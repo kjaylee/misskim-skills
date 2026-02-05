@@ -1,9 +1,9 @@
 ---
 name: blender-interactive
 description: |
-  Blender 양방향 소켓 통신 스킬. TCP 소켓 서버로 실시간 씬 조작, 상태 조회, Poly Haven 에셋 통합.
+  Blender 양방향 소켓 통신 스킬. TCP 소켓 서버로 실시간 씬 조작, 상태 조회, Poly Haven/Sketchfab 에셋 통합.
   기존 blender-pipeline (배치 처리)와 상호보완 — 복잡한 씬 구축, 반복 조작, 실시간 피드백에 사용.
-  트리거: Blender 실시간 조작, 씬 상태 확인, Poly Haven 에셋, 양방향 Blender 통신.
+  트리거: Blender 실시간 조작, 씬 상태 확인, Poly Haven 에셋, Sketchfab 모델, 양방향 Blender 통신.
 ---
 
 # Blender Interactive Socket Server

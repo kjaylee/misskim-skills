@@ -559,9 +559,6 @@ class BlenderSocketServer:
         self.thread = threading.Thread(target=self._accept_loop, daemon=True)
         self.thread.start()
 
-        # 메인 스레드에서 명령 처리하는 타이머 등록
-        bpy.app.timers.register(self._process_pending, first_interval=0.1, persistent=True)
-
         print(f"[BlenderSocket] Server started on {self.host}:{self.port}")
 
     def stop(self):
@@ -671,6 +668,23 @@ class BlenderSocketServer:
             return 0.05  # 50ms 간격으로 재실행
         return None  # 타이머 종료
 
+    def run_blocking(self):
+        """headless 모드용 — 메인 스레드에서 블로킹 루프로 명령 처리.
+        bpy.app.timers 대신 직접 루프를 돌려서 Blender가 종료하지 않게 함."""
+        print("[BlenderSocket] Entering blocking main loop (headless mode)")
+        while self.running:
+            with self._lock:
+                callbacks = list(self._pending)
+                self._pending.clear()
+
+            for cb in callbacks:
+                try:
+                    cb()
+                except Exception:
+                    traceback.print_exc()
+
+            time.sleep(0.05)
+
 
 # ─── 메인 ───
 
@@ -684,30 +698,18 @@ def main():
     print(f"[BlenderSocket] Send JSON to {host}:{port}")
     print(f"[BlenderSocket] Example: {{\"type\": \"ping\"}}")
 
-    # headless 모드에서 Blender가 종료하지 않도록 유지
-    # bpy.app.timers가 돌아가려면 이벤트 루프 필요
-    def keep_alive():
-        if server.running:
-            return 1.0  # 1초마다
-        return None
-
-    bpy.app.timers.register(keep_alive, first_interval=1.0, persistent=True)
-
     # SIGINT/SIGTERM 처리
-    original_sigint = signal.getsignal(signal.SIGINT)
-    original_sigterm = signal.getsignal(signal.SIGTERM)
-
     def shutdown(signum, frame):
         print(f"\n[BlenderSocket] Received signal {signum}, shutting down...")
         server.stop()
-        # 원래 핸들러 복원
-        if signum == signal.SIGINT and original_sigint:
-            signal.signal(signal.SIGINT, original_sigint)
-        if signum == signal.SIGTERM and original_sigterm:
-            signal.signal(signal.SIGTERM, original_sigterm)
 
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
+
+    # headless 모드(-b): 블로킹 루프로 Blender가 종료하지 않게 유지.
+    # bpy.app.timers는 배치 모드에서 이벤트 루프가 없어 작동하지 않으므로,
+    # 메인 스레드에서 직접 명령 큐를 처리하는 루프를 실행.
+    server.run_blocking()
 
 
 if __name__ == "__main__":

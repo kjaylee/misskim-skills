@@ -14,7 +14,10 @@
 
 | 스킬 | 설명 | 상태 |
 |------|------|------|
-| (리서치 진행 중) | | |
+| [research-pro](research/SKILL.md) | Gemini CLI를 활용한 딥 리서치 및 서브에이전트 위임 | ✅ 활성 |
+| [github-pro](github-pro/SKILL.md) | GitHub API 및 gh CLI를 활용한 고급 관리 | ✅ 활성 |
+| [youtube-pro](youtube-pro/SKILL.md) | YouTube 요약, 전사 및 지능형 분석 | ✅ 활성 |
+| [video-pro](video-pro/SKILL.md) | Remotion & FFmpeg 기반 고성능 비디오 에디팅 | ✅ 활성 |
 
 ## 구조
 
