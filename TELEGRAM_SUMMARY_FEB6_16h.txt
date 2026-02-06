@@ -1,0 +1,49 @@
+🔍 Agent Skill Trend Sweep — Feb 6, 16:00 KST
+
+📊 QUICK STATS
+• SkillsMP: 145,000+ skills (↑50K since morning)
+• LobeHub MCP: Active with community ratings
+• Claude Code 2.1: Hot-reload + lifecycle hooks live
+• Molt Road: Entertainment only (ignore)
+
+🆕 TOP DISCOVERIES
+
+1. ⭐ BlenderMCP (Critical Find)
+   • Direct Blender control from Claude AI
+   • 807 stars, 13,973 downloads
+   • Use: Automate 3D asset creation for games
+   • Action: Install on MiniPC, test ASAP
+
+2. 🔥 LobeHub MCP Marketplace
+   • Curated MCP servers with ratings
+   • Top picks: Playwright (browser), grep.app (code search), Firecrawl (scraping)
+   • All open source, some need API keys
+
+3. 🚀 Claude Code 2.1 Features
+   • Skill hot-reload (no restart)
+   • Lifecycle hooks (pre/post exec)
+   • Forked sub-agents (parallel work)
+
+4. 💰 Pricing Trends
+   • 95% FREE (GitHub-based)
+   • Premium: "Skill Stacks" (bundled workflows)
+   • SkillHub: NPM CLI + Pro membership
+
+⚡ ACTIONABLE ITEMS
+
+HIGH PRIORITY:
+✅ Install BlenderMCP → automate 3D assets
+✅ Test SkillHub CLI: npx @skill-hub/cli search "godot"
+✅ Update game-dev skill with hot-reload
+
+MEDIUM:
+🟢 Survey grep.app MCP for game code examples
+🟢 Test Playwright MCP for browser automation
+
+SKIP:
+❌ Molt Road (entertainment/roleplay only)
+
+📁 Full report: misskim-skills/INTAKE_LOG.md
+🎯 Next sweep: Mar 6, 2026
+
+— Miss Kim 💋
