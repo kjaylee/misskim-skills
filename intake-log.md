@@ -1,5 +1,47 @@
 # misskim-skills intake log
 
+## 2026-02-08 Agent skill trend sweep (20:00 KST)
+Sources: SkillsMP (skillsmp.com), skills.sh (Vercel), LobeHub MCP Marketplace, ClawHub security reports, Molt Road analysis, VSCode Copilot Agent Mode, scriptbyai.com top-10 list, creative-tim skills.sh guide, GitHub trending, Snyk/Veracode/HackerNews security advisories.
+
+### 🔥 Key Developments This Week
+
+1. **skills.sh (Vercel) — NEW MAJOR PLAYER**: Vercel launched skills.sh, an open Agent Skills directory with `npx skills add` CLI. 20K+ installs in launch week. Top all-time: `find-skills`, `vercel-react-best-practices`, `web-design-guidelines`, `remotion-best-practices`, `frontend-design` (Anthropic), `vercel-composition-patterns`, `agent-browser`, `skill-creator` (Anthropic), `browser-use`. Pricing: Free/open-source. **Action: HIGH PRIORITY — audit vercel-labs/agent-skills repo for React/Next.js patterns to merge into our web-design-pro and ui-ux-pro-max.**
+
+2. **inference.sh ecosystem — TRENDING**: Dominating 24h trending on skills.sh. Includes `inference-sh` (150+ AI apps via infsh CLI), `agentic-browser` (Playwright + inference.sh), `ai-podcast-creation`. **Action: Evaluate inference-sh as a multi-model gateway skill for misskim-skills.**
+
+3. **LobeHub MCP Marketplace — TOP SERVERS (Feb 8)**: Context7 (35K stars, version-specific docs), Playwright Browser (22K stars), BlenderMCP (14K stars), 21st.dev Magic UI Builder (3.8K stars), Firecrawl (3.3K stars), AntV Charts (3K stars), Tavily web search (2.1K stars), grep.app code search (new featured), Postgres MCP Pro. **Action: Context7 + grep.app are directly useful for our dev workflow — evaluate as MCP server additions.**
+
+4. **🚨 ClawHub SECURITY CRISIS**: 341+ malicious skills discovered (Snyk, 1Password, Veracode, The Register, HackerNews). 7,743 downloads on the most popular malicious package alone. Credential theft, reverse shells, crypto stealers. ClawHub maintainer admitted registry cannot be secured. **Action: ZERO skills from ClawHub without full manual audit. Reinforce our Research→Audit→Rewrite policy.**
+
+5. **Molt Road — CONFIRMED ILLICIT MARKETPLACE**: Security researchers (InfoStealers, Vectra AI) confirm Molt Road is a black market for autonomous agents trading stolen credentials, weapon skills with reverse shells. **Action: DO NOT ENGAGE. Monitor for threat intelligence only.**
+
+6. **Top 10 Skills List (scriptbyai.com, Feb 2026)**: Superpowers (planning-first dev), ui-ux-pro-max (design systems), agent-skills (Vercel/React), planning-with-files (Manus workflow), context-engineering, obsidian-skills, scientific-skills, marketingskills (CRO/copy), dev-browser, humanizer. **Action: We already have ui-ux-pro-max. Evaluate Superpowers' TDD/debugging workflows and planning-with-files' persistent markdown approach.**
+
+7. **VSCode Copilot Agent Mode**: Now reads SKILL.md files natively. SkillsMP indexes Microsoft's own skills (9.3K stars, 1.6K forks). Skills work cross-platform: Claude Code, Cursor, Copilot, Gemini CLI, OpenCode. **Action: Ensure all misskim-skills have proper SKILL.md frontmatter for cross-platform compat.**
+
+8. **OpenClaw hits 146K GitHub stars** (up from ~130K). Neovim agent "99" by ThePrimeagen gaining traction (2.8K stars). `claude-mem` automatic memory capture at 16.9K stars. **Action: Evaluate claude-mem patterns for our memory system improvement.**
+
+### Pricing Snapshot
+| Platform | Model | Price |
+|----------|-------|-------|
+| skills.sh | Open directory + npx CLI | Free |
+| SkillsMP | Browsable catalog (66K-87K skills) | Free browse, compute cost only |
+| SkillHub | Curated + graded (15K skills) | Free tier / Pro $9.99/mo / Agent $19-199/mo |
+| LobeHub MCP | Open-source MCP servers | Free (MIT) |
+| ClawHub | Marketplace (COMPROMISED) | Free but HIGH RISK |
+
+### Actionable Items (Priority Order)
+1. **P1**: Audit `vercel-labs/agent-skills` for React/Next.js/web-design patterns → merge into our skills
+2. **P1**: Add SKILL.md cross-platform frontmatter to all misskim-skills
+3. **P2**: Evaluate inference.sh as multi-model gateway
+4. **P2**: Evaluate Context7 + grep.app MCP servers for dev workflow
+5. **P2**: Study Superpowers' TDD workflow + planning-with-files' persistent markdown pattern
+6. **P3**: claude-mem memory patterns → improve our memory system
+7. **P3**: Remotion best-practices skill → useful for video-pro skill
+8. **SECURITY**: Zero ClawHub installs without manual audit. Update security policy docs.
+
+---
+
 ## 2026-02-05 Agent skill trend sweep
 Sources: SmartScope SkillsMP guide (Feb 2026), CherryHQ MCP Market README, SkillHub rankings page, ClawNews Molt Road skill post, formulahendry VS Code Agent Skills extension README.
 
@@ -40,3 +82,93 @@ Sources: SmartScope SkillsMP guide (Jan 2026 figures), SkillHub home/pricing/ran
 - **MCP Market** (CherryHQ repo) is now a pnpm-organized monorepo of `@mcpmarket/*` servers with TypeScript typings, CLI auto-installation, and consistent MCP protocol definitions. Highlight: `@mcpmarket/auto-install` discovers MCP servers via natural language `add-source` commands. Action: plug our curated MCP servers into that auto-install pipeline, create a `mcpmarket-watch` skill that checks npm tags/registry, and add watchers for connectors we rely on (agents-md, mcporter, data connectors).
 - **Molt Road** exposes an autonomous marketplace API (register → 100 credits, listings, escrow orders, bounties, deliver endpoint) plus trust features (escrow, ratings, badges, bounty board, listing comments). Action: build a `moltroad-watch` skill that polls `GET /listings`, filters by escrow status/trust score, and escalates high-value bounties to our automation queue.
 - **VS Code Agent Skills extension** offers a marketplace UI with repo-configurable sources, one-click install, GitHub token-backed caching, install location toggle (`.github/skills` vs `.claude/skills`), and in-memory metadata caching with a customizable timeout. Action: emulate its metadata+cache syncing for `misskim-skills` (auto-publishing metadata to `.github/skills`, expose `agentSkills.skillRepositories` mirror, and emit update alerts when new bundles appear).
+
+---
+
+## 2026-02-09 00:00 KST — Agent Skill Trend Sweep
+
+### 🔥 HEADLINE: OpenClaw × VirusTotal Partnership (Feb 8)
+
+**The biggest story this cycle.** After the 341 malicious skills scandal, OpenClaw partnered with Google's VirusTotal for automated ClawHub scanning:
+- All published skills now undergo SHA-256 hashing → VirusTotal lookup → Gemini-powered Code Insight analysis
+- Malicious → instant block. Suspicious → warning label. Benign → auto-approved
+- **Daily re-scans** of all active skills (detects time-bomb mutations)
+- Coverage: The Register, HackerNews, The Verge, The Decoder, CyberSecurityNews
+
+**Assessment:** Positive step, but NOT a silver bullet. SKILL.md prompt injection attacks are fundamentally harder to detect than binary malware. Our policy stands: **Research → Audit → Rewrite → misskim-skills. No blind installs.**
+
+### 🆕 New Tools & Skills Discovered
+
+#### 1. **skillc** (govctl-org/skillc) — Agent Skills Development Kit
+- CLI: `skc init` → `skc lint` → `skc build` → `skc stats` → publish
+- Validates SKILL.md structure, links, quality
+- Tracks how agents actually use skills (usage stats)
+- Written in Rust 🟢 (aligns with our stack)
+- **License:** Open-source
+- **Action:** ⭐ EVALUATE — Use for skill authoring QA in misskim-skills
+
+#### 2. **Skillradar** — Semantic Agent Skill Discovery
+- Indexes 2,500+ skills with semantic search
+- Agent-native mode: natural-language → structured search → ranked candidates
+- Web UI + CLI integration
+- **License:** Open-source
+- **Action:** 🟢 TEST — Useful for discovering niche skills by task description
+
+#### 3. **Top 10 MCP Servers for AI Builders (AnalyticsVidhya, Feb 5)**
+New entrants vs. prior surveys:
+- **Figma MCP** (official) — Design file → code. Read frames, components, design tokens
+  - **Action:** ⭐ HIGH — Game UI mockup → code pipeline
+- **Stripe MCP** (official) — Revenue, billing, subscription management
+  - **Action:** 🟡 MONITOR — Useful when monetization scales
+- **Vercel MCP** (official) — Deployment inspection, build logs, debugging
+  - **Action:** 🟢 TEST — If we deploy anything to Vercel
+- **Notion MCP** — Real-time doc automation
+  - **Action:** 🟡 MONITOR — Depends on Notion adoption
+
+#### 4. **Context7 Free Tier Slashed by 92%**
+- Was generous free tier, now heavily rate-limited
+- Still useful but paid plan may be needed for heavy use
+- **Action:** 🟡 REASSESS — Check if free tier sufficient for our coding workflow
+
+#### 5. **25+ Agent Skill Registries Index (Medium, Feb 5)**
+Confirms ecosystem consolidation:
+- Skills = internal expertise (SKILL.md packages)
+- MCP = external services/tools
+- Trend: Both converging into unified "agent capability" model
+
+### 📊 Market Metrics Update
+
+| Metric | Last Sweep (Feb 8) | Current (Feb 9) | Delta |
+|--------|-------------------|------------------|-------|
+| SkillsMP total skills | 87K+ | 87K+ (stable) | — |
+| LobeHub MCP featured | 9 servers | 9 servers | — |
+| ClawHub security | 341 malicious | VirusTotal scanning live | ⬆️ |
+| skills.sh (Vercel) | 20K installs | Growing | ⬆️ |
+| skillc (new) | — | Launched | 🆕 |
+| Skillradar (new) | — | 2.5K indexed | 🆕 |
+| VSCode 1.109 | Agent Skills GA | Stable | — |
+
+### 🎯 Actionable Items (Feb 9 Delta)
+
+| # | Priority | Action | Status |
+|---|----------|--------|--------|
+| 1 | ⭐ CRITICAL | Monitor VirusTotal scanning effectiveness on ClawHub | NEW |
+| 2 | ⭐ HIGH | Evaluate skillc (Rust CLI) for misskim-skills QA | NEW |
+| 3 | ⭐ HIGH | Test Figma MCP for game UI design → code | NEW |
+| 4 | 🟢 MEDIUM | Test Skillradar for skill discovery | NEW |
+| 5 | 🟡 MONITOR | Context7 pricing changes (92% free tier cut) | NEW |
+| 6 | ⭐ CARRY | Audit all misskim-skills for credential exposure | ONGOING |
+| 7 | ⭐ CARRY | Install Brave Search MCP + DocFork MCP | PENDING |
+| 8 | ⭐ CARRY | Ensure SKILL.md cross-platform compat | PENDING |
+
+### 🔒 Security Landscape
+- ClawHub → VirusTotal scanning: Auto-block malicious, warn suspicious, re-scan daily
+- Atomic Stealer (AMOS) campaign via typosquatted skills: **ACTIVE** (targets Mac users)
+- Gen Agent Trust Hub: Free pre-scan tool available
+- arXiv study: 26.1% of skills have vulnerabilities (unchanged)
+- **Our policy reinforced:** No blind installs. Ever.
+
+---
+
+*Sweep completed: 2026-02-09 00:00 KST*
+*Next sweep: 2026-02-10 00:00 KST (daily) / Full monthly: 2026-03-09*

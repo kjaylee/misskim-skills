@@ -13,7 +13,7 @@ MiniPC의 Remotion으로 프로그래밍 방식의 영상 제작.
 
 ## 환경
 
-- **프로젝트:** `/home/spritz/remotion-videos` (MiniPC)
+- **프로젝트:** `$HOME/remotion-videos` (MiniPC)
 - **실행:** `npx remotion render <CompositionId> out/video.mp4`
 - **ffmpeg:** 설치됨
 - **전송:** MiniPC HTTP 서버(9877) + curl로 맥 스튜디오 전송
@@ -84,7 +84,7 @@ const scale = spring({ frame, fps, config: { damping: 200 } });
 
 ```bash
 # 기본 렌더링
-cd /home/spritz/remotion-videos
+cd $HOME/remotion-videos
 npx remotion render MyVideo out/video.mp4
 
 # 고품질

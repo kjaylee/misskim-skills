@@ -45,12 +45,12 @@ MiniPC의 headless Blender 5.0.1에서 실행.
 # nodes.run으로 서버 시작
 nodes.run(node="MiniPC", command=[
     "bash", "-c",
-    "blender -b --factory-startup --python /home/spritz/blender-interactive/blender_socket_addon.py -- --port 9876 &"
+    "blender -b --factory-startup --python $HOME/blender-interactive/blender_socket_addon.py -- --port 9876 &"
 ])
 
 # 또는 start_server.sh 사용
 nodes.run(node="MiniPC", command=[
-    "bash", "/home/spritz/blender-interactive/scripts/start_server.sh", "--background"
+    "bash", "$HOME/blender-interactive/scripts/start_server.sh", "--background"
 ])
 ```
 
@@ -59,31 +59,31 @@ nodes.run(node="MiniPC", command=[
 ```bash
 # ping
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/blender_client.py",
+    "python3", "$HOME/blender-interactive/scripts/blender_client.py",
     "ping"
 ])
 
 # 씬 정보 조회
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/blender_client.py",
+    "python3", "$HOME/blender-interactive/scripts/blender_client.py",
     "get_scene_info", "--pretty"
 ])
 
 # 오브젝트 생성
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/blender_client.py",
+    "python3", "$HOME/blender-interactive/scripts/blender_client.py",
     "create_object", "--params", "{\"type\":\"SPHERE\",\"name\":\"Earth\",\"location\":[0,0,0]}"
 ])
 
 # 머티리얼 설정
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/blender_client.py",
+    "python3", "$HOME/blender-interactive/scripts/blender_client.py",
     "set_material", "--params", "{\"object_name\":\"Earth\",\"color\":[0.2,0.4,0.8],\"metallic\":0.0,\"roughness\":0.7}"
 ])
 
 # 렌더링 프리뷰
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/blender_client.py",
+    "python3", "$HOME/blender-interactive/scripts/blender_client.py",
     "render_preview", "--params", "{\"output_path\":\"/tmp/preview.png\",\"resolution_x\":512,\"resolution_y\":512,\"samples\":32}"
 ])
 ```
@@ -92,7 +92,7 @@ nodes.run(node="MiniPC", command=[
 
 ```bash
 nodes.run(node="MiniPC", command=[
-    "bash", "/home/spritz/blender-interactive/scripts/start_server.sh", "--stop"
+    "bash", "$HOME/blender-interactive/scripts/start_server.sh", "--stop"
 ])
 ```
 
@@ -148,33 +148,33 @@ CC0 무료 에셋 (HDRI, 텍스처, 3D 모델) 검색/다운로드.
 ```bash
 # 텍스처 카테고리 조회
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/polyhaven.py",
+    "python3", "$HOME/blender-interactive/scripts/polyhaven.py",
     "categories", "textures"
 ])
 
 # 벽돌 텍스처 검색
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/polyhaven.py",
+    "python3", "$HOME/blender-interactive/scripts/polyhaven.py",
     "search", "--type", "textures", "--categories", "brick"
 ])
 
 # 텍스처 다운로드 (1k 해상도)
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/polyhaven.py",
+    "python3", "$HOME/blender-interactive/scripts/polyhaven.py",
     "download", "rock_wall_08", "--type", "textures", "--resolution", "1k",
     "--output", "/tmp/polyhaven/textures/"
 ])
 
 # HDRI 다운로드
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/polyhaven.py",
+    "python3", "$HOME/blender-interactive/scripts/polyhaven.py",
     "download", "meadow", "--type", "hdris", "--resolution", "2k",
     "--format", "hdr", "--output", "/tmp/polyhaven/hdri/"
 ])
 
 # 3D 모델 다운로드
 nodes.run(node="MiniPC", command=[
-    "python3", "/home/spritz/blender-interactive/scripts/polyhaven.py",
+    "python3", "$HOME/blender-interactive/scripts/polyhaven.py",
     "download", "food_apple_01", "--type", "models", "--resolution", "1k",
     "--format", "gltf", "--output", "/tmp/polyhaven/models/"
 ])
@@ -233,20 +233,20 @@ blender_client.py execute_code --params '{
 ```bash
 # 1. 스킬 폴더를 MiniPC에 복사
 # nodes.run으로 base64 전송 또는 scp
-scp -r skills/blender-interactive/ spritz@100.80.169.94:/home/spritz/blender-interactive/
+scp -r skills/blender-interactive/ <user>@<MINIPC_IP>:$HOME/blender-interactive/
 ```
 
 ### 자동 시작 (systemd)
 
 ```ini
-# /home/spritz/.config/systemd/user/blender-socket.service
+# $HOME/.config/systemd/user/blender-socket.service
 [Unit]
 Description=Blender Interactive Socket Server
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/snap/bin/blender -b --factory-startup --python /home/spritz/blender-interactive/blender_socket_addon.py -- --port 9876
+ExecStart=/snap/bin/blender -b --factory-startup --python $HOME/blender-interactive/blender_socket_addon.py -- --port 9876
 ExecStop=/bin/kill -TERM $MAINPID
 Restart=on-failure
 RestartSec=10

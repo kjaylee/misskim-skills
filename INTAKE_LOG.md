@@ -1,5 +1,129 @@
 # MissKim Skills Intake Log
 
+## 2026-02-09 04:00 KST — Agent Skill Trend Sweep (Weekly)
+
+### 📊 Executive Summary
+**Major Event:** ClawHub security crisis dominates the week. 341 malicious skills found (Koi Security), Snyk confirms 1,467 malicious payloads across 36% prompt-injection rate. MCP Apps launched as first official MCP extension. VS Code 1.109 adds native agent skills + Copilot Memory. New monetization platforms emerging (Agent37, SkillzWave).
+
+### 🚨 CRITICAL: ClawHub Under Attack (Feb 2-9, 2026)
+
+**Scale of breach (updated Feb 9):**
+- **341 malicious skills** found across 2,857 audited (Koi Security)
+- **1,467 malicious payloads** identified by Snyk ToxicSkills study
+- **36% of skills contain prompt injection** (Snyk)
+- **280+ skills leak API keys and PII** (Snyk credential leak report)
+- **AMOS (Atomic macOS Stealer)** distributed via fake prereqs — targets Mac Mini users running 24/7
+- **Reverse shells** hidden in functional code (better-polymarket, polymarket-all-in-one)
+- **Credential exfil** to webhook.site (rankaj skill)
+- **Typosquatting** at scale: clawhub, clawhub1, clawhubb, clawwhub, etc.
+
+**Sources:** The Verge, Hacker News, SC Media, Snyk (2 reports), Koi Security
+
+**Impact on us:**
+- ⚠️ AGENTS.md policy "Audit → Rewrite → misskim-skills" is VALIDATED
+- ⚠️ Never install from ClawHub without full manual code audit
+- ⚠️ OpenClaw added reporting feature but marketplace remains open-by-default
+- ⚠️ One malicious skill reached ClawHub FRONT PAGE before detection
+
+### 🆕 New Platform: MCP Apps (Jan 26, 2026)
+
+**What:** First official MCP extension — tools return interactive UI components in conversation
+- Dashboards, forms, visualizations, multi-step workflows render inline
+- Builds on MCP-UI and OpenAI-Apps SDK
+- Supported by Claude, endorsed by Anthropic
+- **Sources:** The Register, WorkOS, The Decoder, MCP Blog
+
+**Impact:** MCP servers can now deliver rich UIs, not just text. Game dashboards, analytics panels, asset browsers could all run inside chat.
+
+**Action:** 🟡 MONITOR — Watch for game-dev-relevant MCP Apps (asset browsers, analytics)
+
+### 🆕 New Monetization Platforms
+
+#### Agent37.com
+- Monetizable digital economy based on skills
+- Creators get paid for crafting skills
+- Accessible to non-technical users (not just CLI)
+- **Source:** Reddit r/ClaudeCode
+- **Action:** 🟡 MONITOR — Potential revenue channel for misskim-skills
+
+#### SkillzWave.ai / SpillWave.com
+- Agentic skill installer supporting **14+ coding agent platforms**
+- Auto-installs skills across Claude Code, Cursor, Codex, etc.
+- Evaluates skills on GitHub with feedback (e.g., issue #287 on davila7/claude-code-templates)
+- **Action:** 🟡 EVALUATE — Could help distribute misskim-skills
+
+### 🆕 LobeHub MCP Featured (Feb 7-9)
+
+**New Featured Servers:**
+- **Context7 MCP** — Up-to-date docs for 9,000+ libraries injected into prompts (Node ≥18)
+- **MCPEngage 2026 Complete Series** — 30+ business platform MCP servers (ClickUp, Basecamp, Housecall Pro)
+- **Lovie Formation MCP** — US company formation via AI (LLC, C-Corp, S-Corp)
+
+### 🆕 VS Code 1.109 Update (Feb 5, 2026)
+
+- **Agent Extensibility** — Claude agent support native in VS Code
+- **Copilot Memory** — Store/recall info across sessions (preview)
+- **Skill Folders** — Tested instructions for specific domains (testing, API design, perf optimization)
+- **Source:** InfoWorld (Feb 5)
+
+### 📈 Top 10 Agent Skills (scriptbyai.com, Feb 2026)
+
+| Rank | Skill | Use Case | In MissKim? |
+|------|-------|----------|-------------|
+| 1 | Superpowers | TDD-first dev workflow | ❌ Study |
+| 2 | ui-ux-pro-max | Design system generation | ✅ YES |
+| 3 | agent-skills (Vercel) | React/Next.js optimization | ❌ N/A (JS prohibited) |
+| 4 | planning-with-files | Persistent task tracking | ❌ Partial (ralph-loop) |
+| 5 | context-engineering | Custom agent systems | ❌ Study |
+| 6 | obsidian-skills | Obsidian vault integration | ❌ N/A |
+| 7 | scientific-skills | Scientific computing | ❌ N/A |
+| 8 | marketingskills | CRO and copywriting | ❌ Absorb |
+| 9 | dev-browser | Visual browser testing | ❌ Study |
+| 10 | humanizer | Remove AI writing patterns | ❌ Absorb |
+
+### 🎯 Actionable Items (Feb 9)
+
+| # | Priority | Action | Status |
+|---|----------|--------|--------|
+| 1 | ⭐ CRITICAL | Full security audit of all misskim-skills — validate no credential leaks, no external URL deps | PENDING |
+| 2 | ⭐ CRITICAL | Update AGENTS.md safety section with ClawHub ban + commit-hash pinning | PENDING |
+| 3 | ⭐ HIGH | Absorb marketingskills patterns — CRO/copywriting for game landing pages | PENDING |
+| 4 | ⭐ HIGH | Absorb humanizer patterns — clean AI text for game descriptions | PENDING |
+| 5 | ⭐ HIGH | Study Superpowers TDD workflow — integrate into ralph-loop | PENDING |
+| 6 | 🟢 MEDIUM | Evaluate Agent37 as distribution channel for misskim-skills | PENDING |
+| 7 | 🟢 MEDIUM | Evaluate SkillzWave as multi-platform installer | PENDING |
+| 8 | 🟢 MEDIUM | Monitor MCP Apps for game-dev UI tools | PENDING |
+| 9 | 🟡 LOW | Test Context7 MCP for Rust/Godot docs | PENDING |
+| 10 | 🟡 LOW | Watch VS Code Copilot Memory feature for skill synergy | PENDING |
+
+### 💰 Pricing Landscape (Feb 9 Update)
+
+| Platform | Model | Notes |
+|----------|-------|-------|
+| ClawHub | FREE (open) | ⚠️ SECURITY CRISIS — avoid |
+| SkillsMP | FREE (GitHub aggregator) | 160K+ skills |
+| SkillHub | Freemium (Stacks = paid) | 7K+ AI-curated |
+| Agent37 | Creator monetization | Revenue share model |
+| SkillzWave | Free installer | 14+ platform support |
+| LobeHub MCP | FREE (most) | Some need API keys |
+| VSCode Ext | FREE | formulahendry leading |
+
+### 🔒 Security Recommendations (Reinforced)
+
+1. **ZERO ClawHub installs** without full manual code audit + isolated VM test
+2. **Prefer self-written skills** — our AGENTS.md policy is the gold standard
+3. **Pin ALL external deps** to commit hashes
+4. **No credential passing** through SKILL.md instructions
+5. **Monthly SkillScan audit** of all misskim-skills
+6. **Evaluate Gen Agent Trust Hub** scanner (free, pre-scans skill URLs)
+
+---
+
+*Survey completed: 2026-02-09 04:01 KST*
+*Next sweep: 2026-02-16 (weekly) or 2026-03-09 (monthly deep dive)*
+
+---
+
 ## 2026-02-06 — Comprehensive Agent Skill Marketplace Survey
 
 ### 📊 Executive Summary
@@ -835,3 +959,467 @@ MCP servers = 2026 automation backbone. Focus on OpenAPI + GitHub + PostgreSQL M
 
 *End of Feb 6, 2026 Survey (16:00 KST)*
 *Next update: Mar 6, 2026*
+
+---
+
+## 2026-02-08 — Agent Skill Trend Sweep (Focused Survey)
+
+### 📊 Executive Summary
+**Focus Areas:** MCP Market expansion, SkillsMP scale validation, VSCode ecosystem growth, security landscape updates.
+
+**Key Findings:**
+- SkillsMP scale confirmed: **160,000+ skills** (60% growth since Jan 2026)
+- MCP ecosystem maturing: Glama.ai reporting **usage-based rankings** (30-day activity)
+- VSCode Agent Skills extension stable: 3 primary extensions, formulahendry leading
+- Security concerns escalating: **26.1% of skills contain vulnerabilities** (arXiv study)
+- Agent Skills standard adoption: GitHub Copilot, Claude, Codex CLI unified
+
+### 🆕 New Discoveries
+
+#### 1. MCP Market Expansion (Glama.ai)
+- **URL:** https://glama.ai/mcp/servers
+- **New Feature:** Usage-based sorting (30-day activity)
+- **Top MCP Servers by Usage:**
+  1. **DataForSEO MCP** (417K installs, 1,022K monthly usage)
+     - Comprehensive SEO data: SERPs, keywords, on-page metrics, domain analytics
+     - **Pricing:** Usage-based API (free tier available)
+     - **License:** Apache 2.0
+     - **Automation Potential:** 🟢 MEDIUM — Marketing automation, SEO research
+     - **Action:** 🟡 **MONITOR** — Not game dev priority
+
+  2. **Brave Search MCP** (467K installs, 160K monthly usage)
+     - Web, local business, image, video, news search
+     - AI-powered summarization
+     - **Pricing:** FREE (Brave API)
+     - **License:** MIT
+     - **Automation Potential:** 🟢 HIGH — Research automation, asset discovery
+     - **Action:** ⭐ **INSTALL** — Use for asset hunting workflows
+
+  3. **DocFork MCP** (16K installs, 1,191K monthly usage)
+     - Up-to-date documentation for 9,000+ libraries
+     - Eliminates outdated code suggestions
+     - **Pricing:** FREE
+     - **License:** MIT
+     - **Automation Potential:** 🟢 HIGH — Coding accuracy, tech research
+     - **Action:** ⭐ **INSTALL** — Reduce coding errors
+
+  4. **Ecovacs AI Control MCP** (4K installs, 17 monthly usage)
+     - Robot vacuum control via MCP (device listing, cleaning, charging, status)
+     - **Pricing:** FREE
+     - **License:** MIT
+     - **Automation Potential:** 🔴 LOW — Not relevant to game dev
+     - **Action:** 🔴 **SKIP**
+
+  5. **Sequential Thinking MCP** (12K installs, 107 monthly usage)
+     - Meta-cognitive capabilities: confidence tracking, hypothesis testing
+     - Graph-based memory storage, structured JSON documents
+     - **Pricing:** FREE
+     - **License:** MIT
+     - **Automation Potential:** 🟢 HIGH — Agent reasoning, complex planning
+     - **Action:** ⭐ **ABSORB** — Study for subagent decision-making
+
+  6. **APITable.ai MCP** (26K installs, 191 monthly usage)
+     - AITable datasheet integration for agents
+     - **Pricing:** Freemium
+     - **License:** Unknown
+     - **Automation Potential:** 🟡 MEDIUM — Data management
+     - **Action:** 🟡 **MONITOR**
+
+#### 2. SkillHub Update (www.skillhub.club)
+- **Scale:** **7,000+ AI-evaluated skills** (curated from 160K+ total)
+- **New Feature:** Skill Stacks (pre-configured skill combos for workflows)
+- **Installation:** `npx @skill-hub/cli install frontend-design`
+- **Search:** `npx @skill-hub/cli search "react"`
+- **Pricing Model:** 
+  - Free: Individual skills
+  - Pro: Skill Stacks (bundled workflows), preview before purchase
+- **Automation Potential:** 🟢 HIGH — Curated quality, faster onboarding
+- **Action:** ⭐ **INSTALL CLI** — Test semantic search for game dev skills
+
+#### 3. Security Landscape Update (arXiv Study)
+- **Source:** "Agent Skills in the Wild: A Security Analysis" (arXiv:2601.10338)
+- **Dataset:** 31,132 skills from 2 major marketplaces
+- **Key Findings:**
+  - **26.1% contain vulnerabilities** (8,126 skills)
+  - **5.2% show malicious intent patterns** (1,621 skills)
+  - **Detection Tool:** SkillScan (open-source, GitHub)
+  
+- **Primary Risks:**
+  1. **Prompt Injection** — External text (READMEs, web pages) contains embedded instructions
+  2. **Indirect Instruction Contamination** — Tool outputs not sanitized, malicious content in logs
+  3. **Information Leakage** — Unintentional transmission of .env files, API keys, tokens
+  4. **Supply Chain Attacks** — External URLs/dependencies replaced after initial safe verification
+  
+- **Mitigation Recommendations:**
+  - **P0:** Use official repositories only (Anthropic, OpenAI, GitHub)
+  - **P0:** Prefer self-created skills
+  - **P1:** Minimize allowed-tools (avoid bash execution)
+  - **P1:** Regular audits (monthly skill checks)
+  - **P2:** Test in isolation (VM/container)
+  - **P2:** Pin external dependencies (commit hashes)
+
+- **Action:** ⭐ **CRITICAL** — Audit all misskim-skills for security patterns
+
+#### 4. VSCode Agent Skills Ecosystem
+- **formulahendry.agent-skills** (Leading extension)
+  - Skill marketplace browser inside VS Code
+  - One-click install from multiple repositories
+  - Default repos: anthropics/skills, pytorch/pytorch, openai/skills, formulahendry/agent-skill-code-runner
+  - Install locations: `.github/skills` (default) or `.claude/skills`
+  - GitHub token support for rate limits
+  - **Commands:**
+    - Search Skills
+    - Install/Uninstall Skill
+    - View Skill Details
+    - Open Skill Folder
+    - Refresh marketplace
+  - **Automation Potential:** 🟢 HIGH — Centralized skill management
+  - **Action:** ⭐ **INSTALL** — Primary skill manager for VS Code
+
+- **Agent Skills Standard (agentskills.io)**
+  - Open standard by Anthropic & OpenAI (Dec 2025)
+  - Compatible with:
+    - GitHub Copilot (VS Code, CLI, coding agent)
+    - Claude Code
+    - OpenAI Codex CLI
+    - Cursor (same SKILL.md standard)
+  - **Progressive Disclosure:**
+    - Level 1: Skill discovery (name + description in YAML)
+    - Level 2: Instructions loading (SKILL.md body)
+    - Level 3: Resource access (scripts, examples on-demand)
+  - **Benefit:** Install many skills without context bloat
+  - **Action:** ✅ **ADOPT STANDARD** — Ensure all misskim-skills comply
+
+#### 5. SkillsMP Complete Guide (SmartScope Blog)
+- **URL:** https://smartscope.blog/en/blog/skillsmp-marketplace-guide/
+- **Scale Update:** **66,541+ skills** (structured by SDLC phase)
+- **Key Categories:**
+  - Tools: 22,813 (Productivity 13,399 / Automation 6,666)
+  - Development: 19,563 (CMS 7,259 / Architecture 5,215 / Frontend 3,322)
+  - Data & AI: 13,091 (LLM & AI 10,372 / Analysis 1,756)
+  - Business: 11,814 (Project Management 7,478 / Sales/Marketing 5,044)
+  - DevOps: 11,013 (CI/CD 6,091 / Git Workflows 4,861)
+  - Testing & Security: 8,126 (Testing 3,464 / Code Quality 3,185 / Security 1,741)
+  - Documentation: 5,704 (Knowledge Base 4,411 / Technical Docs 1,744)
+
+- **Top Skills by SDLC Phase:**
+  - **Planning & Design:** architecture, adr, project-planner, roadmap-generator
+  - **Implementation:** code-reviewer, repo-rag, requesting-code-review
+  - **Testing:** test-master, test-generation, writing-go-tests, writing-python-tests
+  - **Security:** secure-code-guardian, vulnerability-scanning, security-reporter
+  - **Deployment:** iac-terraform, terraform-docs, kubernetes-deployment, GitHub-actions-templates
+  - **Operations:** database-optimizer, sql-query-optimizer, cost-optimization, data-analysis
+
+- **Automation Potential:** 🟢 HIGH — Comprehensive SDLC coverage
+- **Action:** ⭐ **MAP TO MISSKIM** — Identify gaps in misskim-skills coverage
+
+---
+
+### 🎯 Skills Worth Absorbing (Feb 8 Additions)
+
+#### Immediate Priority (This Week)
+1. ⭐ **Brave Search MCP** (MIT)
+   - **Why:** Asset discovery, research automation, trend analysis
+   - **Tech:** Python, Brave Search API
+   - **Action:** Install, test with game asset searches
+
+2. ⭐ **DocFork MCP** (MIT)
+   - **Why:** 9,000+ library docs, reduce coding errors
+   - **Tech:** Documentation aggregator
+   - **Action:** Install, integrate with coding workflow
+
+3. ⭐ **Sequential Thinking MCP** (MIT)
+   - **Why:** Meta-cognitive reasoning, confidence tracking, hypothesis testing
+   - **Tech:** Graph-based memory, structured JSON
+   - **Action:** Study patterns, apply to subagent decision-making
+
+4. ⭐ **SkillHub CLI**
+   - **Why:** Semantic search, curated skills, quality filter
+   - **Tech:** NPX tool, AI-evaluated skills
+   - **Action:** `npx @skill-hub/cli search "godot"`
+
+5. ⭐ **VSCode Agent Skills Extension** (formulahendry)
+   - **Why:** Centralized skill management, one-click install
+   - **Tech:** VS Code extension
+   - **Action:** Install, configure GitHub token
+
+#### High Priority (This Month)
+6. 🟢 **Security Audit (SkillScan)**
+   - **Why:** 26.1% of skills contain vulnerabilities
+   - **Tech:** Static analysis toolkit (arXiv:2601.10338)
+   - **Action:** Audit all misskim-skills, flag risks
+
+7. 🟢 **SDLC Coverage Mapping**
+   - **Why:** Identify gaps in misskim-skills vs SkillsMP's 66,541 skills
+   - **Tech:** Skill inventory analysis
+   - **Action:** Compare misskim-skills to SkillsMP categories
+
+8. 🟢 **Agent Skills Standard Compliance**
+   - **Why:** Ensure portability across Claude/Copilot/Codex
+   - **Tech:** SKILL.md format validation
+   - **Action:** Update all skills to agentskills.io spec
+
+---
+
+### 💰 Notable Pricing Models
+
+#### Free (Open Source)
+- ✅ **Brave Search MCP** (MIT)
+- ✅ **DocFork MCP** (MIT)
+- ✅ **Sequential Thinking MCP** (MIT)
+- ✅ **VSCode Agent Skills** (FREE extensions)
+- ✅ **SkillsMP** (GitHub aggregator, 100% free)
+
+#### Freemium
+- 🟡 **SkillHub Pro** — Skill Stacks (bundled workflows)
+- 🟡 **DataForSEO MCP** — Usage-based API (free tier)
+- 🟡 **APITable.ai MCP** — Datasheet automation
+
+#### Paid
+- 🔴 **Godot AI Suite** (itch.io) — Skip, prefer open-source
+
+#### Trend Analysis
+- **2026 Shift:** Moving from individual skills (FREE) to "Skill Stacks" (PAID bundles)
+- **Value Prop:** Pre-configured workflows save onboarding time
+- **Strategy:** Prefer FREE individual skills, avoid vendor lock-in
+
+---
+
+### ⚡ Quick Wins (Easy to Implement)
+
+1. ✅ **Install Brave Search MCP** (30 min)
+   - Clone from GitHub, configure API key
+   - Test with "Kenney.nl CC0 game assets" search
+
+2. ✅ **Install DocFork MCP** (15 min)
+   - Add to MCP config, restart agent
+   - Test with "Rust WASM Bevy documentation"
+
+3. ✅ **Install VSCode Agent Skills Extension** (10 min)
+   - VS Code → Extensions → Search "agent skills"
+   - Install formulahendry.agent-skills
+   - Configure GitHub token
+
+4. ✅ **Security Audit Check** (1 hour)
+   - Review all misskim-skills for:
+     - External URL dependencies
+     - Bash execution permissions
+     - .env file access
+   - Flag high-risk patterns
+
+5. ✅ **Agent Skills Standard Validation** (2 hours)
+   - Update all SKILL.md files with proper YAML frontmatter
+   - Test auto-activation in Claude Code
+   - Document activation triggers
+
+---
+
+### 🔥 Top Trends (Feb 2026)
+
+#### 1. MCP Dominance
+- **80% of enterprise apps expected to embed MCP agents by 2026** (Gartner)
+- Usage-based rankings show real-world adoption (Glama.ai)
+- Top servers: DataForSEO (417K installs), Brave Search (467K installs)
+
+#### 2. Security Escalation
+- **26.1% of skills have vulnerabilities** (arXiv study)
+- Community response: SkillScan toolkit released
+- Trend: Official repositories gaining trust (Anthropic, OpenAI, GitHub)
+
+#### 3. Agent Skills Standardization
+- Anthropic + OpenAI unified spec (Dec 2025)
+- GitHub Copilot, Claude Code, Codex CLI interoperable
+- Progressive disclosure architecture (3-level loading)
+
+#### 4. Skill Marketplaces Consolidating
+- SkillsMP: 160,000+ skills (60% growth in 1 month)
+- SkillHub: 7,000+ AI-evaluated (quality curation)
+- Trend: Moving from volume to curation
+
+#### 5. Workflow Bundles (Skill Stacks)
+- SkillHub Pro: Pre-configured skill combos
+- Value: Faster onboarding for domain-specific tasks
+- Pricing: Freemium model emerging
+
+#### 6. SDLC Specialization
+- Skills organized by dev phase (planning → operations)
+- Top categories: Testing (8,126), DevOps (11,013), Development (19,563)
+- Game dev niche: Godot skills growing
+
+---
+
+### 🎯 Recommended Actions for MissKim-Skills
+
+#### Security (CRITICAL)
+- [ ] ⭐ **Audit all skills with SkillScan patterns**
+- [ ] ⭐ **Remove external URL dependencies** (or pin to commit hashes)
+- [ ] ⭐ **Minimize bash execution permissions**
+- [ ] ⭐ **Document security review in README**
+
+#### Compliance (HIGH)
+- [ ] 🟢 **Update all SKILL.md to agentskills.io spec**
+- [ ] 🟢 **Test auto-activation in Claude Code, GitHub Copilot**
+- [ ] 🟢 **Add progressive disclosure (resources in subfolders)**
+
+#### Tooling (HIGH)
+- [ ] ⭐ **Install Brave Search MCP** → Asset discovery
+- [ ] ⭐ **Install DocFork MCP** → Coding accuracy
+- [ ] ⭐ **Install VSCode Agent Skills Extension** → Skill management
+- [ ] ⭐ **Install SkillHub CLI** → Semantic search
+
+#### Coverage (MEDIUM)
+- [ ] 🟢 **Map misskim-skills to SDLC phases**
+- [ ] 🟢 **Identify gaps vs SkillsMP categories**
+- [ ] 🟢 **Absorb Sequential Thinking MCP logic**
+- [ ] 🟢 **Build missing game dev skills** (3D asset pipeline, Godot automation)
+
+---
+
+### 📅 Next Review: 2026-03-08 (Monthly)
+
+**Focus Areas:**
+- MCP server adoption metrics (Glama.ai rankings)
+- Security vulnerability updates (arXiv, SkillScan)
+- SkillsMP scale (expecting 200K+ by March)
+- Godot 5.0 agent skills (if released)
+- Telegram Mini App development tools
+
+---
+
+### 📚 References (Feb 8, 2026)
+
+#### Primary Sources
+- Glama.ai MCP Servers: https://glama.ai/mcp/servers
+- SkillHub: https://www.skillhub.club/
+- SkillsMP Complete Guide: https://smartscope.blog/en/blog/skillsmp-marketplace-guide/
+- VSCode Agent Skills: https://marketplace.visualstudio.com/items?itemName=formulahendry.agent-skills
+- Agent Skills Standard: https://code.visualstudio.com/docs/copilot/customization/agent-skills
+- Anthropic Skills Repo: https://github.com/anthropics/skills
+
+#### Security Research
+- arXiv Paper: "Agent Skills in the Wild: A Security Analysis" (arXiv:2601.10338)
+- SkillScan Toolkit: https://anonymous.4open.science/r/skillscan
+- SmartScope Security Section: https://smartscope.blog/en/blog/skillsmp-marketplace-guide/#security-risks
+
+#### Community
+- Medium: "The First Real Marketplace for Agent Skills" (Dec 22, 2025)
+- MCP.so FAQ: https://mcp.so
+- GitHub Awesome Copilot: https://github.com/github/awesome-copilot
+
+---
+
+*Survey completed: 2026-02-08 00:00 KST*
+*Subagent: fabdf25d-daac-4434-938b-d978721e0f47*
+
+---
+
+## 2026-02-08 04:00 KST — Critical Security Update & Market Delta
+
+### 🚨 CRITICAL: ClawHub Security Crisis (Feb 2-7, 2026)
+
+Multiple major security disclosures dropped this week targeting ClawHub/OpenClaw ecosystem:
+
+#### 1. Snyk: 341 Malicious ClawHub Skills (Feb 2-5)
+- **Source:** The Register, Snyk, SC Media, Hacker News
+- **Scale:** 283 skills (7.1% of ~4,000 on ClawHub) leak credentials
+- **76 malicious payloads** designed for credential theft, backdoors, data exfiltration
+- **Named bad actors:** `moltyverse-email`, `youtube-data` — pass API keys/passwords through LLM context in plaintext
+- **Worst offender:** `buy-anything` skill v2.0.0 — collects credit card details, tokenizes through LLM provider
+- **Root cause:** SKILL.md instructions treat agents like local scripts; secrets flow through model providers
+- **Action:** ⭐ **CRITICAL** — Re-audit ALL misskim-skills for credential handling patterns
+
+#### 2. Zenity: Indirect Prompt Injection Backdoor (Feb 5)
+- **Source:** TheRegister, Zenity YouTube PoC
+- **Attack:** Google Doc → OpenClaw with Google Workspace integration → backdoor user machine
+- **Vector:** Productivity tool integrations (Gmail, Calendar, Docs, Slack)
+- **Action:** ⚠️ Ensure misskim-skills never auto-read untrusted external content without sanitization
+
+#### 3. Typosquatting Campaign (Feb 1-7)
+- **Source:** eSecurity Planet, Tom's Hardware
+- **Targets:** Crypto wallets, Polymarket bots, YouTube utilities, Google Workspace integrations
+- **Technique:** Typosquatted skill names on ClawHub front page
+- **One malicious skill hit ClawHub front page** before removal — high install count
+- **Action:** ⚠️ Always verify skill publisher/repo before any install
+
+#### 4. Gen Agent Trust Hub Launch (Feb 4)
+- **Source:** PRNewsWire, Gen Digital (NASDAQ: GEN)
+- **Product:** Free AI Skills Scanner + curated AI Skills Marketplace
+- **Features:**
+  - Pre-scan skill URLs before install
+  - Detect hidden logic, unauthorized data access, malicious behavior
+  - Vetted/audited skill repository
+- **Action:** ⭐ **EVALUATE** — Use as security scanner for incoming skills
+
+#### 5. Reddit/Community: Download Count Manipulation
+- **Source:** r/cybersecurity
+- **Finding:** Researcher built harmless backdoored skill, used bots to inflate downloads to 4,000+
+- **Result:** Became #1 most downloaded on ClawHub; devs from 7 countries executed it
+- **Lesson:** Download count ≠ safety. Never trust popularity metrics alone.
+- **Action:** ✅ Reinforces AGENTS.md policy: "Audit → Rewrite → misskim-skills. No blind installs."
+
+### 🆕 New Market Signals
+
+#### LobeHub MCP Marketplace (Feb 7 Featured)
+- **Context7 MCP** — Version-specific library docs injected into prompts (Node.js ≥18)
+- **Playwright MCP** — 22,487 downloads, 4,121 stars — browser automation leader
+- **BlenderMCP** — 13,973 downloads — 3D modeling via Claude (already in our pipeline skill)
+- **Postgres MCP Pro** — Index tuning, explain plans, health checks (432 stars)
+- **AntV Chart MCP** — Chart generation, 3,058 downloads
+- **Magic UI Builder (21st.dev)** — 385 stars, requires API key
+- **Grep.app MCP** — Public GitHub code search (35,324 downloads)
+- **Tavily Search MCP** — Web search with crawl/extract (2,138 stars)
+- **Firecrawl MCP** — Web scraping + LLM analysis (3,303 downloads)
+
+#### Top 10 Best Agent Skills (scriptbyai.com, Feb 2026)
+1. **Superpowers** — Planning-first TDD development workflow
+2. **ui-ux-pro-max** — Design system generation (✅ already in misskim-skills!)
+3. **agent-skills** (Vercel) — React/Next.js optimization
+4. **planning-with-files** — Persistent task tracking
+5. **context-engineering** — Building custom agent systems
+6. **obsidian-skills** — Obsidian vault integration
+7. **scientific-skills** — Scientific computing workflows
+8. **marketingskills** — CRO and copywriting
+9. **dev-browser** — Visual browser testing
+10. **humanizer** — Remove AI writing patterns
+
+#### VSCode 1.109.0 (Feb 5)
+- **New:** Agent Extensibility — Claude agent support in VS Code
+- **New:** MCP Apps — Rich chat interactions with MCP servers
+- **Impact:** Agent skills now native to VS Code ecosystem, not just extensions
+
+#### Vercel agent-skills Repo
+- **GitHub Issue #27:** VS Code Copilot support requested (Jan 15)
+- **Supported agents:** Claude Code, Codex, Cursor, Antigravity
+- **Trend:** Multi-agent portability becoming standard
+
+### 🎯 Actionable Items (Feb 8 Delta)
+
+| # | Priority | Action | Rationale |
+|---|----------|--------|-----------|
+| 1 | ⭐ CRITICAL | Re-audit all misskim-skills for credential exposure | 7.1% of ClawHub skills leak secrets |
+| 2 | ⭐ CRITICAL | Evaluate Gen Agent Trust Hub scanner | Free tool to pre-scan skill URLs |
+| 3 | ⭐ HIGH | Install Context7 MCP | Version-specific docs reduce coding errors |
+| 4 | ⭐ HIGH | Study Superpowers skill | TDD workflow could improve game dev quality |
+| 5 | 🟢 MEDIUM | Study marketingskills | CRO/copywriting automation for game pages |
+| 6 | 🟢 MEDIUM | Study humanizer skill | Clean AI text for game descriptions/marketing |
+| 7 | 🟢 MEDIUM | Test Grep.app MCP | Code search for Rust/WASM/Godot examples |
+| 8 | 🟡 MONITOR | VSCode 1.109 MCP Apps | Native MCP in IDE — watch adoption |
+| 9 | 🟡 MONITOR | Vercel agent-skills standard | Multi-agent portability trend |
+| 10 | 🔴 AVOID | Any ClawHub skill without full audit | Security crisis ongoing |
+
+### 🔒 Security Policy Update (Recommended)
+Based on this week's disclosures, recommend updating AGENTS.md:
+```
+## 5. Safety (Updated Feb 8, 2026)
+- No blind ClawHub installs — EVER. Full code audit mandatory.
+- Scan skill URLs with Gen Agent Trust Hub before evaluation.
+- No credential passing through SKILL.md instructions.
+- Pin all external dependencies to commit hashes.
+- Prefer self-written skills over community skills.
+- SkillScan audit monthly (arXiv:2601.10338 methodology).
+```
+
+---
+
+*Survey completed: 2026-02-08 04:01 KST*
+*Next sweep: 2026-03-08*

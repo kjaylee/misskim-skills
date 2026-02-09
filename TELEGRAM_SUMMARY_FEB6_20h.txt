@@ -1,0 +1,74 @@
+🎯 Agent Skill Market Survey — Feb 2026
+
+✅ Surveyed 6 Platforms:
+• SkillsMP: 145,000+ skills (FREE, GitHub-sourced)
+• SkillHub.club: 7,000+ AI-evaluated skills (Pro stacks available)
+• LobeHub MCP: 19 enterprise servers (community ratings)
+• ClawHub: Vector search registry (FREE)
+• VSCode: 3 extensions (IDE-integrated)
+• Molt Road: ⚠️ SKIP (fictional/entertainment only)
+
+📈 Top 5 Trending Skills (Last 30 Days):
+1. BlenderMCP (807★, 13,973 DL) — Direct Blender control
+2. AI Autonomous Agent for Godot (Asset #4583) — Real-time GDScript
+3. Playwright MCP (4,104★, 22,487 DL) — Browser automation
+4. grep.app MCP (3,136★, 35,324 DL) — GitHub code search
+5. Firecrawl MCP (1,852★, 3,303 DL) — Web scraping + LLM
+
+⭐ Critical Actions (This Week):
+1. Install BlenderMCP on MiniPC → 3D asset automation
+2. Test AI Godot Agent → Real-time script editing
+3. Deploy OpenAPI MCP → Expose eastsea.xyz API
+4. Install GitHub MCP → Auto-PR creation
+
+🎮 Game Dev Opportunities:
+• BlenderMCP → Automate character rigging, export
+• Godot skills → GDScript generation, scene editing
+• Playwright MCP → HTML5 game testing automation
+• Asset hunting → GPT Researcher MCP patterns
+
+💰 Pricing Insights:
+• 95% of skills: FREE (open-source)
+• Emerging model: Premium Stacks (SkillHub Pro)
+• MCP servers: 70% free, 30% freemium SaaS
+• Trend: Individual skills free → Workflow bundles paid
+
+🚀 Monetization Ideas:
+1. Premium Skill Stacks ($9-29/mo) — Pre-configured workflows
+2. Custom MCP Server SaaS ($50-500/mo) — Industry-specific APIs
+3. AI-Generated 3D Assets ($50-200/project) — BlenderMCP-powered
+4. Agent Skill Training ($99-299/course) — Teach skill development
+
+🔄 Market Trends:
+• MCP servers = 2026 automation backbone (80% enterprise adoption)
+• Game dev agent skills emerging (Godot-specific gaining traction)
+• Quality > Quantity (AI evaluation, community ratings)
+• IDE integration accelerating (VSCode, Cursor, Copilot)
+
+⚠️ Security Warnings:
+✅ SAFE: BlenderMCP, GitHub MCP, Playwright MCP, ClawHub CLI
+⚠️ VERIFY: Godot Asset skills (check license)
+🔴 SKIP: Molt Road (fictional/security risk)
+
+📅 Next Steps:
+Week 1: BlenderMCP + Godot Agent testing
+Week 2: OpenAPI + GitHub MCP deployment
+Week 3: Playwright + PostgreSQL MCP integration
+Week 4: Document all new skills, evaluate ROI
+
+📁 Full Reports:
+• Detailed research: memory/skill-trends-2026-02.md
+• Platform analysis: misskim-skills/INTAKE_LOG.md
+• 32 action items identified
+• 4 monetization opportunities outlined
+
+🔗 Key Resources:
+• SkillsMP: skillsmp.com
+• SkillHub: skillhub.club (test CLI: npx @skill-hub/cli search "godot")
+• LobeHub MCP: lobehub.com/mcp
+• ClawHub: clawhub.ai/skills
+
+💡 Key Insight:
+MCP servers are the foundation. Focus on OpenAPI + GitHub + BlenderMCP for immediate game dev automation. Premium Stacks model proven viable for monetization.
+
+Next review: Mar 6, 2026

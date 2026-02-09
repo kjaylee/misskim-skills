@@ -1,0 +1,48 @@
+🎯 Agent Skill Survey Results (Feb 6, 2026)
+
+✅ Surveyed 5 Platforms:
+• SkillsMP: 96,751+ skills (FREE)
+• MCP Market: 19 enterprise servers
+• ClawHub: Vector search registry
+• VSCode: 3 extensions found
+• Molt Road: Fictional marketplace (SKIP)
+
+⭐ Top Picks for MissKim:
+1. AI Autonomous Agent for Godot — Real-time GDScript editing
+2. OpenAPI MCP → eastsea.xyz — Expose game catalog API
+3. GitHub MCP — Auto-PR creation
+4. Self-Improving Agent — Adaptive learning
+5. Agent Orchestrator — Better subagent spawning
+
+🎮 Game Dev Tools Found:
+• Godot Engine Development (SkillsMP)
+• AI Autonomous Agent (Godot Asset #4583)
+• GameDev Agent (Reddit plugin)
+• AI Assistant Hub (Godot Asset #3427)
+
+📈 Marketing Automation:
+• n8n MCP Server (workflow automation)
+• Zapier MCP (7,000+ app integrations)
+• Notion MCP (doc automation)
+
+🛠️ Productivity:
+• GitHub MCP (DevOps automation)
+• ClawHub CLI (skill discovery)
+• PostgreSQL MCP (DB automation)
+• Playwright MCP (testing automation)
+
+🚨 Security:
+✅ 15+ verified open-source skills
+⛔ 4 platforms flagged (Molt Road, paid tools, AWS lock-ins)
+
+📅 Week 1 Actions:
+• Install VSCode Agent Skills extension
+• Test Godot AI agent on MiniPC
+• Study self-improving & orchestrator patterns
+• Install ClawHub CLI
+• Verify all licenses
+
+💡 Key Insight:
+MCP servers = 2026 automation backbone. Focus on OpenAPI + GitHub + PostgreSQL MCPs for eastsea.xyz integration.
+
+🔗 Full report: misskim-skills/INTAKE_LOG.md
