@@ -3,6 +3,32 @@
 ## 2026-02-15 20:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
 
 ### 📊 Executive Summary
+- **SkillsMP:** 214,232 skills. Trending은 범용 프레임워크 중심 → 신규 필요 기능 없음.
+- **MCP Market:** **Godot MCP Server** 신규 노출. Unity/Browserbase/Magic UI 등은 현 스택과 불일치.
+- **SkillHub:** 안정적, 신규 유의미 스킬 없음.
+- **ClawHub:** SPA 제한. 신규 도입 후보 없음. 보안 리스크 지속.
+- **VSCode Agent Skills 확장:** 현재 워크플로우와 미연계.
+- **Molt Road/molt.host:** **ABSOLUTE BLOCK 유지**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| Godot MCP Server (MCP Market) | ⚠️ 참고만 | Godot 스킬+헤드리스 파이프라인 보유. MCP 연동 필요 시 재검토. |
+| VSCode “Agent Skills” 확장 | ⚠️ 참고만 | VSCode 비사용. IDE 전환/표준 테스트 필요 시 재검토. |
+
+**불필요 판정:** 6건
+
+### ✅ Actions
+- 이번 회차 ✅ 도입 없음.
+
+### 📁 Full Report
+- `sweep-2026-02-15-20h-summary.md`
+
+---
+
+## 2026-02-15 20:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
+
+### 📊 Executive Summary
 - **SkillsMP:** 214,232 skills. Top browsing capped at 5,000; current top list dominated by facebook/react SKILL.md.
 - **MCP Market:** 21,012 servers (updated “just now”). **Godot MCP** listed with 1,798 uses.
 - **SkillHub:** 21.3K skills, 1.6M stars. **New: Git version history + Hot rankings** now live.
