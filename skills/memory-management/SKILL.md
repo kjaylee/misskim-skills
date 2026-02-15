@@ -16,8 +16,8 @@ openclaw-mem 기반 세션 간 기억 관리. 에이전트는 세션이 끝나�
 ## 환경 설정
 
 ```bash
-export OPENCLAW_MEM_ROOT=/Users/kjaylee/.openclaw/workspace
-MEM=/Users/kjaylee/.openclaw/workspace/openclaw-mem/.venv/bin/openclaw-mem
+export OPENCLAW_MEM_ROOT=$WORKSPACE/.openclaw/workspace
+MEM=$WORKSPACE/.openclaw/workspace/openclaw-mem/.venv/bin/openclaw-mem
 ```
 
 모든 명령어에서 `$MEM` 은 위 경로를 가리킨다.

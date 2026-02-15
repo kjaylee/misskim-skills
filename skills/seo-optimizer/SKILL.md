@@ -45,7 +45,7 @@ Jekyll은 `jekyll-sitemap` 플러그인으로 자동 생성. 커스텀 필요 �
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
   {% for page in site.pages %}
   {% unless page.exclude_from_sitemap %}
   <url>
@@ -63,7 +63,7 @@ Jekyll은 `jekyll-sitemap` 플러그인으로 자동 생성. 커스텀 필요 �
 
 ```xml
 <!-- sitemap-index.xml -->
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<sitemapindex xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap><loc>https://eastsea.monster/sitemap-tools.xml</loc></sitemap>
   <sitemap><loc>https://eastsea.monster/sitemap-blog.xml</loc></sitemap>
 </sitemapindex>
@@ -167,7 +167,7 @@ Disallow: /404.html
 # Google Autocomplete 크롤링 (Python)
 import requests, json
 def get_suggestions(keyword):
-    url = f"http://suggestqueries.google.com/complete/search?client=firefox&q={keyword}"
+    url = f"https://suggestqueries.google.com/complete/search?client=firefox&q={keyword}"
     return json.loads(requests.get(url).text)[1]
 
 # 도구 키워드 확장

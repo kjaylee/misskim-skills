@@ -239,7 +239,7 @@ echo 'export PATH="$HOME/blender-4.4.0-linux-x64:$PATH"' >> ~/.bashrc
 # MiniPC에서:
 cd /output/dir && python3 -m http.server 9877
 # 맥스튜디오에서:
-curl -O http://<MINIPC_IP>:9877/output_file.glb
+curl -O https://<MINIPC_IP>:9877/output_file.glb
 ```
 
 ## 제한사항 / 주의사항
