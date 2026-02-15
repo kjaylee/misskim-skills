@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-16 04:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
+
+### 📊 Executive Summary
+- **SkillsMP:** 214,232 skills.
+- **MCP Market:** 21,042 servers (updated ~1h), 최신 섹션에 OpenAPI/Chromium/Goop Shield 노출.
+- **SkillHub:** 21.3K skills, 1.4M stars, Git History + Hot Rankings 기능 강조.
+- **ClawHub:** `Newest` 상단 다수가 0-star/저다운로드.
+- **VSCode Agent Skills 확장:** 1,692 installs, last update 2025-12-26.
+- **Molt Road/molt.host:** **ABSOLUTE BLOCK 유지**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| OpenAPI MCP Server (MCP Market 최신) | ✅ 도입 | 범용 REST→MCP 브리지로 API 연동 리드타임 단축 가능. 기존 도메인별 스킬만으로는 확장 속도 제한. |
+| Goop Shield (MCP Market 최신) | ✅ 도입 | 외부 스킬 intake 시 런타임 방어 계층 보강 필요. 사전 감사만으로는 실행 중 공격 대응 한계. |
+| Android Agent (ClawHub Newest) | ⚠️ 참고만 | 모바일 QA 잠재력은 있으나 현 테스트 스택으로 1차 대응 가능. 실기기 자동화 병목 시 재검토. |
+| OpenClaw Commerce Shopify (ClawHub Newest) | ⚠️ 참고만 | 전자상거래 방향성은 맞지만 현재는 Stripe 중심 직접결제 퍼널 우선. Shopify 운영 시작 시 재검토. |
+| VSCode “Agent Skills” 확장 | ⚠️ 참고만 | OpenClaw 중심 운영이라 즉시효용 낮고 업데이트 템포도 느림. VSCode 협업 표준화 시 재검토. |
+| SkillHub Git History + Hot Rankings | ⚠️ 참고만 | 신호 보강 기능이지만 랭킹만으로 품질 보증 불가. 2주 연속 상위+레포 활동성 확인 시 재검토. |
+
+**불필요 판정:** 11건
+
+### ✅ Actions
+1. OpenAPI MCP: Research → Audit → Rewrite (`misskim-skills/skills/openapi-bridge/`) 파일럿.
+2. Goop Shield: Research → Audit → Rewrite (`misskim-skills/skills/runtime-guard/`) 보안 파일럿.
+
+### 📁 Full Report
+- `sweep-2026-02-16-04h-summary.md`
+
+---
+
 ## 2026-02-16 00:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
 
 ### 📊 Executive Summary
