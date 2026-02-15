@@ -1,5 +1,34 @@
 # MissKim Skills Intake Log
 
+## 2026-02-16 00:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
+
+### 📊 Executive Summary
+- **SkillsMP:** 214,232 skills. Recent 상단은 0~1 star 저신뢰 항목 비율 높음.
+- **MCP Market:** 21,042 servers. 최신 섹션에 `OpenAPI`, `Goop Shield` 등 신규 노출.
+- **SkillHub:** 21.3K skills, Hot 랭킹 제공(6시간 주기).
+- **ClawHub:** `Newest` 상단 다수가 0 star/0 install 근접.
+- **VSCode Agent Skills 확장:** 1,691 installs, last update 2025-12-26.
+- **Molt Road/molt.host:** **ABSOLUTE BLOCK 유지**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| OpenAPI MCP Server (MCP Market 최신) | ✅ 도입 | 범용 REST API 연동 병목 직접 해소. 기존 도메인별 스킬만으로는 확장 속도 제한. |
+| Goop Shield (MCP Market 최신) | ✅ 도입 | 외부 스킬 intake 시 런타임 방어층 보강 필요. 사전 감사만으로는 동적 공격 대응 한계. |
+| audit-website (SkillHub Hot) | ⚠️ 참고만 | 현재 스택으로 핵심 점검 가능. SEO/보안 대량 자동감사 필요 시 재검토. |
+| VSCode “Agent Skills” 확장 | ⚠️ 참고만 | OpenClaw 중심 운영이라 즉시효용 낮음. VSCode 팀 워크플로우 전환 시 재검토. |
+
+**불필요 판정:** 12건
+
+### ✅ Actions
+1. OpenAPI MCP: Research → Audit → Rewrite (`misskim-skills/skills/openapi-bridge/`) 파일럿 진행.
+2. Goop Shield: Research → Audit → Rewrite (`misskim-skills/skills/runtime-guard/`) 보안 파일럿 진행.
+
+### 📁 Full Report
+- `sweep-2026-02-16-00h-summary.md`
+
+---
+
 ## 2026-02-15 20:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
 
 ### 📊 Executive Summary
