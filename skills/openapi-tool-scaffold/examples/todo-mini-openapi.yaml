@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Todo Mini API
+  version: 1.0.0
+servers:
+  - url: https://api.todo-mini.example.com
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+paths:
+  /todos:
+    get:
+      operationId: listTodos
+      summary: List todo items
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, done]
+          description: Filter by status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Todo"
+    post:
+      operationId: createTodo
+      summary: Create a todo item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTodo"
+      responses:
+        "201":
+          description: Created
+  /todos/{todoId}:
+    get:
+      operationId: getTodoById
+      summary: Get one todo item
+      parameters:
+        - in: path
+          name: todoId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+  /profile:
+    get:
+      operationId: getProfile
+      summary: Get user profile
+      security:
+        - OAuth2Auth: [profile.read]
+      responses:
+        "200":
+          description: OK
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    OAuth2Auth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.todo-mini.example.com/oauth/authorize
+          tokenUrl: https://auth.todo-mini.example.com/oauth/token
+          scopes:
+            profile.read: Read profile
+  schemas:
+    Todo:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        done:
+          type: boolean
+    NewTodo:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        done:
+          type: boolean
