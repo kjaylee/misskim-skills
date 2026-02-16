@@ -1,5 +1,33 @@
 # MissKim Skills Intake Log
 
+## 2026-02-16 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** main 403(Cloudflare), `sitemap.xml`만 접근 가능(684 URLs / 카테고리 63).
+- **MCP Market:** `mcpmarket.com` 전 경로 403(`x-vercel-mitigated: deny`)로 최신 피드 직접 수집 실패.
+- **SkillHub.club:** `21.3K Skills / 2.4M Stars`, `AI Video Ad Generator` 스택 구성요소 유지 확인.
+- **ClawHub:** `.com → .ai` 리다이렉트 후 connection reset, CLI `clawhub search`도 fetch 실패.
+- **VSCode Agent Skills:** Marketplace API `agent skills` **1,203 결과**, `copilot-mcp` 80,542 installs(2026-02-16 업데이트), `formulahendry.agent-skills` 1,702 installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| AI Video Ad Generator Stack (SkillHub) | ✅ 도입 | 마케팅 영상 end-to-end 자동화 공백을 직접 해소. 기존 분절 파이프라인 대비 ROI 높고, 구성요소가 구체적이라 검증 가능. |
+| Copilot MCP + Agent Skills Manager (VSCode) | ⚠️ 참고만 | 설치수/업데이트는 강한 신호지만 OpenClaw 중심 운영과 불일치. VSCode 표준화 시 재검토. |
+| Agent Skills (formulahendry) | ⚠️ 참고만 | 멀티 소스 연결은 유용하나 업데이트 정체(2025-12-26) + 즉시효용 낮음. IDE 배포 확장 시 재검토. |
+| SkillsMP / MCP Market / ClawHub 피드 접근성 | ⚠️ 참고만 | 신뢰 가능한 최신 수집 불가 상태. 접근 복구 후 재평가. |
+
+**불필요 판정:** 9건
+
+### ✅ Actions
+1. `misskim-skills/skills/game-video-ad-pipeline/` 내부형 스킬 강화 (Research → Audit → Rewrite)
+2. 외부 스택은 계속 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-16-20h-trend-sweep.md`
+
+---
+
 ## 2026-02-16 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
