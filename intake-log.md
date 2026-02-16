@@ -1,5 +1,34 @@
 # MissKim Skills Intake Log
 
+## 2026-02-17 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 브라우저 접근 정상. 총 227,170 skills, recent 상단은 레포 분해형(Android/React) 항목 비중이 높음.
+- **MCP Market:** 21,087 servers. `Godot`, `Firecrawl`, `Browserbase` 등 고노출 항목 확인.
+- **SkillHub:** 21.3K skills / 2.4M stars. `file-search(S 9.0)` 포함 고평가 스킬 노출.
+- **ClawHub:** 브라우저/CLI 모두 정상. `openclaw-skill-observability`, `openclaw-watchdog` 등 최신 항목 확인.
+- **VSCode Agent Skills:** 검색 1,089 결과. `copilot-mcp` 80.6K installs, `Agent Skills` 1.7K installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `openclaw-skill-observability` | ✅ 도입 | 24시간 비용/실패 세션 집계 공백을 직접 해소. 기존 세션 단위 확인만으로는 운영 가시성 한계. 원본은 참조만 하고 내부 재작성으로 리스크 통제. |
+| MCP Market `Godot` MCP Server | ⚠️ 참고만 | 현재는 MiniPC 헤드리스 + 내부 godot 스킬로 대응 가능. 에디터 GUI 제어 병목 발생 시 재검토. |
+| MCP Market `Firecrawl` MCP Server | ⚠️ 참고만 | 대규모 크롤링 수요가 아직 명확하지 않음. 대량 수집 과제가 늘면 재검토. |
+| SkillHub `file-search` | ⚠️ 참고만 | 내부 rg/ast-grep 루틴과 기능 중복. 서브에이전트 검색 실패율 상승 시 재검토. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 불일치. VSCode 표준화 시 재검토. |
+
+**불필요 판정:** 11건
+
+### ✅ Actions
+1. `misskim-skills/skills/openclaw-observability-lite/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. 외부 스킬은 **No blind install** 유지 (Molt Road/molt.host ABSOLUTE BLOCK)
+
+### 📁 Full Report
+- `intake-log/2026-02-17-08h-trend-sweep.md`
+
+---
+
 ## 2026-02-17 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
