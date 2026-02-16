@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-17 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 403 지속. `sitemap.xml`만 접근(684 URLs, lastmod 고정).
+- **MCP Market:** 페이지 직접 fetch는 checkpoint 노출, sitemap 수집은 가능(총 70,172 URLs / server 21,042).
+- **SkillHub.club:** 정상 접근. sitemap 1,981 URLs, 최근 `webapp-testing` 등 업데이트 확인.
+- **ClawHub:** `.com/.ai` TLS reset + CLI `clawhub search` fetch 실패.
+- **VSCode Agent Skills:** `copilot-mcp` 80,621 installs(2/16 업데이트), `formulahendry.agent-skills` 1,708 installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| requesthunt 패턴 (SkillHub) | ✅ 도입 | 수요 신호 데이터 계층 공백(아이템 선정 병목)을 직접 해소. 전략 문서형 기존 스킬로 대체 불가. |
+| webapp-testing 패턴 (SkillHub) | ✅ 도입 | 100+ 웹게임/툴 기능 회귀를 자동 점검할 템플릿 공백 존재. 범용 자동화 대비 QA ROI 높음. |
+| app-store-rejections (MCP Market) | ⚠️ 참고만 | 현재 병목은 계정/출시 절차. 실제 리젝 반복 시 재검토. |
+| openapi-15 (MCP Market) | ⚠️ 참고만 | 내부 `openapi-tool-scaffold` 존재. REST 연동 병목 재발 시 재검토. |
+| Copilot MCP + Agent Skills Manager (VSCode) | ⚠️ 참고만 | 설치 신호는 강하지만 OpenClaw 중심 운영과 우선순위 불일치. |
+| SkillsMP/ClawHub 피드 접근성 이슈 | ⚠️ 참고만 | 원천 피드 검증 불가 상태라 신규 도입 신뢰도 낮음. |
+
+**불필요 판정:** 14건
+
+### ✅ Actions
+1. `misskim-skills/skills/demand-signal-miner/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/webapp-smoke-qa/` 내부형 설계 착수 (Research → Audit → Rewrite)
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-17-04h-trend-sweep.md`
+
+---
+
 ## 2026-02-17 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
