@@ -1,5 +1,35 @@
 # MissKim Skills Intake Log
 
+## 2026-02-16 12:04 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 214,232 skills. recent 상단 다수가 0~1 star 저신뢰 항목.
+- **MCP Market:** 21,061 servers. 최신 서버에 `OpenAPI`, `Rulecatch` 등 신규 노출.
+- **SkillHub:** 21.3K skills / 1.4M stars. `AI Video Ad Generator` stack 확인.
+- **ClawHub:** `clawhub.com/.ai` 모두 ERR_CONNECTION_RESET (피드 수집 실패).
+- **VSCode:** `formulahendry.agent-skills` 1,695 installs(2025-12-26), `AutomataLabs.copilot-mcp` 80,475 installs(2026-02-11).
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| OpenAPI MCP Bridge | ✅ 도입 | API→MCP 변환 병목 직접 해결. 원본 0★라 패턴만 흡수해 내부 재작성. |
+| AI Video Ad Generator Stack | ✅ 도입 | 게임/툴 마케팅 영상 자동화 공백 해소. 구성요소가 명확해 검증 가능. |
+| Rulecatch | ⚠️ 참고만 | 모니터링 가치 있으나 현재 SDD+TDD+검증 루프와 일부 중복. |
+| Copilot MCP + Agent Skills (VSCode) | ⚠️ 참고만 | 설치수는 크지만 VSCode 중심 + 외부 의존이 현재 운영과 불일치. |
+| Agent Skills (formulahendry) | ⚠️ 참고만 | 업데이트 정체. VSCode 배포 채널 필요 시 재검토. |
+| SkillsMP `hs` (hardstop) | ⚠️ 참고만 | 안전 가드 개념은 유효하나 기존 안전정책과 중복. |
+
+**불필요 판정:** 15건
+
+### ✅ Actions
+1. `misskim-skills/skills/openapi-tool-scaffold/` 파일럿 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/game-video-ad-pipeline/` 파일럿 (Research → Audit → Rewrite)
+
+### 📁 Full Report
+- `intake-log/2026-02-16-12h-trend-sweep.md`
+
+---
+
 ## 2026-02-16 04:00 KST — Agent Skill Trend Sweep (SkillsMP · MCP Market · SkillHub · ClawHub · VSCode)
 
 ### 📊 Executive Summary
