@@ -1,5 +1,35 @@
 # MissKim Skills Intake Log
 
+## 2026-02-16 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 메인/검색/API 403 (Cloudflare). `sitemap.xml`만 접근 가능.
+- **MCP Market:** Latest 신규 6개 확인 (`PubCrawl`, `Rulecatch`, `App Store Rejections`, `Power Automate`, `Bareos`, `OpenAPI`).
+- **SkillHub.club:** `7,000+` skills / `2.0M` stars, `AI Video Ad Generator` 스택 유지.
+- **ClawHub:** `.com/.ai` 모두 connection reset, CLI `explore`도 fetch 실패.
+- **VSCode Agent Skills:** Marketplace API 기준 `agent skills` 총 1,201 결과. `AutomataLabs.copilot-mcp` 80,495 installs(당일 업데이트).
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| OpenAPI MCP (`/server/openapi-15`) | ✅ 도입 | REST API→도구화 병목 직접 해소. 원본 카운트 0이라 패턴만 흡수 후 내부 재작성. |
+| AI Video Ad Generator Stack | ✅ 도입 | 마케팅 영상 자동화 공백 해소. 구성요소가 명확해 내부 파이프라인으로 검증 가능. |
+| Rulecatch | ⚠️ 참고만 | 규칙/비용 모니터링 가치는 있으나 현재 검증 루프와 중복. 병목 수치화 시 재검토. |
+| App Store Rejections | ⚠️ 참고만 | 심사 대응 DB는 유용하나 현재 병목은 계정/배포 절차. 실제 리젝 반복 시 재검토. |
+| Copilot MCP + Agent Skills Manager (VSCode) | ⚠️ 참고만 | 설치수 신호는 강하나 OpenClaw 중심 운영과 불일치. VSCode 표준화 시 재검토. |
+| SkillsMP/ClawHub 피드 접근성 | ⚠️ 참고만 | 정상 피드 수집 불가로 판정 신뢰 낮음. 접근 복구 시 재평가. |
+
+**불필요 판정:** 12건
+
+### ✅ Actions
+1. `misskim-skills/skills/openapi-tool-scaffold/` 강화 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/game-video-ad-pipeline/` 업데이트 (Research → Audit → Rewrite)
+
+### 📁 Full Report
+- `intake-log/2026-02-16-16h-trend-sweep.md`
+
+---
+
 ## 2026-02-16 12:04 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
