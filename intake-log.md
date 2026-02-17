@@ -1,5 +1,37 @@
 # MissKim Skills Intake Log
 
+## 2026-02-17 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 227,170 skills, recent 상단이 Android 분해형 스킬 중심(2/17).
+- **MCP Market:** 21,091 servers, latest에 `ShellCheck`, `Appwrite`, `Mem0` 등 신규 노출.
+- **SkillHub:** Hot leaderboard 570 skills(6시간 주기 갱신).
+- **ClawHub:** `explore` 최신에 `paypal`, `dependency-auditor`, `bitwarden-secrets` 등 확인.
+- **VSCode Agent Skills:** `copilot-mcp` 80,690 installs(최신 0.0.91), `formulahendry.agent-skills` 1,714 installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| MCP Market `ShellCheck` MCP | ✅ 도입 | 쉘 스크립트 품질 게이트 공백을 직접 메움. 도입 비용 대비 회귀 방지 효과가 큼. |
+| ClawHub `paypal` | ✅ 도입 | 직접결제 퍼널 강화(현재 수익화 우선순위)와 정합. 기존 스킬셋에 webhook 검증 템플릿 부재. |
+| ClawHub `dependency-auditor` | ⚠️ 참고만 | 유용하지만 `healthcheck`/기존 검증 루프와 일부 중복. 의존성 이슈 재발 시 재검토. |
+| SkillHub `audit-website` | ⚠️ 참고만 | `web-design-guidelines` + 내부 QA 루틴으로 1차 대응 가능. 유입 하락 시 재검토. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하지만 VSCode UI 중심이라 OpenClaw CLI 중심 운영과 불일치. |
+| SkillsMP recent Android cluster | ⚠️ 참고만 | 현재 핵심 파이프라인(웹게임/도구/배포)과 직접 연관 약함. Android 네이티브 착수 시 재검토. |
+| MCP Market `Mem0` | ⚠️ 참고만 | `openclaw-mem` 검증 기간과 기능 중복. 회상 지표 악화 시 재검토. |
+
+**불필요 판정:** 12건
+
+### ✅ Actions
+1. `misskim-skills/skills/shell-script-guard/` 내부형 스킬 설계 착수 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/payments-paypal-funnel/` 신규 설계 착수 (Research → Audit → Rewrite)
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-17-16h-trend-sweep.md`
+
+---
+
 ## 2026-02-17 12:07 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
