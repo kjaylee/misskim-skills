@@ -1,5 +1,34 @@
 # MissKim Skills Intake Log
 
+## 2026-02-18 08:00 KST — Agent Skill Trend Sweep (비판적 흡수)
+
+### 📊 수집 소스
+- SkillsMP: **233,309 skills** (recent: `query-data`, `data-analysis`, `browsing-workflow`)
+- MCP Market: **21,135 servers** (latest: `Java Decompiler`, `Dotnet Websearch`, `AI Inspector`)
+- SkillHub.ai: **Coming soon** (카탈로그 미오픈)
+- ClawHub: newest 30개 샘플 수집 (`arc-compliance-checker`, `agent-self-assessment`, `SnapRender` 등)
+- VSCode Agent Skills: **1,093 results** (`copilot-mcp` 80.8K installs, `agent-skills` 1.7K installs)
+
+### 🧪 비판적 필터 판정
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `arc-compliance-checker` | ✅ 도입 | 외부 스킬 intake의 정책 준수 판정을 구조화/자동화하는 현재 병목과 직접 정합. |
+| VSCode `avifenesh.agnix` | ⚠️ 참고만 | 규칙 lint 아이디어는 유효하나 VSCode 종속. CLI 룰팩 추출 가능 시 재검토. |
+| MCP Market `AI Inspector` | ⚠️ 참고만 | 브라우저 자동화 스택 중복. 실패율/SLA 악화 시 재검토. |
+| SkillsMP `query-data` | ⚠️ 참고만 | 분석 표준화는 유효하나 현 우선 병목(배포/수익화)과 직접 정합 낮음. |
+| ClawHub `SnapRender` | ⚠️ 참고만 | 기능 중복. 정기 visual diff 운영이 KPI화될 때 재검토. |
+
+- ❌ **8건 불필요 판정**
+
+### ✅ 도입 실행 계획
+1. `misskim-skills/skills/skill-intake-policy-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** 유지 + 외부 스킬 **No blind install** 고정
+
+### 📁 Full Report
+- `intake-log/2026-02-18-08h-trend-sweep.md`
+
+---
+
 ## 2026-02-18 04:00 KST — Agent Skill Trend Sweep (비판적 흡수)
 
 ### 📊 수집 소스
