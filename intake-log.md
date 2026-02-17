@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-18 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 233,309 skills. recent에 `query-data`, `data-analysis`, `browsing-workflow` 등 2/17 신규 다수.
+- **MCP Market:** 21,135 servers. latest 섹션에 `AI Inspector`, `Java Decompiler`, `Dotnet Websearch` 노출.
+- **SkillHub:** 21.3K skills / 5.7M stars. Solopreneur Toolkit에 `requesthunt` 포함 유지.
+- **ClawHub:** newest 30개 샘플 수집에서 `agents-skill-security-audit` 확인.
+- **VSCode Agent Skills:** 검색 1,211 결과. `copilot-mcp` 80,815 installs, `agent-skills` 1,723 installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `agents-skill-security-audit` | ✅ 도입 | 외부 스킬 intake 수동 감사 공백을 직접 해소. 낮은 도입비 대비 리스크 감소 효과 큼. |
+| SkillHub `requesthunt` | ✅ 도입 | 수요 신호 수집 자동화 공백 해결. 아이템 선정 속도 개선 기대. |
+| VSCode `avifenesh.agnix` | ⚠️ 참고만 | 규칙 lint 아이디어 유효하나 VSCode 종속. CLI 추출 가능 시 재검토. |
+| MCP Market `AI Inspector` | ⚠️ 참고만 | 현재 브라우저 자동화 스택과 중복. 실패율 악화 시 재검토. |
+| SkillsMP `query-data` | ⚠️ 참고만 | 분석 니즈는 있으나 현 병목과 직접 정합 낮음. |
+| VSCode `AutomataLabs.copilot-mcp` | ⚠️ 참고만 | 설치 신호 강하지만 OpenClaw CLI 중심 운영과 불일치. |
+
+**불필요 판정:** 4건
+
+### ✅ Actions
+1. `misskim-skills/skills/skill-intake-security-audit-lite/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/request-signal-harvester/` 내부형 설계 착수 (Research → Audit → Rewrite)
+3. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-18-04h-trend-sweep.md`
+
+---
+
 ## 2026-02-17 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
