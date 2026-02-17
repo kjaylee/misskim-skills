@@ -1,5 +1,37 @@
 # MissKim Skills Intake Log
 
+## 2026-02-17 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 227,170 skills. recent 상단이 Android 분해형 대량 항목(2/17)으로 채워져 신호 대비 노이즈가 큼.
+- **MCP Market:** 21,091 servers(약 1시간 전 업데이트). latest에 `ShellCheck`, `Appwrite`, `Mem0` 노출.
+- **SkillHub:** 21.3K skills / 5.5M stars 표기, 랭킹/스택 중심 큐레이션 강화.
+- **ClawHub:** 7,911 skills. 자동화·메모리·브라우저 계열 고다운로드 항목 재확인.
+- **VSCode Agent Skills:** 검색 1,092 결과. `copilot-mcp` 80.7K installs, `formulahendry.agent-skills` 1.7K installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| VSCode `agnix - Agent Config Linter` | ✅ 도입 | 외부 스킬 intake 정적 검증 공백(SKILL.md/AGENTS.md)을 직접 메움. 규칙셋 패턴 흡수 비용 대비 품질 게이트 효과가 큼. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하지만 VSCode 중심. OpenClaw CLI 운영축과 직접 결합도 낮음. |
+| MCP Market `Mem0` | ⚠️ 참고만 | `openclaw-mem` 검증 기간과 기능 중복. 회상 지표 악화 시 재검토. |
+| MCP Market `Godot` | ⚠️ 참고만 | 도메인 적합성은 높으나 현재 godot 스택으로 1차 대응 가능. |
+| SkillsMP recent Android cluster | ⚠️ 참고만 | 현재 핵심 파이프라인(웹게임/도구/마케팅 자동화)과 직접 정합 낮음. |
+| ClawHub `Agent Browser` | ⚠️ 참고만 | 기존 `browser-cdp-automation` 및 OpenClaw browser tool과 기능 중복. |
+| SkillHub `AI Video Ad Generator Stack` | ⚠️ 참고만 | 유료/크레딧 의존도가 높고 내부 파이프라인과 중복 구간 존재. |
+
+**불필요 판정:** 19건
+
+### ✅ Actions
+1. `misskim-skills/skills/agent-config-lint-gate/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host **ABSOLUTE BLOCK** 유지 (MoltHub 연계 항목 즉시 제외)
+3. 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-17-20h-trend-sweep.md`
+
+---
+
 ## 2026-02-17 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
