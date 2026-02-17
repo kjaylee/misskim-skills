@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-17 12:07 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 227,170 skills. recent 상단은 Android 레포 분해형 신규 항목(2/17) 중심.
+- **MCP Market:** 21,091 servers (약 1시간 전 업데이트). latest에 `ShellCheck`, `Dolex`, `K-Trendz`, `Appwrite`, `Mem0` 노출.
+- **SkillHub:** 20,922 skills. `file-search`, `systematic-debugging`, `mcp-builder` 상위 유지.
+- **ClawHub:** 7,834 skills. Newest에 `Arc Security MCP`, `Lily Memory`, `OpenClaw Backup Safe` 확인.
+- **VSCode Agent Skills:** 검색 1,089 결과. `copilot-mcp` 80.7K installs, `Agent Skills` 1.7K installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| MCP Market `ShellCheck` MCP | ✅ 도입 | 쉘 스크립트 품질 게이트 공백을 직접 해소. 수동 점검 대비 도입 비용이 낮고 회귀 예방 ROI가 큼. |
+| ClawHub `Arc Security MCP` | ⚠️ 참고만 | 문제정의(스킬 안전성)는 맞지만 신뢰 신호(별점/검증 사례) 부족. 외부 스킬 인테이크 병목 시 재검토. |
+| SkillHub `mcp-builder` | ⚠️ 참고만 | MCP 제작 가이드는 유용하나 내부 `openapi-tool-scaffold`/`mcporter`로 1차 대체 가능. MCP 리드타임 지연 시 재검토. |
+| VSCode `agnix` (Agent Config Linter) | ⚠️ 참고만 | lint 필요성은 높지만 VSCode 의존(17 installs)으로 현재 OpenClaw CLI 중심 운영과 불일치. |
+| ClawHub `Lily Memory` | ⚠️ 참고만 | 메모리 문제 해결 주장 있으나 `openclaw-mem` 검증기간과 기능 중복. 회상 지표 악화 시 재검토. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하지만 IDE 확장 중심이라 현재 운영축과 불일치. IDE 표준화 시 재검토. |
+
+**불필요 판정:** 14건
+
+### ✅ Actions
+1. `misskim-skills/skills/shell-script-guard/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host **ABSOLUTE BLOCK** 유지 (Molt 계열 신규 항목 포함)
+3. 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-17-12h-trend-sweep.md`
+
+---
+
 ## 2026-02-17 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
