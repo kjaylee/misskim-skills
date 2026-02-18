@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-18 12:00 KST — Agent Skill Trend Sweep (비판적 흡수)
+
+### 📊 수집 소스
+- SkillsMP: **233,309 skills** (상단 노출: `mintlify`, `feishu-doc`, `obsidian`)
+- MCP Market: **21,157 servers** (latest: `Java Decompiler`, `Dotnet Websearch`, `Turtle Noir`)
+- SkillHub.ai: **Coming soon** (카탈로그 미오픈)
+- ClawHub: newest 20개 샘플 수집 (`faster-whisper`, `web-qa-bot`, `arc-compliance-checker`)
+- VSCode Agent Skills: **1,095 results** (`copilot-mcp` 80.9K installs, `agent-skills` 1.7K installs)
+
+### 🧪 비판적 필터 판정
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `arc-compliance-checker` | ✅ 도입 | 외부 스킬 intake 정책 준수 판정 자동화 병목과 직접 정합. |
+| ClawHub `web-qa-bot` | ✅ 도입 | 기능 안정성 우선 정책 대비, 스모크/접근성/시각 회귀 자동화 표준이 부재. |
+| ClawHub `faster-whisper` | ⚠️ 참고만 | 성능 이점 가능성은 있으나 기존 Whisper 스택과 중복. 실제 SLA 초과 시 재검토. |
+| MCP Market `Task Master` | ⚠️ 참고만 | 수요는 있으나 현재 queue-manager + subagent 체계로 핵심 요구 충족. |
+| SkillsMP `query-data` 계열 | ⚠️ 참고만 | 데이터 질의 표준화 가치는 있으나 현재 최우선 병목과 정합 낮음. |
+| VSCode `copilot-mcp` / `agent-skills` 확장군 | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 불일치. |
+
+- ❌ **13건 불필요 판정**
+
+### ✅ 도입 실행 계획
+1. `misskim-skills/skills/skill-intake-policy-gate/` 실행 전환 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/web-regression-guard/` 신규 설계 착수 (Research → Audit → Rewrite)
+3. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** 유지 + 외부 스킬 **No blind install** 고정
+
+### 📁 Full Report
+- `intake-log/2026-02-18-12h-trend-sweep.md`
+
+---
+
 ## 2026-02-18 08:00 KST — Agent Skill Trend Sweep (비판적 흡수)
 
 ### 📊 수집 소스
