@@ -1,5 +1,34 @@
 # MissKim Skills Intake Log
 
+## 2026-02-19 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 브라우저 수집 성공, **239,658 skills**. recent 상단에 `shadmin-feature-dev`, `check-tests-commit`, `maxxit-lazy-trading` 등 확인.
+- **MCP Market:** 브라우저 수집 성공, **21,325 servers**. latest에 `DevOps Practices`, `LibreNMS`, `Gemini Search`, `Vigilo` 확인(다수 0 usage).
+- **SkillHub (skillhub.club):** **21.3K skills / 4.7M stars**, Hot에 `systematic-debugging`, `file-search`, `context-optimization` 지속 노출.
+- **ClawHub:** newest 샘플에서 `ddg-web-search`, `agent-audit`, `lark-base` 확인.
+- **VSCode Agent Skills:** 검색 `agent skills` **1,095 results**, `formulahendry.agent-skills` **1,741 installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `ddg-web-search` | ✅ 도입 | Brave 429로 반복되는 검색 공백을 직접 메우는 fallback 패턴. |
+| MCP Market `Vigilo` | ⚠️ 참고만 | 감사 니즈는 유효하나 현재 세션/로그 체계로 1차 대응 가능. |
+| SkillHub `context-optimization` | ⚠️ 참고만 | `openclaw-mem`/내부 메모리 규율과 중복. |
+| SkillsMP `check-tests-commit` 계열 | ⚠️ 참고만 | 기존 `verify-before-done`/TDD 루틴으로 핵심 기능 대응 중. |
+| VSCode `formulahendry.agent-skills` | ⚠️ 참고만 | IDE 편의성은 있으나 OpenClaw CLI 중심 운영과 불일치. |
+
+**불필요 판정:** 17건
+
+### ✅ Actions
+1. `misskim-skills/skills/search-fallback-router/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-19-00h-trend-sweep.md`
+
+---
+
 ## 2026-02-18 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
