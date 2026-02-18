@@ -1,5 +1,35 @@
 # MissKim Skills Intake Log
 
+## 2026-02-18 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 실시간 경로는 Cloudflare 403, `sitemap.xml`만 접근 가능(직접 신규 검증 제한).
+- **MCP Market:** 홈 latest에서 `java-decompiler-1`, `dotnet-websearch`, `sql-sentinel`, `openwrt` 확인. sitemap 기준 **21,091 servers**.
+- **SkillHub (skillhub.club):** **21.3K skills / 4.6M stars**, Hot에 `systematic-debugging`, `file-search`, `context-optimization` 노출.
+- **ClawHub:** newest 샘플에서 `agent-audit`, `security-sentinel`, `fathom-meetings` 확인.
+- **VSCode Agent Skills:** `formulahendry.agent-skills` **1,737 installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `agent-audit` | ✅ 도입 | 모델/크론/세션 비용-성과 감사의 수동 병목을 직접 해결. |
+| ClawHub `security-sentinel` | ⚠️ 참고만 | 보안 니즈는 있으나 `healthcheck` 루틴과 중복 범위 큼. |
+| MCP Market `SQL Sentinel` | ⚠️ 참고만 | DB 자동화 비중이 아직 낮아 즉시 ROI 제한. |
+| SkillHub `context-optimization` | ⚠️ 참고만 | `openclaw-mem`/내부 메모리 규율과 핵심 기능 중복. |
+| SkillsMP `mintlify` | ⚠️ 참고만 | 문서 자동화 가치는 있으나 현재 우선 병목과 정합 낮음. |
+| VSCode `formulahendry.agent-skills` | ⚠️ 참고만 | IDE 편의성은 있으나 OpenClaw CLI 중심 운영과 불일치. |
+
+**불필요 판정:** 15건
+
+### ✅ Actions
+1. `misskim-skills/skills/agent-cost-audit-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-18-20h-trend-sweep.md`
+
+---
+
 ## 2026-02-18 16:00 KST — Agent Skill Trend Sweep (비판적 흡수)
 
 ### 📊 수집 소스
