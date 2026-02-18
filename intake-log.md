@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-18 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 233,309 skills. 최신 노출에서 `mintlify`, `imsg`, `feishu-doc` 확인.
+- **MCP Market:** 21,157 servers. latest에 `Java Decompiler`, `Dotnet Websearch`, `SQL Sentinel`, `OpenWrt`(0 usage 다수).
+- **SkillHub (skillhub.club):** 21.3K skills / 4.8M stars. `context-optimization`, `systematic-debugging` 상위 노출.
+- **ClawHub:** 8,222 skills. Newest에서 `Geepers Data`, `DeepReader`, `Audit OpenClaw Security` 확인.
+- **VSCode Agent Skills:** `formulahendry.agent-skills` 1,733 installs, 5.0(1 review), v0.0.2.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `Geepers Data` | ✅ 도입 | Brave 검색 쿼터 제한으로 생기는 수집 공백을 직접 메움. |
+| ClawHub `DeepReader` | ⚠️ 참고만 | URL 읽기 니즈는 있으나 `summarize`/`web_fetch`와 기능 중복. |
+| MCP Market `Task Master` | ⚠️ 참고만 | 수요는 있으나 현 queue-manager + subagent 체계로 핵심 요구 충족. |
+| MCP Market `Godot` MCP | ⚠️ 참고만 | 도메인 정합성은 높지만 현 godot 스택으로 1차 대응 가능. |
+| SkillsMP `mintlify` | ⚠️ 참고만 | 문서 자동화 가치는 있으나 현재 우선 병목과 직접 정합 낮음. |
+| SkillHub `context-optimization` | ⚠️ 참고만 | 컨텍스트 최적화 수요는 있으나 `openclaw-mem`/내부 메모리 루틴과 중복. |
+| VSCode `formulahendry.agent-skills` | ⚠️ 참고만 | IDE 편의성은 있으나 OpenClaw CLI 중심 운영과 불일치. |
+
+**불필요 판정:** 18건
+
+### ✅ Actions
+1. `misskim-skills/skills/data-source-fallback-bridge/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-18-16h-trend-sweep.md`
+
+---
+
 ## 2026-02-18 12:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
