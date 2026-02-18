@@ -1,5 +1,35 @@
 # MissKim Skills Intake Log
 
+## 2026-02-19 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 브라우저 수집 성공, **239,658 skills**. recent 상단에 `shadmin-feature-dev`, `nippo`, `check-tests-commit` 확인.
+- **MCP Market:** 브라우저 수집 성공, **21,325 servers**. latest에 `DevOps Practices`, `LibreNMS`, `Gemini Search`, `Zen of Languages`, `Vigilo` 확인.
+- **SkillHub (skillhub.club):** **21.3K skills / 4.3M stars**, Trending Today 상단 `feishu-drive`, `model-usage`, `github` 노출.
+- **ClawHub:** newest 38개 샘플에서 `memory-tools`, `proxymock`, `openrouter-perplexity`, `exa-tool` 확인. `moltbook-cli-tool` 노출.
+- **VSCode Agent Skills:** 검색 `agent skills` **1,099 results**, `copilot-mcp` **81K installs**, `formulahendry.agent-skills` **1.7K installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `openrouter-perplexity` | ✅ 도입 | Brave 429/quota 공백을 메우는 검색 fallback 패턴으로 즉시 ROI가 높음. |
+| ClawHub `memory-tools` | ⚠️ 참고만 | `openclaw-mem`/내부 메모리 규율과 기능 중복. 회상 실패 반복 시 재검토. |
+| MCP Market `Gemini Search` | ⚠️ 참고만 | 검색 백업 니즈는 맞지만 `openrouter` fallback과 중복 가능성이 커 우선순위 낮음. |
+| SkillsMP `check-tests-commit` 계열 | ⚠️ 참고만 | `verify-before-done` + `tdd-discipline`로 핵심 기능 이미 대응 중. |
+| SkillHub `skill-creator` | ⚠️ 참고만 | 내부 `skill-authoring`/작성 규약과 중복. 제작 리드타임 악화 시 재검토. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 불일치. |
+
+**불필요 판정:** 18건
+
+### ✅ Actions
+1. `misskim-skills/skills/search-fallback-openrouter/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub/Moltbook **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-19-04h-trend-sweep.md`
+
+---
+
 ## 2026-02-19 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
