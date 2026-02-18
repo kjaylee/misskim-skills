@@ -1,5 +1,35 @@
 # MissKim Skills Intake Log
 
+## 2026-02-19 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** 브라우저 수집 성공, **239,658 skills**. recent 상단에 `shadmin-feature-dev`, `nippo`, `check-tests-commit`, `maxxit-lazy-trading` 확인.
+- **MCP Market:** 브라우저 수집 성공, **21,325 servers**. latest에 `DevOps Practices`, `LibreNMS`, `Gemini Search`, `Zen of Languages`, `MyInstants`, `Vigilo` 확인.
+- **SkillHub (skillhub.club):** **21.6K skills / 4.3M stars**, Trending Today 상단 `feishu-drive`, `model-usage`, `github`, `wacli`, `trello` 노출.
+- **ClawHub:** newest 59개 샘플에서 `credential-scanner`, `flowclaw`, `loopwind`, `gamer-news` 확인.
+- **VSCode Agent Skills:** 검색 `agent skills` **1,102 results**, `copilot-mcp` **81K installs**, `formulahendry.agent-skills` **1,746 installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `credential-scanner` | ✅ 도입 | 외부 스킬 intake 단계의 secret leak 탐지 공백을 직접 메우며 도입비 대비 리스크 절감 효과가 큼. |
+| ClawHub `flowclaw` | ⚠️ 참고만 | 멀티모델 라우팅 수요는 있으나 다중 인증/운영 복잡도가 높아 즉시 ROI 불명확. |
+| MCP Market `Gemini Search` | ⚠️ 참고만 | 검색 백업 니즈는 유효하지만 `search-fallback-openrouter` 추진과 기능 중복 가능성 큼. |
+| SkillsMP `check-tests-commit` 계열 | ⚠️ 참고만 | `verify-before-done` + `tdd-discipline`로 핵심 문제를 이미 커버 중. |
+| SkillHub `context-optimization` | ⚠️ 참고만 | `openclaw-mem`/내부 메모리 규율과 중복. 비용 지표 악화 시 재검토. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 정합이 낮음. |
+
+**불필요 판정:** 19건
+
+### ✅ Actions
+1. `misskim-skills/skills/credential-leak-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub/Moltbook **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-19-08h-trend-sweep.md`
+
+---
+
 ## 2026-02-19 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
