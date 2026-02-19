@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-19 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** **239,658 skills**. recent 상단 `shadmin-feature-dev`, `nippo`, `check-tests-commit`, `maxxit-lazy-trading`, `audio-extractor` 확인.
+- **MCP Market:** **21,362 servers**(updated just now). latest에 `Substack Publisher`, `DevOps Practices`, `LibreNMS`, `Gemini Search`, `Zen of Languages`, `MyInstants` 확인.
+- **SkillHub (skillhub.club):** **21.6K skills / 4.0M stars**. Trending Today 상단 `coding-agent`, `feishu-drive`, `model-usage`, `wacli`, `slack` 확인.
+- **ClawHub:** newest 30개 샘플에서 `guardian`, `openclaw-skillguard`, `agents-skill-security-audit` 확인.
+- **VSCode Agent Skills:** 검색 `agent skills` **1,102 results**, `copilot-mcp` **81.1K installs**, `Agent Skills` **1.8K installs**, `agnix` **19 installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `guardian` (privacy-audit 패턴) | ✅ 도입 | 외부 스킬 재배포/내부화 시 개인정보/로컬데이터 누출 차단 게이트 공백을 직접 해소. |
+| ClawHub `openclaw-skillguard` | ⚠️ 참고만 | 보안 스캔 방향은 유효하나 기존 추진 중 게이트와 범위 중복이 큼. |
+| VSCode `agnix` | ⚠️ 참고만 | 룰셋 자산 가치는 높지만 VSCode 종속 도입은 현재 운영축과 불일치. |
+| MCP Market `Substack Publisher` | ⚠️ 참고만 | 채널 확장 가치는 있으나 현재 핵심 병목(배포/수익화)과 직접 정합 낮음. |
+| MCP Market `Gemini Search` | ⚠️ 참고만 | 검색 fallback 니즈는 유효하나 기존 fallback 라인과 중복 가능성 큼. |
+| SkillsMP `check-tests-commit` 계열 | ⚠️ 참고만 | 내부 `verify-before-done` + SDD/TDD 규율로 핵심 수요를 이미 충족. |
+| SkillHub 상위군(`coding-agent`/`feishu-drive`/`model-usage`) | ⚠️ 참고만 | 보유 스택과 기능 중복이 커 순증 가치가 낮음. |
+
+**불필요 판정:** 72건
+
+### ✅ Actions
+1. `misskim-skills/skills/skill-package-privacy-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-19-20h-trend-sweep.md`
+
+---
+
 ## 2026-02-19 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
