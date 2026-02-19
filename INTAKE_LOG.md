@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-19 12:06 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** **239,658 skills**. recent 상단 `shadmin-feature-dev`, `nippo`, `check-tests-commit`, `maxxit-lazy-trading` 확인.
+- **MCP Market:** **21,362 servers**(updated just now). latest에 `Substack Publisher`, `DevOps Practices`, `LibreNMS`, `Gemini Search`, `Zen of Languages`, `MyInstants` 확인.
+- **SkillHub (skillhub.club):** **21.6K skills / 4.4M stars**, Trending Today `feishu-drive`, `model-usage`, `github`, `wacli`, `trello` 유지.
+- **ClawHub:** newest 60개 샘플에서 `clawwall`, `memory-hygiene`, `reddit-insights` 확인. Molt 계열 노출은 정책 차단.
+- **VSCode Agent Skills:** 검색 `agent skills` **1,103 results**, `copilot-mcp` **81.1K installs**, `formulahendry.agent-skills` **1.8K installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `clawwall` | ✅ 도입 | outbound secret/PII 유출 하드블록 공백을 직접 해소. 인기도가 아니라 리스크 갭 기반 채택. |
+| MCP Market `Substack Publisher` | ⚠️ 참고만 | 배포 확장 가치는 있으나 현재 우선 채널과 직접 병목 정합이 낮음. |
+| MCP Market `Gemini Search` | ⚠️ 참고만 | 검색 fallback 니즈는 유효하나 기존 fallback 경로와 중복 가능성 큼. |
+| SkillsMP `check-tests-commit` 계열 | ⚠️ 참고만 | 내부 `verify-before-done` + SDD/TDD 규율로 핵심 기능 대체 가능. |
+| SkillHub 상위군(`feishu-drive`/`model-usage`) | ⚠️ 참고만 | 대형 star는 확산 신호일 뿐 현재 운영 병목 해결과 거리 있음. |
+| ClawHub `memory-hygiene` | ⚠️ 참고만 | `openclaw-mem` 및 내부 메모리 운영 규율과 기능 중복. |
+| VSCode `Copilot MCP + Agent Skills Manager` | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 불일치. |
+
+**불필요 판정:** 96건
+
+### ✅ Actions
+1. `misskim-skills/skills/outbound-dlp-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host/MoltHub/Moltbook **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-19-12h-trend-sweep.md`
+
+---
+
 ## 2026-02-19 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
