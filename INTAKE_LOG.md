@@ -1,5 +1,37 @@
 # MissKim Skills Intake Log
 
+## 2026-02-19 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** **239,658 skills**. recent 상단 `shadmin-feature-dev`, `nippo`, `check-tests-commit`, `maxxit-lazy-trading`, `audio-extractor` 확인.
+- **MCP Market:** **21,362 servers**(updated just now). latest에 `Substack Publisher`, `DevOps Practices`, `LibreNMS`, `Gemini Search`, `Zen of Languages`, `MyInstants` 확인.
+- **SkillHub (skillhub.club):** **21.6K skills / 4.1M stars**. Hot/Rankings 상단 `coding-agent`, `feishu-drive`, `model-usage`, `wacli`, `slack` 확인.
+- **ClawHub:** newest 40개 샘플에서 `clawguarddevin`, `openclaw-cache-kit`, `agent-spawner` 확인. Molt 계열 노출은 정책 차단.
+- **VSCode Agent Skills:** 검색 `agent skills` **1,103 results**, `copilot-mcp` **81.1K installs**, `Agent Skills` **1.8K installs**, `agnix` **18 installs**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `clawguarddevin` 패턴 | ✅ 도입 | 외부 스킬 intake의 악성패턴 자동 스캔 공백을 직접 해소. 수동 Audit만으로는 누락 리스크가 남음. |
+| VSCode `agnix` 룰셋(패턴 흡수) | ✅ 도입 | SKILL.md/AGENTS/MCP 설정 검증 자동화가 현재 부재. 확장 자체가 아니라 룰셋만 내부 재작성 시 ROI가 큼. |
+| MCP Market `Substack Publisher` | ⚠️ 참고만 | 채널 확장 가치는 있으나 현재 핵심 병목(배포/수익화)과 직접 정합 낮음. |
+| MCP Market `Gemini Search` | ⚠️ 참고만 | 검색 fallback 니즈는 유효하나 기존 fallback 라인과 중복 가능성 큼. |
+| SkillsMP `check-tests-commit` 계열 | ⚠️ 참고만 | 내부 `verify-before-done` + SDD/TDD 규율로 핵심 수요를 이미 충족. |
+| SkillHub 상위군(`coding-agent`/`feishu-drive`/`model-usage`) | ⚠️ 참고만 | 보유 스택과 기능 중복이 커 순증 가치가 낮음. |
+| ClawHub `openclaw-cache-kit` | ⚠️ 참고만 | 비용절감 잠재력은 있으나 설정 리스크 검증이 선행돼야 함. |
+
+**불필요 판정:** 81건
+
+### ✅ Actions
+1. `misskim-skills/skills/skill-intake-malware-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. `misskim-skills/skills/agent-config-lint-gate/` 설계 착수 (Research → Audit → Rewrite)
+3. Molt Road/molt.host/MoltHub/Moltbook **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-19-16h-trend-sweep.md`
+
+---
+
 ## 2026-02-19 12:06 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
