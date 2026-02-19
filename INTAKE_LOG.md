@@ -1,5 +1,33 @@
 # MissKim Skills Intake Log
 
+## 2026-02-20 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** Cloudflare 차단 → `r.jina.ai` 우회 수집. **239,658 skills** 확인.
+- **MCP Market:** **21,507 servers**. Latest MCP Servers: `NotebookLM`, `Marketer`, `Ocean`, `Substack Publisher`, `Rug Munch Intelligence`, `FastAPI`.
+- **SkillHub (skillhub.club):** **21.6K skills / 4.3M stars**. Trending Today 상단 `coding-agent`, `feishu-drive`, `model-usage`, `wacli`, `slack`(기존 보유).
+- **ClawHub:** Convex API 샘플에서 `Docs Feeder`, `Z.AI Web Search`, `ClawDog Backup(의심 플래그)` 확인.
+- **VSCode Agent Skills:** `formulahendry.agent-skills` **1,761 installs**, 평점 **5.0(1)**, **v0.0.2(2025-12-26)**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `Docs Feeder` | ⚠️ 참고만 | 문서 수집 자동화 수요는 있으나 긴급 병목은 아님. 기존 `web_fetch`/`summarize`로 대체 가능. 검증 부족(다운로드 0). **재검토:** 문서 수집 실패율 >10%/주. |
+| ClawHub `Z.AI Web Search` | ⚠️ 참고만 | Brave 429로 fallback 니즈는 있으나 API 키/운영비 필요. 품질 지표 부족. **재검토:** 검색 실패가 연속 3회 이상 발생 시. |
+| MCP Market `Substack Publisher` | ⚠️ 참고만 | Substack 운영이 핵심 병목이 아님. 도입 대비 ROI 낮음. **재검토:** Substack 채널을 KPI로 승격 시. |
+| MCP Market `Task Master` | ⚠️ 참고만 | 기존 `queue-manager`로 핵심 수요 충족. GitHub 스타만으로 품질 보장 불가. **재검토:** 큐 충돌 주 3회 이상. |
+
+**불필요 판정:** 10건
+
+### ✅ Actions
+1. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+2. 검색 쿼터 악화 시 `Z.AI Web Search` 재검토 트리거 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-20-00h-trend-sweep.md`
+
+---
+
 ## 2026-02-19 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
