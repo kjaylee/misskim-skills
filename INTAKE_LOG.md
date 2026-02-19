@@ -1,5 +1,36 @@
 # MissKim Skills Intake Log
 
+## 2026-02-20 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** `r.jina.ai` 우회로 **239,658 skills** 확인 (timeline 평균 **1,762.2**, 피크 **19,898 @ 2/4**).
+- **MCP Market:** 원문 HTML 수집 기준 **21,507 servers**. Latest 상단 `NotebookLM`, `Marketer`, `Ocean`, `Substack Publisher`, `Rug Munch Intelligence`, `FastAPI`.
+- **SkillHub (skillhub.club):** **21.6K skills / 4.0M stars**. Trending Today 상단 `coding-agent`, `feishu-drive`, `model-usage`, `wacli`, `slack`.
+- **ClawHub:** `tavily-search` 신호 확인 (**downloads 23,180 / installsCurrent 133 / stars 71**), 최신 신규군은 저신뢰(0~1 installs 다수).
+- **VSCode Agent Skills:** `copilot-mcp` **81,251 installs**, `formulahendry.agent-skills` **~1.75K installs**(v0.0.2, 2025-12-26).
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `tavily-search` | ✅ 도입 | Brave 검색 429/쿼터초과로 실제 공백 존재. `web_fetch`는 URL known 케이스만 가능해 대체 불완전. 도입비(API 키/소액비용) 대비 실패 재시도 시간 절감 효과 큼. 지표(23,180 downloads/133 current installs/71 stars)로 저신뢰 신규군과 구분 가능. |
+| MCP Market `FastAPI` | ⚠️ 참고만 | API 자동화 수요는 있으나 `openapi-tool-scaffold`/기존 스택으로 1차 대응 가능. 재검토: API 프로젝트 동시 3개+ 병목 발생 시. |
+| MCP Market `Substack Publisher` | ⚠️ 참고만 | 현재 핵심 병목(수익화/배포 자동화)과 직접 정합 낮음. 재검토: Substack 채널 KPI 승격 시. |
+| VSCode `copilot-mcp` | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 불일치. 재검토: VSCode 워크플로 비중 50%+ 시. |
+| VSCode `formulahendry.agent-skills` | ⚠️ 참고만 | 멀티소스 탐색 장점은 있으나 업데이트 정체 + 평점 표본 부족. 재검토: 내부 탐색 리드타임 악화 시. |
+
+**불필요 판정:** 18건
+
+### ✅ Actions
+1. `misskim-skills/skills/search-fallback-tavily-lite/` 설계 착수 (Research → Audit → Rewrite)
+2. `web_search` 429/쿼터초과 시에만 fallback 발동하는 조건부 라우팅 규칙 적용
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-20-04h-trend-sweep.md`
+- `intake-log/2026-02-20-04h-trend-raw.json`
+
+---
+
 ## 2026-02-20 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

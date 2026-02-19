@@ -1,0 +1,244 @@
+{
+  "fetchedAt": "2026-02-19T19:08:37.835997+00:00",
+  "skillsmp_total": "239,658",
+  "skillsmp_average_per_period": "1762.2",
+  "skillsmp_peak_period": "19898",
+  "skillsmp_peak_at": "Feb 4, 2026",
+  "skillhub_totals": "21.6K Skills•4.0M Stars",
+  "skillhub_trending_openclaw": [
+    {
+      "skill": "coding-agent",
+      "deltaStars": "209196"
+    },
+    {
+      "skill": "feishu-drive",
+      "deltaStars": "205893"
+    },
+    {
+      "skill": "model-usage",
+      "deltaStars": "202172"
+    },
+    {
+      "skill": "wacli",
+      "deltaStars": "180193"
+    },
+    {
+      "skill": "slack",
+      "deltaStars": "168423"
+    }
+  ],
+  "mcpmarket_checkpoint": false,
+  "mcpmarket_total_servers": "21,507",
+  "mcpmarket_latest_servers": [
+    "NotebookLM",
+    "Marketer",
+    "Ocean",
+    "Substack Publisher",
+    "Rug Munch Intelligence",
+    "FastAPI"
+  ],
+  "mcpso_total": "17753",
+  "mcpso_latest_sample": [
+    "Pylon",
+    "AlphaVantage",
+    "Same",
+    "Vivid",
+    "MoneyChoice",
+    "Toleno",
+    "Epitome",
+    "Achriom"
+  ],
+  "clawhub_top_non_suspicious": [
+    {
+      "name": "Gog",
+      "slug": "gog",
+      "owner": "steipete",
+      "downloadsBadge": "28.6kk",
+      "stars": 178,
+      "versions": 1
+    },
+    {
+      "name": "Tavily Web Search",
+      "slug": "tavily-search",
+      "owner": "arun-8687",
+      "downloadsBadge": "23.2kk",
+      "stars": 71,
+      "versions": 1
+    },
+    {
+      "name": "Summarize",
+      "slug": "summarize",
+      "owner": "steipete",
+      "downloadsBadge": "21.9kk",
+      "stars": 79,
+      "versions": 1
+    },
+    {
+      "name": "Github",
+      "slug": "github",
+      "owner": "steipete",
+      "downloadsBadge": "21.1kk",
+      "stars": 59,
+      "versions": 1
+    },
+    {
+      "name": "Sonoscli",
+      "slug": "sonoscli",
+      "owner": "steipete",
+      "downloadsBadge": "18.3kk",
+      "stars": 12,
+      "versions": 1
+    },
+    {
+      "name": "Weather",
+      "slug": "weather",
+      "owner": "steipete",
+      "downloadsBadge": "18.2kk",
+      "stars": 44,
+      "versions": 1
+    },
+    {
+      "name": "Ontology",
+      "slug": "ontology",
+      "owner": "oswalpalash",
+      "downloadsBadge": "17.9kk",
+      "stars": 25,
+      "versions": 3
+    },
+    {
+      "name": "Notion",
+      "slug": "notion",
+      "owner": "steipete",
+      "downloadsBadge": "11.5kk",
+      "stars": 41,
+      "versions": 1
+    }
+  ],
+  "clawhub_tavily_stats": {
+    "comments": 8,
+    "downloads": 23180,
+    "installsAllTime": 136,
+    "installsCurrent": 133,
+    "stars": 71,
+    "versions": 1
+  },
+  "clawhub_newest_sample": [
+    {
+      "slug": "agent-browser-4",
+      "downloads": 0,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "gemini-image-generator",
+      "downloads": 3,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "crypto-prices",
+      "downloads": 3,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "charts",
+      "downloads": 3,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "brain-search",
+      "downloads": 3,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "claw1-web-researcher",
+      "downloads": 6,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "afrexai-web-performance-engine",
+      "downloads": 10,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "afrexai-cybersecurity-engine",
+      "downloads": 13,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "toggle",
+      "downloads": 34,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "openclaw-troubleshooting",
+      "downloads": 22,
+      "stars": 0,
+      "installsCurrent": 1
+    },
+    {
+      "slug": "clawhub-search-verify",
+      "downloads": 27,
+      "stars": 0,
+      "installsCurrent": 0
+    },
+    {
+      "slug": "excalidraw-diagram-generator",
+      "downloads": 50,
+      "stars": 0,
+      "installsCurrent": 0
+    }
+  ],
+  "vscode_agent_results": [
+    {
+      "id": "AutomataLabs.copilot-mcp",
+      "displayName": "Copilot MCP + Agent Skills Manager",
+      "installs": 81251,
+      "version": "0.0.91"
+    },
+    {
+      "id": "yamapan.agent-skill-ninja",
+      "displayName": "Agent Skills Ninja",
+      "installs": 547,
+      "version": "0.8.16"
+    },
+    {
+      "id": "lawvable.minimal-agent-workspace",
+      "displayName": "Legal Agent Skills",
+      "installs": 202,
+      "version": "0.1.13"
+    },
+    {
+      "id": "formulahendry.agent-skills",
+      "displayName": "Agent Skills",
+      "installs": 1763,
+      "version": "0.0.2"
+    },
+    {
+      "id": "laurids.agent-skills-sh",
+      "displayName": "Agent Skills - Browse, Install & Manage",
+      "installs": 125,
+      "version": "0.1.14"
+    },
+    {
+      "id": "JustinSong.agent-skills-market",
+      "displayName": "Agent Skills Market",
+      "installs": 10,
+      "version": "0.0.7"
+    }
+  ],
+  "vscode_formulahendry": {
+    "installs": 1750,
+    "rating": 5.0,
+    "ratingCount": 1,
+    "version": "0.0.2",
+    "lastUpdated": "2025-12-26T02:13:18.417Z"
+  }
+}
