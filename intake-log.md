@@ -1,5 +1,37 @@
 # MissKim Skills Intake Log
 
+## 2026-02-20 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP:** `239,658` skills, 평균 `1,762.2`, 피크 `19,898`(Feb 4). Security 카테고리 `5,913`.
+- **MCP Market:** 본회차 `Vercel Security Checkpoint(429)`로 직접 수집 실패.
+- **MCP fallback (mcp.so):** `17,764` MCP servers 카탈로그 확인.
+- **SkillHub:** `21.6K skills / 4.0M stars`, Trending Today 상단은 기존 보유군 중심.
+- **ClawHub:** non-suspicious 상위 유지, newest는 다수 `0 current installs`.
+- **VSCode Agent Skills:** `copilot-mcp` 81k installs(4.3/5, 8), `formulahendry.agent-skills` 1.8k installs(5.0/5, 1, Dec 2025 업데이트).
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillsMP `security-scan` 패턴 | ✅ 도입 | 외부 스킬 intake의 설정/MCP/훅 보안 점검 자동화 공백을 직접 메움. 외부 코드 설치 없이 룰만 내부 재작성 가능. |
+| ClawHub `counterclaw-core` | ⚠️ 참고만 | 방어 목적은 맞지만 기존 DLP/credential 게이트와 중복 + 실사용 신호 약함(8 downloads, 0 current installs). |
+| ClawHub `sentry-issues` | ⚠️ 참고만 | 장애 분석 자동화는 유효하나 Sentry 표준 도입이 선행돼야 ROI 발생. |
+| mcp.so `EdgeOne Pages MCP` | ⚠️ 참고만 | 배포 대안 가치는 있으나 현재 GitHub Pages 파이프라인으로 1차 대응 가능. |
+| SkillHub `context-optimization` | ⚠️ 참고만 | `openclaw-mem`/내부 컨텍스트 규율과 중복, 즉시 실행효과 제한. |
+| VSCode `copilot-mcp` / `agent-skills` | ⚠️ 참고만 | 생태계 신호는 강하나 OpenClaw CLI 운영축과 불일치. |
+
+**불필요 판정:** 26건
+
+### ✅ Actions
+1. `misskim-skills/skills/agent-config-security-scan-lite/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+3. MCP Market 체크포인트 차단은 다음 회차 재검증(직접 수집 복구 전까지 차선 소스 병행)
+
+### 📁 Full Report
+- `intake-log/2026-02-20-08h-trend-sweep.md`
+
+---
+
 ## 2026-02-20 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

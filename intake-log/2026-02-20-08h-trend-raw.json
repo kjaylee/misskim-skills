@@ -1,0 +1,59 @@
+{
+  "fetchedAt": "2026-02-20T08:05:00+09:00",
+  "collection": {
+    "skillsmp_total": 239658,
+    "skillsmp_average_per_period": 1762.2,
+    "skillsmp_peak_period": 19898,
+    "skillsmp_peak_at": "2026-02-04",
+    "skillsmp_security_category": 5913,
+    "mcpmarket_status": "blocked_vercel_checkpoint_429",
+    "mcpso_total_servers": 17764,
+    "skillhub_totals": "21.6K Skills / 4.0M Stars",
+    "skillhub_trending": [
+      "coding-agent",
+      "feishu-drive",
+      "model-usage",
+      "wacli",
+      "slack"
+    ],
+    "clawhub_non_suspicious_sample": [
+      "gog",
+      "tavily-search",
+      "summarize",
+      "github"
+    ],
+    "clawhub_newest_signal": "mostly 0 current installs",
+    "vscode": {
+      "copilot_mcp": {
+        "installs_badge": "81k",
+        "version": "v0.0.91",
+        "rating": "4.3/5 (8)"
+      },
+      "agent_skills_formulahendry": {
+        "installs_badge": "1.8k",
+        "version": "v0.0.2",
+        "rating": "5.0/5 (1)",
+        "last_updated": "december 2025"
+      }
+    }
+  },
+  "decisions": {
+    "adopt": [
+      "skillsmp_security_scan_pattern"
+    ],
+    "reference": [
+      "clawhub_counterclaw_core",
+      "clawhub_sentry_issues",
+      "mcpso_edgeone_pages_mcp",
+      "skillhub_context_optimization",
+      "vscode_copilot_mcp",
+      "vscode_agent_skills_formulahendry"
+    ],
+    "discarded_count": 26
+  },
+  "security": {
+    "molt_road_block": true,
+    "blind_install_allowed": false,
+    "policy": "Research->Audit->Rewrite only"
+  }
+}
