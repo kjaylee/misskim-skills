@@ -1,0 +1,128 @@
+{
+  "fetchedAt": "2026-02-20T16:03:16.192654+09:00",
+  "collection": {
+    "skillsmp": {
+      "source_home": "https://r.jina.ai/http://skillsmp.com",
+      "source_timeline": "https://r.jina.ai/http://skillsmp.com/timeline",
+      "source_categories": "https://r.jina.ai/http://skillsmp.com/categories",
+      "total_skills": 239658,
+      "timeline_average_per_period": 1762.2,
+      "timeline_peak_period": 19898,
+      "timeline_peak_at": "Feb 4, 2026",
+      "security_category": 5913
+    },
+    "mcpmarket": {
+      "status": "blocked_vercel_checkpoint_429",
+      "source": "https://mcpmarket.com"
+    },
+    "mcp_fallback_mcpso": {
+      "source": "https://r.jina.ai/http://mcp.so/servers",
+      "top_server_slugs": [
+        "edgeone-pages-mcp",
+        "mcpadvisor",
+        "amap-maps",
+        "puppeteer",
+        "sequentialthinking",
+        "mcp-server-flomo",
+        "postgres",
+        "MiniMax-MCP"
+      ]
+    },
+    "skillhub": {
+      "source": "https://r.jina.ai/http://skillhub.club",
+      "totals": "21.6K Skills•5.3M Stars",
+      "trending_today": [
+        "gifgrep",
+        "feishu-drive",
+        "model-usage",
+        "wacli",
+        "slack"
+      ],
+      "s_rank_sample": [
+        "file-search",
+        "systematic-debugging",
+        "skill-creator"
+      ]
+    },
+    "clawhub": {
+      "newest_sample_size": 39,
+      "newest_signal": "mostly installsCurrent=0",
+      "adoption_candidate": {
+        "slug": "openclaw-gateway-fd-fix",
+        "stats": {
+          "downloads": 17,
+          "installsCurrent": 0,
+          "installsAllTime": 0,
+          "stars": 0
+        }
+      },
+      "signal_samples": {
+        "opena2a-security": {
+          "downloads": 17,
+          "installsCurrent": 0,
+          "installsAllTime": 0,
+          "stars": 0
+        },
+        "platform-healthcheck": {
+          "downloads": 14,
+          "installsCurrent": 0,
+          "installsAllTime": 0,
+          "stars": 0
+        },
+        "guardian": {
+          "downloads": 84,
+          "installsCurrent": 0,
+          "installsAllTime": 0,
+          "stars": 1
+        }
+      },
+      "top_trending": [
+        "sonoscli",
+        "gog",
+        "github",
+        "summarize",
+        "weather"
+      ],
+      "top_installs_all_time": [
+        "gog",
+        "summarize",
+        "sonoscli",
+        "github",
+        "weather"
+      ]
+    },
+    "vscode": {
+      "query": "agent skills",
+      "total_results": 1218,
+      "extensions": {
+        "AutomataLabs.copilot-mcp": {
+          "installs": 81333,
+          "rating": 4.25,
+          "ratingCount": 8,
+          "lastUpdated": "2026-02-16T05:31:22.773Z"
+        },
+        "formulahendry.agent-skills": {
+          "installs": 1767,
+          "rating": 5,
+          "ratingCount": 1,
+          "lastUpdated": "2025-12-26T02:13:18.417Z"
+        },
+        "yamapan.agent-skill-ninja": {
+          "installs": 553,
+          "rating": 5,
+          "ratingCount": 2,
+          "lastUpdated": "2026-02-18T04:52:34.987Z"
+        }
+      }
+    },
+    "web_search": {
+      "status": "quota_exhausted_429",
+      "fallback": "web_fetch + direct APIs"
+    }
+  },
+  "security": {
+    "molt_road_block": true,
+    "blind_install_allowed": false,
+    "policy": "Research->Audit->Rewrite only"
+  }
+}
