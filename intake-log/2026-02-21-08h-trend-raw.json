@@ -1,0 +1,110 @@
+{
+  "timestamp_kst": "2026-02-21 08:00",
+  "policy": {
+    "host_browser_used": false,
+    "node_browser_status": "relay_tab_not_connected",
+    "fallback": ["web_fetch", "r.jina.ai", "direct API/CLI"]
+  },
+  "sources": {
+    "skillsmp": {
+      "status": "ok_via_r_jina",
+      "metrics": {
+        "total_skills": 239658,
+        "timeline_avg_per_period": 1762.2,
+        "timeline_peak": 19898,
+        "timeline_peak_at": "Feb 4, 2026",
+        "security_search_results": 8590
+      }
+    },
+    "mcpmarket": {
+      "status": "direct_html_ok_via_requests_webfetch_blocked_429",
+      "metrics": {
+        "server_urls_from_sitemap": 21091,
+        "skill_urls_from_sitemap": 43782,
+        "latest_servers_sample": [
+          "shellcheck",
+          "dolex",
+          "k-trendz",
+          "appwrite-2",
+          "european-parliament",
+          "mem0-12",
+          "pubroot",
+          "coworking-skill",
+          "hotels-skill",
+          "claude-code-toolkit"
+        ]
+      }
+    },
+    "skillhub": {
+      "status": "ok_via_r_jina",
+      "metrics": {
+        "skills": "21.6K",
+        "stars": "4.9M",
+        "trending_top5": ["gifgrep", "feishu-drive", "model-usage", "wacli", "slack"]
+      }
+    },
+    "clawhub": {
+      "status": "ok_via_cli",
+      "metrics": {
+        "newest_sample_count": 12,
+        "trending_sample_count": 20,
+        "example_new": ["free-jobboard-api", "clawd-zero-trust", "larrybrain"],
+        "example_trending": ["gog", "github", "summarize", "mcporter", "nano-pdf"]
+      }
+    },
+    "vscode_agent_skills": {
+      "status": "ok_via_marketplace_api",
+      "metrics": {
+        "queried_results": 30,
+        "top_by_installs": [
+          {"id": "AutomataLabs.copilot-mcp", "installs": 81476, "rating": 4.25, "rating_count": 8},
+          {"id": "formulahendry.agent-skills", "installs": 1782, "rating": 5, "rating_count": 1},
+          {"id": "yamapan.agent-skill-ninja", "installs": 555, "rating": 5, "rating_count": 2}
+        ]
+      }
+    }
+  },
+  "candidates": [
+    {
+      "item": "MCP Market /server/prodlint (production-readiness scan pattern)",
+      "verdict": "adopt",
+      "why": "AI-generated code production-check gate gap (secrets/injection/hallucinated imports) is still manual and repetitive.",
+      "plan": [
+        "Research checklist from Prodlint and similar server pages",
+        "Audit false-positive rules + secret handling",
+        "Rewrite internal skill: misskim-skills/skills/production-readiness-gate/",
+        "Run against 10 recent scripts; measure critical finding precision"
+      ]
+    },
+    {
+      "item": "MCP Market /server/shellcheck",
+      "verdict": "reference",
+      "why": "Need is real, but MCP server 도입 없이 shellcheck CLI 직접 게이트로 대체 가능."
+    },
+    {
+      "item": "ClawHub clawd-zero-trust",
+      "verdict": "reference",
+      "why": "healthcheck/security 운영축과 중복. installsCurrent=0으로 신뢰 신호 약함."
+    },
+    {
+      "item": "SkillHub Trending Top5 (gifgrep/feishu-drive/model-usage/wacli/slack)",
+      "verdict": "reference",
+      "why": "대부분 이미 보유 스택/내장 스킬과 기능 중복. 스타 급증은 품질 보장 아님."
+    },
+    {
+      "item": "VSCode AutomataLabs.copilot-mcp",
+      "verdict": "reference",
+      "why": "설치 신호는 강하나 VSCode 중심 워크플로 의존. OpenClaw CLI 중심 운영과 정합 낮음."
+    },
+    {
+      "item": "SkillsMP security cluster (search=security, 8,590 results)",
+      "verdict": "reference",
+      "why": "규모는 크지만 중복/로컬라이즈 파생 항목 많아 즉시 도입 품질 낮음."
+    }
+  ],
+  "discarded_count": 39,
+  "security": {
+    "absolute_block": ["molt road", "molt.host"],
+    "external_skill_policy": "Research -> Audit -> Rewrite -> misskim-skills/ only"
+  }
+}
