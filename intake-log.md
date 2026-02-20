@@ -1,5 +1,38 @@
 # MissKim Skills Intake Log
 
+## 2026-02-21 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **web_search:** Brave API quota/rate limit(429)로 실패.
+- **SkillsMP:** 카테고리 합 `254,084`, Security `5,913`.
+- **MCP Market:** Vercel Security Checkpoint(429)로 직접 수집 차단.
+- **MCP fallback(mcp.so):** `17,775` servers, `Search1API/Perplexity/Serper/Jina` 확인.
+- **SkillHub:** `21.6K Skills / 4.6M Stars`, Trending 상단 `gifgrep/feishu-drive/model-usage/wacli/slack`.
+- **VSCode Agent Skills:** 필터링 29개, `copilot-mcp` `81,453 installs`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| mcp.so 검색군 기반 검색 fallback 브로커 패턴 | ✅ 도입 | `web_search` 429로 신규 탐색이 중단됨. `web_fetch` 단독 대체 불충분. 외부 코드 무설치 내부 재작성으로 즉시 복구 가능. |
+| ClawHub `Ontology` | ⚠️ 참고만 | 구조화 메모리 장점은 있으나 현재 `openclaw-mem + memory-management`로 1차 대응 가능. |
+| SkillsMP `Security` 대분류 확장 | ⚠️ 참고만 | 니즈는 높지만 범주가 넓어 저품질 혼입 가능. 탐지율 미달 시 재검토. |
+| VSCode `copilot-mcp`/Agent Skills 확장군 | ⚠️ 참고만 | 설치수는 강하나 VSCode 종속. OpenClaw CLI 중심 운영과 정합 낮음. |
+| ClawHub `.ai` latest 신규군 | ⚠️ 참고만 | 다수 `installsCurrent=0`로 실사용 신호 약함. |
+
+**불필요 판정:** 37건
+
+### ✅ Actions
+1. `misskim-skills/skills/search-fallback-broker-lite/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. `web_search` 정상 시 기본 경로 유지, `429/쿼터초과/타임아웃`에서만 fallback 발동
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-21-04h-trend-sweep.md`
+- `intake-log/2026-02-21-04h-trend-raw.json`
+
+---
+
 ## 2026-02-21 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

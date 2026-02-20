@@ -1,0 +1,274 @@
+{
+  "timestamp_kst": "2026-02-21 04:00",
+  "task": "agent-skill-trend-check",
+  "collection": {
+    "web_search": {
+      "status": "failed",
+      "error": "Brave Search API quota/rate limit exceeded (429)"
+    },
+    "skillsmp": {
+      "source": "https://skillsmp.com/categories",
+      "categories": {
+        "tools": 67701,
+        "development": 54082,
+        "business": 41431,
+        "data_ai": 36011,
+        "devops": 28522,
+        "testing_security": 26337,
+        "security": 5913
+      },
+      "total_skills": 254084
+    },
+    "mcp_market": {
+      "source": "https://mcpmarket.com",
+      "status": "blocked",
+      "error": "Vercel Security Checkpoint 429"
+    },
+    "mcp_fallback_mcpso": {
+      "source": "https://mcp.so",
+      "total_servers": 17775,
+      "search_related_servers": [
+        "Search1API",
+        "Perplexity Ask MCP Server",
+        "Serper MCP Server",
+        "Jina AI MCP Tools",
+        "Playwright Mcp"
+      ]
+    },
+    "skillhub": {
+      "source": "https://skillhub.club",
+      "summary": {
+        "skills": "21.6K",
+        "stars": "4.6M"
+      },
+      "trending_today": [
+        {
+          "name": "gifgrep",
+          "stars_growth": "+212229"
+        },
+        {
+          "name": "feishu-drive",
+          "stars_growth": "+205893"
+        },
+        {
+          "name": "model-usage",
+          "stars_growth": "+202172"
+        },
+        {
+          "name": "wacli",
+          "stars_growth": "+180193"
+        },
+        {
+          "name": "slack",
+          "stars_growth": "+168423"
+        }
+      ]
+    },
+    "clawhub_com": {
+      "source": "https://clawhub.com",
+      "popular_snapshot": [
+        {
+          "name": "Gog",
+          "stars": 203,
+          "downloads": "29.9k"
+        },
+        {
+          "name": "Tavily Web Search",
+          "stars": 81,
+          "downloads": "24.3k"
+        },
+        {
+          "name": "Summarize",
+          "stars": 91,
+          "downloads": "22.9k"
+        },
+        {
+          "name": "Github",
+          "stars": 63,
+          "downloads": "22k"
+        },
+        {
+          "name": "Ontology",
+          "stars": 31,
+          "downloads": "20.1k"
+        },
+        {
+          "name": "Weather",
+          "stars": 49,
+          "downloads": "18.9k"
+        },
+        {
+          "name": "Sonoscli",
+          "stars": 13,
+          "downloads": "18.8k"
+        }
+      ]
+    },
+    "clawhub_api": {
+      "source": "https://clawhub.ai/api/v1/skills/",
+      "total": 23,
+      "latest_15": [
+        {
+          "slug": "plans-methodology",
+          "downloads": 5,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "product-roadmap",
+          "downloads": 5,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "product-launch",
+          "downloads": 7,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "zeitgaist-dialect",
+          "downloads": 7,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "afrexai-vendor-risk",
+          "downloads": 7,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "speakturbo-tts",
+          "downloads": 11,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "memory-pill",
+          "downloads": 11,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "download-anything",
+          "downloads": 14,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "openseti-skill",
+          "downloads": 8,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "courtroom",
+          "downloads": 11,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "clawd-zero-trust",
+          "downloads": 22,
+          "installsCurrent": 0,
+          "stars": 1
+        },
+        {
+          "slug": "bilibili-subtitle-download-skill",
+          "downloads": 11,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "colony-solana",
+          "downloads": 12,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "fireant-stock",
+          "downloads": 12,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "ceaser-send",
+          "downloads": 17,
+          "installsCurrent": 0,
+          "stars": 0
+        }
+      ]
+    },
+    "vscode_agent_skills": {
+      "source": "VS Marketplace extensionquery API",
+      "count_filtered": 29,
+      "top_results": [
+        {
+          "id": "AutomataLabs.copilot-mcp",
+          "installs": 81453,
+          "rating": 4.25,
+          "ratingCount": 8
+        },
+        {
+          "id": "ask-toolkit.alexa-skills-kit-toolkit",
+          "installs": 65026,
+          "rating": 4.090909004211426,
+          "ratingCount": 11
+        },
+        {
+          "id": "mark-tucker.ask-cli-configure",
+          "installs": 6547,
+          "rating": 5.0,
+          "ratingCount": 1
+        },
+        {
+          "id": "formulahendry.agent-skills",
+          "installs": 1781,
+          "rating": 5.0,
+          "ratingCount": 1
+        },
+        {
+          "id": "gaoyuan.skills-vscode",
+          "installs": 660,
+          "rating": 0,
+          "ratingCount": 0
+        },
+        {
+          "id": "yamapan.agent-skill-ninja",
+          "installs": 555,
+          "rating": 5.0,
+          "ratingCount": 2
+        },
+        {
+          "id": "rmurthy.claude-to-copilot",
+          "installs": 368,
+          "rating": 0,
+          "ratingCount": 0
+        },
+        {
+          "id": "MichielWBeijen.andrej-karpathy-skills-cursor-vscode",
+          "installs": 275,
+          "rating": 0,
+          "ratingCount": 0
+        },
+        {
+          "id": "xiaxiangfeng.skills-sh-vscode",
+          "installs": 219,
+          "rating": 5.0,
+          "ratingCount": 1
+        },
+        {
+          "id": "lawvable.minimal-agent-workspace",
+          "installs": 204,
+          "rating": 5.0,
+          "ratingCount": 2
+        }
+      ]
+    }
+  },
+  "policy_flags": {
+    "molt_block": true,
+    "blocked_items": []
+  }
+}
