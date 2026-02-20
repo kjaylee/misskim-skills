@@ -1,5 +1,37 @@
 # MissKim Skills Intake Log
 
+## 2026-02-21 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **web_search:** Brave API quota/rate limit(429)로 탐색 불가.
+- **MiniPC browser.proxy:** relay 탭 미연결로 브라우저 수집 실패(정책상 host 브라우저 미사용 유지).
+- **SkillsMP:** `239,658` skills, Security `5,913` 확인.
+- **MCP Market:** Vercel Security Checkpoint(429)로 직접 수집 차단.
+- **SkillHub:** `21.6K Skills / 5.0M Stars`, Trending 상위 `gifgrep/feishu-drive/model-usage/wacli/slack`.
+- **ClawHub:** 최근 신규군 다수 저신뢰(`apprentice` 2 downloads).
+- **VSCode Agent Skills:** `copilot-mcp` `81,414 installs`, `agent-skills` `1,776 installs`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub CLI + ClawHub `search-cluster` 기반 멀티소스 검색 fallback 패턴 | ✅ 도입 | `web_search` 429로 discovery 중단. `web_fetch` 단독 대체 불충분. 외부 코드 무설치 내부 재작성으로 즉시 복구 가능. |
+| VSCode `copilot-mcp / agent-skills` | ⚠️ 참고만 | 설치수 신호는 강하나 VSCode 의존. OpenClaw CLI 중심 운영과 정합 낮음. |
+| SkillsMP `Security` 카테고리 확장 | ⚠️ 참고만 | 필요성은 높지만 범주가 넓고 저품질 혼입 가능. 탐지율 미달 시 재검토. |
+| ClawHub `apprentice` | ⚠️ 참고만 | 컨셉은 유효하나 실사용 신호 약함(2 downloads / 0 current installs). |
+
+**불필요 판정:** 14건
+
+### ✅ Actions
+1. `misskim-skills/skills/search-fallback-federation-lite/` 내부형 설계 착수 (Research → Audit → Rewrite)
+2. `web_search` 정상 시 기본 경로 유지, `429/쿼터초과`에서만 fallback 발동
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-21-00h-trend-sweep.md`
+- `intake-log/2026-02-21-00h-trend-raw.json`
+
+---
+
 ## 2026-02-20 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

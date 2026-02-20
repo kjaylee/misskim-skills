@@ -1,0 +1,74 @@
+{
+  "timestamp_kst": "2026-02-21 00:00",
+  "task": "agent-skill-trend-check",
+  "collection": {
+    "web_search": {
+      "status": "failed",
+      "error": "Brave Search API quota/rate limit exceeded (429)"
+    },
+    "browser_proxy_minipc": {
+      "status": "unavailable",
+      "error": "Chrome relay connected but no tab attached"
+    },
+    "skillsmp": {
+      "source": "https://r.jina.ai/http://skillsmp.com/categories",
+      "total_skills": 239658,
+      "categories": {
+        "tools": 67701,
+        "development": 54082,
+        "business": 41431,
+        "data_ai": 36011,
+        "devops": 28522,
+        "testing_security": 26337,
+        "security": 5913
+      }
+    },
+    "mcp_market": {
+      "source": "https://mcpmarket.com",
+      "status": "blocked",
+      "error": "Vercel Security Checkpoint 429",
+      "note": "mcp.market is currently a parked domain-for-sale page, not MCP registry content"
+    },
+    "skillhub": {
+      "source": "https://skillhub.club",
+      "summary": {
+        "skills": "21.6K",
+        "stars": "5.0M"
+      },
+      "trending_today": [
+        {"name": "gifgrep", "stars_growth": "+212229"},
+        {"name": "feishu-drive", "stars_growth": "+205893"},
+        {"name": "model-usage", "stars_growth": "+202172"},
+        {"name": "wacli", "stars_growth": "+180193"},
+        {"name": "slack", "stars_growth": "+168423"}
+      ],
+      "cli_signals": [
+        "npx @skill-hub/cli install frontend-design",
+        "npx @skill-hub/cli search \"react\""
+      ]
+    },
+    "clawhub": {
+      "source": "https://clawhub.ai/api/v1/skills/",
+      "recent_samples": [
+        {"slug": "apprentice", "downloads": 2, "installsCurrent": 0, "stars": 0},
+        {"slug": "tweet-processor", "downloads": 3, "installsCurrent": 0, "stars": 0},
+        {"slug": "search-cluster", "downloads": 149, "installsCurrent": 0, "stars": 0},
+        {"slug": "total-recall", "downloads": 63, "installsCurrent": 1, "stars": 1},
+        {"slug": "moltbook-cli-tool", "downloads": 250, "installsCurrent": 3, "stars": 1}
+      ]
+    },
+    "vscode_agent_skills": {
+      "source": "VS Marketplace extensionquery API",
+      "top_results": [
+        {"id": "AutomataLabs.copilot-mcp", "installs": 81414, "rating": 4.25, "rating_count": 8},
+        {"id": "formulahendry.agent-skills", "installs": 1776, "rating": 5, "rating_count": 1},
+        {"id": "gaoyuan.skills-vscode", "installs": 656, "rating": 0, "rating_count": 0},
+        {"id": "yamapan.agent-skill-ninja", "installs": 555, "rating": 5, "rating_count": 2}
+      ]
+    }
+  },
+  "policy_flags": {
+    "molt_block": true,
+    "blocked_items": ["moltbook-cli-tool"]
+  }
+}
