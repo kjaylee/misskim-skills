@@ -1,0 +1,106 @@
+{
+  "fetchedAt": "2026-02-20T12:09:00+09:00",
+  "collection": {
+    "skillsmp": {
+      "source": "https://r.jina.ai/http://skillsmp.com",
+      "total_skills": 239658,
+      "timeline_average_per_period": 1762.2,
+      "timeline_peak_period": 19898,
+      "timeline_peak_at": "2026-02-04",
+      "security_category": 5913,
+      "security_signal": [
+        "security-review",
+        "security-scan"
+      ]
+    },
+    "mcpmarket": {
+      "status": "blocked_vercel_checkpoint_429",
+      "source": "https://mcpmarket.com"
+    },
+    "mcp_fallback_mcpso": {
+      "source": "https://mcp.so/servers",
+      "top_server_slugs": [
+        "edgeone-pages-mcp",
+        "Figma-Context-MCP",
+        "firecrawl-mcp-server",
+        "playwright-mcp",
+        "sentry"
+      ]
+    },
+    "skillhub": {
+      "source": "https://www.skillhub.club",
+      "totals": "21.6K Skills / 3.9M Stars",
+      "trending_today": [
+        "coding-agent",
+        "feishu-drive",
+        "model-usage",
+        "wacli",
+        "slack"
+      ],
+      "s_rank_sample": [
+        "file-search",
+        "systematic-debugging",
+        "skill-creator"
+      ]
+    },
+    "clawhub": {
+      "newest_sample_size": 40,
+      "newest_signal": "mostly installsCurrent=0",
+      "sample": {
+        "little-snitch": {
+          "downloads": 699,
+          "installsCurrent": 1
+        },
+        "causal-inference": {
+          "downloads": 1026,
+          "installsCurrent": 0
+        },
+        "automation-workflows": {
+          "downloads": 5274,
+          "installsCurrent": 25
+        }
+      }
+    },
+    "vscode": {
+      "query": "agent skills",
+      "total_results": 1218,
+      "extensions": {
+        "AutomataLabs.copilot-mcp": {
+          "installs": 81317,
+          "rating": 4.25,
+          "ratingCount": 8,
+          "lastUpdated": "2026-02-16"
+        },
+        "formulahendry.agent-skills": {
+          "installs": 1764,
+          "rating": 5,
+          "ratingCount": 1,
+          "lastUpdated": "2025-12-26"
+        },
+        "gaoyuan.skills-vscode": {
+          "installs": 650,
+          "lastUpdated": "2026-02-12"
+        }
+      }
+    }
+  },
+  "decisions": {
+    "adopt": [
+      "skillsmp_security_scan_pattern"
+    ],
+    "reference": [
+      "mcpso_figma_context_mcp",
+      "mcpso_edgeone_pages_mcp",
+      "clawhub_little_snitch",
+      "vscode_copilot_mcp",
+      "vscode_agent_skills",
+      "skillhub_file_search"
+    ],
+    "discarded_count": 21
+  },
+  "security": {
+    "molt_road_block": true,
+    "blind_install_allowed": false,
+    "policy": "Research->Audit->Rewrite only"
+  }
+}

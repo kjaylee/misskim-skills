@@ -1,5 +1,38 @@
 # MissKim Skills Intake Log
 
+## 2026-02-20 12:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **SkillsMP (r.jina.ai 우회):** `239,658` skills, 평균 `1,762.2`, 피크 `19,898`(Feb 4), Security `5,913`.
+- **MCP Market:** 본회차 `Vercel Security Checkpoint(429)`로 직접 수집 실패.
+- **MCP fallback (mcp.so):** 상단에 `edgeone-pages-mcp`, `Figma-Context-MCP`, `firecrawl-mcp-server`, `playwright-mcp` 노출.
+- **SkillHub:** `21.6K skills / 3.9M stars`, Trending Today는 기존 보유군 중심.
+- **ClawHub:** newest 40개 샘플 다수 `installsCurrent=0`; `little-snitch`(699/1), `causal-inference`(1026/0) 확인.
+- **VSCode Agent Skills:** 검색 결과 `1,218`; `copilot-mcp` 81,317 installs, `agent-skills` 1,764 installs.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillsMP `security-scan` 패턴 | ✅ 도입 | 외부 스킬 intake의 설정/MCP/훅 보안 점검 공백을 직접 보완. 외부 코드 설치 없이 룰셋 내부 재작성 가능. |
+| mcp.so `Figma-Context-MCP` | ⚠️ 참고만 | 디자인-코드 정합 개선 여지는 있으나 Figma 토큰/권한 운영비가 선행됨. |
+| mcp.so `EdgeOne Pages MCP` | ⚠️ 참고만 | 배포 대안 가치는 있으나 현재 GitHub Pages로 1차 대응 가능. |
+| ClawHub `little-snitch` | ⚠️ 참고만 | outbound 감사 용도는 맞지만 Little Snitch 설치/루트 권한 전제 비용 큼. |
+| VSCode `copilot-mcp` / `agent-skills` | ⚠️ 참고만 | 확산 신호는 강하나 OpenClaw CLI 중심 운영과 정합 낮음. |
+| SkillHub `file-search` | ⚠️ 참고만 | 탐색 생산성은 유효하나 현 스택(grep/find + systematic-debugging)으로 대응 가능. |
+
+**불필요 판정:** 21건
+
+### ✅ Actions
+1. `misskim-skills/skills/agent-config-security-scan-lite/` 설계 착수 (Research → Audit → Rewrite)
+2. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+3. MCP Market 429 고착 시 다음 회차 MiniPC browser.proxy 재시도 (attach 가능 시)
+
+### 📁 Full Report
+- `intake-log/2026-02-20-12h-trend-sweep.md`
+- `intake-log/2026-02-20-12h-trend-raw.json`
+
+---
+
 ## 2026-02-20 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
