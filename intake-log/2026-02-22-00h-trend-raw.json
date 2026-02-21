@@ -1,0 +1,231 @@
+{
+  "timestamp_kst": "2026-02-22 00:00",
+  "task": "agent-skill-trend-check",
+  "policy": {
+    "host_browser_used": false,
+    "preferred_collection": [
+      "web_search",
+      "web_fetch"
+    ],
+    "fallback_used": [
+      "r.jina.ai",
+      "direct API",
+      "CLI",
+      "HTML parsing"
+    ],
+    "notes": [
+      "web_search quota exceeded (429)",
+      "MiniPC browser proxy checked via browser target=node; profile openclaw start failed and chrome relay had no attached tab",
+      "Mac Studio host browser not used"
+    ]
+  },
+  "sources": {
+    "web_search": {
+      "status": "failed_429_quota_limited"
+    },
+    "skillsmp": {
+      "status": "ok_via_r_jina",
+      "direct_status": "cloudflare_403_on_main_pages",
+      "metrics": {
+        "total_skills": 239658,
+        "timeline_average_per_period": 1826.2,
+        "timeline_peak_period": 29797,
+        "timeline_peak_at": "2026-02-19",
+        "sitemap_urls": 684,
+        "security_category": 5913,
+        "search_security_results": 10280
+      },
+      "samples": [
+        "openclaw/openclaw healthcheck",
+        "anomalyco/opencode cloudflare",
+        "pytorch/pytorch pr-review"
+      ]
+    },
+    "mcp_market": {
+      "primary": "https://mcpmarket.com",
+      "primary_status": "blocked_429_vercel_checkpoint",
+      "fallback_source": "https://market-mcp.com",
+      "status": "ok_via_fallback_domain",
+      "metrics": {
+        "homepage_mcp_links": 100
+      },
+      "sample_signals": [
+        {
+          "slug": "archon",
+          "signal": 19110
+        },
+        {
+          "slug": "triggerdev",
+          "signal": 18629
+        },
+        {
+          "slug": "chrome-devtools",
+          "signal": 18288
+        },
+        {
+          "slug": "claude-flow",
+          "signal": 13562
+        },
+        {
+          "slug": "contextforge-gateway",
+          "signal": 4009
+        }
+      ]
+    },
+    "skillhub": {
+      "sources": [
+        "https://skillhub.club",
+        "@skill-hub/cli"
+      ],
+      "status": "ok",
+      "metrics": {
+        "homepage_claim": "15,000+ curated skills",
+        "trending_sampled": 30,
+        "latest_sampled": 30,
+        "search_sampled_each": 15
+      },
+      "search_samples": {
+        "security": [
+          "parcadei-continuous-claude-v3-security",
+          "captaincrouton89-claude-security-auditing"
+        ],
+        "code_search": [
+          "intellectronica-agent-skills-mgrep-code-search",
+          "madappgang-claude-code-code-search-selector"
+        ],
+        "browser_automation": [
+          "civitai-civitai-browser-automation",
+          "ynulihao-agentskillos-browser-automation"
+        ],
+        "mcp": [
+          "sveltejs-mcp",
+          "piebald-ai-splitrail-mcp"
+        ]
+      }
+    },
+    "clawhub": {
+      "source": "https://clawhub.ai/api/v1/skills",
+      "status": "partial_ok_then_rate_limited",
+      "metrics": {
+        "newest_sampled": 24,
+        "trending_sampled": 29,
+        "downloads_sampled": 26,
+        "installs_sampled": 29
+      },
+      "samples": {
+        "trending": [
+          {
+            "slug": "gog",
+            "downloads": 31018,
+            "installsCurrent": 486,
+            "stars": 213
+          },
+          {
+            "slug": "summarize",
+            "downloads": 23777,
+            "installsCurrent": 465,
+            "stars": 97
+          },
+          {
+            "slug": "sonoscli",
+            "downloads": 19214,
+            "installsCurrent": 423,
+            "stars": 15
+          }
+        ],
+        "newest": [
+          {
+            "slug": "kagi-fastgpt",
+            "downloads": 0,
+            "installsCurrent": 0,
+            "stars": 0
+          },
+          {
+            "slug": "kagi-summarizer",
+            "downloads": 0,
+            "installsCurrent": 0,
+            "stars": 0
+          }
+        ]
+      }
+    },
+    "vscode_agent_skills": {
+      "source": "VS Marketplace extensionquery API (flags=914)",
+      "status": "ok",
+      "metrics": {
+        "sampled_total": 30
+      },
+      "key_items": [
+        {
+          "id": "AutomataLabs.copilot-mcp",
+          "installs": 81558,
+          "rating": 4.25,
+          "ratingCount": 8
+        },
+        {
+          "id": "formulahendry.agent-skills",
+          "installs": 1796,
+          "rating": 5,
+          "ratingCount": 1
+        },
+        {
+          "id": "yamapan.agent-skill-ninja",
+          "installs": 562,
+          "rating": 5,
+          "ratingCount": 2
+        }
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "item": "SkillHub CLI non-interactive JSON fallback",
+      "verdict": "adopt",
+      "q1_need": "web_search 429 + MiniPC browser proxy 미가용 시에도 스윕 지속 경로가 필요하다.",
+      "q2_redundancy": "기존 clawhub 단일 소스만으로는 멀티마켓 커버가 부족하다.",
+      "q3_cost_effect": "npx 실행만으로 도입 가능하고 설치/유지비가 매우 낮다.",
+      "q4_hype_filter": "홈페이지 문구가 아니라 CLI JSON 실출력으로 검증했다."
+    },
+    {
+      "item": "MCP Market detail-page signal harvester (market-mcp.com)",
+      "verdict": "adopt",
+      "q1_need": "MCP Market 메인 도메인 차단 시 trend signal 수집 공백이 생긴다.",
+      "q2_redundancy": "기존 로그는 링크 리스트 중심이라 숫자 신호 비교가 어렵다.",
+      "q3_cost_effect": "detail 페이지 텍스트 파싱만으로 100개 중 상위 신호 추출 가능하다.",
+      "q4_hype_filter": "설명 문구가 아닌 signal 수치(예: 19110/18629/18288)로 우선순위화 가능하다."
+    },
+    {
+      "item": "MCP Market contextforge-gateway",
+      "verdict": "reference",
+      "q1_need": "MCP+REST 통합 관리는 장기적으로 유용하다.",
+      "q2_redundancy": "현재 OpenClaw gateway + mcporter 조합으로 당장 대체 가능하다.",
+      "q3_cost_effect": "도입 시 운영 경계/인증 설계 복잡도가 증가한다.",
+      "q4_hype_filter": "signal 4009는 의미 있으나 현재 병목 직접 해결 근거는 부족하다."
+    },
+    {
+      "item": "VSCode Copilot MCP + Agent Skills extension cluster",
+      "verdict": "reference",
+      "q1_need": "설치량 신호는 강하다.",
+      "q2_redundancy": "OpenClaw CLI 중심 운영과 정합이 낮고 동일 기능을 CLI로 대체 가능하다.",
+      "q3_cost_effect": "IDE 종속 운영전환 비용이 커서 즉시 ROI가 낮다.",
+      "q4_hype_filter": "설치수 대비 리뷰 표본이 작아 과대평가 위험이 있다."
+    },
+    {
+      "item": "ClawHub newest Kagi pair (kagi-fastgpt / kagi-summarizer)",
+      "verdict": "reference",
+      "q1_need": "검색 fallback 니즈는 존재한다.",
+      "q2_redundancy": "기존 fallback 라인(현재 운영/기획 중)과 기능 중복 가능성이 높다.",
+      "q3_cost_effect": "외부 유료 API 의존 대비 현재 실사용 신호가 0이다.",
+      "q4_hype_filter": "newest 노출만 있고 downloads/installs/stars가 모두 0이다."
+    }
+  ],
+  "discarded_count": 23,
+  "security": {
+    "absolute_block": [
+      "molt road",
+      "molt.host"
+    ],
+    "blind_install": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}

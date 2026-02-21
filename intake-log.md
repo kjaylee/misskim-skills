@@ -1,5 +1,39 @@
 # MissKim Skills Intake Log
 
+## 2026-02-22 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota), MiniPC browser.proxy는 node 점검 시 relay 미연결/프로필 시작 실패.
+- **대체 경로:** `r.jina.ai + direct API + CLI`.
+- **SkillsMP:** `239,658` skills, 평균 `1,826.2`, 피크 `29,797 @ 2026-02-19`, Security `5,913`, `security` 검색 `10,280`.
+- **MCP Market:** `mcpmarket.com` 429 차단, `market-mcp.com` 대체 경로에서 `/mcp/*` `100`개 + 상위 signal(`archon 19,110`, `triggerdev 18,629`, `chrome-devtools 18,288`, `contextforge-gateway 4,009`).
+- **SkillHub:** 홈페이지 `15,000+` 주장 + CLI JSON(trending/latest/search) 수집 성공.
+- **VSCode Agent Skills:** `copilot-mcp` `81,558 installs`, `agent-skills` `1,796 installs`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub CLI non-interactive JSON fallback | ✅ 도입 | web_search 429 + proxy 미가용 시 discovery 중단을 직접 해소. clawhub 단일소스 중복 리스크 완화, npx 기반 저비용 적용 가능. |
+| MCP Market detail-page signal harvester | ✅ 도입 | 메인 도메인 차단 시에도 MCP 후보의 수치 signal 확보 가능. 링크 나열이 아닌 숫자 기반 우선순위화로 즉시 효과. |
+| MCP Market `contextforge-gateway` | ⚠️ 참고만 | 통합관리 니즈는 있으나 현재 OpenClaw gateway + mcporter로 대체 가능. MCP 운영 복잡도 증가 시 재검토. |
+| VSCode `copilot-mcp / agent-skills` 확장군 | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 운영축과 정합 낮음. VSCode 비중 50%+ 전환 시 재검토. |
+| ClawHub newest `kagi-fastgpt / kagi-summarizer` | ⚠️ 참고만 | fallback 니즈는 맞지만 실사용 신호(다운로드/설치/스타) 0으로 과대평가 위험. |
+
+**불필요 판정:** 23건
+
+### ✅ Actions
+1. SkillHub CLI fallback 경로를 intake 루틴에 read-only로 편입 (Research → Audit → Rewrite)
+2. MCP Market detail-page signal 파서를 추가해 상위 후보를 수치 기반으로 정렬
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-22-00h-trend-sweep.md`
+- `intake-log/2026-02-22-00h-trend-raw.json`
+
+---
+
 ## 2026-02-21 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
