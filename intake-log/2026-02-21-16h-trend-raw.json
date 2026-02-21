@@ -1,0 +1,177 @@
+{
+  "timestamp_kst": "2026-02-21 16:00",
+  "task": "agent-skill-trend-check",
+  "policy": {
+    "host_browser_used": false,
+    "preferred_collection": [
+      "web_search",
+      "web_fetch"
+    ],
+    "fallback_used": [
+      "r.jina.ai",
+      "direct API"
+    ],
+    "notes": [
+      "Brave web_search quota exhausted (429)",
+      "MiniPC browser proxy path checked; relay/open profile not available for this run",
+      "MCP Market direct access blocked by Vercel Security Checkpoint"
+    ]
+  },
+  "sources": {
+    "web_search": {
+      "status": "failed_429_quota_limited"
+    },
+    "skillsmp": {
+      "source": "https://r.jina.ai/http://skillsmp.com/timeline + /categories",
+      "status": "ok_via_r_jina",
+      "metrics": {
+        "total_skills": 239658,
+        "average_per_period": 1762.2,
+        "peak_period": 19898,
+        "peak_at": "Feb 4, 2026",
+        "tools": 67701,
+        "development": 54082,
+        "security": 5913
+      }
+    },
+    "mcp_market": {
+      "source": "https://mcpmarket.com",
+      "status": "blocked",
+      "http_status": 429,
+      "note": "Vercel Security Checkpoint"
+    },
+    "skillhub": {
+      "source": "https://r.jina.ai/http://skillhub.club",
+      "status": "ok_via_r_jina",
+      "metrics": {
+        "skills_collected": 21564,
+        "stars": "5.1M",
+        "trending_today_top5": [
+          "discord",
+          "nano-banana-pro",
+          "gifgrep",
+          "feishu-drive",
+          "model-usage"
+        ],
+        "s_rank_sample": [
+          "file-search",
+          "systematic-debugging",
+          "skill-creator",
+          "backend-models-standards"
+        ]
+      }
+    },
+    "clawhub": {
+      "source": "https://clawhub.ai/api/v1/skills/ (partial snapshot before 429)",
+      "status": "partial_then_rate_limited",
+      "sample_latest": [
+        {
+          "slug": "aetherlang-karpathy-skill",
+          "downloads": 0,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "semfind",
+          "downloads": 2,
+          "installsCurrent": 0,
+          "stars": 0
+        },
+        {
+          "slug": "agent-rate-limiter",
+          "downloads": 20,
+          "installsCurrent": 0,
+          "stars": 1
+        },
+        {
+          "slug": "taskflow",
+          "downloads": 17,
+          "installsCurrent": 0,
+          "stars": 0
+        }
+      ]
+    },
+    "vscode_agent_skills": {
+      "source": "VS Marketplace extensionquery API",
+      "status": "ok",
+      "queries": [
+        "agent skills",
+        "mcp",
+        "skillhub"
+      ],
+      "key_items": [
+        {
+          "id": "AutomataLabs.copilot-mcp",
+          "installs": 81509,
+          "rating": 4.25,
+          "ratingCount": 8,
+          "updated": "2026-02-16T05:31:22.773+00:00"
+        },
+        {
+          "id": "formulahendry.agent-skills",
+          "installs": 1789,
+          "rating": 5,
+          "ratingCount": 1,
+          "updated": "2025-12-26T02:13:18.420+00:00"
+        },
+        {
+          "id": "yamapan.agent-skill-ninja",
+          "installs": 559,
+          "rating": 5,
+          "ratingCount": 2,
+          "updated": "2026-02-18T04:52:34.987+00:00"
+        },
+        {
+          "id": "avifenesh.agnix",
+          "installs": 24,
+          "rating": null,
+          "ratingCount": 0,
+          "updated": "2026-02-21T06:03:18.957+00:00"
+        }
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "item": "SkillHub `file-search` 패턴 (ripgrep + ast-grep 운영 플레이북)",
+      "verdict": "adopt",
+      "q1_need": "코드 탐색 결과 과다/문맥 오염 병목이 현재도 반복된다.",
+      "q2_redundancy": "도구는 있지만 표준 실행 루틴(타깃 축소→패턴→증거) 스킬이 없다.",
+      "q3_cost_effect": "문서형 내부 재작성 비용이 낮고, 디버깅/리팩터링 시간 절감이 즉시 기대된다.",
+      "q4_hype_filter": "별점이 아니라 최근 10개 작업의 탐색시간 단축률로 검증 가능하다."
+    },
+    {
+      "item": "ClawHub `agent-rate-limiter`",
+      "verdict": "reference",
+      "q1_need": "429 대응 니즈는 명확하다.",
+      "q2_redundancy": "이미 진행 중인 search-fallback 라인과 목적이 부분 중복된다.",
+      "q3_cost_effect": "외부 설치/유지 대비 즉시 순효과가 불확실하다.",
+      "q4_hype_filter": "downloads/stars가 낮고 installsCurrent=0으로 신뢰 신호가 약하다."
+    },
+    {
+      "item": "VSCode `AutomataLabs.copilot-mcp`",
+      "verdict": "reference",
+      "q1_need": "MCP/skill 관리 니즈 일부는 존재한다.",
+      "q2_redundancy": "OpenClaw CLI + 내부 스킬 구조로 대체 가능하다.",
+      "q3_cost_effect": "VSCode 종속 전환 비용이 크다.",
+      "q4_hype_filter": "설치수는 높지만 리뷰 표본(8)이 작다."
+    },
+    {
+      "item": "MCP Market direct intake",
+      "verdict": "reference",
+      "q1_need": "필요하지만",
+      "q2_redundancy": "현재 회차는 데이터 접근 자체가 차단되어 비교가 불가하다.",
+      "q3_cost_effect": "우회 자동화보다 접속 안정화가 우선이다.",
+      "q4_hype_filter": "검증 데이터 부재 상태에서는 채택 판단 불가."
+    }
+  ],
+  "discarded_count": 34,
+  "security": {
+    "absolute_block": [
+      "molt road",
+      "molt.host"
+    ],
+    "blind_install": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}

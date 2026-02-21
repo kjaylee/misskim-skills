@@ -1,5 +1,38 @@
 # MissKim Skills Intake Log
 
+## 2026-02-21 16:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** Brave `web_search` 429(quota), MCP Market 429(Vercel checkpoint), ClawHub API 429.
+- **대체 경로:** `r.jina.ai + direct API`.
+- **SkillsMP:** `239,658` skills, 평균 `1,762.2`, 피크 `19,898 @ Feb 4, 2026`, Security `5,913`.
+- **SkillHub:** `21,564 skills / 5.1M stars`, Trending Top5 `discord/nano-banana-pro/gifgrep/feishu-drive/model-usage`.
+- **ClawHub:** partial latest snapshot 확보 후 rate limit.
+- **VSCode Agent Skills:** `copilot-mcp` `81,509 installs`, `agent-skills` `1,789 installs`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub `file-search` 패턴 | ✅ 도입 | 반복되는 코드 탐색 병목(과다 결과/컨텍스트 오염)을 직접 해소. 도구는 이미 있으나 실행 전략 스킬 부재. 저비용 내부 재작성 가능하며 효과는 최근 10개 작업 탐색시간 단축률로 검증 가능. |
+| ClawHub `agent-rate-limiter` | ⚠️ 참고만 | 429 대응 니즈는 맞지만 기존 search-fallback 라인과 목적 중복. `installsCurrent=0`로 신뢰 신호 약함. |
+| VSCode `AutomataLabs.copilot-mcp` | ⚠️ 참고만 | 설치 신호 강하지만 VSCode 종속 비용 큼. OpenClaw CLI 기반 운영으로 대체 가능. |
+| MCP Market direct intake | ⚠️ 참고만 | 필요 소스이나 429 차단으로 이번 회차 품질 비교 불가. |
+
+**불필요 판정:** 34건
+
+### ✅ Actions
+1. `misskim-skills/skills/code-search-playbook/` 내부 재작성 착수 (Research → Audit → Rewrite)
+2. 최근 10개 코드 작업 기준 탐색 시간/오탐률 검증 계획 적용
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-21-16h-trend-sweep.md`
+- `intake-log/2026-02-21-16h-trend-raw.json`
+
+---
+
 ## 2026-02-21 12:10 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
