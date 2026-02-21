@@ -1,0 +1,173 @@
+{
+  "timestampKST": "2026-02-22T04:01:00+09:00",
+  "task": "agent-skill-trend-check",
+  "constraints": {
+    "hostBrowserForbidden": true,
+    "hostBrowserUsed": false,
+    "minipcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlock": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave API 429 quota/rate limited"
+    },
+    "webFetch": {
+      "status": "partial",
+      "notes": "Used direct fetch and r.jina.ai fallback where anti-bot blocked direct fetch"
+    },
+    "miniPCBrowserProxy": {
+      "status": "degraded",
+      "notes": "openclaw profile start failed; chrome relay tab not attached"
+    },
+    "miniPCSystemRun": {
+      "status": "used",
+      "notes": "Playwright headless extraction on MiniPC for mcpmarket.com"
+    }
+  },
+  "sources": {
+    "skillsmp": {
+      "url": "https://r.jina.ai/http://skillsmp.com/ko",
+      "signals": {
+        "skillsTotal": 261145,
+        "browseCap": 5000,
+        "standard": "open SKILL.md",
+        "claim": "Search through 200000++ skills"
+      }
+    },
+    "mcpMarket": {
+      "url": "https://mcpmarket.com/",
+      "signals": {
+        "serversTotal": 21654,
+        "updated": "3 hours ago",
+        "officialTop": [
+          {"name": "Magic", "score": 4283},
+          {"name": "Firecrawl", "score": 4195},
+          {"name": "Browserbase", "score": 3141},
+          {"name": "Bright Data", "score": 2045},
+          {"name": "ElevenLabs", "score": 1225}
+        ],
+        "featuredTop": [
+          {"name": "Superpowers", "score": 56294},
+          {"name": "TrendRadar", "score": 46653},
+          {"name": "Context7", "score": 46347},
+          {"name": "Ghidra", "score": 7659},
+          {"name": "Unity", "score": 2649},
+          {"name": "Godot", "score": 1867}
+        ]
+      }
+    },
+    "skillhub": {
+      "url": "https://www.skill-marketplace.com/",
+      "signals": {
+        "skillsTotal": 541,
+        "githubSources": 55,
+        "downloads": "111k",
+        "topSkill": "gemini-cli",
+        "topSkillStars": "94.1k"
+      },
+      "repo": {
+        "url": "https://github.com/skillhub-club/skillhub-desktop",
+        "stars": 278,
+        "forks": 5,
+        "openIssues": 0,
+        "pushedAt": "2026-01-30T10:33:29Z"
+      }
+    },
+    "clawhub": {
+      "queries": ["security audit", "mcp", "godot"],
+      "sample": [
+        {
+          "slug": "security-audit-toolkit",
+          "downloads": 1765,
+          "installsCurrent": 6,
+          "stars": 4,
+          "updatedAt": 1771696835890
+        },
+        {
+          "slug": "mcp-skill",
+          "downloads": 1496,
+          "installsCurrent": 2,
+          "stars": 0,
+          "updatedAt": 1771700135880
+        },
+        {
+          "slug": "openclaw-godot-skill",
+          "downloads": 549,
+          "installsCurrent": 0,
+          "stars": 0,
+          "updatedAt": 1771695335940
+        }
+      ],
+      "registryRepo": {
+        "url": "https://api.github.com/repos/openclaw/clawhub",
+        "stars": 2500,
+        "forks": 571,
+        "openIssues": 288
+      }
+    },
+    "vscodeAgentSkills": {
+      "officialDocs": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
+      "blog": "https://code.visualstudio.com/blogs/2026/02/05/multi-agent-development",
+      "signals": {
+        "status": "GA in VS Code 1.109",
+        "chatSkillsContribution": true,
+        "extensions": [
+          {"id": "AutomataLabs.copilot-mcp", "installs": "81.5K"},
+          {"id": "formulahendry.agent-skills", "installs": "1.8K"},
+          {"id": "avifenesh.agnix", "installs": 26}
+        ],
+        "githubRepo": {
+          "url": "https://github.com/formulahendry/vscode-agent-skills",
+          "stars": 23,
+          "forks": 7,
+          "openIssues": 0,
+          "pushedAt": "2025-12-26T02:07:16Z"
+        }
+      }
+    }
+  },
+  "decisions": [
+    {
+      "item": "ClawHub security-audit-toolkit 패턴 흡수 (내부 보안 인테이크 게이트 v2)",
+      "verdict": "adopt",
+      "why": [
+        "외부 스킬 검수 병목(공급망/시크릿/권한 과다) 해결 필요",
+        "기존 규칙은 분산되어 있고 재현 가능한 점수화 루틴이 부족",
+        "도입 비용은 낮고(패턴 재작성) 실패 비용 절감 효과가 큼",
+        "다운로드 외에도 installsCurrent(6), stars(4), 최근 업데이트로 최소 신뢰 신호 확보"
+      ]
+    },
+    {
+      "item": "VS Code chatSkills 패키징 경로(공식 표준) 병행 지원",
+      "verdict": "adopt",
+      "why": [
+        "문제: OpenClaw 밖에서 미스김 스킬 재사용 진입장벽이 높음",
+        "기존 clawhub 배포만으로는 VS Code/Copilot 네이티브 유통 경로를 직접 대체 못함",
+        "초기 비용은 소수 핵심 스킬 포장으로 제한 가능",
+        "공식 문서/릴리스 기반(마케팅 문구보다 표준 기능 근거)"
+      ]
+    },
+    {
+      "item": "SkillsMP 대규모 카탈로그 직접 흡수",
+      "verdict": "reference",
+      "recheckWhen": "카테고리별 정밀 API 또는 신뢰 점수 필드 공개 시"
+    },
+    {
+      "item": "MCP Market 상위 서버(Feature/Official) 즉시 도입",
+      "verdict": "reference",
+      "recheckWhen": "현재 도구로 해결 불가한 실병목(브라우저/문서/게임제어)이 2주 연속 재발할 때"
+    },
+    {
+      "item": "SkillHub Marketplace/Desktop 즉시 도입",
+      "verdict": "reference",
+      "recheckWhen": "비-CLI 협업자 온보딩 필요가 명확해질 때"
+    },
+    {
+      "item": "VSCode 서드파티 extension(Agent Skills/agnix) 직접 도입",
+      "verdict": "reference",
+      "recheckWhen": "VSCode 작업 비중이 50% 이상으로 상승하고 OpenClaw 경로 대비 ROI가 확인될 때"
+    }
+  ],
+  "unnecessaryCount": 16
+}

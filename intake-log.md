@@ -1,5 +1,41 @@
 # MissKim Skills Intake Log
 
+## 2026-02-22 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), MiniPC browser.proxy는 openclaw profile start 실패 + chrome relay 미연결.
+- **대체 경로:** MiniPC `system.run` Playwright + `r.jina.ai` + direct API/CLI.
+- **SkillsMP:** `261,145` skills, browse cap `5,000` 확인.
+- **MCP Market:** `21,654` servers(업데이트 `3 hours ago`), 상위 signal `Superpowers 56,294`, `Context7 46,347`, `Magic 4,283`, `Firecrawl 4,195`, `Browserbase 3,141`, `Godot 1,867`.
+- **SkillHub:** `541 skills / 55 sources / 111k downloads`(홈 기준).
+- **ClawHub:** `security-audit-toolkit` 실사용 신호(`downloads 1,765 / installsCurrent 6 / stars 4`) 확인.
+- **VSCode Agent Skills:** 공식 `chatSkills` GA + 확장 설치 신호(`copilot-mcp 81.5K`, `agent-skills 1.8K`, `agnix 26`).
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `security-audit-toolkit` 패턴 흡수 (내부 보안 인테이크 게이트 v2) | ✅ 도입 | 외부 스킬 intake 보안 검수 병목을 직접 해결. 기존 규칙 분산 상태를 점수화 게이트로 통합 가능. 낮은 도입비 대비 리스크 절감 효과가 큼. |
+| VS Code `chatSkills` 패키징 경로(공식 표준) 병행 지원 | ✅ 도입 | OpenClaw 외 협업 환경에서 스킬 재사용 장벽을 낮춤. clawhub 단일 경로의 유통 한계를 보완하며 공식 표준이라 신뢰성 높음. |
+| SkillsMP 대규모 카탈로그 직접 흡수 | ⚠️ 참고만 | 규모는 크지만 노이즈/차단으로 정밀 필터 품질이 낮음. 카테고리 API/신뢰도 필드 안정화 시 재검토. |
+| MCP Market 상위 서버 즉시 도입 | ⚠️ 참고만 | 지표는 강하나 기존 스택으로 1차 대체 가능. 동일 병목이 2주 연속 반복되면 재검토. |
+| SkillHub Marketplace/Desktop 즉시 도입 | ⚠️ 참고만 | GUI 멀티툴 관리 가치는 있으나 CLI 중심 운영축과 정합 낮음. 협업 온보딩 수요 확정 시 재검토. |
+| VSCode 서드파티 확장(`agent-skills`, `agnix`) 직접 도입 | ⚠️ 참고만 | 현재 운영축(OpenClaw CLI)과 불일치. VSCode 비중 50%+일 때 재검토. |
+
+**불필요 판정:** 16건
+
+### ✅ Actions
+1. `security-audit-toolkit` 패턴을 내부형 보안 인테이크 게이트 v2로 재작성 (Research → Audit → Rewrite)
+2. 핵심 스킬 3개를 VS Code `chatSkills` 포맷으로 PoC 패키징
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-22-04h-trend-sweep.md`
+- `intake-log/2026-02-22-04h-trend-raw.json`
+
+---
+
 ## 2026-02-22 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
