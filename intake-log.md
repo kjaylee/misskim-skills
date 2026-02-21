@@ -1,5 +1,38 @@
 # MissKim Skills Intake Log
 
+## 2026-02-21 12:10 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** Brave `web_search` 429(quota), MCP Market 429(Vercel checkpoint)로 일부 차단.
+- **대체 경로:** `r.jina.ai` + direct API/CLI로 수집 지속.
+- **SkillsMP:** `239,658` skills, 평균 `1,762.2`, 피크 `19,898 @ Feb 4, 2026`, `security` 검색 `8,590`.
+- **SkillHub:** `21.6K Skills / 4.8M Stars`, Trending Top5 `gifgrep/feishu-drive/model-usage/wacli/slack`.
+- **ClawHub:** newest 30 / trending 29 샘플 수집.
+- **VSCode Agent Skills:** relevance 필터 32개, 상위 `copilot-mcp` `81,492 installs`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub `file-search` 패턴 (ripgrep + ast-grep 워크플로) | ✅ 도입 | 코드 탐색 과다 결과/컨텍스트 오염 병목을 직접 해결. 도구는 있으나 실행 전략 스킬이 없어 재현성이 낮음. 저비용 재작성 가능, 효과는 최근 10개 작업 탐색시간 단축률로 검증. |
+| VSCode `AutomataLabs.copilot-mcp` | ⚠️ 참고만 | MCP/skill 관리 니즈는 있으나 OpenClaw + clawhub CLI로 대체 가능. VSCode 종속 비용 대비 ROI 제한. |
+| ClawHub newest 저신뢰 클러스터 | ⚠️ 참고만 | 일부 유용 가능성은 있으나 기존 스킬과 중복 다수 + 낮은 `installsCurrent`로 즉시 도입 근거 약함. |
+| MCP Market direct intake | ⚠️ 참고만 | 필요하지만 이번 회차는 429 차단으로 품질 검증 자체가 불가. 접속 안정화 후 재검토. |
+
+**불필요 판정:** 32건
+
+### ✅ Actions
+1. `misskim-skills/skills/code-search-playbook/` 설계 착수 (Research → Audit → Rewrite)
+2. 최근 10개 코드 작업 기준 탐색 시간/오탐률 검증 계획 수립
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-21-12h-trend-sweep.md`
+- `intake-log/2026-02-21-12h-trend-raw.json`
+
+---
+
 ## 2026-02-21 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

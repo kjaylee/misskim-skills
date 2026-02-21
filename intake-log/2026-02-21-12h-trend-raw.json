@@ -1,0 +1,318 @@
+{
+  "timestamp_kst": "2026-02-21 12:10",
+  "task": "agent-skill-trend-check",
+  "policy": {
+    "host_browser_used": false,
+    "collection_priority": [
+      "web_search",
+      "web_fetch"
+    ],
+    "fallback": [
+      "r.jina.ai",
+      "direct API/CLI"
+    ],
+    "notes": [
+      "MCP Market blocked by Vercel checkpoint; used prior shortlist only, no blind inference"
+    ]
+  },
+  "sources": {
+    "web_search": {
+      "status": "failed_429_quota_limited"
+    },
+    "skillsmp": {
+      "status": "ok_via_r_jina",
+      "metrics": {
+        "total_skills": 239658,
+        "timeline_avg_per_period": 1762.2,
+        "timeline_peak": 19898,
+        "timeline_peak_at": "Feb 4, 2026",
+        "security_search_results": 8590
+      }
+    },
+    "mcp_market": {
+      "status": "blocked",
+      "http_status": 429,
+      "note": "Vercel security checkpoint"
+    },
+    "skillhub": {
+      "status": "ok_via_r_jina",
+      "metrics": {
+        "totals": "21.6KSkills•4.8MStars",
+        "trending_top5": [
+          "gifgrep",
+          "feishu-drive",
+          "model-usage",
+          "wacli",
+          "slack"
+        ],
+        "must_have_sample": [
+          "file-search",
+          "systematic-debugging",
+          "skill-creator",
+          "backend-models-standards"
+        ]
+      }
+    },
+    "clawhub": {
+      "status": "ok_via_cli",
+      "metrics": {
+        "newest_sample": [
+          {
+            "slug": "bitcoin-daily",
+            "downloads": 932,
+            "installsCurrent": 2,
+            "stars": 1
+          },
+          {
+            "slug": "update-plus",
+            "downloads": 904,
+            "installsCurrent": 0,
+            "stars": 1
+          },
+          {
+            "slug": "lobster",
+            "downloads": 813,
+            "installsCurrent": 3,
+            "stars": 1
+          },
+          {
+            "slug": "migrate",
+            "downloads": 523,
+            "installsCurrent": 0,
+            "stars": 0
+          },
+          {
+            "slug": "proton-pass",
+            "downloads": 761,
+            "installsCurrent": 1,
+            "stars": 0
+          },
+          {
+            "slug": "openspec",
+            "downloads": 1011,
+            "installsCurrent": 1,
+            "stars": 0
+          },
+          {
+            "slug": "skills-devo",
+            "downloads": 500,
+            "installsCurrent": 0,
+            "stars": 0
+          },
+          {
+            "slug": "fabric-bridge",
+            "downloads": 526,
+            "installsCurrent": 0,
+            "stars": 1
+          },
+          {
+            "slug": "paper-recommendation",
+            "downloads": 775,
+            "installsCurrent": 0,
+            "stars": 1
+          },
+          {
+            "slug": "prose",
+            "downloads": 598,
+            "installsCurrent": 1,
+            "stars": 0
+          }
+        ],
+        "trending_sample": [
+          {
+            "slug": "sonoscli",
+            "downloads": 18965,
+            "installsCurrent": 410,
+            "stars": 14
+          },
+          {
+            "slug": "gog",
+            "downloads": 30358,
+            "installsCurrent": 474,
+            "stars": 205
+          },
+          {
+            "slug": "github",
+            "downloads": 22290,
+            "installsCurrent": 382,
+            "stars": 63
+          },
+          {
+            "slug": "summarize",
+            "downloads": 23223,
+            "installsCurrent": 448,
+            "stars": 93
+          },
+          {
+            "slug": "weather",
+            "downloads": 19120,
+            "installsCurrent": 325,
+            "stars": 49
+          },
+          {
+            "slug": "openai-whisper",
+            "downloads": 10242,
+            "installsCurrent": 252,
+            "stars": 45
+          },
+          {
+            "slug": "skill-creator",
+            "downloads": 7750,
+            "installsCurrent": 219,
+            "stars": 24
+          },
+          {
+            "slug": "notion",
+            "downloads": 12298,
+            "installsCurrent": 263,
+            "stars": 43
+          },
+          {
+            "slug": "obsidian",
+            "downloads": 11214,
+            "installsCurrent": 249,
+            "stars": 36
+          },
+          {
+            "slug": "gemini",
+            "downloads": 6999,
+            "installsCurrent": 226,
+            "stars": 18
+          }
+        ],
+        "molt_keyword_hits": []
+      }
+    },
+    "vscode_agent_skills": {
+      "status": "ok_via_marketplace_api",
+      "metrics": {
+        "relevant_count": 32,
+        "top10": [
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 81492,
+            "rating": 4.25,
+            "ratingCount": 8,
+            "updated": "2026-02-16T05:31:22.773+00:00"
+          },
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1786,
+            "rating": 5,
+            "ratingCount": 1,
+            "updated": "2025-12-26T02:13:18.42+00:00"
+          },
+          {
+            "id": "gaoyuan.skills-vscode",
+            "installs": 662,
+            "rating": null,
+            "ratingCount": 0,
+            "updated": "2026-02-12T09:04:05.497+00:00"
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "installs": 558,
+            "rating": 5,
+            "ratingCount": 2,
+            "updated": "2026-02-18T04:52:34.987+00:00"
+          },
+          {
+            "id": "xiaxiangfeng.skills-sh-vscode",
+            "installs": 225,
+            "rating": 5,
+            "ratingCount": 1,
+            "updated": "2026-02-06T04:36:28.89+00:00"
+          },
+          {
+            "id": "lawvable.minimal-agent-workspace",
+            "installs": 205,
+            "rating": 5,
+            "ratingCount": 2,
+            "updated": "2026-02-04T23:31:58.58+00:00"
+          },
+          {
+            "id": "garrettsiegel.lobstore-skills",
+            "installs": 170,
+            "rating": null,
+            "ratingCount": 0,
+            "updated": "2026-01-31T20:36:22.953+00:00"
+          },
+          {
+            "id": "Ralphysh.ralphy-sh",
+            "installs": 164,
+            "rating": null,
+            "ratingCount": 0,
+            "updated": "2026-01-24T12:28:39.143+00:00"
+          },
+          {
+            "id": "laurids.agent-skills-sh",
+            "installs": 129,
+            "rating": 5,
+            "ratingCount": 1,
+            "updated": "2026-02-07T17:16:01.55+00:00"
+          },
+          {
+            "id": "whyuds.agent-skills-manager",
+            "installs": 110,
+            "rating": null,
+            "ratingCount": 0,
+            "updated": "2026-01-24T15:11:06.27+00:00"
+          }
+        ]
+      }
+    }
+  },
+  "candidates": [
+    {
+      "item": "SkillHub must-have `file-search` pattern (ripgrep + ast-grep workflow)",
+      "source": "skillhub",
+      "verdict": "adopt",
+      "q1_need": "코드베이스 탐색 시 과도한 결과/컨텍스트 오염 문제가 반복됨.",
+      "q2_redundancy": "현재 tools는 존재하지만 검색 전략을 강제하는 실행 스킬이 부재.",
+      "q3_cost_vs_effect": "낮은 도입비용(문서형 스킬 재작성) 대비 디버깅/리팩터 속도 개선 기대.",
+      "q4_hype_check": "별점/설치수는 참고만. 최근 10개 작업에서 탐색시간 단축률로 검증 예정.",
+      "plan": [
+        "Research: file-search 절차(타깃 축소→패턴 탐색→증거 캡처) 추출",
+        "Audit: 우리 코드규모 기준 false-positive 억제 룰 추가",
+        "Rewrite: misskim-skills/skills/code-search-playbook/ 초안 작성",
+        "Validate: 최근 10개 코드 작업에서 탐색 시간/오탐 비율 측정"
+      ]
+    },
+    {
+      "item": "VSCode `AutomataLabs.copilot-mcp`",
+      "source": "vscode",
+      "verdict": "reference",
+      "q1_need": "MCP/skill 관리 니즈는 있으나",
+      "q2_redundancy": "OpenClaw + clawhub CLI + 로컬 스킬 구조로 대체 가능",
+      "q3_cost_vs_effect": "VSCode 종속 비용이 높고 현재 운영축과 불일치",
+      "q4_hype_check": "설치수(81k)는 높지만 리뷰 표본이 8개로 품질 신뢰 한계"
+    },
+    {
+      "item": "ClawHub newest low-trust cluster (e.g., supernote-cloud, voice-agent, docker-diag)",
+      "source": "clawhub",
+      "verdict": "reference",
+      "q1_need": "일부 기능은 유용 가능",
+      "q2_redundancy": "대부분 기존 스킬(요약/자동화/운영)과 중복",
+      "q3_cost_vs_effect": "신규 설치/검증 비용 대비 즉시 ROI 낮음",
+      "q4_hype_check": "installsCurrent 저조 + 신규 급증 패턴은 과대포장 가능성"
+    },
+    {
+      "item": "MCP Market direct intake",
+      "source": "mcp_market",
+      "verdict": "reference",
+      "q1_need": "필요하지만",
+      "q2_redundancy": "현재 회차는 데이터 접근 불가로 비교 불충분",
+      "q3_cost_vs_effect": "우회 자동화 비용보다 접속 안정화가 선행되어야 함",
+      "q4_hype_check": "차단 상태에서는 품질검증 자체가 불가능"
+    }
+  ],
+  "discarded_count": 32,
+  "security": {
+    "absolute_block": [
+      "molt road",
+      "molt.host"
+    ],
+    "blind_install": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}
