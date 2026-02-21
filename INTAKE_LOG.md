@@ -1,5 +1,39 @@
 # MissKim Skills Intake Log
 
+## 2026-02-21 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **실패 신호:** `web_search` 429(quota), MiniPC browser.proxy 노드 연결 불가.
+- **대체 경로:** direct API/CLI/curl RSS로 수집 지속.
+- **SkillsMP:** `sitemap 684 URLs`, lastmod `2026-02-06` 확인(본 사이트 직접 접근은 Cloudflare 차단).
+- **MCP Market:** 홈 기준 `/mcp/*` 링크 `100`개, 샘플 신호 `chrome-devtools(18288)`, `claude-flow(13562)`, `contextforge-gateway(4009)`.
+- **SkillHub(Agent Skills):** 홈페이지 `15,000+` 주장 + `@skill-hub/cli` 비대화식 JSON 수집 성공.
+- **ClawHub:** `explore --json` 샘플 `56개(47 unique)`.
+- **VSCode Agent Skills:** extensionquery 샘플 `24개(22 unique)`, `copilot-mcp` `81,534 installs`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub `@skill-hub/cli` 비대화식 intake 경로 | ✅ 도입 | Brave 429 + MiniPC disconnect 동시 발생 시 discovery가 멈춤. clawhub 단일 소스로는 백업이 불충분하며, npx + `--json --no-select`로 저비용 복구 가능. |
+| MCP Market `contextforge-gateway` | ⚠️ 참고만 | MCP/REST 통합 가치는 있으나 현 단계에선 OpenClaw gateway + 기존 도구 조합으로 대응 가능. |
+| ClawHub `find-skills` 및 상위 탐색군 | ⚠️ 참고만 | 탐색 니즈는 맞지만 현재 `clawhub search/explore + intake-log`와 기능 중복. |
+| VSCode `copilot-mcp / agent-skills` 확장군 | ⚠️ 참고만 | 설치 신호는 강하나 OpenClaw CLI 중심 운영과 정합 낮음. |
+| SkillsMP direct intake | ⚠️ 참고만 | 필요한 소스이나 이번 회차는 차단으로 검증 데이터가 제한됨. |
+
+**불필요 판정:** 27건
+
+### ✅ Actions
+1. SkillHub CLI 출력(`slug/repo_url/github_stars`)을 intake 표준 필드로 매핑
+2. `web_search` 장애(429/timeout) 시 SkillHub CLI read-only fallback 적용
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-21-20h-trend-sweep.md`
+- `intake-log/2026-02-21-20h-trend-raw.json`
+
+---
+
 ## 2026-02-21 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

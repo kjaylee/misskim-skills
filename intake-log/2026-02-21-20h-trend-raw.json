@@ -1,0 +1,206 @@
+{
+  "timestamp_kst": "2026-02-21 20:00",
+  "task": "agent-skill-trend-check",
+  "policy": {
+    "host_browser_used": false,
+    "preferred_collection": [
+      "web_search",
+      "web_fetch"
+    ],
+    "fallback_used": [
+      "direct API",
+      "CLI",
+      "curl/rss"
+    ],
+    "notes": [
+      "Brave web_search quota exceeded (429)",
+      "MiniPC browser.proxy node disconnected",
+      "Mac Studio host browser was not used"
+    ]
+  },
+  "sources": {
+    "web_search": {
+      "status": "failed_429_quota_limited"
+    },
+    "skillsmp": {
+      "status": "partially_accessible",
+      "accessible": [
+        "sitemap.xml",
+        "robots.txt"
+      ],
+      "blocked": [
+        "/",
+        "/search",
+        "/timeline",
+        "/docs"
+      ],
+      "metrics": {
+        "sitemap_urls": 684,
+        "lastmod_latest": "2026-02-06T13:28:47.000Z"
+      }
+    },
+    "mcp_market": {
+      "source": "https://market-mcp.com",
+      "status": "ok",
+      "metrics": {
+        "homepage_mcp_links": 100
+      },
+      "samples": [
+        {
+          "slug": "chrome-devtools",
+          "signal": 18288
+        },
+        {
+          "slug": "claude-flow",
+          "signal": 13562
+        },
+        {
+          "slug": "contextforge-gateway",
+          "signal": 4009
+        },
+        {
+          "slug": "anyquery",
+          "signal": 2201
+        }
+      ]
+    },
+    "skillhub": {
+      "sources": [
+        "https://www.skillhub.club/",
+        "@skill-hub/cli",
+        "skillhub-club/skillhub-desktop releases"
+      ],
+      "status": "ok",
+      "metrics": {
+        "homepage_claim": "15,000+ curated skills",
+        "cli_sampled": 24
+      },
+      "samples": [
+        {
+          "slug": "dnyoussef-context-cascade-gemini-search",
+          "github_stars": 15
+        },
+        {
+          "slug": "zenobi-us-dotfiles-brave-search",
+          "github_stars": 30
+        },
+        {
+          "slug": "inferencesh-skills-web-search",
+          "github_stars": 0
+        }
+      ]
+    },
+    "clawhub": {
+      "source": "clawhub explore --json",
+      "status": "ok",
+      "metrics": {
+        "sampled_total": 56,
+        "sampled_unique": 47
+      },
+      "top_downloads_sample": [
+        {
+          "slug": "gog",
+          "downloads": 30782,
+          "stars": 210
+        },
+        {
+          "slug": "summarize",
+          "downloads": 23568,
+          "stars": 96
+        },
+        {
+          "slug": "agent-browser",
+          "downloads": 23493,
+          "stars": 112
+        }
+      ]
+    },
+    "vscode_agent_skills": {
+      "source": "VS Marketplace extensionquery API",
+      "status": "ok",
+      "queries": [
+        "agent skills",
+        "copilot mcp",
+        "skill hub"
+      ],
+      "metrics": {
+        "sampled_total": 24,
+        "sampled_unique": 22
+      },
+      "key_items": [
+        {
+          "id": "AutomataLabs.copilot-mcp",
+          "installs": 81534,
+          "rating": 4.25,
+          "ratingCount": 8,
+          "published": "2026-02-16T05:31:22.773Z"
+        },
+        {
+          "id": "formulahendry.agent-skills",
+          "installs": 1794,
+          "rating": 5,
+          "ratingCount": 1,
+          "published": "2025-12-26T02:13:18.417Z"
+        },
+        {
+          "id": "yamapan.agent-skill-ninja",
+          "installs": 561,
+          "rating": 5,
+          "ratingCount": 2,
+          "published": "2026-02-18T04:52:34.987Z"
+        }
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "item": "SkillHub CLI (@skill-hub/cli) non-interactive intake path",
+      "verdict": "adopt",
+      "q1_need": "Brave 429 + MiniPC disconnect가 동시에 발생하면 신규 스킬 탐색이 멈춘다.",
+      "q2_redundancy": "clawhub explore는 단일 소스라 멀티마켓 백업이 안 된다.",
+      "q3_cost_effect": "추가 인프라 없이 npx/JSON 수집이 가능해 도입비가 낮다.",
+      "q4_hype_filter": "마케팅 문구 대신 CLI 실출력(슬러그/깃허브 스타)으로 검증 가능했다."
+    },
+    {
+      "item": "MCP Market contextforge-gateway",
+      "verdict": "reference",
+      "q1_need": "MCP/REST 통합 관리 니즈는 존재한다.",
+      "q2_redundancy": "현재 OpenClaw gateway + 기존 도구 조합으로 당장 대체 가능하다.",
+      "q3_cost_effect": "도입 시 설계/운영 복잡도가 커 즉시 ROI가 불확실하다.",
+      "q4_hype_filter": "노출 지표는 높지만 실제 내부 병목 해소 효과는 미검증이다."
+    },
+    {
+      "item": "ClawHub find-skills + 상위 탐색군",
+      "verdict": "reference",
+      "q1_need": "탐색 효율 니즈는 맞다.",
+      "q2_redundancy": "이미 clawhub search/explore와 내부 intake 로그 루틴으로 커버 가능하다.",
+      "q3_cost_effect": "신규 설치 대비 순증 가치가 낮다.",
+      "q4_hype_filter": "다운로드 상위군 다수가 기존 보유/운영 스킬과 중복이다."
+    },
+    {
+      "item": "VSCode Copilot MCP + Agent Skills 확장군",
+      "verdict": "reference",
+      "q1_need": "신호는 강하지만",
+      "q2_redundancy": "OpenClaw CLI 중심 워크플로우와 운영축이 다르다.",
+      "q3_cost_effect": "IDE 종속 전환 비용이 크다.",
+      "q4_hype_filter": "설치수 대비 리뷰 표본이 작은 항목이 많아 과대평가 가능성이 있다."
+    },
+    {
+      "item": "SkillsMP direct intake",
+      "verdict": "reference",
+      "q1_need": "필요 소스임은 분명하다.",
+      "q2_redundancy": "이번 회차는 Cloudflare 차단으로 검증 가능한 데이터가 제한됐다.",
+      "q3_cost_effect": "우회 자동화 투자보다 접근 안정화가 우선이다.",
+      "q4_hype_filter": "실데이터 부족 상태에서는 도입 판단을 미루는 것이 안전하다."
+    }
+  ],
+  "discarded_count": 27,
+  "security": {
+    "absolute_block": [
+      "molt road",
+      "molt.host"
+    ],
+    "blind_install": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}
