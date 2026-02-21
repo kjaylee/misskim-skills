@@ -1,5 +1,41 @@
 # MissKim Skills Intake Log
 
+## 2026-02-22 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), 브라우저 자동화는 불필요하여 MiniPC browser.proxy 미사용.
+- **대체 경로:** `web_fetch + r.jina.ai`.
+- **SkillsMP:** `261,145` skills, browse cap `5,000`.
+- **MCP Market:** `mcpmarket.com` 429, 대체 `market-mcp.com`에서 `6,409` 서버(`100` 노출) 및 상위 signal 확인.
+- **SkillHub:** `21.6K skills / 5.2M stars`, Trending 상단 `discord / nano-banana-pro / gifgrep / feishu-drive / model-usage`.
+- **ClawHub:** API `api/v1/skills` 429, `skills?sort=newest` 텍스트 수집으로 신규군 확인.
+- **VSCode Agent Skills:** 공식 docs에서 `chatSkills` + slash command 경로 확인, 설치 신호 `copilot-mcp 81.5K`, `agent-skills 1.8K`, `agnix 26`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub newest 저신호 군 (`approvals-ui`, `summarize-file`, `prospairrow-websites-mcp`) | ⚠️ 참고만 | 일부 니즈는 있으나 현재 핵심 병목(일일 게임/서비스 생산)과 직접 정합이 약함. 신호(0~1)도 낮아 과대평가 위험. |
+| MCP Market 상위군 (`Archon`, `Trigger.dev`, `Chrome DevTools`) | ⚠️ 참고만 | 숫자 신호는 강하나 `browser-cdp-automation`, `coding-agent` 등 기존 스택으로 대체 가능. MCP 운영 복잡도 대비 즉시 ROI 낮음. |
+| VSCode 확장군 (`copilot-mcp`, `agent-skills`, `agnix`) | ⚠️ 참고만 | 설정 검증·유통 니즈는 유효하지만 현재 OpenClaw CLI 중심 운영축과 불일치. VSCode 비중 증가 시 재검토. |
+| SkillsMP 대규모 카탈로그 직접 흡수 | ⚠️ 참고만 | 카탈로그 규모는 크지만 품질 신호 분리 비용이 큼. 신뢰도 점수/API 안정화 전까지 참고 유지. |
+
+**✅ 도입:** 없음 (이번 회차)
+
+**불필요 판정:** 17건
+
+### ✅ Actions
+1. 즉시 신규 도입 보류 (근거 부족)
+2. 기존 도입안(`security-audit-toolkit` 패턴 흡수, VS Code `chatSkills` 병행 지원) 실행 지속
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-22-08h-trend-sweep.md`
+- `intake-log/2026-02-22-08h-trend-raw.json`
+
+---
+
 ## 2026-02-22 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
