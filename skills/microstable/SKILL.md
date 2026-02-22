@@ -36,7 +36,7 @@ microstable/
 작업 경로:
 
 ```bash
-cd /Users/kjaylee/.openclaw/workspace/misskim-skills/skills/microstable
+cd $WORKSPACE/misskim-skills/skills/microstable
 ```
 
 ### 1) 프로토콜 상태 조회
