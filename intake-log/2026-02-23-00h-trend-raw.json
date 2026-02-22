@@ -1,0 +1,177 @@
+{
+  "timestampKST": "2026-02-23T00:00:00+09:00",
+  "task": "agent-skill-trend-check",
+  "constraints": {
+    "hostBrowserForbidden": true,
+    "hostBrowserUsed": false,
+    "minipcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "miniPCBrowserProxyUsed": false,
+    "miniPCBrowserProxyFailure": "Chrome extension relay has no attached tab",
+    "moltBlock": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave Search API 429 (quota exceeded)"
+    },
+    "webFetch": {
+      "status": "ok_with_fallback",
+      "notes": "Used web_fetch + r.jina.ai mirror for anti-bot protected pages"
+    },
+    "miniPCBrowserProxy": {
+      "status": "attempted_but_unavailable",
+      "notes": "target=node used only; no host browser used"
+    }
+  },
+  "sources": {
+    "skillsmp": {
+      "urls": [
+        "https://r.jina.ai/http://skillsmp.com",
+        "https://r.jina.ai/http://skillsmp.com/timeline",
+        "https://r.jina.ai/http://skillsmp.com/categories"
+      ],
+      "signals": {
+        "totalSkills": 261145,
+        "peakPeriod": 29027,
+        "peakPeriodDate": "Feb 19, 2026",
+        "domainTop": {
+          "tools": 71840,
+          "development": 56892,
+          "business": 44784,
+          "dataAi": 37420
+        }
+      }
+    },
+    "mcpMarket": {
+      "primaryUrl": "https://mcpmarket.com",
+      "primaryStatus": "blocked_429_vercel_checkpoint",
+      "fallbackUrl": "https://r.jina.ai/http://mcpmarket.cn",
+      "fallbackSignals": {
+        "hostedTotalSeen": 136,
+        "topSeen": [
+          "markitdown",
+          "Time",
+          "Sequential Thinking",
+          "Fetch",
+          "Context 7",
+          "Github",
+          "n8n-mcp",
+          "figma-context"
+        ]
+      },
+      "confidence": "medium_low"
+    },
+    "skillhub": {
+      "url": "https://r.jina.ai/http://skillhub.club",
+      "signals": {
+        "totals": "21.6K skills / 5.2M stars",
+        "skillsCollected": 21564,
+        "trendingTodayTop5": [
+          "feishu-doc",
+          "discord",
+          "nano-banana-pro",
+          "gifgrep",
+          "feishu-drive"
+        ],
+        "hotSkillsSeen": [
+          "frontend-design",
+          "systematic-debugging",
+          "file-search",
+          "context-optimization",
+          "skill-builder",
+          "docs-review"
+        ]
+      }
+    },
+    "clawhub": {
+      "urls": [
+        "https://r.jina.ai/http://clawhub.ai",
+        "https://r.jina.ai/http://clawhub.ai/api/v1/skills"
+      ],
+      "signals": {
+        "apiItemsSampled": 24,
+        "newestSeen": [
+          "self-improving-agent-local",
+          "maomao-weather",
+          "funda",
+          "memory-pro",
+          "geomanic",
+          "clawsync"
+        ],
+        "popularTop": [
+          "gog (32296/230★)",
+          "tavily-search (26479/99★)",
+          "agent-browser (24524/118★)",
+          "humanizer (11316/91★)",
+          "free-ride (10890/55★)"
+        ]
+      }
+    },
+    "vscodeAgentSkills": {
+      "marketApi": "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery",
+      "extension": {
+        "id": "formulahendry.agent-skills",
+        "version": "0.0.2",
+        "installs": 1807,
+        "rating": 5.0,
+        "ratingCount": 1,
+        "lastUpdated": "2025-12-26T02:13:18.417Z"
+      }
+    }
+  },
+  "decisions": [
+    {
+      "item": "ClawHub tavily-search",
+      "verdict": "adopt",
+      "q1_need": "Brave web_search quota 429가 반복되어 검색 fallback 공백이 실제로 존재",
+      "q2_redundancy": "web_fetch는 URL이 있을 때만 동작해 검색 대체가 불완전",
+      "q3_cost_effect": "API key/호출비는 발생하지만 조사·브리핑 파이프라인 중단 리스크를 즉시 완화",
+      "q4_hype_filter": "다운로드/별점 신호는 강하지만 blind install 금지, 반드시 audit+rewrite",
+      "executionPlan": [
+        "Research: upstream skill repo 수집 및 동작 범위 확인",
+        "Audit: secrets/exec/path traversal/remote code 실행 여부 정적 점검",
+        "Rewrite: misskim-skills/skills/tavily-search-fallback로 최소 권한 재작성",
+        "Pilot: 7일간 trend sweep 작업에서 Brave 실패 시에만 제한 사용",
+        "Gate: 성공률 +20% 미만이면 즉시 롤백"
+      ]
+    },
+    {
+      "item": "MCP Market fallback 상위군 (Context 7 / n8n-mcp)",
+      "verdict": "reference",
+      "q1_need": "문서 최신화·자동화 니즈는 있으나 현재 최우선 병목은 검색 fallback",
+      "q2_redundancy": "기존 web_fetch/summarize/coding-agent로 1차 대체 가능",
+      "q3_cost_effect": "MCP 온보딩/운영 비용 대비 즉시 ROI 불명확",
+      "q4_hype_filter": "mcpmarket.com 원본 차단 상태라 신호 신뢰도 제한",
+      "recheckWhen": "문서 버전 불일치/자동화 실패가 주 3회 이상 누적될 때"
+    },
+    {
+      "item": "SkillHub 방법론군 (systematic-debugging / file-search)",
+      "verdict": "reference",
+      "q1_need": "품질 개선 가치 있음",
+      "q2_redundancy": "기존 디버깅·검색 루틴/스킬과 중복 높음",
+      "q3_cost_effect": "신규 도입보다 기존 루틴 강화가 저비용",
+      "q4_hype_filter": "S-rank/스타는 내부 평가 지표라 품질 보증 아님",
+      "recheckWhen": "디버깅 재시도율이 목표 초과할 때"
+    },
+    {
+      "item": "VSCode Agent Skills extension",
+      "verdict": "reference",
+      "q1_need": "IDE-centric 협업에는 유효",
+      "q2_redundancy": "현재 운영축(OpenClaw CLI + misskim-skills)과 직접 중복 큼",
+      "q3_cost_effect": "도입 시 IDE 종속성 증가 대비 이득 제한",
+      "q4_hype_filter": "설치수 1,807이지만 리뷰 1건으로 품질 신호 약함",
+      "recheckWhen": "VSCode 기반 외부 협업 비중이 50% 이상으로 상승 시"
+    }
+  ],
+  "adoptCount": 1,
+  "referenceCount": 3,
+  "unnecessaryCount": 6,
+  "security": {
+    "absoluteBlock": [
+      "molt road",
+      "molt.host"
+    ],
+    "blindInstall": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}
