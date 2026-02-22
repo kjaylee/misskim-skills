@@ -1,0 +1,197 @@
+{
+  "timestampKST": "2026-02-22T16:00:00+09:00",
+  "task": "agent-skill-trend-check",
+  "constraints": {
+    "hostBrowserForbidden": true,
+    "hostBrowserUsed": false,
+    "minipcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "miniPCBrowserProxyUsed": false,
+    "moltBlock": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave API 429 (quota/rate limit exceeded)"
+    },
+    "webFetch": {
+      "status": "ok_with_fallback",
+      "notes": "Used direct web_fetch + r.jina.ai fallback for anti-bot/checkpoint pages"
+    },
+    "miniPCBrowserProxy": {
+      "status": "not_used",
+      "notes": "No browser-only extraction required in this cycle"
+    }
+  },
+  "sources": {
+    "skillsmp": {
+      "url": "https://r.jina.ai/http://skillsmp.com/ko",
+      "signals": {
+        "skillsTotal": 261145,
+        "browseCap": 5000,
+        "standard": "open SKILL.md",
+        "positioning": "largest collection for Claude/Codex/ChatGPT"
+      }
+    },
+    "mcpMarket": {
+      "primary": "https://mcpmarket.com",
+      "primaryStatus": "blocked_429_vercel_checkpoint",
+      "fallback": "https://r.jina.ai/http://market-mcp.com",
+      "signals": {
+        "librarySize": 6409,
+        "visibleLimit": 100,
+        "top": [
+          {
+            "name": "Archon",
+            "signal": 19110
+          },
+          {
+            "name": "Trigger.dev",
+            "signal": 18629
+          },
+          {
+            "name": "Chrome DevTools",
+            "signal": 18288
+          }
+        ]
+      }
+    },
+    "skillhub": {
+      "urls": [
+        "https://r.jina.ai/http://skillhub.club",
+        "https://r.jina.ai/http://www.skill-marketplace.com/"
+      ],
+      "signals": {
+        "homeTotals": "21.6K skills / 5.6M stars",
+        "skillsCollected": 21564,
+        "marketplaceTotals": "542 skills / 55 sources / 111k downloads",
+        "trendingTop5": [
+          "feishu-doc",
+          "discord",
+          "nano-banana-pro",
+          "gifgrep",
+          "feishu-drive"
+        ]
+      }
+    },
+    "clawhub": {
+      "home": "https://r.jina.ai/http://clawhub.ai",
+      "newest": "https://r.jina.ai/http://clawhub.ai/skills?sort=newest",
+      "api": "https://clawhub.ai/api/v1/skills",
+      "signals": {
+        "apiPageItems": 24,
+        "highSignalSample": [
+          {
+            "slug": "capability-evolver",
+            "downloads": 1189,
+            "installsCurrent": 19,
+            "stars": 8
+          },
+          {
+            "slug": "self-improving",
+            "downloads": 1195,
+            "installsCurrent": 5,
+            "stars": 2
+          },
+          {
+            "slug": "apify",
+            "downloads": 210,
+            "installsCurrent": 2,
+            "stars": 1
+          }
+        ]
+      }
+    },
+    "vscodeAgentSkills": {
+      "docs": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
+      "signals": {
+        "chatSkillsContribution": true,
+        "slashCommandsForSkills": true,
+        "extensions": [
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 81647,
+            "rating": 4.25,
+            "ratingCount": 8
+          },
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1806,
+            "rating": 5.0,
+            "ratingCount": 1
+          },
+          {
+            "id": "avifenesh.agnix",
+            "installs": 26
+          }
+        ],
+        "githubRepo": {
+          "url": "https://api.github.com/repos/formulahendry/vscode-agent-skills",
+          "stars": 23,
+          "forks": 7,
+          "openIssues": 0,
+          "pushedAt": "2025-12-26T02:07:16Z"
+        }
+      }
+    }
+  },
+  "decisions": [
+    {
+      "item": "ClawHub capability-evolver 계열",
+      "verdict": "reference",
+      "q1_need": "멀티 에이전트 품질개선 니즈는 존재하나 현재 병목은 신규 스킬 도입이 아니라 일일 산출/검증 루틴 안정화.",
+      "q2_redundancy": "parallel-agents/subagent-dev/verify-before-done로 핵심 운영은 이미 커버.",
+      "q3_cost_effect": "신규 운영 레이어 도입 대비 즉시 ROI 불명확.",
+      "q4_hype_filter": "installsCurrent 19는 신호이나 장기 재현 데이터 부족.",
+      "recheckWhen": "서브에이전트 실패율이 2주 연속 악화되거나 자동 품질회귀가 반복될 때"
+    },
+    {
+      "item": "MCP Market 상위군 (Archon/Trigger.dev/Chrome DevTools)",
+      "verdict": "reference",
+      "q1_need": "강한 수치 신호는 있으나 지금 당장 해결 못 하는 구체 병목은 아님.",
+      "q2_redundancy": "browser-cdp-automation/coding-agent/기존 자동화 스택으로 1차 대체 가능.",
+      "q3_cost_effect": "MCP 인증·운영·보안 비용 대비 즉시 생산성 상승 불확실.",
+      "q4_hype_filter": "랭킹 수치가 품질/적합성을 보장하지 않음.",
+      "recheckWhen": "동일 유형의 작업 실패가 2주 이상 누적되고 기존 스택 복구가 안 될 때"
+    },
+    {
+      "item": "VSCode 확장군 (copilot-mcp, agent-skills)",
+      "verdict": "reference",
+      "q1_need": "IDE 기반 협업 시 유효하지만 현재 운영축(OpenClaw CLI 중심)과 직접 정합이 낮음.",
+      "q2_redundancy": "내부 skill-authoring + clawhub/rewrite 프로세스로 대체 가능.",
+      "q3_cost_effect": "IDE 종속도 증가 대비 즉시 ROI 제한.",
+      "q4_hype_filter": "설치수 증가는 도입 타당성의 보조 지표일 뿐 필수 근거 아님.",
+      "recheckWhen": "VSCode 기반 협업 비중이 50%를 넘거나 외부 협업자 온보딩 병목이 명확해질 때"
+    },
+    {
+      "item": "SkillsMP 대규모 카탈로그 직접 흡수",
+      "verdict": "unnecessary",
+      "why": "규모(261k) 대비 노이즈/중복 감사 비용이 너무 커서 현재 ROI가 낮음"
+    },
+    {
+      "item": "SkillHub Trending 급등군 직접 도입",
+      "verdict": "unnecessary",
+      "why": "스타 급등은 마케팅 신호일 뿐이며 기존 보유 스택과 중복이 큼"
+    },
+    {
+      "item": "VSCode agnix 확장 직접 도입",
+      "verdict": "unnecessary",
+      "why": "설치/검증 신호가 매우 약하고 IDE 종속 비용이 현재 요구 대비 큼"
+    },
+    {
+      "item": "ClawHub self-improving 직접 도입",
+      "verdict": "unnecessary",
+      "why": "memory-management/회고 루틴과 핵심 기능 중복"
+    }
+  ],
+  "adoptCount": 0,
+  "referenceCount": 3,
+  "unnecessaryCount": 4,
+  "security": {
+    "absoluteBlock": [
+      "molt road",
+      "molt.host"
+    ],
+    "blindInstall": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}
