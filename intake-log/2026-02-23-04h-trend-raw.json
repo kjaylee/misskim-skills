@@ -1,0 +1,154 @@
+{
+  "timestampKst": "2026-02-23T04:00:00+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave quota/rate limit 429"
+    },
+    "fallback": [
+      "web_fetch",
+      "r.jina.ai",
+      "duckduckgo snippets"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-usable",
+      "reason": "chrome relay tab not attached"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skillsmp.com",
+      "signals": {
+        "totalSkills": 269875,
+        "peakPeriod": 29027,
+        "peakAt": "2026-02-19",
+        "notes": [
+          "Timeline algorithm updated (2026-02-06)",
+          "Browse pagination cap introduced"
+        ]
+      },
+      "sampleItems": [
+        {
+          "name": "new-relic-automation",
+          "category": "monitoring",
+          "updated": "2026-02-19"
+        },
+        {
+          "name": "python-observability",
+          "category": "monitoring",
+          "updated": "2026-01-30"
+        }
+      ]
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "signals": {
+        "status": "blocked",
+        "error": "Vercel Security Checkpoint 429",
+        "snippetEvidence": [
+          "Top 100 MCP servers ranked by GitHub stars",
+          "Daily ranking pages exist (e.g., 2026-02-09, 2026-02-19)",
+          "Examples mention Figma/Databricks/Storybook/Ghidra integrations"
+        ]
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://www.skillhub.pm",
+      "signals": {
+        "toolsListed": 311,
+        "mcpServers": 233,
+        "skills": 78,
+        "verified": 78
+      },
+      "featured": [
+        {
+          "name": "Context7 MCP Server",
+          "signal": "46.4k"
+        },
+        {
+          "name": "Playwright MCP Server",
+          "signal": "27.5k"
+        },
+        {
+          "name": "Notion MCP Server",
+          "signal": "3.9k"
+        }
+      ]
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.com",
+      "signals": {
+        "highlighted": [
+          "Trello",
+          "Slack",
+          "Caldav Calendar",
+          "Answer Overflow"
+        ],
+        "popular": [
+          {
+            "name": "gog",
+            "downloads": "32.5k"
+          },
+          {
+            "name": "ontology",
+            "downloads": "26k"
+          },
+          {
+            "name": "summarize",
+            "downloads": "25.1k"
+          }
+        ]
+      }
+    },
+    {
+      "source": "VSCode Agent Skills extensions",
+      "url": "https://marketplace.visualstudio.com/search?term=Agent%20Skills&target=VSCode",
+      "signals": {
+        "results": 1128,
+        "top": [
+          {
+            "name": "Copilot MCP + Agent Skills Manager",
+            "installs": "81.7k"
+          },
+          {
+            "name": "Agent Skills",
+            "installs": "1.8k"
+          },
+          {
+            "name": "agnix - Agent Config Linter",
+            "installs": "28"
+          }
+        ]
+      },
+      "blockedCandidates": [
+        "Lobstore Skills (MoltHub)"
+      ]
+    }
+  ],
+  "decisions": {
+    "adopt": [
+      {
+        "item": "agnix rulepack absorption (rewrite to CLI lint gate in misskim-skills)",
+        "why": "Directly addresses external-skill audit consistency gap; extension itself is not installed"
+      }
+    ],
+    "reference": [
+      "SkillHub Context7 MCP",
+      "SkillHub Playwright MCP",
+      "ClawHub Answer Overflow",
+      "VSCode Copilot MCP extension",
+      "MCP Market leaderboard watch"
+    ],
+    "rejectCount": 4
+  }
+}

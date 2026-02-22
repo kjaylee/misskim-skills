@@ -1,6 +1,41 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-23 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), MiniPC browser.proxy는 relay attach 미연결로 실사용 불가.
+- **대체 경로:** `web_fetch + r.jina.ai + 검색 스니펫`.
+- **SkillsMP:** `269,875` skills, peak `29,027`(@ 2026-02-19).
+- **MCP Market:** `mcpmarket.com` 429 checkpoint로 직접 상세 수집 불가(리더보드/일간 랭킹 존재 신호만 확보).
+- **SkillHub:** `311 tools`(`233 MCP / 78 Skills`).
+- **ClawHub:** highlighted `Trello/Slack/Caldav/Answer Overflow`, popular `gog/ontology/summarize`.
+- **VSCode Agent Skills:** `copilot-mcp 81.7k`, `agent-skills 1.8k`, `agnix 28`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| agnix rulepack 흡수 (확장 설치 아님) | ✅ 도입 | 외부 스킬 intake의 설정/정책 lint 공백을 직접 해결. 확장은 설치하지 않고 룰셋만 추출해 내부 CLI 게이트로 재작성해 도입비를 최소화. |
+| SkillHub `Context7 MCP` | ⚠️ 참고만 | 내부 `context7-docs` 보유로 즉시 순증 효과 제한. 문서 불일치가 주 3회+ 누적 시 재검토. |
+| SkillHub `Playwright MCP` | ⚠️ 참고만 | 기존 `browser-cdp-automation`/`playwright-testing`과 중복. 브라우저 라인 안정성 저하 시 재검토. |
+| ClawHub `Answer Overflow` | ⚠️ 참고만 | Discord 지식 검색은 유효하나 현재 핵심 병목 직접 해결도는 낮음. 재현 실패 반복 시 재검토. |
+| VSCode `copilot-mcp` 계열 직접 도입 | ⚠️ 참고만 | OpenClaw CLI 중심 운영과 정합이 낮아 즉시 도입 보류. |
+
+**❌ 불필요 판정:** 4건
+
+### ✅ Actions
+1. `agnix` 룰 아이디어를 내부 lint gate로 재작성 (Research → Audit → Rewrite)
+2. `MCP/SkillHub/VSCode` 후보군은 재검토 트리거 기반 watchlist 유지
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-23-04h-trend-sweep.md`
+- `intake-log/2026-02-23-04h-trend-raw.json`
+
+---
+
 ## 2026-02-22 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
