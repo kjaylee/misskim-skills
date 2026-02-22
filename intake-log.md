@@ -1,5 +1,43 @@
 # MissKim Skills Intake Log
 
+## 2026-02-22 12:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), MiniPC browser.proxy는 불필요하여 미사용.
+- **대체 경로:** `web_fetch + r.jina.ai`.
+- **SkillsMP:** `261,145` skills, browse cap `5,000`.
+- **MCP Market:** `mcpmarket.com` 429, 대체 `market-mcp.com`에서 `6,409` 서버(`100` 노출) 확인.
+- **SkillHub:** `21.6K skills / 5.1M stars`, Trending 상단 `discord / nano-banana-pro / gifgrep / feishu-drive / model-usage`.
+- **ClawHub:** newest/popular/API 교차 수집(`planning-with-files`, `browser-use`, `swarm`, `clawstats`, `website-monitor`).
+- **VSCode Agent Skills:** 공식 docs의 `chatSkills`/slash command 경로 + 확장군(`copilot-mcp`, `agent-skills`, `agnix`) 기능 확인.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub 신규 운영/모니터링군 (`clawstats`, `website-monitor`) | ⚠️ 참고만 | 운영 니즈는 있으나 현재 핵심 병목(일일 게임/서비스 산출)과 직접 연결 약함. heartbeat+healthcheck로 1차 대체 가능하며 newest 신호(installsCurrent)도 약함. |
+| ClawHub 계획/비용 최적화군 (`planning-with-files`, `swarm`) | ⚠️ 참고만 | 현재 운영정책(메인 오케스트레이션+서브에이전트)과 충돌 가능. 기존 subagent+cron+checkpoint 체계로 유사 기능 수행 중. |
+| MCP Market 상위군 (`Archon`, `Trigger.dev`, `Chrome DevTools`) | ⚠️ 참고만 | 고신호이나 지금 즉시 해결 못 하는 병목은 아님. 기존 스택으로 대체 가능하고 MCP 운영복잡도 대비 ROI 불명확. |
+| SkillHub Trending 급등군 | ⚠️ 참고만 | 상위 다수가 기존 보유 스킬과 중복. 단기 star 급등은 품질 보장 지표가 아님. |
+| VSCode 확장군 (`copilot-mcp`, `agent-skills`, `agnix`) | ⚠️ 참고만 | IDE 협업 환경에는 유효하나 현재 OpenClaw CLI 중심 운영축과 불일치. VSCode 비중 상승 시 재검토. |
+| SkillsMP 대규모 카탈로그 직접 흡수 | ⚠️ 참고만 | 검색 소스로는 유효하지만 대량 감사 비용이 큼. 품질/신뢰도 API 안정화 전까지 참고 유지. |
+
+**✅ 도입:** 없음 (이번 회차)
+
+**불필요 판정:** 19건
+
+### ✅ Actions
+1. 즉시 신규 도입 보류 (근거 부족)
+2. `MCP/SkillHub/VSCode` 군은 재검토 트리거 기반으로 watchlist 유지
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-22-12h-trend-sweep.md`
+- `intake-log/2026-02-22-12h-trend-raw.json`
+
+---
+
 ## 2026-02-22 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

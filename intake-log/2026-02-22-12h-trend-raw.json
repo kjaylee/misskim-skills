@@ -1,0 +1,170 @@
+{
+  "timestampKST": "2026-02-22T12:00:00+09:00",
+  "task": "agent-skill-trend-check",
+  "constraints": {
+    "hostBrowserForbidden": true,
+    "hostBrowserUsed": false,
+    "minipcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlock": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave API 429 (quota/rate limit exceeded)"
+    },
+    "webFetch": {
+      "status": "ok_with_fallback",
+      "notes": "Used direct web_fetch and r.jina.ai fallback for anti-bot/checkpoint pages"
+    },
+    "miniPCBrowserProxy": {
+      "status": "not_used",
+      "notes": "No browser-only step required in this cycle"
+    }
+  },
+  "sources": {
+    "skillsmp": {
+      "url": "https://r.jina.ai/http://skillsmp.com/ko",
+      "signals": {
+        "skillsTotal": 261145,
+        "browseCap": 5000,
+        "standard": "open SKILL.md",
+        "positioning": "GitHub-scale discovery for Claude/Codex/ChatGPT"
+      }
+    },
+    "mcpMarket": {
+      "primary": "https://mcpmarket.com",
+      "primaryStatus": "blocked_429_vercel_checkpoint",
+      "fallback": "https://r.jina.ai/http://market-mcp.com",
+      "signals": {
+        "librarySize": 6409,
+        "visibleLimit": 100,
+        "top": [
+          {"name": "Archon", "signal": 19110},
+          {"name": "Trigger.dev", "signal": 18629},
+          {"name": "Chrome DevTools", "signal": 18288}
+        ]
+      }
+    },
+    "skillhub": {
+      "url": "https://r.jina.ai/http://skillhub.club",
+      "signals": {
+        "homeTotals": "21.6K skills / 5.1M stars",
+        "skillsCollected": 21564,
+        "trendingTop5": [
+          "discord",
+          "nano-banana-pro",
+          "gifgrep",
+          "feishu-drive",
+          "model-usage"
+        ]
+      }
+    },
+    "clawhub": {
+      "home": "https://r.jina.ai/http://clawhub.ai",
+      "newest": "https://r.jina.ai/http://clawhub.ai/skills?sort=newest",
+      "popular": "https://r.jina.ai/http://clawhub.ai/skills?sort=popular",
+      "api": "https://clawhub.ai/api/v1/skills",
+      "signals": {
+        "newestSample": [
+          {"slug": "clawstats", "stars": 11, "installsCurrent": 0},
+          {"slug": "website-monitor", "stars": 8, "installsCurrent": 0},
+          {"slug": "agent-autopilot", "stars": 11, "installsCurrent": 0}
+        ],
+        "apiSample": [
+          {"slug": "planning-with-files", "downloads": 2506, "installsCurrent": 13, "stars": 8},
+          {"slug": "browser-use", "downloads": 6620, "installsCurrent": 29, "stars": 16},
+          {"slug": "swarm", "downloads": 1353, "installsCurrent": 5, "stars": 4}
+        ],
+        "popularSample": [
+          {"slug": "gog", "downloads": "31.6k", "stars": 221},
+          {"slug": "tavily-search", "downloads": "25.8k", "stars": 89},
+          {"slug": "mcporter", "downloads": "10.5k", "stars": 29}
+        ]
+      }
+    },
+    "vscodeAgentSkills": {
+      "docs": [
+        "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
+        "https://marketplace.visualstudio.com/items?itemName=AutomataLabs.copilot-mcp",
+        "https://marketplace.visualstudio.com/items?itemName=formulahendry.agent-skills",
+        "https://marketplace.visualstudio.com/items?itemName=avifenesh.agnix"
+      ],
+      "signals": {
+        "chatSkillsContribution": true,
+        "slashCommandsForSkills": true,
+        "extensionFocus": [
+          "MCP/skills manager (copilot-mcp)",
+          "multi-repo skill marketplace (agent-skills)",
+          "230-rule config lint (agnix)"
+        ]
+      }
+    }
+  },
+  "decisions": [
+    {
+      "item": "ClawHub 신규 운영/모니터링군 (clawstats, website-monitor)",
+      "verdict": "reference",
+      "q1_need": "운영 모니터링 니즈는 존재하나 현재 핵심 병목(일일 게임/서비스 산출)과 직접 연결이 약함.",
+      "q2_redundancy": "기존 heartbeat 루틴(디스크/인프라 체크)과 healthcheck 스택으로 1차 대응 가능.",
+      "q3_cost_effect": "신규 유지 포인트 추가 대비 즉시 생산성 상승이 작음.",
+      "q4_hype_filter": "newest 노출 대비 installsCurrent=0 중심이라 신호 약함.",
+      "recheckWhen": "인프라 장애가 1주 내 2회 이상 재발하고 기존 체크로 원인 포착이 지연될 때"
+    },
+    {
+      "item": "ClawHub planning-with-files / swarm 계열",
+      "verdict": "reference",
+      "q1_need": "비용/계획 자동화 니즈는 있으나 현재 운영 정책(메인 오케스트레이션 + 서브에이전트)과 충돌 가능.",
+      "q2_redundancy": "기존 subagent + cron + checkpoint 방식으로 유사 기능 구현 중.",
+      "q3_cost_effect": "행동규칙 충돌 리스크와 검증 비용이 큼.",
+      "q4_hype_filter": "마케팅 문구 대비 실사용 검증 데이터가 제한적.",
+      "recheckWhen": "서브에이전트 비용/실패율 KPI가 2주 연속 악화될 때"
+    },
+    {
+      "item": "MCP Market 상위군 (Archon, Trigger.dev, Chrome DevTools)",
+      "verdict": "reference",
+      "q1_need": "고신호지만 지금 당장 해결 못하는 구체 병목은 아님.",
+      "q2_redundancy": "browser-cdp-automation/coding-agent/기존 DevOps 루틴으로 대체 가능.",
+      "q3_cost_effect": "MCP 인증·보안·운영 복잡도 증가 대비 즉시 ROI 불명확.",
+      "q4_hype_filter": "랭킹 신호는 강하나 우리 KPI 개선 인과가 약함.",
+      "recheckWhen": "동일 작업 실패가 2주 연속 반복되고 기존 스택으로 복구 불가할 때"
+    },
+    {
+      "item": "SkillHub Trending 급등군",
+      "verdict": "reference",
+      "q1_need": "일부 도메인 일치 항목은 있으나 상위 대부분이 기존 보유 스킬과 중복.",
+      "q2_redundancy": "openclaw 기본 스킬/내부 스킬로 상당수 충족.",
+      "q3_cost_effect": "대량 큐레이션 검증 비용이 큼.",
+      "q4_hype_filter": "단기 스타 급등 수치만으로 품질 보장 불가.",
+      "recheckWhen": "트렌딩 상위가 3회차 연속 유지되고 실제 사용 사례가 축적될 때"
+    },
+    {
+      "item": "VSCode Agent Skills 확장군 (copilot-mcp, agent-skills, agnix)",
+      "verdict": "reference",
+      "q1_need": "협업 IDE 환경에는 유효하나 현재 주력 운영축과 직접 정합이 낮음.",
+      "q2_redundancy": "OpenClaw CLI + 내부 rewrite 프로세스로 핵심 기능 대체 가능.",
+      "q3_cost_effect": "IDE 종속성과 운영전환 비용이 큼.",
+      "q4_hype_filter": "확장 생태계 성장 자체가 우리 생산성 향상을 보장하지 않음.",
+      "recheckWhen": "VSCode 기반 협업 비중이 50% 이상으로 증가할 때"
+    },
+    {
+      "item": "SkillsMP 대규모 카탈로그 직접 흡수",
+      "verdict": "reference",
+      "q1_need": "검색 소스로는 유효하지만 즉시 도입 대상 선별 정확도가 낮음.",
+      "q2_redundancy": "skillhub/clawhub + 내부 보유 스킬로 1차 커버 가능.",
+      "q3_cost_effect": "대량 후보 검수와 감사 비용이 큼.",
+      "q4_hype_filter": "규모 신호(261k)는 강하나 품질 선별 비용이 과대.",
+      "recheckWhen": "품질 점수/신뢰도 API가 안정 제공될 때"
+    }
+  ],
+  "adoptCount": 0,
+  "referenceCount": 6,
+  "unnecessaryCount": 19,
+  "security": {
+    "absoluteBlock": [
+      "molt road",
+      "molt.host"
+    ],
+    "blindInstall": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}
