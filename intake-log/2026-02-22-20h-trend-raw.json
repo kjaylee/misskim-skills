@@ -1,0 +1,182 @@
+{
+  "timestampKST": "2026-02-22T20:00:00+09:00",
+  "task": "agent-skill-trend-check",
+  "constraints": {
+    "hostBrowserForbidden": true,
+    "hostBrowserUsed": false,
+    "minipcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "miniPCBrowserProxyUsed": false,
+    "moltBlock": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave Search API 429 (quota/rate limit exceeded)"
+    },
+    "webFetch": {
+      "status": "ok_with_fallback",
+      "notes": "Used web_fetch and r.jina.ai mirror for anti-bot/checkpoint pages"
+    },
+    "miniPCBrowserProxy": {
+      "status": "not_used",
+      "notes": "No browser-only extraction required in this cycle"
+    }
+  },
+  "sources": {
+    "skillsmp": {
+      "url": "https://r.jina.ai/http://skillsmp.com/ko",
+      "signals": {
+        "skillsTotal": 261145,
+        "browseCap": 5000,
+        "positioning": "open SKILL.md ecosystem"
+      }
+    },
+    "mcpMarket": {
+      "primary": "https://mcpmarket.com",
+      "primaryStatus": "blocked_429_vercel_checkpoint",
+      "fallback": "https://r.jina.ai/http://market-mcp.com",
+      "signals": {
+        "librarySize": 6409,
+        "visibleLimit": 100,
+        "top": [
+          { "name": "Archon", "signal": 19110 },
+          { "name": "Trigger.dev", "signal": 18629 },
+          { "name": "Chrome DevTools", "signal": 18288 },
+          { "name": "Model Context Protocol for Beginners", "signal": 18032 },
+          { "name": "Claude-Flow", "signal": 13562 }
+        ]
+      }
+    },
+    "skillhub": {
+      "url": "https://r.jina.ai/http://skillhub.club",
+      "signals": {
+        "totals": "21.6K skills / 5.3M stars",
+        "skillsCollected": 21564,
+        "trendingTop5": [
+          "feishu-doc (+216,637)",
+          "discord (+214,567)",
+          "nano-banana-pro (+214,564)",
+          "gifgrep (+212,229)",
+          "feishu-drive (+205,893)"
+        ],
+        "sRankExamples": [
+          "systematic-debugging (57.1k)",
+          "file-search (790)",
+          "skill-creator (2.5k)"
+        ]
+      }
+    },
+    "clawhub": {
+      "url": "https://r.jina.ai/http://clawhub.ai",
+      "apiStatus": "rate_limited_429",
+      "signals": {
+        "popularExamples": [
+          "self-improving-agent (29.2k, 287★)",
+          "tavily-search (26.2k, 96★)",
+          "ontology (25.7k, 42★)",
+          "summarize (24.6k, 103★)"
+        ],
+        "highlightedExamples": [
+          "trello (7.6k, 37★)",
+          "slack (8.4k, 36★)",
+          "caldav-calendar (7.5k, 74★)",
+          "answeroverflow (3.6k, 36★)"
+        ]
+      }
+    },
+    "vscodeAgentSkills": {
+      "docs": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
+      "marketApi": "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery",
+      "signals": {
+        "chatSkillsContribution": true,
+        "extensions": [
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 81666,
+            "rating": 4.25,
+            "ratingCount": 8,
+            "version": "0.0.91"
+          },
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1805,
+            "rating": 5.0,
+            "ratingCount": 1,
+            "version": "0.0.2"
+          },
+          {
+            "id": "avifenesh.agnix",
+            "installs": 27,
+            "version": "0.13.0"
+          }
+        ]
+      }
+    }
+  },
+  "decisions": [
+    {
+      "item": "MCP Market 상위 자동화군 (Archon/Trigger.dev/Chrome DevTools)",
+      "verdict": "reference",
+      "q1_need": "신호는 강하지만 현재 핵심 병목(일일 산출, QA 루틴) 직접 해결은 아님",
+      "q2_redundancy": "browser-cdp-automation, coding-agent, 기존 OpenClaw 자동화로 1차 대체 가능",
+      "q3_cost_effect": "MCP 온보딩/보안/운영비 대비 즉시 ROI 불명확",
+      "q4_hype_filter": "랭킹 숫자만으로 우리 환경 적합성 보장 불가",
+      "recheckWhen": "동일 자동화 실패가 2주 누적되고 기존 스택으로 복구 불가할 때"
+    },
+    {
+      "item": "ClawHub ontology",
+      "verdict": "reference",
+      "q1_need": "구조화 메모리 니즈는 있으나 현 병목은 메모리 스키마가 아니라 실행 throughput",
+      "q2_redundancy": "openclaw-mem + memory-management + existing RAG 루틴으로 대체 가능",
+      "q3_cost_effect": "그래프 메모리 운영 복잡도 대비 즉시 생산성 상승 제한적",
+      "q4_hype_filter": "25.7k 다운로드는 강하지만 실제 장기 운영 성공률 데이터 부족",
+      "recheckWhen": "회상 정확도 KPI가 2주 연속 기준 미달일 때"
+    },
+    {
+      "item": "VSCode 확장군 (copilot-mcp / agent-skills)",
+      "verdict": "reference",
+      "q1_need": "IDE 협업에는 유효하나 현재 운영축(OpenClaw CLI)과 직접 정합 낮음",
+      "q2_redundancy": "skill-authoring + clawhub/rewrite 프로세스로 핵심 기능 대체 가능",
+      "q3_cost_effect": "IDE 종속성 증가 대비 ROI 제한",
+      "q4_hype_filter": "설치수(81,666 등)는 보조지표일 뿐 품질/안정성 보증 아님",
+      "recheckWhen": "VSCode 기반 협업 비중이 50% 이상이거나 외부 온보딩 병목이 명확해질 때"
+    },
+    {
+      "item": "SkillHub S-rank (systematic-debugging/file-search/skill-creator)",
+      "verdict": "reference",
+      "q1_need": "방법론적 가치가 있으나 즉시 해결할 신규 공백은 제한적",
+      "q2_redundancy": "동일 계열 스킬을 이미 보유/내재화 중",
+      "q3_cost_effect": "추가 채택보다 기존 루틴 고도화가 비용효율 우위",
+      "q4_hype_filter": "S-rank 및 star 급등은 자체 평가 지표라 과대포장 가능성 존재",
+      "recheckWhen": "기존 디버깅/탐색 루틴의 실패율이 목표치 초과 시"
+    },
+    {
+      "item": "SkillsMP 대규모 카탈로그 직접 흡수",
+      "verdict": "unnecessary",
+      "why": "261k 규모 대비 노이즈/중복 감사비가 높아 현재 ROI 낮음"
+    },
+    {
+      "item": "ClawHub self-improving-agent 직접 도입",
+      "verdict": "unnecessary",
+      "why": "내부 memory-management/회고 루틴과 중복"
+    },
+    {
+      "item": "SkillHub Trending 급등군 직접 도입",
+      "verdict": "unnecessary",
+      "why": "star 급등은 마케팅 신호 성격이 강하고 현재 병목 해결과 거리 있음"
+    },
+    {
+      "item": "VSCode agnix 직접 도입",
+      "verdict": "unnecessary",
+      "why": "설치 신호(27)가 약하고 IDE 종속 비용이 요구 대비 큼"
+    }
+  ],
+  "adoptCount": 0,
+  "referenceCount": 4,
+  "unnecessaryCount": 4,
+  "security": {
+    "absoluteBlock": ["molt road", "molt.host"],
+    "blindInstall": false,
+    "policy": "Research -> Audit -> Rewrite -> misskim-skills/"
+  }
+}
