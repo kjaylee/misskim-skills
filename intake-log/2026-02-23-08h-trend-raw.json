@@ -1,0 +1,170 @@
+{
+  "timestampKst": "2026-02-23T08:00:00+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave quota/rate limit 429"
+    },
+    "fallback": [
+      "web_fetch",
+      "r.jina.ai",
+      "VSCode Marketplace API"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-usable",
+      "reason": "chrome relay tab not attached"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skillsmp.com",
+      "signals": {
+        "totalSkills": 269875,
+        "categoryBreakdown": {
+          "security": 6631,
+          "mobile": 4817,
+          "llm_ai": 27853
+        },
+        "notes": [
+          "Browse cap 5000",
+          "Recent updates visible on category pages"
+        ]
+      },
+      "sampleItems": [
+        {
+          "name": "security-scan",
+          "repo": "affaan-m/everything-claude-code",
+          "updated": "2026-02-20"
+        },
+        {
+          "name": "mobile-ios-design",
+          "repo": "wshobson/agents",
+          "updated": "2026-02-21"
+        }
+      ]
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "signals": {
+        "status": "blocked",
+        "error": "Vercel Security Checkpoint 429"
+      },
+      "mirror": {
+        "url": "https://market-mcp.com",
+        "totalServers": 6409,
+        "top": [
+          {
+            "name": "Archon",
+            "score": 19110
+          },
+          {
+            "name": "Trigger.dev",
+            "score": 18629
+          },
+          {
+            "name": "Chrome DevTools",
+            "score": 18288
+          }
+        ]
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://www.skillhub.pm",
+      "signals": {
+        "toolsListed": 311
+      },
+      "featured": [
+        {
+          "name": "Context7 MCP Server",
+          "signal": "46.4k"
+        },
+        {
+          "name": "Playwright MCP Server",
+          "signal": "27.5k"
+        },
+        {
+          "name": "Apple Docs MCP",
+          "signal": "898"
+        }
+      ],
+      "watch": [
+        "XcodeBuildMCP"
+      ]
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.ai",
+      "signals": {
+        "popular": [
+          {
+            "name": "gog",
+            "downloads": "32.8k"
+          },
+          {
+            "name": "self-improving-agent",
+            "downloads": "30.3k"
+          },
+          {
+            "name": "tavily-search",
+            "downloads": "26.9k"
+          }
+        ],
+        "newestLowInstallPattern": true
+      },
+      "blockedCandidates": [
+        "moltbro/humanize-ai-text"
+      ]
+    },
+    {
+      "source": "VSCode Agent Skills extensions",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "top": [
+          {
+            "name": "Copilot MCP + Agent Skills Manager",
+            "installs": 81737,
+            "rating": 4.25,
+            "ratingCount": 8
+          },
+          {
+            "name": "Agent Skills",
+            "installs": 1816,
+            "rating": 5.0,
+            "ratingCount": 1
+          },
+          {
+            "name": "agnix - Agent Config Linter",
+            "installs": 28
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": {
+    "adopt": [
+      {
+        "item": "agnix rulepack absorption (rewrite to internal intake lint gate)",
+        "why": "Directly addresses recurring intake policy/format drift without adopting external extension runtime"
+      },
+      {
+        "item": "Apple Docs MCP pattern absorption (read-only internal skill rewrite)",
+        "why": "Improves iOS/camera app documentation retrieval accuracy with low maintenance overhead"
+      }
+    ],
+    "reference": [
+      "MCP Market top automation cluster",
+      "VSCode copilot-mcp direct install",
+      "ClawHub self-improving-agent"
+    ],
+    "rejectCount": 7
+  }
+}

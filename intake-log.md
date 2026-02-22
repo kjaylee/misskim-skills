@@ -1,6 +1,41 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-23 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), MiniPC browser.proxy는 relay attach 미연결로 실사용 불가.
+- **대체 경로:** `web_fetch + r.jina.ai + VSCode Marketplace API`.
+- **SkillsMP:** `269,875` skills (`Security 6,631`, `Mobile 4,817`).
+- **MCP Market:** `mcpmarket.com` 429, 대체 mirror(`market-mcp.com`) `6,409` 서버 신호 확보.
+- **SkillHub:** `311 tools` 신호 유지.
+- **ClawHub:** `gog 32.8k`, `self-improving-agent 30.3k`, `tavily-search 26.9k`.
+- **VSCode Agent Skills:** `copilot-mcp 81,737`, `agent-skills 1,816`, `agnix 28`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| agnix rulepack 흡수 (확장 설치 아님) | ✅ 도입 | 외부 스킬 intake에서 반복되는 정책/형식 편차를 직접 해결. 확장 설치 없이 룰셋만 내부 lint gate로 재작성해 저비용 고효율 확보. |
+| SkillHub `Apple Docs MCP` 패턴 흡수 (직접 MCP 설치 아님) | ✅ 도입 | iOS/카메라앱 문서 탐색 정확도 병목을 줄이는 직접 해법. MCP 런타임 도입 없이 read-only 스킬로 재작성하여 유지비 최소화. |
+| MCP Market 상위 자동화군 (`Chrome DevTools`, `Archon`) | ⚠️ 참고만 | 기존 `browser-cdp-automation`/`coding-agent`로 1차 대체 가능. 신규 MCP 운영 복잡도 대비 즉시 ROI 불명확. |
+| VSCode `copilot-mcp` 직접 도입 | ⚠️ 참고만 | 설치 신호는 강하지만 현재 운영축(OpenClaw CLI)과 정합이 낮음. VSCode 협업 비중 상승 시 재검토. |
+| ClawHub `self-improving-agent` | ⚠️ 참고만 | 개념은 유효하나 현재 핵심 병목은 품질게이트 일관성. 다운로드 신호만으로 도입 금지. |
+
+**❌ 불필요 판정:** 7건
+
+### ✅ Actions
+1. `agnix` 룰셋을 내부 intake lint gate로 재작성 (Research → Audit → Rewrite)
+2. `Apple Docs MCP` 패턴을 read-only 내부 스킬(`apple-dev-docs`)로 PoC 작성
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-23-08h-trend-sweep.md`
+- `intake-log/2026-02-23-08h-trend-raw.json`
+
+---
+
 ## 2026-02-23 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
