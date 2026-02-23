@@ -1,0 +1,247 @@
+{
+  "timestampKst": "2026-02-23T12:00:00+09:00",
+  "generatedAtKst": "2026-02-23T12:07:51.993983+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave quota/rate limit 429"
+    },
+    "fallback": [
+      "web_fetch",
+      "r.jina.ai",
+      "clawhub CLI",
+      "VSCode Marketplace API"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-used",
+      "reason": "web_fetch/r.jina/CLI/API path covered required sources"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skillsmp.com",
+      "signals": {
+        "totalSkills": 269875,
+        "categoryBreakdown": {
+          "security": 6631,
+          "mobile": 4817,
+          "llm_ai": 27853
+        },
+        "browseCap": 5000
+      },
+      "notes": [
+        "data via r.jina.ai mirror due direct 403 on root"
+      ]
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "signals": {
+        "status": "blocked",
+        "error": "Vercel Security Checkpoint 429"
+      },
+      "mirror": {
+        "url": "https://market-mcp.com",
+        "totalServers": 6409,
+        "top": [
+          {
+            "name": "Archon",
+            "score": 19110
+          },
+          {
+            "name": "Trigger.dev",
+            "score": 18629
+          },
+          {
+            "name": "Chrome DevTools",
+            "score": 18288
+          },
+          {
+            "name": "Model Context Protocol for Beginners",
+            "score": 18032
+          },
+          {
+            "name": "Claude-Flow",
+            "score": 13562
+          },
+          {
+            "name": "XHS Downloader",
+            "score": 13272
+          }
+        ]
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://www.skillhub.pm",
+      "signals": {
+        "toolsListed": 311,
+        "mcpListed": 233,
+        "skillsListed": 78
+      },
+      "featured": [
+        {
+          "name": "Context7 MCP Server",
+          "signal": "46.4k"
+        },
+        {
+          "name": "Playwright MCP Server",
+          "signal": "27.5k"
+        },
+        {
+          "name": "Magic MCP (21st.dev)",
+          "signal": "4.3k"
+        },
+        {
+          "name": "Notion MCP Server",
+          "signal": "3.9k"
+        },
+        {
+          "name": "Neon Postgres MCP Server",
+          "signal": "554"
+        },
+        {
+          "name": "Figma Dev Mode MCP",
+          "signal": "261"
+        }
+      ]
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.ai",
+      "signals": {
+        "popularTop": [
+          {
+            "slug": "gog",
+            "downloads": 32958,
+            "installsCurrent": 522,
+            "stars": 236
+          },
+          {
+            "slug": "self-improving-agent",
+            "downloads": 30641,
+            "installsCurrent": 245,
+            "stars": 313
+          },
+          {
+            "slug": "tavily-search",
+            "downloads": 27112,
+            "installsCurrent": 182,
+            "stars": 105
+          },
+          {
+            "slug": "ontology",
+            "downloads": 26164,
+            "installsCurrent": 30,
+            "stars": 44
+          },
+          {
+            "slug": "summarize",
+            "downloads": 25421,
+            "installsCurrent": 499,
+            "stars": 107
+          }
+        ],
+        "trendingTop": [
+          {
+            "slug": "sonoscli",
+            "downloads": 19936,
+            "installsCurrent": 446,
+            "stars": 15
+          },
+          {
+            "slug": "gog",
+            "downloads": 32958,
+            "installsCurrent": 522,
+            "stars": 236
+          },
+          {
+            "slug": "github",
+            "downloads": 24215,
+            "installsCurrent": 426,
+            "stars": 68
+          },
+          {
+            "slug": "summarize",
+            "downloads": 25421,
+            "installsCurrent": 499,
+            "stars": 107
+          },
+          {
+            "slug": "weather",
+            "downloads": 20623,
+            "installsCurrent": 363,
+            "stars": 54
+          }
+        ],
+        "newestZeroInstallCountTop10": 4
+      },
+      "blockedCandidates": [
+        "molt road / molt.host family blocked by policy"
+      ]
+    },
+    {
+      "source": "VSCode Agent Skills extensions",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "searchResultCount": "1133",
+        "topSkillManagers": [
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "displayName": "Copilot MCP + Agent Skills Manager",
+            "installs": 81749,
+            "rating": 4.25,
+            "ratingCount": 8,
+            "updated": "2026-02-16T05:31:22.773+00:00"
+          },
+          {
+            "id": "formulahendry.agent-skills",
+            "displayName": "Agent Skills",
+            "installs": 1818,
+            "rating": 5,
+            "ratingCount": 1,
+            "updated": "2025-12-26T02:13:18.42+00:00"
+          },
+          {
+            "id": "gaoyuan.skills-vscode",
+            "displayName": "Skills",
+            "installs": 689,
+            "rating": null,
+            "ratingCount": 0,
+            "updated": "2026-02-12T09:04:05.497+00:00"
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "displayName": "Agent Skills Ninja",
+            "installs": 569,
+            "rating": 5,
+            "ratingCount": 2,
+            "updated": "2026-02-21T20:59:15.713+00:00"
+          },
+          {
+            "id": "garrettsiegel.lobstore-skills",
+            "displayName": "Lobstore Skills",
+            "installs": 177,
+            "rating": null,
+            "ratingCount": 0,
+            "updated": "2026-02-22T23:39:19.673+00:00"
+          }
+        ],
+        "agnix": {
+          "id": "avifenesh.agnix",
+          "installs": 28,
+          "rating": null,
+          "ratingCount": 0,
+          "updated": "2026-02-21T15:10:08.683+00:00"
+        }
+      }
+    }
+  ]
+}

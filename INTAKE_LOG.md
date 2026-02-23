@@ -1,5 +1,40 @@
 # MissKim Skills Intake Log
 
+## 2026-02-23 12:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), MiniPC browser.proxy는 이번 회차 미사용(필수 소스는 web/API/CLI로 충족).
+- **대체 경로:** `web_fetch + r.jina.ai + clawhub CLI + VSCode Marketplace API`.
+- **SkillsMP:** `269,875` skills (`Security 6,631`, `Mobile 4,817`, `LLM&AI 27,853`).
+- **MCP Market:** `mcpmarket.com` 429 checkpoint, mirror(`market-mcp.com`) 기준 `6,409` 서버.
+- **SkillHub:** `311 tools` (`233 MCP / 78 Skills`).
+- **ClawHub:** 상위 `gog(32,958)`, `self-improving-agent(30,641)`, `tavily-search(27,112)`.
+- **VSCode Agent Skills:** `copilot-mcp 81,749`, `agent-skills 1,818`, `agnix 28`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| MCP Market `Microsandbox` 패턴(외부 설치 아님) | ✅ 도입 | 외부 스킬 intake의 실행계 보안검증 공백을 직접 해소. 기존 정적 리뷰만으로는 부족해 내부 sandbox gate로 재작성 시 비용 대비 보안효과가 큼. |
+| SkillHub 상위(`Context7/Playwright/Notion`) | ⚠️ 참고만 | 기존 `context7-docs`/`playwright-testing`/현행 문서 파이프라인으로 1차 대체 가능. |
+| MCP Market 상위(`Archon/Trigger.dev/Chrome DevTools`) | ⚠️ 참고만 | `coding-agent`/`parallel-agents`/`browser-cdp-automation`과 중복, 순증 ROI 불명확. |
+| VSCode 확장군(`copilot-mcp/agent-skills/skill-ninja`) | ⚠️ 참고만 | installs 신호는 강하나 OpenClaw CLI 중심 운영축과 정합 낮음. |
+| ClawHub `self-improving-agent`/`ontology` | ⚠️ 참고만 | 학습/메모리 가치는 있으나 현재 핵심 병목(intake security gate) 직접 해결도 낮음. |
+
+**❌ 불필요 판정:** 9건
+
+### ✅ Actions
+1. `misskim-skills/skills/skill-intake-sandbox-gate/` 설계 착수 (Research → Audit → Rewrite)
+2. 재검토 트리거: 문서/브라우저 워크플로 실패율 주간 2배↑ 또는 VSCode 협업비중 50%↑
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-23-12h-trend-sweep.md`
+- `intake-log/2026-02-23-12h-trend-raw.json`
+
+---
+
 ## 2026-02-23 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
