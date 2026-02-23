@@ -1,0 +1,229 @@
+{
+  "timestampKst": "2026-02-23T20:00:00+09:00",
+  "generatedAtKst": "2026-02-23T20:11:00+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "failed",
+      "error": "Brave Search API 429 (quota/rate limited)"
+    },
+    "primary": [
+      "web_fetch",
+      "direct HTTP fetch (requests/curl)",
+      "clawhub CLI",
+      "VSCode Marketplace API"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-used",
+      "reason": "필수 소스 수집이 API/CLI/HTTP로 충족됨"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skillsmp.com",
+      "access": {
+        "root": "403 Cloudflare challenge",
+        "robots": "200",
+        "sitemap": "200"
+      },
+      "signals": {
+        "sitemapUrlCount": 684,
+        "topLevelPaths": {
+          "categories": 576,
+          "docs": 45,
+          "search": 9,
+          "timeline": 9
+        },
+        "skillDetailUrlsInSitemap": 0
+      },
+      "notes": [
+        "직접 본문 접근 불가로 실사용 품질 검증 불가",
+        "외부 블로그의 '66k+ skills' 주장은 교차검증 실패"
+      ]
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "signals": {
+        "headlineServers": 21759,
+        "updatedAgo": "1 hour",
+        "topMcpServers": [
+          {
+            "name": "Superpowers",
+            "count": 57076
+          },
+          {
+            "name": "TrendRadar",
+            "count": 46755
+          },
+          {
+            "name": "Context7",
+            "count": 46429
+          },
+          {
+            "name": "MindsDB",
+            "count": 38557
+          }
+        ],
+        "latestEntries": [
+          {
+            "name": "Modernity",
+            "count": 0
+          },
+          {
+            "name": "Statelessagent",
+            "count": 0
+          },
+          {
+            "name": "Orchestration Gateway",
+            "count": 0
+          }
+        ],
+        "topAgentSkills": [
+          {
+            "name": "React Code Fix & Linter",
+            "count": 242682
+          },
+          {
+            "name": "n8n Pull Request Creator",
+            "count": 170914
+          },
+          {
+            "name": "Prompt Finder & Enhancer",
+            "count": 144375
+          }
+        ]
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://www.skillhub.club/skills",
+      "signals": {
+        "skillsFound": 21159,
+        "sampleTop": [
+          {
+            "slug": "file-search",
+            "owner": "massgen",
+            "score": 9.0,
+            "signal": "793"
+          },
+          {
+            "slug": "systematic-debugging",
+            "owner": "obra",
+            "score": 9.2,
+            "signal": "58.4k"
+          },
+          {
+            "slug": "frontend-design",
+            "owner": "anthropics",
+            "score": 8.2,
+            "signal": "69.0k"
+          },
+          {
+            "slug": "mcp-builder",
+            "owner": "anthropics",
+            "score": 8.4,
+            "signal": "73.5k"
+          }
+        ]
+      },
+      "notes": [
+        "상위 항목에서 유사 수치(예: 73.5k 반복) 다수 관찰"
+      ]
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.ai",
+      "signals": {
+        "latestFromExplore": [
+          "hi-lite",
+          "nuwa-world-osint-human-research",
+          "pls-url-to-markdown",
+          "pls-marketing-ideas",
+          "india-location-normalizer",
+          "ghost-admin",
+          "compliance-readiness",
+          "continuity-kernel"
+        ],
+        "targetedSearch": {
+          "query": "file search",
+          "top": [
+            "file-search",
+            "epstein",
+            "baidu-search"
+          ]
+        },
+        "inspected": [
+          {
+            "slug": "file-search",
+            "summary": "Fast file-name and content search using fd/rg",
+            "updated": "2026-02-23"
+          },
+          {
+            "slug": "openclaw-token-optimizer",
+            "summary": "Reduce token usage and API costs",
+            "updated": "2026-02-23"
+          }
+        ]
+      }
+    },
+    {
+      "source": "VSCode Agent Skills extension ecosystem",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "query": "\"agent skills\"",
+        "topRelevant": [
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1829,
+            "rating": 5,
+            "ratingCount": 1
+          },
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 81834,
+            "rating": 4.25,
+            "ratingCount": 8
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "installs": 570,
+            "rating": 5,
+            "ratingCount": 2
+          }
+        ]
+      },
+      "notes": [
+        "설치수 대비 리뷰 샘플이 작아 품질 신뢰도 제한"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "item": "ClawHub file-search 패턴(내부 재작성)",
+      "verdict": "adopt"
+    },
+    {
+      "item": "MCP Market leaderboard 기반 신규 MCP 도입",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "VSCode Agent Skills 확장 직접 도입",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "기타 잡다한 신규 항목",
+      "verdict": "not-needed"
+    }
+  ]
+}

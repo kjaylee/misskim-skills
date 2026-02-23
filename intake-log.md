@@ -1,6 +1,41 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-23 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 우선순위:** `web_search + web_fetch` 우선 시도.
+- **실제 상태:** `web_search` 429(quota/rate limit), MiniPC browser.proxy는 미사용(API/CLI로 수집 충족).
+- **대체 경로:** `web_fetch + direct HTTP + clawhub CLI + VSCode Marketplace API`.
+- **SkillsMP:** 루트는 Cloudflare 403, 대신 `robots/sitemap` 신호(684 URL)만 확보.
+- **MCP Market:** `21,759 servers` 헤드라인 확인, 최신 항목 다수 0카운트.
+- **SkillHub:** `21,159 skills found` 확인.
+- **ClawHub:** `explore/search/inspect`로 후보 신속 검증 가능.
+- **VSCode Agent Skills:** `agent-skills 1,829(리뷰 1)`, `copilot-mcp 81,834(리뷰 8)`.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| ClawHub `file-search` 패턴(내부 재작성) | ✅ 도입 | 대형 리포 탐색 병목을 직접 해결. 기존 보유 스킬과 중복이 낮고, 문서형 Rewrite라 도입비가 매우 작음. `inspect` 기반으로 사전 검증 가능. |
+| MCP Market 상위군 | ⚠️ 참고만 | 랭킹 신호는 강하지만 기존 자동화 스택으로 1차 대체 가능. 신규 MCP 운영비 대비 ROI 미확정. |
+| VSCode Agent Skills 확장군 | ⚠️ 참고만 | IDE 편의성은 있으나 현재 운영축(OpenClaw CLI)과 정합 낮음. 리뷰 모수도 작음. |
+| SkillsMP 직접 흡수 | ⚠️ 참고만 | 본문 접근 차단으로 실품질 검증 불가. 교차검증 가능한 공식 데이터 확보 전 보류. |
+| ClawHub `openclaw-token-optimizer` | ⚠️ 참고만 | 비용절감 문제는 맞지만 기존 운영과 중복 가능성 있음. 과장 문구 대비 A/B 검증 필요. |
+
+**❌ 불필요 판정:** 12건
+
+### ✅ Actions
+1. `file-search` 계열을 `misskim-skills/skills/file-search-pro/`로 Research→Audit→Rewrite (macOS fallback 포함)
+2. MCP/VSCode/SkillsMP는 재검토 트리거 기반 watchlist 유지
+3. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-23-20h-trend-sweep.md`
+- `intake-log/2026-02-23-20h-trend-raw.json`
+
+---
+
 ## 2026-02-23 12:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
