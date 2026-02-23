@@ -2761,3 +2761,29 @@ Based on this week's disclosures, recommend updating AGENTS.md:
 
 *Survey completed: 2026-02-08 04:01 KST*
 *Next sweep: 2026-03-08*
+
+---
+
+## 2026-02-23 16:00 KST — Agent Skill Trend Sweep (비판적 흡수)
+
+### 수집 범위
+- SkillsMP, MCP Market, SkillHub, clawhub.com, VSCode Agent Skills extension
+- `web_search` 쿼터(429) + MiniPC browser proxy 미연결로 `web_fetch` + `clawhub` CLI + VS Marketplace API 조합으로 대체 조사
+- Molt Road/molt.host 미접속 (절대 차단 유지)
+
+### 판정
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub (www.skillhub.club) 메타데이터 피드 | ✅ 도입 | skill URL 1,000개, 당일 갱신으로 유입 감지 효율 높음. 설치 없이 sitemap 기반 사전 필터링 가능. |
+| SkillsMP | ⚠️ 참고만 | sitemap(684 URL) 확인은 가능하나 본문 Cloudflare 차단으로 검증 한계. proxy 복구 시 재검토. |
+| VSCode `formulahendry.agent-skills` | ⚠️ 참고만 | 탐색 UI 장점은 있으나 현재 OpenClaw+CLI 운영과 중복. installs 1,823 대비 평점 표본 1건. |
+| ClawHub `native-hubspot` | ⚠️ 참고만 | HubSpot CRM 도입 시 유효. 현재 운영 파이프라인과 직접 과제 연결 약함. |
+
+- ❌ 불필요 판정: 4건
+
+### ✅ 도입 실행 계획
+1. SkillHub sitemap 일일 수집(메타데이터 only)
+2. 키워드 기반 후보 1차 필터(`godot|telegram|marketing|mcp|automation|revenue`)
+3. 상위 후보만 `Research → Audit → Rewrite → misskim-skills/` 적용
+4. self-modify/credential 노출/무단 외부호출 패턴 발견 시 즉시 폐기
+

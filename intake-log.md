@@ -1848,3 +1848,46 @@ OpenAI Responses API now natively supports SKILL.md via Shell Tool + `container_
 ---
 
 [Previous entries continue below...]
+---
+
+## 2026-02-23 16:00 KST — Agent Skill Trend Sweep (비판적 흡수)
+
+### 수집 범위
+- SkillsMP, MCP Market, SkillHub, clawhub.com, VSCode Agent Skills extension
+- 브라우저 제약 대응: `web_search` 쿼터 초과(429) + MiniPC browser proxy 연결 실패로 `web_fetch` + `clawhub` CLI + VS Marketplace API로 대체 조사
+- 보안 정책 고정: **Molt Road/molt.host 미접속/절대 차단 유지**
+
+### 핵심 데이터 포인트
+- **SkillsMP sitemap**: URL 684개 (categories 567), 최신 lastmod `2026-02-06`
+- **SkillHub sitemap**: URL 1,985개 (skills 1,000), 최신 lastmod `2026-02-23`
+- **MCP Market (market-mcp.com) sitemap**: URL 6,413개 (mcp 6,409)이나 lastmod 전부 `2025-11-01`로 고정
+- **VSCode 확장 실측** (Gallery API):
+  - `formulahendry.agent-skills` installs 1,823 / rating 5.0 (1)
+  - `laurids.agent-skills-sh` installs 134 / rating 5.0 (1)
+  - `yamapan.agent-skill-ninja` installs 569 / rating 5.0 (2)
+  - `JustinSong.agent-skills-market` installs 15 / rating 0 (0)
+- **ClawHub newest 샘플**: 다수 항목 installsCurrent 0~1, 과장형 설명 대비 실사용 낮음
+
+### 판정 테이블 (불필요 항목 개별 나열 생략)
+| 항목 | 판정 | 근거 |
+|------|------|------|
+| SkillHub (www.skillhub.club) **메타데이터 피드만** | ✅ 도입 | **필요성:** 신규 스킬 유입 속도 높음(1,000개 skill URL, 당일 갱신). **기존 대체:** clawhub만으로는 외부 생태계 커버 부족. **비용/효과:** sitemap 파싱만으로 저비용 고효율. **과대포장 검증:** 설치 전 단계에서 메타데이터만 수집하므로 마케팅 문구 영향 최소화. |
+| SkillsMP (skillsmp.com) | ⚠️ 참고만 | 카테고리 폭은 넓지만(567) 콘텐츠 본문은 Cloudflare 차단으로 심층 검증 불가. 탐색 소스 유지하되, MiniPC proxy 복구 후 재검토. |
+| VSCode `formulahendry.agent-skills` | ⚠️ 참고만 | UI 기반 탐색은 편하지만 현재 운영은 OpenClaw+CLI 중심. 설치수 1,823 대비 평점 표본 1건으로 품질 신뢰도 낮음. VSCode GUI 워크플로 필요 시 재검토. |
+| ClawHub `native-hubspot` | ⚠️ 참고만 | HubSpot CRM 운영 시작 시엔 유효하나, 현재 파이프라인에 HubSpot 미도입. 토큰/스코프 운영 부담 있어 즉시 도입 가치 낮음. |
+
+- **❌ 불필요 판정: 4건**
+
+### ✅ 도입 실행 계획 (상세)
+1. SkillHub sitemap을 일일 수집 소스로 고정 (설치 아님, 메타데이터 only)
+2. 키워드 필터 1차 적용: `godot|telegram|marketing|mcp|automation|revenue`
+3. 후보 상위 10개만 `Research → Audit → Rewrite → misskim-skills/` 순서로 수동 흡수
+4. 설치/실행 전 체크리스트 강제:
+   - 민감정보/토큰 전달 지시 존재 여부
+   - 외부 네트워크 호출 및 임의 실행 명령
+   - self-modify/auto-loop 성향 (발견 시 즉시 제외)
+
+### 보안 메모
+- Molt Road/molt.host: 차단 유지
+- 외부 스킬은 블라인드 설치 금지 (Research → Audit → Rewrite)
+
