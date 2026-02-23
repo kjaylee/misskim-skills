@@ -105,7 +105,7 @@ PATTERNS: Dict[str, List[re.Pattern]] = {
         re.compile(r"OPENAI_API_KEY"),
         re.compile(r"ANTHROPIC_API_KEY"),
         re.compile(r"PRIVATE_KEY"),
-        re.compile(r"-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----"),
+        re.compile(r"-----BEGIN (RSA|EC|OPENSSH) PRIVATE\s+KEY-----"),
         re.compile(r"_authToken"),
     ],
     "persistence": [
