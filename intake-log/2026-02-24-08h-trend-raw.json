@@ -1,0 +1,250 @@
+{
+  "timestampKst": "2026-02-24T08:00:00+09:00",
+  "generatedAtKst": "2026-02-24T08:04:59.219146+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "not-used",
+      "reason": "수집 단계 제한(240초) 내 direct HTTP/API/CLI 경로로 충족"
+    },
+    "primary": [
+      "direct HTTP fetch (requests)",
+      "clawhub CLI",
+      "VSCode Marketplace API"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-used",
+      "reason": "필수 소스 수집이 API/CLI로 충족됨"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skillsmp.com",
+      "access": {
+        "root": 403,
+        "robots": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "sitemapUrlCount": 684,
+        "topLevelPathsNormalized": {
+          "categories": 576,
+          "docs": 45,
+          "root": 9,
+          "search": 9,
+          "timeline": 9,
+          "about": 9
+        }
+      },
+      "notes": [
+        "root는 Cloudflare 차단 지속(403)"
+      ]
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "signals": {
+        "primaryStatus": 200,
+        "headlineServers": 21804,
+        "lastUpdatedUtc": "2026-02-23T11:00:39.547482+00:00",
+        "updatedAgo": "1 hour ago",
+        "topMcpServers": [
+          {
+            "name": "Superpowers",
+            "count": 58273
+          },
+          {
+            "name": "TrendRadar",
+            "count": 46905
+          },
+          {
+            "name": "Context7",
+            "count": 46540
+          },
+          {
+            "name": "MindsDB",
+            "count": 38557
+          }
+        ],
+        "topAgentSkills": [
+          {
+            "name": "Superpowers",
+            "count": 58273
+          },
+          {
+            "name": "Zed",
+            "count": 75795
+          },
+          {
+            "name": "Cline",
+            "count": 58247
+          }
+        ],
+        "mirror": "https://market-mcp.com",
+        "mirrorStatus": 200
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://www.skillhub.club/skills",
+      "signals": {
+        "status": 200,
+        "skillsFound": 21159,
+        "sampleTopSlugs": [
+          "kol",
+          "massgen-massgen-file-search",
+          "muratcankoylan-agent-skills-for-context-engineering-context-optimization",
+          "obra-superpowers-systematic-debugging",
+          "frontend-design",
+          "davepoon-buildwithclaude-skill-creator",
+          "anthropics-skills-doc-coauthoring",
+          "maxritter-claude-codepro-backend-models-standards"
+        ]
+      }
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.ai",
+      "signals": {
+        "latestFromExplore": [
+          "trustlog-guard  v1.1.0  2m ago  Financial governance for OpenClaw agents. Tracks …",
+          "frost-sentinel-lite  v1.0.1  3m ago  Lightweight temperature monitoring. Upgrade to Co…",
+          "checkly-cli-skills  v1.0.1  3m ago  Comprehensive Checkly CLI command reference and M…",
+          "nuwa-world-osint-human-research  v1.0.0  4m ago  Face search and deep research via the Nuwa World …",
+          "slides  v1.0.0  4m ago  Create, edit, and automate presentations with pro…",
+          "lattice  v1.2.1  4m ago  Initialize and manage Lattice organizations — a f…"
+        ]
+      },
+      "access": {
+        "exploreRc": 0
+      }
+    },
+    {
+      "source": "VSCode Agent Skills extension ecosystem",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "status": 200,
+        "topRelevant": [
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1838,
+            "rating": 5,
+            "ratingCount": 1
+          },
+          {
+            "id": "gaoyuan.skills-vscode",
+            "installs": 711,
+            "rating": null,
+            "ratingCount": null
+          },
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 81961,
+            "rating": 4.25,
+            "ratingCount": 8
+          },
+          {
+            "id": "lawvable.minimal-agent-workspace",
+            "installs": 213,
+            "rating": 5,
+            "ratingCount": 2
+          },
+          {
+            "id": "llsenyue.agent-skills-hub",
+            "installs": 97,
+            "rating": null,
+            "ratingCount": null
+          },
+          {
+            "id": "JustinSong.agent-skills-market",
+            "installs": 16,
+            "rating": null,
+            "ratingCount": null
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "installs": 572,
+            "rating": 5,
+            "ratingCount": 2
+          },
+          {
+            "id": "laurids.agent-skills-sh",
+            "installs": 136,
+            "rating": 5,
+            "ratingCount": 1
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "낮음(본문 차단)",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "높음"
+      }
+    },
+    {
+      "item": "MCP Market 상위군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능(coding-agent/browser-cdp)",
+        "costEffect": "중간 이하",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "SkillHub 상위군 신규 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "ClawHub 신규군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "검증 부족(버즈/단기신호)",
+        "replaceableByExistingStack": "대체 가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "높음"
+      }
+    },
+    {
+      "item": "VSCode Agent Skills 직접 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "낮음(OpenClaw CLI 중심)",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "기타 신규 후보",
+      "verdict": "not-needed"
+    }
+  ],
+  "meaningfulNewChanges": 0,
+  "minorDrift": {
+    "vscodeInstallDelta": {
+      "formulahendry.agent-skills": "+1",
+      "AutomataLabs.copilot-mcp": "+23",
+      "yamapan.agent-skill-ninja": "+2"
+    }
+  }
+}
