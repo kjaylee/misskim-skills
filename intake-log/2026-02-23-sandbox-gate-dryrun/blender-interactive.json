@@ -1,0 +1,211 @@
+{
+  "file_count": 6,
+  "file_sha256": {
+    "SKILL.md": "2a979f0f4f47573dcb79ea12e475ebf68fe6852e1b37af20e802420e0933c2ca",
+    "blender_socket_addon.py": "8c1f895da6c1e837c6282e306a7481a4b8be112f83ee31bca297edd7be0f657f",
+    "scripts/blender_client.py": "5a321cd18f98448ff692f4f3929f28630c9e00587f8b2a00adc24cc8cc926edd",
+    "scripts/polyhaven.py": "e59aa3872de5ebd06c9b0c29dc9ffbee1062896f2ce2c9bd95a5d5616720c314",
+    "scripts/sketchfab.py": "05ff66f10b64056216ff318e71fa48dceffe602a0080cec7056d5c28d21f75bd",
+    "scripts/start_server.sh": "060dd298af0c01e997e7879689b1a6090bd7c61b7229fec2e6030c83165070ca"
+  },
+  "matches": [
+    {
+      "category": "network",
+      "file": "blender_socket_addon.py",
+      "line": 15,
+      "pattern": "\\bsocket\\b",
+      "snippet": "import socket"
+    },
+    {
+      "category": "proc_exec",
+      "file": "blender_socket_addon.py",
+      "line": 237,
+      "pattern": "\\bexec\\s*\\(",
+      "snippet": "exec(code, namespace)"
+    },
+    {
+      "category": "network",
+      "file": "blender_socket_addon.py",
+      "line": 553,
+      "pattern": "\\bsocket\\b",
+      "snippet": "self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)"
+    },
+    {
+      "category": "network",
+      "file": "blender_socket_addon.py",
+      "line": 554,
+      "pattern": "\\bsocket\\b",
+      "snippet": "self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)"
+    },
+    {
+      "category": "network",
+      "file": "blender_socket_addon.py",
+      "line": 586,
+      "pattern": "\\bsocket\\b",
+      "snippet": "except socket.timeout:"
+    },
+    {
+      "category": "network",
+      "file": "blender_socket_addon.py",
+      "line": 641,
+      "pattern": "\\bsocket\\b",
+      "snippet": "except socket.timeout:"
+    },
+    {
+      "category": "network",
+      "file": "scripts/blender_client.py",
+      "line": 19,
+      "pattern": "\\bsocket\\b",
+      "snippet": "import socket"
+    },
+    {
+      "category": "network",
+      "file": "scripts/blender_client.py",
+      "line": 28,
+      "pattern": "\\bsocket\\b",
+      "snippet": "sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/blender_client.py",
+      "line": 55,
+      "pattern": "\\bsocket\\b",
+      "snippet": "except socket.timeout:"
+    },
+    {
+      "category": "network",
+      "file": "scripts/sketchfab.py",
+      "line": 20,
+      "pattern": "\\burllib\\b",
+      "snippet": "from urllib import request, parse, error"
+    },
+    {
+      "category": "network",
+      "file": "scripts/sketchfab.py",
+      "line": 22,
+      "pattern": "https?://",
+      "snippet": "API_BASE = \"https://api.sketchfab.com/v3\""
+    },
+    {
+      "category": "network",
+      "file": "scripts/sketchfab.py",
+      "line": 148,
+      "pattern": "https?://",
+      "snippet": "\"https://sketchfab.com/settings/password \uc5d0\uc11c \ubc1c\uae09 \ud6c4 \""
+    },
+    {
+      "category": "fs_write",
+      "file": "scripts/sketchfab.py",
+      "line": 193,
+      "pattern": "\\bos\\.remove\\b",
+      "snippet": "os.remove(zip_path)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 26,
+      "pattern": "https?://",
+      "snippet": "Poly Haven API \ubb38\uc11c: https://api.polyhaven.com"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 37,
+      "pattern": "\\brequests\\b",
+      "snippet": "import requests"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 40,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.request"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 41,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.parse"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 45,
+      "pattern": "https?://",
+      "snippet": "API_BASE = \"https://api.polyhaven.com\""
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 50,
+      "pattern": "\\brequests\\b",
+      "snippet": "\"\"\"HTTP GET \u2014 requests \ub610\ub294 urllib \uc0ac\uc6a9\"\"\""
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 50,
+      "pattern": "\\burllib\\b",
+      "snippet": "\"\"\"HTTP GET \u2014 requests \ub610\ub294 urllib \uc0ac\uc6a9\"\"\""
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 53,
+      "pattern": "\\brequests\\b",
+      "snippet": "resp = requests.get(url, params=params, headers=headers, timeout=30)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 58,
+      "pattern": "\\burllib\\b",
+      "snippet": "query = urllib.parse.urlencode(params)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 60,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request(url, headers={\"User-Agent\": USER_AGENT})"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 61,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=30) as resp:"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 70,
+      "pattern": "\\brequests\\b",
+      "snippet": "resp = requests.get(url, headers=headers, stream=True, timeout=120)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 76,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request(url, headers={\"User-Agent\": USER_AGENT})"
+    },
+    {
+      "category": "network",
+      "file": "scripts/polyhaven.py",
+      "line": 77,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=120) as resp:"
+    }
+  ],
+  "matches_by_category": {
+    "fs_write": 1,
+    "network": 25,
+    "proc_exec": 1
+  },
+  "path": "/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blender-interactive",
+  "recommendation": "reject_or_rewrite",
+  "risk_level": "high",
+  "risk_score": 23
+}

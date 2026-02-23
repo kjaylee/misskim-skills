@@ -1,0 +1,307 @@
+{
+  "file_count": 12,
+  "file_sha256": {
+    "SKILL.md": "91b8e5e9a52d4d68d4e26011a84f38025491549bc98ef5d7175c8eced316bd8f",
+    "examples/README.md": "3f108ca794ea8176aed0c093151babd392d5fd8bd47917f943941da94b887b22",
+    "examples/petstore-mcp-server.py": "0778fd3b6e1d410f712bc1737721802f6a68210d9352a3f0139fd551293124c1",
+    "examples/todo-mini-mcp-server.py": "dabb0f1121bcab145ddd1a6e1a8efe91674f3df0c7bff6725e720edd85c3f02f",
+    "examples/todo-mini-openapi.yaml": "e77e4d86775f4e405a5ea45976c3c6b7b22154851b1e4a48955a8641ba95396e",
+    "references/research-audit.md": "91094196a931ea56d67586111fb33405e7af596a9e8883fcd2268d42c10f3ba8",
+    "references/test-report.md": "5cecc4b7195533139567e7ae263544fda5bfed93257f95bcdd6ca036062504ee",
+    "scripts/openapi-to-mcp.py": "fe184a32746cd566ed66985d5a8b386a4f53ca2a89d6e512c8d3f01afe39f2b3",
+    "specs/openapi-tool-scaffold/plan.md": "2c02a6a0a52fcef3f055477a9286d76d7ac4acb8d4791488ea7e31d1c9ae2cae",
+    "specs/openapi-tool-scaffold/spec.md": "c4ef02a62a72ecf82a43bd5df6a640fff031fca85396b2a6aa84ea1777acab82",
+    "specs/openapi-tool-scaffold/tasks.md": "e4ad034090c1a1211b7d4324b0f86ea96f280fea8a618f42a55c87b739e29926",
+    "templates/mcp_server_stdio.py.tmpl": "f9b556f4effb9309308d1d0f4ac6308df2dab5c4ad63cf0c4a05d6fd1fc0d4bc"
+  },
+  "matches": [
+    {
+      "category": "doc_url",
+      "file": "SKILL.md",
+      "line": 53,
+      "pattern": "https?://",
+      "snippet": "\"https://petstore3.swagger.io/api/v3/openapi.json\" \\"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/test-report.md",
+      "line": 11,
+      "pattern": "https?://",
+      "snippet": "\"https://petstore3.swagger.io/api/v3/openapi.json\" \\"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/test-report.md",
+      "line": 23,
+      "pattern": "https?://",
+      "snippet": "\"base_url\": \"https://petstore3.swagger.io/api/v3\","
+    },
+    {
+      "category": "doc_url",
+      "file": "references/test-report.md",
+      "line": 49,
+      "pattern": "https?://",
+      "snippet": "\"base_url\": \"https://api.todo-mini.example.com\","
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 13,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.error"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 14,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.parse"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 15,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.request"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 20,
+      "pattern": "https?://",
+      "snippet": "BASE_URL = 'https://api.todo-mini.example.com'"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 84,
+      "pattern": "https?://",
+      "snippet": "'flows': {'authorizationCode': {'authorizationUrl': 'https://auth.todo-mini.example.com/oauth/authorize',"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 85,
+      "pattern": "https?://",
+      "snippet": "'tokenUrl': 'https://auth.todo-mini.example.com/oauth/token',"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 346,
+      "pattern": "\\burllib\\b",
+      "snippet": "encoded = urllib.parse.quote(str(value), safe=\"\")"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 381,
+      "pattern": "\\burllib\\b",
+      "snippet": "query_string = urllib.parse.urlencode(query, doseq=True)"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 385,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request(url=url, data=body_data, headers=headers, method=method)"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 392,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=timeout) as resp:"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-mcp-server.py",
+      "line": 396,
+      "pattern": "\\burllib\\b",
+      "snippet": "except urllib.error.HTTPError as exc:"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-openapi.yaml",
+      "line": 6,
+      "pattern": "https?://",
+      "snippet": "- url: https://api.todo-mini.example.com"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-openapi.yaml",
+      "line": 86,
+      "pattern": "https?://",
+      "snippet": "authorizationUrl: https://auth.todo-mini.example.com/oauth/authorize"
+    },
+    {
+      "category": "network",
+      "file": "examples/todo-mini-openapi.yaml",
+      "line": 87,
+      "pattern": "https?://",
+      "snippet": "tokenUrl: https://auth.todo-mini.example.com/oauth/token"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 13,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.error"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 14,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.parse"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 15,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.request"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 20,
+      "pattern": "https?://",
+      "snippet": "BASE_URL = 'https://petstore3.swagger.io/api/v3'"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 22,
+      "pattern": "https?://",
+      "snippet": "OPENAPI_SOURCE = 'https://petstore3.swagger.io/api/v3/openapi.json'"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 234,
+      "pattern": "https?://",
+      "snippet": "'flows': {'implicit': {'authorizationUrl': 'https://petstore3.swagger.io/oauth/authorize',"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 497,
+      "pattern": "\\burllib\\b",
+      "snippet": "encoded = urllib.parse.quote(str(value), safe=\"\")"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 532,
+      "pattern": "\\burllib\\b",
+      "snippet": "query_string = urllib.parse.urlencode(query, doseq=True)"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 536,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request(url=url, data=body_data, headers=headers, method=method)"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 543,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=timeout) as resp:"
+    },
+    {
+      "category": "network",
+      "file": "examples/petstore-mcp-server.py",
+      "line": 547,
+      "pattern": "\\burllib\\b",
+      "snippet": "except urllib.error.HTTPError as exc:"
+    },
+    {
+      "category": "doc_url",
+      "file": "examples/README.md",
+      "line": 6,
+      "pattern": "https?://",
+      "snippet": "- `https://petstore3.swagger.io/api/v3/openapi.json`"
+    },
+    {
+      "category": "doc_url",
+      "file": "examples/README.md",
+      "line": 12,
+      "pattern": "https?://",
+      "snippet": "\"https://petstore3.swagger.io/api/v3/openapi.json\" \\"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 21,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.parse"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 22,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.request"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 31,
+      "pattern": "\\burllib\\b",
+      "snippet": "parsed = urllib.parse.urlparse(value)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 37,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request("
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 44,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=30) as resp:"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 337,
+      "pattern": "\\burllib\\b",
+      "snippet": "parsed = urllib.parse.urlparse(url)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 341,
+      "pattern": "\\burllib\\b",
+      "snippet": "base = urllib.parse.urlparse(input_ref)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 343,
+      "pattern": "\\burllib\\b",
+      "snippet": "return urllib.parse.urljoin(origin, url)"
+    },
+    {
+      "category": "network",
+      "file": "scripts/openapi-to-mcp.py",
+      "line": 346,
+      "pattern": "https?://",
+      "snippet": "return \"https://api.example.com\""
+    }
+  ],
+  "matches_by_category": {
+    "doc_url": 6,
+    "network": 34
+  },
+  "path": "/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/openapi-tool-scaffold",
+  "recommendation": "quarantine_then_rewrite",
+  "risk_level": "medium",
+  "risk_score": 13
+}

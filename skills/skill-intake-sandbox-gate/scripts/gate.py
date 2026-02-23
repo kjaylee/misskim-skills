@@ -145,8 +145,9 @@ def scan_file(path: Path, root: Path) -> List[Match]:
 
     # Reduce false-positives from documentation.
     # Markdown often *mentions* risky terms (subprocess, rm -rf) without executing them.
+    # For markdown, we only record outbound URLs as an informational signal.
     is_markdown = path.suffix.lower() == ".md"
-    md_allowed_categories = {"network"}  # keep URLs/domains as weak signals
+    md_url_patterns = [re.compile(r"https?://"), re.compile(r"\bws://|\bwss://")]
 
     try:
         text = path.read_text(errors="ignore")
@@ -155,16 +156,34 @@ def scan_file(path: Path, root: Path) -> List[Match]:
 
     lines = text.splitlines()
     for idx, line in enumerate(lines, start=1):
+        if is_markdown:
+            for pat in md_url_patterns:
+                if pat.search(line):
+                    matches.append(
+                        Match(
+                            file=rel,
+                            line=idx,
+                            category="doc_url",
+                            pattern=pat.pattern,
+                            snippet=line.strip()[:400],
+                        )
+                    )
+            continue
+
         for category, patterns in PATTERNS.items():
-            if is_markdown and category not in md_allowed_categories:
-                continue
             for pat in patterns:
                 if pat.search(line):
+                    stripped = line.strip()
+                    # Reduce false positives from comments/documentation inside code.
+                    if stripped.startswith("#") or stripped.startswith("//"):
+                        if category != "network":
+                            continue
+
                     # Reduce false positives from scanners/linters that merely *mention* risky terms.
                     # If the line is defining regex patterns (re.compile), it's usually not executing the behavior.
                     if "re.compile" in line and category != "network":
                         continue
-                    snippet = line.strip()[:400]
+                    snippet = stripped[:400]
                     matches.append(
                         Match(
                             file=rel,
@@ -179,8 +198,11 @@ def scan_file(path: Path, root: Path) -> List[Match]:
 
 def compute_risk(matches: List[Match]) -> Tuple[int, str]:
     # basic score: unique category hits weighted + small per-hit bonus
+    # NOTE: doc_url is informational only and does not affect risk.
     cats = {}
     for m in matches:
+        if m.category == "doc_url":
+            continue
         cats[m.category] = cats.get(m.category, 0) + 1
 
     score = 0

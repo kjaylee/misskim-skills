@@ -1,0 +1,253 @@
+{
+  "file_count": 6,
+  "file_sha256": {
+    "SKILL.md": "6894ffed76a67bb6c66801be30aebad411985c35268e3f5dd4052ba0ad372e21",
+    "references/AUDIT.md": "1cd00c7ffb50502e5a0ddf39f4a7256e5fac333e589a7755ee000a30b1a15f84",
+    "references/RESEARCH.md": "2ff6b2cf7dfcf03dce1991b068376f12282ca10a769a597d5287418c0d51fc9c",
+    "references/TEST_REPORT.md": "24e6968d7d20d2aaf017819b9954e4b6202c63ba5355eca1641413fb21c88149",
+    "scripts/generate-video.py": "64f6f2e4e536609eb7864761def67e5704827b35e2961cdeb4fe55df00597c5e"
+  },
+  "matches": [
+    {
+      "category": "doc_url",
+      "file": "references/AUDIT.md",
+      "line": 20,
+      "pattern": "https?://",
+      "snippet": "- FFmpeg: https://ffmpeg.org/legal.html"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/AUDIT.md",
+      "line": 21,
+      "pattern": "https?://",
+      "snippet": "- Remotion: https://raw.githubusercontent.com/remotion-dev/remotion/main/LICENSE.md"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/AUDIT.md",
+      "line": 22,
+      "pattern": "https?://",
+      "snippet": "- MoviePy: https://raw.githubusercontent.com/Zulko/moviepy/master/LICENCE.txt"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/AUDIT.md",
+      "line": 23,
+      "pattern": "https?://",
+      "snippet": "- Shotcut: https://raw.githubusercontent.com/mltframework/shotcut/master/COPYING"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/AUDIT.md",
+      "line": 24,
+      "pattern": "https?://",
+      "snippet": "- Kdenlive: https://raw.githubusercontent.com/KDE/kdenlive/master/COPYING"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/AUDIT.md",
+      "line": 25,
+      "pattern": "https?://",
+      "snippet": "- MLT: https://raw.githubusercontent.com/mltframework/mlt/master/COPYING"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 19,
+      "pattern": "https?://",
+      "snippet": "- https://ffmpeg.org/legal.html"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 29,
+      "pattern": "https?://",
+      "snippet": "- https://www.remotion.dev/docs/cli"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 30,
+      "pattern": "https?://",
+      "snippet": "- https://raw.githubusercontent.com/remotion-dev/remotion/main/LICENSE.md"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 31,
+      "pattern": "https?://",
+      "snippet": "- https://www.remotion.dev/docs/licensing"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 40,
+      "pattern": "https?://",
+      "snippet": "- https://raw.githubusercontent.com/Zulko/moviepy/master/LICENCE.txt"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 45,
+      "pattern": "https?://",
+      "snippet": "- \ucd9c\ucc98: https://shotcut.org/, https://raw.githubusercontent.com/mltframework/shotcut/master/COPYING"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 48,
+      "pattern": "https?://",
+      "snippet": "- \ucd9c\ucc98: https://kdenlive.org/features/, https://raw.githubusercontent.com/KDE/kdenlive/master/COPYING"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 51,
+      "pattern": "https?://",
+      "snippet": "- \ucd9c\ucc98: https://raw.githubusercontent.com/mltframework/mlt/master/COPYING"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 61,
+      "pattern": "https?://",
+      "snippet": "- \ucd9c\ucc98: https://raw.githubusercontent.com/neur0map/clawvid/main/README.md"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 66,
+      "pattern": "https?://",
+      "snippet": "- \ucd9c\ucc98: https://raw.githubusercontent.com/zrewolwerowanykaloryfer/deapi-clawdbot-skill/main/README.md"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 72,
+      "pattern": "https?://",
+      "snippet": "- https://raw.githubusercontent.com/unisone/openclaw-skill-suite/main/README.md"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 73,
+      "pattern": "https?://",
+      "snippet": "- https://raw.githubusercontent.com/unisone/openclaw-skill-suite/main/skills/remotion-product-demos/SKILL.md"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 80,
+      "pattern": "https?://",
+      "snippet": "- https://skillhub.com"
+    },
+    {
+      "category": "doc_url",
+      "file": "references/RESEARCH.md",
+      "line": 81,
+      "pattern": "https?://",
+      "snippet": "- https://skillhub.ai"
+    },
+    {
+      "category": "proc_exec",
+      "file": "scripts/generate-video.py",
+      "line": 18,
+      "pattern": "\\bsubprocess\\b",
+      "snippet": "import subprocess"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 22,
+      "pattern": "\\burllib\\b",
+      "snippet": "import urllib.request"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 25,
+      "pattern": "\\burllib\\b",
+      "snippet": "from urllib.parse import urlparse"
+    },
+    {
+      "category": "proc_exec",
+      "file": "scripts/generate-video.py",
+      "line": 64,
+      "pattern": "\\bsubprocess\\b",
+      "snippet": "proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)"
+    },
+    {
+      "category": "proc_exec",
+      "file": "scripts/generate-video.py",
+      "line": 82,
+      "pattern": "\\bsubprocess\\b",
+      "snippet": "out = subprocess.check_output("
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 107,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request("
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 116,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=30) as resp:"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 140,
+      "pattern": "https?://",
+      "snippet": "r'\"full\":\"(https://[^\"]+/apps/' + re.escape(app_id) + r'/ss_[^\"]+\\.(?:jpg|png)[^\"]*)\"',"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 144,
+      "pattern": "https?://",
+      "snippet": "r'\"standard\":\"(https://[^\"]+/apps/' + re.escape(app_id) + r'/ss_[^\"]+\\.(?:jpg|png)[^\"]*)\"',"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 169,
+      "pattern": "\\burllib\\b",
+      "snippet": "req = urllib.request.Request(url, headers={\"User-Agent\": \"Mozilla/5.0\"})"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 170,
+      "pattern": "\\burllib\\b",
+      "snippet": "with urllib.request.urlopen(req, timeout=30) as resp, out_path.open(\"wb\") as f:"
+    },
+    {
+      "category": "network",
+      "file": "scripts/generate-video.py",
+      "line": 542,
+      "pattern": "https?://",
+      "snippet": "page = fetch_url(f\"https://store.steampowered.com/app/{game_id}/?l=english\")"
+    },
+    {
+      "category": "fs_write",
+      "file": "scripts/generate-video.py",
+      "line": 603,
+      "pattern": "\\bshutil\\.rmtree\\b",
+      "snippet": "shutil.rmtree(tmp_root, ignore_errors=True)"
+    }
+  ],
+  "matches_by_category": {
+    "doc_url": 20,
+    "fs_write": 1,
+    "network": 9,
+    "proc_exec": 3
+  },
+  "path": "/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/game-video-ad-pipeline",
+  "recommendation": "reject_or_rewrite",
+  "risk_level": "high",
+  "risk_score": 24
+}
