@@ -1,6 +1,39 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-24 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 경로:** `web_fetch + r.jina.ai + VSCode Marketplace API`.
+- **SkillsMP:** `269,875` 신호 확인(직접 루트는 여전히 Cloudflare 차단).
+- **MCP Market:** `mcpmarket.com` 429 유지, mirror(`market-mcp.com`) `6,409` 유지.
+- **SkillHub:** `21,159 skills found` 유지.
+- **ClawHub:** popular/highlighted 상위군 유지(`gog 33.7k`, `self-improving-agent 31.8k`).
+- **VSCode Agent Skills:** `agent-skills 1,832`, `copilot-mcp 81,720`, `agent-skill-ninja 570`.
+- **변화 판단:** 의미 있는 신규 변화 **0건**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| SkillsMP 직접 흡수 | ⚠️ 참고만 | 실문제 직접 해결력 검증 신호가 약하고, 기존 소스(ClawHub/SkillHub/VSCode API)로 1차 대체 가능. |
+| MCP Market 상위군 즉시 도입 | ⚠️ 참고만 | 기존 `coding-agent`/`browser-cdp-automation`로 대체 가능하며 운영·권한 비용 대비 ROI 불확실. |
+| SkillHub 상위군 신규 도입 | ⚠️ 참고만 | 내부 유사 스킬 다수 존재, 신규 도입보다 기존 스택 고도화가 비용효율 우위. |
+| ClawHub popular 신규 도입 | ⚠️ 참고만 | 직전 회차 대비 의미 있는 신규 후보 부재, 다운로드 지표 단독 채택은 과대평가 위험. |
+| VSCode Agent Skills 확장군 | ⚠️ 참고만 | IDE 편의성은 있으나 OpenClaw CLI 중심 운영과 정합 낮음, 리뷰 모수도 작음. |
+
+**❌ 불필요 판정:** 5건
+
+### ✅ Actions
+1. 신규 ✅ 도입 없음 (watchlist 유지)
+2. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-24-00h-trend-sweep.md`
+- `intake-log/2026-02-24-00h-trend-raw.json`
+
+---
+
 ## 2026-02-23 20:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

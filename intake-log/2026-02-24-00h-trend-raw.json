@@ -1,0 +1,137 @@
+{
+  "timestampKst": "2026-02-24T00:00:00+09:00",
+  "generatedAtKst": "2026-02-24T00:01:00+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "not-used",
+      "reason": "수집 단계 제한(240초) 내 web_fetch/direct API 경로로 즉시 충족"
+    },
+    "primary": [
+      "web_fetch",
+      "r.jina.ai mirror fetch",
+      "direct HTTP (VSCode Marketplace API)"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-used",
+      "reason": "필수 소스가 API/HTTP로 수집됨"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skillsmp.com",
+      "signals": {
+        "skills": 269875,
+        "browseCap": 5000
+      },
+      "access": {
+        "root": "403 Cloudflare challenge",
+        "rJinaMirror": "200"
+      }
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "signals": {
+        "primaryAccess": "429 Vercel Security Checkpoint",
+        "mirror": "market-mcp.com",
+        "mirrorServersFound": 6409,
+        "mirrorShowing": 100
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://www.skillhub.club/skills",
+      "signals": {
+        "skillsFound": 21159,
+        "sampleTop": [
+          "file-search (signal 793)",
+          "systematic-debugging (58.4k)",
+          "frontend-design (69.0k)",
+          "mcp-builder (73.5k)"
+        ]
+      }
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.com",
+      "signals": {
+        "popular": [
+          "gog (33.7k)",
+          "self-improving-agent (31.8k)",
+          "tavily-search (27.9k)",
+          "ontology (27.4k)",
+          "summarize (26k)"
+        ],
+        "highlighted": [
+          "trello (7.8k)",
+          "slack (8.8k)",
+          "caldav-calendar (7.7k)",
+          "answeroverflow (3.7k)"
+        ]
+      },
+      "notes": [
+        "clawhub CLI explore는 본 회차 rate limit"
+      ]
+    },
+    {
+      "source": "VSCode Agent Skills extension ecosystem",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "topRelevant": [
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1832,
+            "rating": 5,
+            "ratingCount": 1
+          },
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 81720,
+            "rating": 4.25,
+            "ratingCount": 8
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "installs": 570,
+            "rating": 5,
+            "ratingCount": 2
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "MCP Market 상위군 즉시 도입",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "SkillHub 상위군 신규 도입",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "ClawHub popular 신규 도입",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "VSCode Agent Skills 확장 직접 도입",
+      "verdict": "reference-only"
+    },
+    {
+      "item": "기타 신규 후보",
+      "verdict": "not-needed"
+    }
+  ],
+  "meaningfulNewChanges": 0
+}
