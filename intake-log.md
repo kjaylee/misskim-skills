@@ -1,6 +1,39 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-24 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용.
+- **수집 경로:** direct HTTP + clawhub CLI + VSCode Marketplace API.
+- **SkillsMP:** root 403 지속, `sitemap=684` 유지.
+- **MCP Market:** primary 정상(21,804 servers, updated 1 hour ago), 상위 랭킹군 신호 유지.
+- **SkillHub:** `21,159 Skills Found` 유지.
+- **ClawHub:** `explore/search/inspect` 정상, `file-search` 업데이트(2026-02-23) 유지.
+- **VSCode Agent Skills:** `agent-skills 1,837`, `copilot-mcp 81,938`.
+- **변화 판단:** 의미 있는 신규 변화 **0건**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| SkillsMP 직접 흡수 | ⚠️ 참고만 | 본문 차단(403) 지속으로 품질 검증 한계, 기존 소스로 1차 대체 가능. |
+| MCP Market 상위군 즉시 도입 | ⚠️ 참고만 | 우리 핵심 병목 직접 해결도 제한, 기존 자동화 스택으로 대체 가능. |
+| SkillHub 상위군 신규 도입 | ⚠️ 참고만 | 내부 유사 스택 다수, 도입/유지 비용 대비 순증 효과 불명확. |
+| ClawHub 신규군 즉시 도입 | ⚠️ 참고만 | 최신 노출은 활발하나 신뢰 누적 데이터 부족, 과대포장 리스크 존재. |
+| VSCode Agent Skills 확장 직접 도입 | ⚠️ 참고만 | OpenClaw CLI 중심 운영과 정합 낮음, 설치수 단독으로는 근거 부족. |
+
+**❌ 불필요 판정:** 6건
+
+### ✅ Actions
+1. 신규 ✅ 도입 없음 (watchlist 유지)
+2. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지
+
+### 📁 Full Report
+- `intake-log/2026-02-24-04h-trend-sweep.md`
+- `intake-log/2026-02-24-04h-trend-raw.json`
+
+---
+
 ## 2026-02-24 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
