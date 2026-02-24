@@ -1,4 +1,4 @@
-# Attack Matrix — 28 Vectors with Historical Mechanisms & Defense Patterns
+# Attack Matrix — 31 Vectors with Historical Mechanisms & Defense Patterns
 
 ## A. Smart Contract Vectors
 
@@ -156,6 +156,12 @@ pub collateral_mint: Account<'info, Mint>,
 **Mechanism**: Exhaust keeper resources (CPU/memory/RPC quota) → protocol stops operating.
 **Defense**: Rate limiting, circuit breakers, graceful degradation, health monitoring.
 
+### B29. AI Agent Prompt-Injection Confused-Deputy
+**Historical**: Trail of Bits Comet audit (2026) + SkillInject benchmark (arXiv 2602.20156)
+**Mechanism**: Attacker-controlled content (page/skill file/reference doc) injects instructions that make an autonomous agent use trusted tools (browser, wallet, RPC admin actions) to exfiltrate secrets or perform unauthorized actions.
+**Bypass insight**: Even when model resists direct malicious prompts, structured "system-like" fragments and fake safety workflows can still trigger tool misuse.
+**Defense**: Tool-level authorization policy (not prompt-only), data/command channel separation, explicit allowlists for side effects, and human approval for privileged actions.
+
 ## C. Economic Vectors
 
 ### C21. Bank Run / Depeg
@@ -181,6 +187,12 @@ pub collateral_mint: Account<'info, Mint>,
 **Mechanism**: Extract value from protocol transactions via ordering manipulation.
 **Defense**: Commit-reveal, private submission, MEV-share, protocol-owned ordering.
 
+### C30. Liquidity-Exhaustion Griefing
+**Historical**: Intent bridge study (arXiv 2602.17805, Feb 2026)
+**Mechanism**: Attacker repeatedly consumes finite execution/liquidity capacity (solver capital, per-window redemption bandwidth) to deny service or force unfavorable pricing for honest users.
+**Bypass insight**: Attacker can optimize route/timing to reduce griefing cost substantially while keeping victim impact high.
+**Defense**: Identity-aware quotas, adaptive pricing by actor concentration, reservation lanes for organic flow, and anti-grief penalties tied to failed or bursty usage patterns.
+
 ## D. Infrastructure Vectors
 
 ### D26. Frontend XSS/Injection
@@ -195,4 +207,11 @@ pub collateral_mint: Account<'info, Mint>,
 ### D28. Supply Chain
 **Historical**: event-stream (2018), ua-parser-js (2021), multiple npm attacks
 **Mechanism**: Compromise dependency → inject malicious code into build.
-**Defense**: Lock files, audit dependencies, minimal dependency tree, vendoring.
+**2026 reinforcement (RustSec)**: short-lived typosquat waves (`rpc-check`, `tracing-check`) targeted a specific ecosystem to steal credentials before package takedown.
+**Defense**: Lock files, audit dependencies, minimal dependency tree, vendoring, Cargo.lock attestation, registry-source allowlists, and two-person review for new deps.
+
+### D31. Protocol-Metadata Confusion (IDL/Schema Trust)
+**Historical**: Anchor `idl: Exclude external accounts` patch (2026-02-22)
+**Mechanism**: Off-chain clients over-trust generated metadata and infer ownership/safety guarantees for accounts that are actually external, leading to unsafe automation or signing UX.
+**Defense**: Treat generated IDL/schema as advisory; enforce runtime owner/program checks and account invariants in clients before signing/submitting transactions.
+

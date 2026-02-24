@@ -127,6 +127,42 @@ Mitigation:
 - Fast rollback for feed misconfiguration
 - Deployment-time invariant checks (unit tests + on-chain sanity range)
 
+## New 2026 Patterns (Anchor/SPL/Jito Surface)
+
+### Anchor IDL External-Account Overtrust
+Anchor patched IDL generation to exclude externally owned account types from internal account definitions (`idl: Exclude external accounts`, 2026-02-22).
+
+**Risk pattern**:
+- Client/wallet tooling treats generated IDL as a trust source.
+- External accounts appear “first-party safe” in automation or signing UX.
+- Integrator skips owner/program checks because metadata looked authoritative.
+
+**Mitigation**:
+- Keep runtime owner checks in on-chain code as source of truth.
+- In off-chain clients, validate `account.owner` and expected program IDs before signing.
+- Treat IDL/schema as descriptive, never as an authorization boundary.
+
+### Slot-Flow Quota Capture (Redemption Griefing)
+Protocols with global per-slot caps can be DoSed by one actor who consumes most of the quota early each slot.
+
+**Attack shape**:
+1. Attacker prepares redeemable balance.
+2. Sends burst redeems at slot boundary.
+3. Honest user redeems revert with slot-limit errors despite healthy collateral.
+
+**Mitigation**:
+- Per-actor fair-share limits (or stake-weighted quotas).
+- Priority lanes for small/organic redeems.
+- Burst scoring + grief penalties.
+
+### Typosquat Waves Targeting Solana Rust Tooling
+Recent RustSec advisories (`rpc-check`, `tracing-check`) show short-lived malicious crates aimed at credential theft in a specific ecosystem.
+
+**Mitigation**:
+- Cargo.lock hash attestation in CI/runtime.
+- Registry-source allowlist (crates.io only unless explicitly approved).
+- Two-person review for dependency additions/renames near common crate names.
+
 ## Solana-Specific Defense Checklist
 
 1. ☐ All accounts have owner checks (Anchor `Account<>` type)
