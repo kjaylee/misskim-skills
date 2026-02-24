@@ -1,0 +1,169 @@
+{
+  "timestampKst": "2026-02-24T16:00:00+09:00",
+  "generatedAtKst": "2026-02-24T16:03:00+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "webSearch": {
+      "status": "not-used",
+      "reason": "수집 단계 제한(240초) 내 direct HTTP/CLI 경로로 충족"
+    },
+    "primary": [
+      "direct HTTP fetch (web_fetch + curl)",
+      "clawhub CLI",
+      "VSCode Marketplace HTML parsing"
+    ],
+    "miniPcBrowserProxy": {
+      "status": "not-used",
+      "reason": "필수 소스 수집이 API/CLI/HTTP로 충족됨"
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skills.sh",
+      "access": {
+        "root": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "leaderboardAllTime": 73042,
+        "topSkill": "vercel-labs/skills/find-skills",
+        "topSkillInstalls": "305.2K",
+        "sitemapLocCount": 4000
+      }
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "access": {
+        "primary": 429,
+        "mirror": 200
+      },
+      "signals": {
+        "mirrorTop": [
+          "Archon",
+          "Trigger.dev",
+          "Chrome DevTools",
+          "Microsandbox"
+        ]
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://skillhub.club",
+      "signals": {
+        "skills": "21.6K",
+        "stars": "5.0M"
+      }
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.ai",
+      "access": {
+        "search": "ok",
+        "explore": 429,
+        "api": 429
+      },
+      "signals": {
+        "searchTop": [
+          "agent-skills-tools",
+          "agent-orchestrator",
+          "agent-council"
+        ]
+      },
+      "retry": "explore (1회)"
+    },
+    {
+      "source": "VSCode Agent Skills extension ecosystem",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "topRelevant": [
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installs": 82035,
+            "rating": 4.2
+          },
+          {
+            "id": "formulahendry.agent-skills",
+            "installs": 1861,
+            "rating": 5.0
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "installs": 573,
+            "rating": 5.0
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "중간",
+        "marketingHypeRisk": "중간 이상"
+      }
+    },
+    {
+      "item": "MCP Market 상위군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능(coding-agent/browser-cdp)",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "SkillHub 상위군 신규 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "ClawHub 신규군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "검증 부족(429)",
+        "replaceableByExistingStack": "대체 가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "높음"
+      }
+    },
+    {
+      "item": "VSCode Agent Skills 직접 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "낮음(OpenClaw CLI 중심)",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "기타 신규 후보",
+      "verdict": "not-needed"
+    }
+  ],
+  "meaningfulNewChanges": 1,
+  "minorDrift": {
+    "vscodeInstallDelta": {
+      "AutomataLabs.copilot-mcp": "+36",
+      "formulahendry.agent-skills": "+18",
+      "yamapan.agent-skill-ninja": "+1"
+    }
+  }
+}
