@@ -215,3 +215,40 @@ pub collateral_mint: Account<'info, Mint>,
 **Mechanism**: Off-chain clients over-trust generated metadata and infer ownership/safety guarantees for accounts that are actually external, leading to unsafe automation or signing UX.
 **Defense**: Treat generated IDL/schema as advisory; enforce runtime owner/program checks and account invariants in clients before signing/submitting transactions.
 
+## Why Audits Miss It — Vector Notes (Purple Reinforcement)
+
+| Vector | 왜 감사가 놓치는가 (메타 원인) |
+|---|---|
+| A1 Reentrancy | 함수 단위 체크리스트에 치우쳐 cross-function reentry 경로를 축약 평가. |
+| A2 Flash Loan | 단일 TX 시뮬레이션/경제 모델링 부족으로 자본 무제한 가정이 빠짐. |
+| A3 Oracle Manipulation | feed 단위 검증은 하지만 unit-composition(비율×USD) 검증이 누락됨. |
+| A4 Access Control | 코드 권한만 보고 키 운영/서명 정책(HSM·MPC)까지 확장 점검을 생략. |
+| A5 Overflow | 정상 범위 테스트 중심, 극단 경계값과 타입 승격 경로를 충분히 안 밟음. |
+| A6 Account Substitution | 계정 owner/address 제약을 “프레임워크가 해준다”는 가정에 의존. |
+| A7 Signature Replay | 도메인 분리(chain/program/nonce) 전수 확인 대신 happy-path 서명 검증만 수행. |
+| A8 Front-running | 온체인 로직 감사로 끝내고 mempool/ordering 위협모델을 범위 밖 처리. |
+| A9 Proxy Upgrade | 현재 구현 안전성에 집중, 업그레이드 권한 탈취 시나리오를 운영이슈로 분리. |
+| A10 Logic Bug | 취약점 taxonomy 매칭 위주로 명세-구현 정합성 검증이 얕아짐. |
+| A11 Rent/Lamport Drain | 저금액/저영향으로 분류되어 종료·정리 경로 검토가 축소됨. |
+| A12 CPI Confusion | 호출 대상 신뢰를 암묵 가정, CPI target pinning 검증 누락. |
+| A13 PDA Collision | seed namespace 설계 검토 없이 코드 패턴 스캔으로 대체. |
+| B14 RPC Manipulation | 온체인 무결성 가정이 강해 off-chain state ingestion 신뢰경계를 과소평가. |
+| B15 Key Compromise | 코드 감사와 키 운영 감사가 분리되어 blast radius 분석이 빠짐. |
+| B16 Race Condition | 단일 프로세스/단일 인스턴스 가정으로 재시작·중복 실행 경쟁을 놓침. |
+| B17 Checkpoint Poisoning | 상태파일을 캐시로 간주해 무결성/권한 검증을 기능 요구로 반영하지 않음. |
+| B18 Config Injection | 설정값 변경을 배포 파이프라인 문제로 분리해 런타임 위협으로 연결 안 함. |
+| B19 Memory/Log Leak | 기능 로그 우선 문화로 비밀정보 마스킹이 보안 요구로 강제되지 않음. |
+| B20 DoS | 자금 탈취 중심 리뷰로 가용성 공격 경제성 분석이 후순위. |
+| B29 AI Agent Confused-Deputy | 프롬프트 방어를 정책으로 착각하고 tool 권한 분리/승인 경계를 누락. |
+| C21 Bank Run | 코드 정확성은 확인하지만 집단행동/신뢰 붕괴 동학을 모델링하지 않음. |
+| C22 Collateral Manipulation | 단일 자산 기준 정상장 시나리오만 검증, 상관붕괴·급변장 스트레스 미흡. |
+| C23 Governance Attack | voting logic 검증은 해도 자금조달(플래시론) 기반 장악 비용을 계산 안 함. |
+| C24 Sybil | 정체성 비용·운영정책 검토 없이 온체인 stake 기준만 확인. |
+| C25 MEV | 프로토콜 내부 불변식 검증에 치우쳐 주문순서 시장구조를 별도 취급. |
+| C30 Liquidity Exhaustion | 손실 없는 저강도 반복 공격의 누적효과를 단건 리스크로 축소 평가. |
+| D26 Frontend Injection | 스마트컨트랙트 감사 범위 밖으로 분리되어 UI 공급망 통제가 누락됨. |
+| D27 RPC Takeover | endpoint 다중화만 점검하고 공급자 상관관계(ASN/DNS)까지는 미검증. |
+| D28 Supply Chain | 정적 스캐너 통과를 안전으로 간주, 단기 typosquat 파동 탐지가 느림. |
+| D31 Metadata Confusion | 생성된 IDL/스키마를 사실상 신뢰원으로 취급해 런타임 검증이 생략됨. |
+
+

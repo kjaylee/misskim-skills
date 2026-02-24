@@ -76,6 +76,20 @@ The full matrix with historical references, code-level mechanisms, and defense p
 |---|---|---|---|
 | 2026-02-25 | Moonwell oracle incident ($1.78M bad debt) | A3, A10, B18 | Added oracle unit-normalization misuse pattern, governance timelock recovery-gap note, and feed-composition sanity defenses |
 
+## Defense Failure Patterns (Meta, Purple-Team Informed)
+
+Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실패하는지**를 같이 기록한다.
+
+1. **Control Fragmentation**: 감사/바운티/모니터링/IR가 분리돼 신호가 연결되지 않음.
+2. **Rollback Latency**: 문제 인지 후 안전한 롤백까지의 의사결정·권한 체인 지연.
+3. **Assumption Drift**: 배포 당시 안전하던 임계치/가정이 시장·인프라 변화로 무효화.
+4. **Confused-Deputy Ops**: AI/자동화 도구가 비신뢰 입력을 권한 있는 행동으로 변환.
+5. **Capacity Griefing**: 단일 대형 공격보다 지속 저강도 압박으로 운영 여유를 소진.
+
+리포트의 각 HIGH/CRITICAL 항목에 아래를 추가:
+- `Why defense failed` (설계/운영/조직 중 어디가 끊겼는지)
+- `Recovery path` (탐지→차단→복구까지 실제 실행 경로)
+
 ## Execution Methodology
 
 For each of the 28 vectors:
