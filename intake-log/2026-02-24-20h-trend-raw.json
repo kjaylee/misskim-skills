@@ -1,0 +1,205 @@
+{
+  "timestampKst": "2026-02-24T20:00:00+09:00",
+  "generatedAtKst": "2026-02-24T20:03:00+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "runtimeBudgetSec": {
+      "total": 420,
+      "collection": 240
+    },
+    "webSearch": {
+      "status": "not-used",
+      "reason": "direct HTTP + web_fetch + clawhub CLI/API로 수집 충족"
+    },
+    "primary": [
+      "web_fetch (skills.sh / market-mcp / skillhub / clawhub / VSCode pages)",
+      "direct HTTP parse (requests/curl)",
+      "clawhub CLI (search/explore)",
+      "clawhub API (/api/v1/skills)",
+      "badgen VS Marketplace shields"
+    ],
+    "retryPolicy": {
+      "sourceRetryMax": 1,
+      "retriesUsed": [
+        "clawhub search (1)",
+        "clawhub explore (1)"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "source": "SkillsMP",
+      "url": "https://skills.sh",
+      "access": {
+        "root": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "leaderboardAllTime": 73274,
+        "topSkill": "vercel-labs/skills/find-skills",
+        "topSkillInstalls": "307.7K",
+        "sitemapLocCount": 4000
+      }
+    },
+    {
+      "source": "MCP Market",
+      "url": "https://mcpmarket.com",
+      "access": {
+        "web_fetch": 429,
+        "direct_http": 200,
+        "mirror": 200
+      },
+      "signals": {
+        "primaryServers": 21857,
+        "mirrorTop": [
+          "Archon",
+          "Trigger.dev",
+          "Chrome DevTools",
+          "Microsandbox"
+        ]
+      }
+    },
+    {
+      "source": "SkillHub",
+      "url": "https://skillhub.club",
+      "access": {
+        "root": 200,
+        "r_jina": 200
+      },
+      "signals": {
+        "skills": "21.6K",
+        "stars": "5.1M",
+        "skillsCollected": 21564,
+        "trendingTop": [
+          "blucli",
+          "openai-whisper-api",
+          "feishu-doc",
+          "nano-banana-pro",
+          "gifgrep"
+        ]
+      }
+    },
+    {
+      "source": "ClawHub",
+      "url": "https://clawhub.ai",
+      "access": {
+        "site": 200,
+        "search": "rate-limited -> ok (retry 1)",
+        "explore": "rate-limited -> ok (retry 1)",
+        "api_list": 200
+      },
+      "signals": {
+        "popular": {
+          "gog": "34.8k",
+          "self-improving-agent": "33.6k",
+          "ontology": "30.1k"
+        },
+        "apiNewest": [
+          "react-native-logs-cli",
+          "filtrix-image-gen",
+          "envato-comment-task-to-sheet"
+        ]
+      }
+    },
+    {
+      "source": "VSCode Agent Skills extension ecosystem",
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "topRelevant": [
+          {
+            "id": "AutomataLabs.copilot-mcp",
+            "installsApprox": "81.9K",
+            "rating": "badge rate-limited"
+          },
+          {
+            "id": "formulahendry.agent-skills",
+            "installsApprox": "1.8K~1.9K",
+            "rating": "5.0/5 (1)"
+          },
+          {
+            "id": "yamapan.agent-skill-ninja",
+            "installs": 573,
+            "rating": "5.0 (page metadata)"
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "중간",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "MCP Market 상위군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능(coding-agent/browser-cdp)",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "SkillHub 상위군 신규 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "부분적",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "ClawHub 신규군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "검증 부분충족",
+        "replaceableByExistingStack": "대체 가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간 이상"
+      }
+    },
+    {
+      "item": "VSCode Agent Skills 직접 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "solvesOurProblem": "낮음(OpenClaw CLI 중심)",
+        "replaceableByExistingStack": "가능",
+        "costEffect": "낮음",
+        "marketingHypeRisk": "중간"
+      }
+    },
+    {
+      "item": "기타 신규 후보",
+      "verdict": "not-needed"
+    }
+  ],
+  "meaningfulNewChanges": 1,
+  "changeSummary": [
+    "ClawHub 접근성 회복: search/explore 재시도 1회 후 정상 + API list 200 확인"
+  ],
+  "minorDrift": {
+    "skillsmpAllTime": "+232 (73,042 -> 73,274)",
+    "skillhubStars": "5.0M -> 5.1M",
+    "vscodeInstalls": "소폭 변동(반올림 구간)"
+  },
+  "security": {
+    "absoluteBlock": [
+      "molt road",
+      "molt.host"
+    ],
+    "externalSkillPolicy": "Research -> Audit -> Rewrite -> misskim-skills/ (blind install 금지)"
+  }
+}
