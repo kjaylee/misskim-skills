@@ -32,17 +32,21 @@ mint(user, mint_amount);
 **Defense**: TWAP oracles, staleness checks (>N slots = reject), confidence interval checks, mint/redeem cooldowns, per-block volume limits.
 
 ### A3. Oracle Manipulation
-**Historical**: Mango (Pyth feed manipulation), BonqDAO (TellorFlex oracle), Harvest (Curve pool as oracle)
+**Historical**: Mango (Pyth feed manipulation), BonqDAO (TellorFlex oracle), Harvest (Curve pool as oracle), Moonwell (2026, $1.78M bad debt)
 **Mechanism**: Push stale/false price data to oracle → protocol acts on wrong price → value extraction.
+**2026 reinforcement (Moonwell)**: Oracle-composition unit mismatch (`cbETH/ETH` ratio treated as USD price) created a 99%+ mispricing window and automated liquidations.
 **Solana/Pyth specific**: Pyth confidence intervals, staleness (slot age), status checks.
 **Code pattern to find**:
 ```
 // VULNERABLE: no staleness check
 let price = pyth_price.price;
-// VULNERABLE: no confidence check  
+// VULNERABLE: no confidence check
 // VULNERABLE: no status check (Trading vs Unknown)
+
+// VULNERABLE: ratio feed used directly as USD
+let usd_price = cbeth_eth_ratio; // missing * eth_usd
 ```
-**Defense**: `max_staleness_slots`, `min_confidence_ratio`, `price_status == Trading`, multi-oracle fallback.
+**Defense**: `max_staleness_slots`, `min_confidence_ratio`, `price_status == Trading`, explicit unit normalization (`ratio * base_usd`), on-chain price sanity bands, multi-oracle fallback.
 
 ### A4. Access Control
 **Historical**: Ronin ($624M — 5/9 validator keys), Wormhole ($320M — guardian signature bypass), Poly Network ($611M — role verification bypass)
@@ -98,9 +102,10 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Multisig upgrade authority, timelock, freeze authority, eventual immutability.
 
 ### A10. Logic Bug
-**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking)
+**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression)
 **Mechanism**: Incorrect business logic allows unintended state transitions or value extraction.
-**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing.
+**2026 reinforcement (Moonwell)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission if unit-invariant tests are missing.
+**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`).
 
 ### A11. Rent/Lamport Drain (Solana)
 **Historical**: Multiple small-scale
@@ -138,7 +143,8 @@ pub collateral_mint: Account<'info, Mint>,
 
 ### B18. Config Injection
 **Mechanism**: Modify config file → change RPC endpoints, fee rates, authority keys.
-**Defense**: Config file permissions (600), integrity checks, immutable deployment.
+**2026 reinforcement (Moonwell)**: Misconfigured oracle rollout plus unbypassable timelock can lock protocol into a bad config long enough for extraction.
+**Defense**: Config file permissions (600), integrity checks, immutable deployment, and emergency fast-path for oracle rollback/kill-switch outside normal governance delay.
 
 ### B19. Memory/Log Leak
 **Historical**: Slope wallet (private keys in Sentry logs)

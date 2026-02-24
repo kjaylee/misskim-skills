@@ -70,6 +70,12 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 27 | RPC Endpoint Takeover | Multiple | HIGH |
 | 28 | Supply Chain | event-stream, ua-parser-js | HIGH |
 
+## Daily Evolution Log (Recent)
+
+| Date (KST) | Incident | Vector Mapping | Delta Applied |
+|---|---|---|---|
+| 2026-02-25 | Moonwell oracle incident ($1.78M bad debt) | A3, A10, B18 | Added oracle unit-normalization misuse pattern, governance timelock recovery-gap note, and feed-composition sanity defenses |
+
 ## Execution Methodology
 
 For each of the 28 vectors:

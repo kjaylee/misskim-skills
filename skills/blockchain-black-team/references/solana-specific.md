@@ -100,6 +100,33 @@ Solana uses slots (~400ms) not wall-clock time. `Clock::get()?.unix_timestamp` i
 ### Transaction Ordering
 Validators can reorder transactions within a block. MEV is possible on Solana via Jito and similar infrastructure.
 
+## Oracle Composition & Unit Safety
+
+### Ratio Feed Misuse (Unit Normalization Bug)
+When protocols compose feeds (e.g., token/base ratio + base/USD), missing one leg can convert a ratio into a false USD price.
+
+```rust
+// VULNERABLE: ratio treated as final USD price
+let cbeth_eth = ratio_feed.price;
+let usd_price = cbeth_eth; // missing ETH/USD multiplier
+
+// SAFE: explicit composition + sanity guard
+let eth_usd = base_usd_feed.price;
+let usd_price = cbeth_eth
+    .checked_mul(eth_usd)
+    .ok_or(ErrorCode::MathOverflow)?
+    / SCALE;
+require!(usd_price >= MIN_PRICE && usd_price <= MAX_PRICE, ErrorCode::InvalidPrice);
+```
+
+### Timelock Recovery Gap
+If oracle config changes require long governance delay, attacker can exploit the gap before rollback.
+
+Mitigation:
+- Emergency oracle pause path (separate authority with strict scope)
+- Fast rollback for feed misconfiguration
+- Deployment-time invariant checks (unit tests + on-chain sanity range)
+
 ## Solana-Specific Defense Checklist
 
 1. ☐ All accounts have owner checks (Anchor `Account<>` type)
@@ -114,3 +141,4 @@ Validators can reorder transactions within a block. MEV is possible on Solana vi
 10. ☐ Oracle staleness + confidence + status validated
 11. ☐ No sensitive data in logs or error messages
 12. ☐ Upgrade authority secured (multisig or frozen)
+13. ☐ Oracle feed composition enforces unit normalization + price sanity range
