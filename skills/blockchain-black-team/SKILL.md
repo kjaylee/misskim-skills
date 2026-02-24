@@ -5,6 +5,12 @@ description: Execute real-world blockchain attack scenarios against smart contra
 
 # Blockchain Black Team — Real-World Attack Simulation
 
+## When to Use This vs Others
+- **Use this (Black Team)** when you want historically proven attack vectors mapped to real incidents and immediate exploitability checks.
+- **Use `blockchain-red-team`** for novel/zero-day style techniques and bypass research beyond known patterns.
+- **Use `blockchain-purple-team`** for meta-level coverage gaps, audit failure causes, and architecture/ops blind spots.
+
+
 Execute battle-tested attack vectors from 68+ historical blockchain incidents ($10B+ total losses) against target protocol code.
 
 ## When to Use

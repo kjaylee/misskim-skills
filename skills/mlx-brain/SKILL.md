@@ -1,3 +1,11 @@
+---
+name: mlx-brain
+description: MacBook MLX local LLM orchestration skill for running lightweight on-device models via command line. Use when you need local inference, private/offline generation, model routing (qwen/coder), or remote invocation on MacBook Pro nodes. Triggers on MLX, local LLM, on-device inference, qwen, coder model, and MacBook model execution workflows.
+metadata:
+  author: misskim
+  version: "1.0"
+---
+
 # MLX Brain - 맥북 MLX LLM 오케스트레이터
 
 ## 설치 (맥북)

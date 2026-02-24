@@ -1,3 +1,11 @@
+---
+name: sprite-sheet
+description: Sprite sheet and texture atlas production guide for game asset optimization in Rust (Macroquad/Bevy) and Godot. Use when packing sprites, reducing draw calls, generating atlas metadata, or optimizing rendering/memory for HTML5/mobile games. Triggers on sprite sheet, texture atlas, asset packing, draw call optimization, animation frames, and 2D game asset pipeline work.
+metadata:
+  author: misskim
+  version: "1.0"
+---
+
 # Sprite Sheet & Texture Atlas Mastery
 
 **Category**: Game Development | Asset Optimization  

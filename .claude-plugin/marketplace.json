@@ -1,0 +1,219 @@
+{
+  "skills": [
+    {
+      "name": "anti-slop-design",
+      "path": "skills/anti-slop-design",
+      "description": "Create distinctive, production-grade frontend interfaces that avoid generic AI aesthetics"
+    },
+    {
+      "name": "appstore-screenshots",
+      "path": "skills/appstore-screenshots",
+      "description": "Xcode 프로젝트에서 App Store 홍보 스크린샷 자동 생성"
+    },
+    {
+      "name": "blender-interactive",
+      "path": "skills/blender-interactive",
+      "description": "Blender 양방향 소켓 통신 스킬. TCP 소켓 서버로 실시간 씬 조작, 상태 조회, Poly Haven/Sketchfab 에셋 통합. 기존 blender-pipeline (배치 처리)와 상호보완 — 복잡한 씬 구축, 반복 조작, 실시간 피드백에 사용. 트리거: Blender 실시간 조작, 씬 상태 확인, Poly Haven 에셋, Sketchfab 모델, 양방향 Blender 통신"
+    },
+    {
+      "name": "blender-pipeline",
+      "path": "skills/blender-pipeline",
+      "description": "Blender 헤드리스 게임 에셋 파이프라인. 3D 모델 제작/가공/변환/렌더링을 Blender Python API(bpy)로 자동화. 트리거: 3D 모델링, 에셋 변환, 스프라이트 시트, 리깅, Mixamo, FBX/glTF 변환, 프로시저럴 에셋 생성 관련 요청"
+    },
+    {
+      "name": "blockchain-black-team",
+      "path": "skills/blockchain-black-team",
+      "description": "Execute real-world blockchain attack scenarios against smart contracts and off-chain infrastructure"
+    },
+    {
+      "name": "blockchain-purple-team",
+      "path": "skills/blockchain-purple-team",
+      "description": "Meta-security analysis that finds structural gaps missed by Black Team (historical patterns) and Red Team (novel techniques)"
+    },
+    {
+      "name": "blockchain-red-team",
+      "path": "skills/blockchain-red-team",
+      "description": "Offensive penetration testing of blockchain protocols using novel attack techniques beyond known historical incidents"
+    },
+    {
+      "name": "context7-docs",
+      "path": "skills/context7-docs",
+      "description": "Query up-to-date library/framework documentation via Context7 MCP"
+    },
+    {
+      "name": "evoweb-ai",
+      "path": "skills/evoweb-ai",
+      "description": "Create a Website Designed to Bring Clients from ChatGPT, Gemini & Modern Search"
+    },
+    {
+      "name": "game-design",
+      "path": "skills/game-design",
+      "description": "Game design planning framework for new game concepts, loops, systems, balance, and production-ready design docs"
+    },
+    {
+      "name": "game-dev-rust-godot",
+      "path": "skills/game-dev-rust-godot",
+      "description": "Game development workflow using Rust+WASM or Godot 4.x for HTML5 games"
+    },
+    {
+      "name": "game-marketing",
+      "path": "skills/game-marketing",
+      "description": "텔레그램 Mini App 게임 마케팅 플레이북. 새 게임 런칭 시 로드하여 단계별 실행. 홍보 채널 세팅, 바이럴 메카닉, 수익화, 자동화까지 커버"
+    },
+    {
+      "name": "game-video-ad-pipeline",
+      "path": "skills/game-video-ad-pipeline",
+      "description": "FFmpeg 기반 $0 게임 광고 영상 자동 생성 스킬. 게임 ID(steam app id)로 스크린샷 자동 수집 → 템플릿 스타일(액션/퍼즐/아이들) 적용 → 텍스트 오버레이 포함 15~30초 MP4 출력"
+    },
+    {
+      "name": "github-pro",
+      "path": "skills/github-pro",
+      "description": "Advanced GitHub operations via `gh` CLI. CI/CD monitoring, API queries, and automated PR reviews"
+    },
+    {
+      "name": "godot",
+      "path": "skills/godot",
+      "description": "Godot Engine 게임 개발. 프로젝트 생성, GDScript 코딩, 2D/3D 게임 제작, 노드 시스템, Scene 구조, 물리/애니메이션/UI 구현 지원. Godot 프로젝트 작업 시 사용"
+    },
+    {
+      "name": "humanizer",
+      "path": "skills/humanizer",
+      "description": "AI가 생성한 한국어 텍스트를 자연스러운 사람 글처럼 변환하는 가이드. 소설, 블로그, 에세이 등 한국어 콘텐츠 작성 시 AI 냄새 제거. AI text humanize, 자연스러운 글쓰기, 번역투 제거, 한국어 교정에 사용"
+    },
+    {
+      "name": "memory-management",
+      "path": "skills/memory-management",
+      "description": "AI 에이전트의 세션 간 기억 관리 스킬. openclaw-mem CLI 기반 5-Layer 메모리 아키텍처 운용, 세션 라이프사이클(시작/중간/종료) 기억 작업, 프로젝트 Brain 관리, 기억 위생 유지. memory, context, handoff, working memory, decision log, RAG, LanceDB 관련 작업 시 사용"
+    },
+    {
+      "name": "microstable",
+      "path": "skills/microstable",
+      "description": "Microstable protocol agent participation skill. Enables AI agents to interact with the Microstable self-evolving multi-collateral stablecoin protocol"
+    },
+    {
+      "name": "mlx-brain",
+      "path": "skills/mlx-brain",
+      "description": "MacBook MLX local LLM orchestration skill for running lightweight on-device models via command line"
+    },
+    {
+      "name": "monetization-playbook",
+      "path": "skills/monetization-playbook",
+      "description": "인디 개발자의 무료 도구/게임/앱 수익화 완전 플레이북. 제품 유형별 수익 모델 선택, 가격 전략, AdSense/Stripe/Gumroad 구현, 마케팅 연동, 퍼널 측정, A/B 테스트까지. monetization, pricing, paywall, freemium, indie revenue 언급 시 사용"
+    },
+    {
+      "name": "openapi-tool-scaffold",
+      "path": "skills/openapi-tool-scaffold",
+      "description": "OpenAPI 3.x (JSON/YAML) 스펙을 MCP stdio 서버(Python) 코드로 자동 변환하는 스킬. 외부 REST API를 MCP tool로 빠르게 브릿지할 때 사용. 인증(Bearer, API Key, OAuth stub) 지원, endpoint별 tool 자동 생성. 트리거: OpenAPI→MCP 변환, 외부 API MCP 연동, REST API tool 자동화, Python MCP scaffold"
+    },
+    {
+      "name": "parallel-agents",
+      "path": "skills/parallel-agents",
+      "description": "Dispatch multiple subagents for independent tasks simultaneously"
+    },
+    {
+      "name": "playwright-testing",
+      "path": "skills/playwright-testing",
+      "description": "Test web applications and games using Playwright on MiniPC"
+    },
+    {
+      "name": "postgres-perf",
+      "path": "skills/postgres-perf",
+      "description": "PostgreSQL performance optimization and best practices"
+    },
+    {
+      "name": "ralph-loop",
+      "path": "skills/ralph-loop",
+      "description": "AI 자율 구현 방법론. 구현/개발/코딩 요청 시 자동 적용. 메인은 마더 서브에이전트를 spawn하고, 마더가 워커들을 관리. specs/ → IMPLEMENTATION_PLAN.md → 1태스크씩 구현 → 2단계 리뷰 → 테스트 → 반복"
+    },
+    {
+      "name": "react-perf",
+      "path": "skills/react-perf",
+      "description": "React and Next.js performance optimization patterns"
+    },
+    {
+      "name": "remotion-video",
+      "path": "skills/remotion-video",
+      "description": "Create programmatic videos using Remotion on MiniPC"
+    },
+    {
+      "name": "seo-optimizer",
+      "path": "skills/seo-optimizer",
+      "description": "GitHub Pages 정적 사이트 SEO 완전 최적화 스킬. 기술적 SEO(sitemap, robots.txt, canonical, meta tags, Open Graph, JSON-LD), 콘텐츠 SEO(제목/설명/키워드/내부링크), 도구·게임·블로그 페이지별 SEO, Google Search Console 연동, Core Web Vitals, SEO 감사 자동화. SEO, 검색 최적화, 메타태그, 구조화 데이터, 사이트맵 언급 시 활성화"
+    },
+    {
+      "name": "skill-authoring",
+      "path": "skills/skill-authoring",
+      "description": "Guide for creating effective SKILL.md files that extend agent capabilities"
+    },
+    {
+      "name": "skill-intake-sandbox-gate",
+      "path": "skills/skill-intake-sandbox-gate",
+      "description": "Intake gate for external AgentSkills/MCP tools"
+    },
+    {
+      "name": "sprite-sheet",
+      "path": "skills/sprite-sheet",
+      "description": "Sprite sheet and texture atlas production guide for game asset optimization in Rust (Macroquad/Bevy) and Godot"
+    },
+    {
+      "name": "stripe-payments",
+      "path": "skills/stripe-payments",
+      "description": "Best practices for Stripe payment integration"
+    },
+    {
+      "name": "subagent-dev",
+      "path": "skills/subagent-dev",
+      "description": "Execute implementation plans using fresh subagents per task with two-stage review (spec compliance + code quality)"
+    },
+    {
+      "name": "systematic-debugging",
+      "path": "skills/systematic-debugging",
+      "description": "Root-cause-first debugging methodology"
+    },
+    {
+      "name": "tdd-discipline",
+      "path": "skills/tdd-discipline",
+      "description": "Test-Driven Development methodology"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "path": "skills/ui-ux-pro-max",
+      "description": "UI/UX design intelligence and implementation guidance for building polished interfaces"
+    },
+    {
+      "name": "verify-before-done",
+      "path": "skills/verify-before-done",
+      "description": "Require fresh verification evidence before claiming work is complete. Use ALWAYS before any completion claim, commit, push, PR, or status report. Prevents false completion claims"
+    },
+    {
+      "name": "video-pro",
+      "path": "skills/video-pro",
+      "description": "MiniPC 노드(Remotion + FFmpeg)를 활용한 실전형 비디오 에디팅 스킬. 프로그래밍 방식의 영상 제작부터 컷 편집, 자막 합성, 포맷 변환까지 지원합니다"
+    },
+    {
+      "name": "web-bundling",
+      "path": "skills/web-bundling",
+      "description": "Bundle web applications into single HTML files for distribution"
+    },
+    {
+      "name": "web-deploy-github",
+      "path": "skills/web-deploy-github",
+      "description": "Create and deploy single-page static websites to GitHub Pages with autonomous workflow"
+    },
+    {
+      "name": "web-design-guidelines",
+      "path": "skills/web-design-guidelines",
+      "description": "Review UI code for Web Interface Guidelines compliance"
+    },
+    {
+      "name": "web-design-pro",
+      "path": "skills/web-design-pro",
+      "description": "Modern web design engineering skills including design tokens, advanced UI/UX methodologies, accessibility, and game-specific UI patterns. Use for building commercial-grade, performant, and accessible web interfaces"
+    },
+    {
+      "name": "youtube-pro",
+      "path": "skills/youtube-pro",
+      "description": "Advanced YouTube analysis, transcripts, and metadata extraction"
+    }
+  ]
+}

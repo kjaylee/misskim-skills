@@ -5,6 +5,12 @@ description: Offensive penetration testing of blockchain protocols using novel a
 
 # Blockchain Red Team — Novel Attack Technique Research & Exploitation
 
+## When to Use This vs Others
+- **Use this (Red Team)** when you need new exploit ideas, patch bypass attempts, or forward-looking offensive research.
+- **Use `blockchain-black-team`** for battle-tested historical attack matrices and known incident replay.
+- **Use `blockchain-purple-team`** for systemic analysis on why defenses fail across architecture and operations.
+
+
 Develop and execute attack techniques that **haven't been seen in the wild yet**. While the Black Team maps historical incidents, the Red Team invents the next generation of attacks.
 
 ## When to Use

@@ -5,6 +5,12 @@ description: Create and deploy single-page static websites to GitHub Pages with 
 
 # Web Deploy GitHub Pages
 
+## When to Use This vs Others
+- **Use this (`web-deploy-github`)** when the goal is repository setup, GitHub Actions, and GitHub Pages deployment to a live URL.
+- **Use `web-bundling`** when the core need is packaging the app/game into a single distributable HTML artifact.
+- For single-file site distribution, run `web-bundling` first, then `web-deploy-github` for hosting.
+
+
 ## Overview
 
 This skill enables autonomous creation and deployment of static websites to GitHub Pages. It follows a complete workflow from project structure initialization through automatic deployment via GitHub Actions, optimized for single-page applications, portfolios, and landing pages.

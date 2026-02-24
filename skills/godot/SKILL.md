@@ -7,6 +7,12 @@ version: 1.0.0
 
 # Godot Engine Skill
 
+## When to Use This vs Others
+- **Use this (`godot`)** for hands-on Godot engine execution: Scene/Node architecture, GDScript coding, export/debug workflows.
+- **Use `game-design`** when you need to define the game concept, loops, and system design before implementation.
+- **Use `game-dev-rust-godot`** when you need full pipeline governance across assets/tests/shipping, not only engine-specific guidance.
+
+
 Godot 4.x 게임 엔진 개발을 위한 종합 가이드. 프로젝트 생성부터 빌드, GDScript 코딩, Scene/Node 시스템, 2D/3D 게임 제작까지 전 과정을 지원합니다.
 
 ## 🚀 Quick Start

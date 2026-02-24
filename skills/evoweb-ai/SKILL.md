@@ -1,5 +1,5 @@
 ---
-name: EvoWeb.ai Website Builder
+name: evoweb-ai
 description: Create a Website Designed to Bring Clients from ChatGPT, Gemini & Modern Search
 homepage: https://evoweb.ai/
 metadata: {"clawdbot":{"emoji":"🌐","requires":{"bins":[],"env":["EVOWEB_API_KEY"]}}}

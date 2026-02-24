@@ -3,6 +3,12 @@ name: ui-ux-pro-max
 description: UI/UX design intelligence and implementation guidance for building polished interfaces. Use when the user asks for UI design, UX flows, information architecture, visual style direction, design systems/tokens, component specs, copy/microcopy, accessibility, or to generate/critique/refine frontend UI (HTML/CSS/JS, React, Next.js, Vue, Svelte, Tailwind). Includes workflows for (1) generating new UI layouts and styling, (2) improving existing UI/UX, (3) producing design-system tokens and component guidelines, and (4) turning UX recommendations into concrete code changes.
 ---
 
+## When to Use This vs Others
+- **Use this (`ui-ux-pro-max`)** when the request needs UX flow + visual direction + component specs + actionable implementation guidance.
+- **Use `web-design-pro`** for design engineering principles (tokens/accessibility/performance) and system-level best practices.
+- **Use `web-design-guidelines`** for formal compliance audit output tied to external guideline rules.
+
+
 Follow these steps to deliver high-quality UI/UX output with minimal back-and-forth.
 
 ## 1) Triage

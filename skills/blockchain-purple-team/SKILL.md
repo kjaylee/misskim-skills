@@ -5,6 +5,12 @@ description: Meta-security analysis that finds structural gaps missed by Black T
 
 # Blockchain Purple Team — Meta-Security & Structural Gap Analysis
 
+## When to Use This vs Others
+- **Use this (Purple Team)** when Black/Red findings exist but you need structural gap analysis and cross-team coverage mapping.
+- **Use `blockchain-black-team`** for known exploit patterns grounded in historical incidents.
+- **Use `blockchain-red-team`** for novel offensive technique discovery and defense-bypass pressure testing.
+
+
 Find what Black Team and Red Team **cannot see** — the structural blind spots, audit failures, and systemic patterns that make defenses fail.
 
 ## When to Use

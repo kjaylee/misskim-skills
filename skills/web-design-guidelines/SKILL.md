@@ -9,6 +9,12 @@ metadata:
 
 # Web Interface Guidelines
 
+## When to Use This vs Others
+- **Use this (`web-design-guidelines`)** for strict rule-based UI review and finding reports (`file:line`) against the latest guideline source.
+- **Use `web-design-pro`** for deeper design system architecture, performance-aware styling, and implementation strategy.
+- **Use `ui-ux-pro-max`** for end-to-end UX deliverables and concrete redesign/refactor proposals.
+
+
 Review files for compliance with Web Interface Guidelines.
 
 ## How It Works

@@ -5,6 +5,12 @@ description: Game development workflow using Rust+WASM or Godot 4.x for HTML5 ga
 
 # Game Development: Rust + WASM / Godot 4.x
 
+## When to Use This vs Others
+- **Use this (`game-dev-rust-godot`)** for end-to-end production workflow (assets→spec→tests→implementation) in Rust+WASM or Godot.
+- **Use `game-design`** before coding when gameplay concept, loops, and feature priorities are still being shaped.
+- **Use `godot`** when the task is engine-deep Godot implementation details rather than cross-stack production orchestration.
+
+
 HTML5 게임 제작을 위한 전용 워크플로우. **주인님 직접 지시 (2026-02-06)**: Rust + WASM 또는 Godot만 사용.
 
 ## 🚀 기술 스택 (필수 준수)

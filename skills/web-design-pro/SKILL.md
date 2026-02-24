@@ -9,6 +9,12 @@ metadata:
 
 # Web Design Pro (Modern Design Engineering)
 
+## When to Use This vs Others
+- **Use this (`web-design-pro`)** for advanced design engineering: tokens, accessibility, performance, and production-grade UI systems.
+- **Use `web-design-guidelines`** when the primary task is compliance auditing against external guideline rules.
+- **Use `ui-ux-pro-max`** when you need deliverable-driven UX flows, component specs, and direct UI generation/refinement output.
+
+
 웹 디자인의 심미성을 넘어, 시스템 설계, 성능 최적화, 접근성, 그리고 게임 특화 UX를 통합한 전문가 레벨의 기술셋.
 
 ## 1. Design Systems & Tokens (디자인 시스템 & 토큰)

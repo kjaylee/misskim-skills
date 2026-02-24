@@ -80,3 +80,38 @@ skill-name/
 
 **나쁜:** 에이전트가 이미 아는 Python 문법 설명
 **좋은:** 에이전트가 모르는 도메인 특화 지식/워크플로우 제공
+
+## Prerequisites Checklist (Template)
+
+새 스킬 작성 시 아래 체크리스트를 먼저 채운다.
+
+- [ ] 이 스킬이 해결할 **구체 문제**가 1문장으로 정의되어 있다.
+- [ ] 기존 스킬과의 **중복 여부**를 확인했다 (중복이면 라우팅 섹션으로 통합).
+- [ ] 필요한 실행 환경/의존성(노드, 바이너리, 권한, API 키)을 명시했다.
+- [ ] 입력/출력 형태(예: 파일, URL, 코드, 보고서 템플릿)를 정의했다.
+- [ ] 실패 시 폴백 경로(대체 툴/수동 절차)를 적었다.
+- [ ] 최소 1개 이상의 실제 사용 예시를 포함했다.
+## When to Use / When NOT to Use (Decision Tree Template)
+
+스킬 상단에 아래 템플릿 형태로 분기 로직을 추가한다.
+
+```md
+## When to Use This vs Others
+- Use this skill when: {핵심 조건 1}, {핵심 조건 2}
+- Use {other-skill} when: {대안 스킬이 더 적합한 조건}
+- Do NOT use this skill when: {명확한 제외 조건}
+```
+
+의사결정은 2~3줄로 짧게 유지하고, 서로 헷갈리는 스킬 쌍에는 반드시 교차 링크를 넣는다.
+## Dual Description Rule (Agent vs Marketplace)
+
+동일 스킬이라도 설명은 목적별로 분리한다.
+
+- **`SKILL.md` frontmatter `description` (에이전트용):**
+  - 트리거 키워드를 풍부하게 포함한다.
+  - "언제 호출되어야 하는지"를 명시한다.
+  - 예: 도메인 키워드, 요청 유형, 활성화 신호 포함.
+- **`marketplace.json` `description` (사람용):**
+  - 기능 요약 중심의 자연스러운 1~2문장.
+  - 마케팅/탐색 친화적 문장으로 작성.
+  - 내부 트리거 키워드 나열은 지양.

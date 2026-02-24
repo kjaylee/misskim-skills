@@ -9,6 +9,12 @@ metadata:
 
 # Web Bundling (Single HTML)
 
+## When to Use This vs Others
+- **Use this (`web-bundling`)** when you must produce a self-contained single HTML output for sharing/distribution.
+- **Use `web-deploy-github`** when deployment automation and GitHub Pages publishing are the primary objective.
+- For hosted single-file artifacts, bundle first here, then deploy via `web-deploy-github`.
+
+
 React/Vite 앱을 단일 HTML 파일로 번들링.
 
 ## 언제 사용

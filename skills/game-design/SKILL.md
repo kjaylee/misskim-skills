@@ -1,4 +1,18 @@
+---
+name: game-design
+description: Game design planning framework for new game concepts, loops, systems, balance, and production-ready design docs. Use when asked to design a game concept, core loop, progression, retention, or to structure game planning from idea to implementation. Triggers on game design, game planning, loop design, mechanics design, progression design, feature spec, and game concept requests.
+metadata:
+  author: misskim
+  version: "1.0"
+---
+
 # 🎮 게임 기획 스킬 (Game Design Skill)
+
+## When to Use This vs Others
+- **Use this (`game-design`)** for concept definition, loop architecture, retention/progression planning, and design-doc level decisions.
+- **Use `game-dev-rust-godot`** when you are ready to implement and ship via Rust+WASM or Godot workflow.
+- **Use `godot`** when execution is specifically GDScript/Scene/Node-level Godot engine work.
+
 
 > 새 게임 기획 시 따라야 할 프레임워크, 체크리스트, 패턴 모음
 > 학습 배경: specs/game-design-study.md 참조
