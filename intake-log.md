@@ -1,6 +1,40 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-25 08:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용, MiniPC relay 미연결로 browser.proxy 미사용.
+- **수집 경로:** `web_fetch + r.jina.ai + direct HTTP(UA) + clawhub CLI/API`.
+- **SkillsMP:** `skillsmp.com const skills=283,647` / `skills.sh All Time 73,867`.
+- **MCP Market:** `web_fetch 429` 지속, direct HTTP 기준 `skillStats.totalCount=50,371`, mirror `6,409 MCP servers`.
+- **SkillHub:** `4.9M Stars`, `22,030 Skills Collected`, sitemap `<loc> 1,979`.
+- **ClawHub:** API `/api/v1/skills` `200` 회복(직전 429), CLI `search/explore` 정상.
+- **VSCode Agent Skills:** `copilot-mcp 82.2K`, `agent-skills 1.9K`, `agent-skill-ninja 573`.
+- **변화 판단:** 의미 있는 신규 변화 **2건**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| SkillsMP 직접 흡수 | ⚠️ 참고만 | Q1 부분적, Q2 가능(대체 소스 존재), Q3 중간, Q4 높음(카운트 불일치). |
+| MCP Market 상위군 즉시 도입 | ⚠️ 참고만 | Q1 부분적, Q2 가능(coding-agent/browser-cdp), Q3 낮음, Q4 중간. |
+| SkillHub 상위군 신규 도입 | ⚠️ 참고만 | Q1 부분적, Q2 가능, Q3 낮음, Q4 중간. |
+| ClawHub API 기반 intake 경로 강화 | ✅ 도입 | Q1 높음, Q2 일부 불가(API 신호 대체 어려움), Q3 높음, Q4 낮음. |
+| VSCode Agent Skills 확장 직접 도입 | ⚠️ 참고만 | Q1 낮음(OpenClaw CLI 중심), Q2 가능, Q3 낮음, Q4 중간. |
+
+**❌ 불필요 판정:** 5건
+
+### ✅ Actions
+1. ClawHub API 신호를 intake scorecard에 고정(Research→Audit→Rewrite).
+2. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지.
+
+### 📁 Full Report
+- `intake-log/2026-02-25-08h-trend-sweep.md`
+- `intake-log/2026-02-25-08h-trend-raw.json`
+
+---
+
+
 ## 2026-02-25 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary
