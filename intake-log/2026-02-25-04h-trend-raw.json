@@ -1,0 +1,178 @@
+{
+  "timestampKst": "2026-02-25T04:00:00+09:00",
+  "generatedAtKst": "2026-02-25T04:03:47.960187+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "runtimeSec": 41.8,
+    "runtimeBudgetSec": {
+      "total": 420,
+      "collection": 240
+    },
+    "webSearch": {
+      "status": "not-used",
+      "reason": "direct HTTP + CLI + badge endpoints로 수집 충족"
+    },
+    "retryPolicy": {
+      "sourceRetryMax": 1
+    }
+  },
+  "sources": [
+    {
+      "url": "https://skills.sh",
+      "access": {
+        "root": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "leaderboardAllTime": 73669,
+        "sitemapLocCount": 4000
+      }
+    },
+    {
+      "url": "https://mcpmarket.com",
+      "access": {
+        "direct_http": 429,
+        "mirror": 200
+      },
+      "signals": {
+        "primaryServers": null,
+        "mirrorServers": 6409,
+        "mirrorTop": [
+          "Archon",
+          "Trigger.dev",
+          "Chrome DevTools"
+        ]
+      }
+    },
+    {
+      "url": "https://skillhub.club",
+      "access": {
+        "root": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "stars": "5.1M",
+        "skillsCollected": 21564,
+        "sitemapLocCount": 1979
+      }
+    },
+    {
+      "url": "https://clawhub.ai",
+      "access": {
+        "search": "ok",
+        "searchRetryUsed": false,
+        "explore": "ok",
+        "exploreRetryUsed": true,
+        "api_list": 429,
+        "apiRetryUsed": true
+      },
+      "signals": {
+        "searchTop": [
+          "openclaw-anything",
+          "openclaw-backup",
+          "openclaw-server-secure-skill"
+        ],
+        "exploreTop": [
+          "claw-observability",
+          "polymarket-weather-trader",
+          "hype-scanner",
+          "agent-bom",
+          "ohmytoken-tracker"
+        ]
+      }
+    },
+    {
+      "url": "https://marketplace.visualstudio.com",
+      "signals": {
+        "AutomataLabs.copilot-mcp": {
+          "status": 200,
+          "installs": 82193
+        },
+        "formulahendry.agent-skills": {
+          "status": 200,
+          "installs": 1881
+        },
+        "yamapan.agent-skill-ninja": {
+          "status": 200,
+          "installs": 573
+        }
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분적",
+        "q2": "가능(ClawHub/SkillHub 대체)",
+        "q3": "중간",
+        "q4": "중간"
+      }
+    },
+    {
+      "item": "MCP Market 상위군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분적",
+        "q2": "가능(coding-agent/browser-cdp)",
+        "q3": "낮음",
+        "q4": "중간"
+      }
+    },
+    {
+      "item": "SkillHub 상위군 신규 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분적",
+        "q2": "가능",
+        "q3": "낮음",
+        "q4": "중간"
+      }
+    },
+    {
+      "item": "ClawHub 신규군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분충족",
+        "q2": "대체 가능",
+        "q3": "낮음",
+        "q4": "중간 이상"
+      }
+    },
+    {
+      "item": "VSCode Agent Skills 확장 직접 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "낮음(OpenClaw CLI 중심)",
+        "q2": "가능",
+        "q3": "낮음",
+        "q4": "중간"
+      }
+    },
+    {
+      "item": "기타 신규 후보",
+      "verdict": "not-needed"
+    }
+  ],
+  "meaningfulNewChanges": 0,
+  "changeSummary": [],
+  "minorDrift": {
+    "skillsmpAllTime": "73415 -> 73669",
+    "mcpPrimary": "200 -> 429",
+    "skillhubStars": "5.0M -> 5.1M",
+    "vscodeCopilotMcp": "81.9K -> 82,193"
+  },
+  "security": {
+    "absoluteBlock": [
+      "molt road",
+      "molt.host"
+    ],
+    "externalSkillPolicy": "Research -> Audit -> Rewrite -> misskim-skills/ (blind install 금지)"
+  }
+}
