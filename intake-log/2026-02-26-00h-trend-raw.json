@@ -1,0 +1,194 @@
+{
+  "timestampKst": "2026-02-26T00:00:00+09:00",
+  "generatedAtKst": "2026-02-26T00:07+09:00",
+  "policy": {
+    "hostBrowserUsed": false,
+    "miniPcBrowserUsed": false,
+    "miniPcNode": "a0d4c6b43d248c06bf918856a4772f0fd45d806f8d335292793b3a612cb3ae79",
+    "moltBlocked": true
+  },
+  "collection": {
+    "runtimeSec": 187.4,
+    "runtimeBudgetSec": {
+      "total": 420,
+      "collection": 240
+    },
+    "webSearch": {
+      "status": "stopped-after-429",
+      "note": "web_search 1회차에서 429 발생, 동일 런에서 web_search 즉시 중단"
+    },
+    "retryPolicy": {
+      "sourceRetryMax": 1
+    }
+  },
+  "sources": [
+    {
+      "url": "https://skillsmp.com",
+      "access": {
+        "direct": 403,
+        "r_jina": 200
+      },
+      "signals": {
+        "constSkills": 283647,
+        "marketingClaim": "270000++"
+      }
+    },
+    {
+      "url": "https://skills.sh",
+      "access": {
+        "root": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "leaderboardAllTime": 74583,
+        "sitemapLocCount": 4000
+      }
+    },
+    {
+      "url": "https://mcpmarket.com/tools/skills",
+      "access": {
+        "direct_http": 429,
+        "retry_once": 429
+      },
+      "signals": {
+        "skillStatsTotalCount": null,
+        "skillStatsLastUpdated": null
+      }
+    },
+    {
+      "url": "https://market-mcp.com",
+      "access": {
+        "root": 200
+      },
+      "signals": {
+        "totalServers": 6409,
+        "top": [
+          "Archon",
+          "Trigger.dev",
+          "Chrome DevTools"
+        ]
+      }
+    },
+    {
+      "url": "https://skillhub.club",
+      "access": {
+        "root": 200,
+        "sitemap": 200
+      },
+      "signals": {
+        "stars": "5.0M",
+        "skillsCollected": 22030,
+        "sitemapLocCount": 1983
+      }
+    },
+    {
+      "url": "https://clawhub.ai",
+      "access": {
+        "api_list": 200,
+        "apiRetryUsed": false,
+        "search": "ok",
+        "searchRetryUsed": false,
+        "explore": "ok",
+        "exploreRetryUsed": false
+      },
+      "signals": {
+        "apiItems": 20,
+        "apiTopSlug": "apiclaw",
+        "searchTop": [
+          "agent-directory",
+          "agent-team-orchestration",
+          "ai-agent-helper"
+        ],
+        "exploreTop": [
+          "apiclaw",
+          "evolink-image",
+          "astock-research"
+        ],
+        "blockedObserved": [
+          "moltbook-skill"
+        ]
+      }
+    },
+    {
+      "url": "https://marketplace.visualstudio.com/items",
+      "access": {
+        "items_pages": 200
+      },
+      "signals": {
+        "AutomataLabs.copilot-mcp": 82426,
+        "formulahendry.agent-skills": 1920,
+        "yamapan.agent-skill-ninja": 584
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "item": "SkillsMP 직접 흡수",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분적",
+        "q2": "가능(skills.sh/ClawHub 대체)",
+        "q3": "중간",
+        "q4": "높음(카운트·문구 과대포장 가능)"
+      }
+    },
+    {
+      "item": "MCP Market 상위군 즉시 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분적",
+        "q2": "가능(coding-agent/browser-cdp)",
+        "q3": "낮음",
+        "q4": "중간"
+      }
+    },
+    {
+      "item": "SkillHub 상위군 신규 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "부분적",
+        "q2": "가능",
+        "q3": "낮음",
+        "q4": "중간(스타 중심 지표)"
+      }
+    },
+    {
+      "item": "ClawHub API 기반 intake 경로 강화",
+      "verdict": "adopt",
+      "criticalFilter": {
+        "q1": "높음",
+        "q2": "일부 불가(API 신호 대체 어려움)",
+        "q3": "높음",
+        "q4": "중간(신규 노출 버즈/품질 분리 점검 필요)"
+      }
+    },
+    {
+      "item": "VSCode Agent Skills 확장 직접 도입",
+      "verdict": "reference-only",
+      "criticalFilter": {
+        "q1": "낮음(OpenClaw CLI 중심)",
+        "q2": "가능",
+        "q3": "낮음",
+        "q4": "중간(설치수 편향)"
+      }
+    }
+  ],
+  "meaningfulNewChanges": 0,
+  "changeSummary": [],
+  "minorDrift": {
+    "skillsShAllTime": "74328 -> 74583",
+    "skillhubStars": "4.8M -> 5.0M",
+    "clawhubApiItems": "18 -> 20",
+    "clawhubApiTop": "deepgram-asr -> apiclaw",
+    "vscodeCopilotMcp": "82370 -> 82426",
+    "vscodeAgentSkills": "1912 -> 1920",
+    "vscodeSkillNinja": "584 -> 584"
+  },
+  "security": {
+    "absoluteBlock": [
+      "molt road",
+      "molt.host"
+    ],
+    "externalSkillPolicy": "Research -> Audit -> Rewrite -> misskim-skills/ (blind install 금지)"
+  }
+}
