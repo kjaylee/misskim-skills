@@ -129,7 +129,7 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Multi-RPC consensus, TLS pinning, response validation against known state.
 
 ### B15. Key Compromise
-**Historical**: Ronin ($624M), Harmony ($100M), Slope wallet
+**Historical**: Ronin ($624M), Harmony ($100M), Slope wallet, IoTeX ioTube (2026, $4.4M)
 **Mechanism**: Private key stolen from file/memory/HSM → full control of associated accounts.
 **Defense**: HSM, threshold signatures, key rotation, file encryption, memory zeroization.
 

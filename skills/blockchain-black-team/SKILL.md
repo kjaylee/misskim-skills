@@ -24,11 +24,11 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 ## Quick Start
 
 1. Read the target codebase (on-chain + off-chain)
-2. Load `references/attack-matrix.md` for the 28-vector framework
+2. Load `references/attack-matrix.md` for the 31-vector framework
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (28 Vectors)
+## Attack Matrix (31 Vectors)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -49,18 +49,19 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 12 | CPI Confusion (Solana) | Crema ($8.8M) | HIGH |
 | 13 | PDA Seed Collision (Solana) | Multiple | MEDIUM |
 
-### B. Off-chain/Keeper (7 vectors)
+### B. Off-chain/Keeper (8 vectors)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 14 | RPC Manipulation | Multiple | HIGH |
-| 15 | Key Compromise | Ronin ($624M), Harmony ($100M) | CRITICAL |
+| 15 | Key Compromise | Ronin ($624M), Harmony ($100M), IoTeX ioTube ($4.4M) | CRITICAL |
 | 16 | Race Condition | Multiple keeper exploits | MEDIUM |
 | 17 | Checkpoint Poisoning | Novel | HIGH |
 | 18 | Config Injection | Multiple | HIGH |
 | 19 | Memory/Log Leak | Slope wallet drain | MEDIUM |
 | 20 | Denial of Service | Solana network halts | MEDIUM |
+| 29 | AI Agent Prompt-Injection Confused-Deputy | Trail of Bits Comet audit (2026) | HIGH |
 
-### C. Economic (5 vectors)
+### C. Economic (6 vectors)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 21 | Bank Run / Depeg | UST/LUNA ($40B), USDC SVB | CRITICAL |
@@ -68,18 +69,21 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 23 | Governance Attack | Beanstalk ($182M) | HIGH |
 | 24 | Sybil Attack | Multiple | MEDIUM |
 | 25 | MEV Extraction | MEV ecosystem | MEDIUM |
+| 30 | Liquidity-Exhaustion Griefing | Intent bridge study (2026) | MEDIUM |
 
-### D. Infrastructure (3 vectors)
+### D. Infrastructure (4 vectors)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 26 | Frontend XSS/Injection | BadgerDAO ($120M) | HIGH |
 | 27 | RPC Endpoint Takeover | Multiple | HIGH |
 | 28 | Supply Chain | event-stream, ua-parser-js | HIGH |
+| 31 | Protocol-Metadata Confusion (IDL/Schema Trust) | Anchor IDL external-account patch (2026) | HIGH |
 
 ## Daily Evolution Log (Recent)
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-02-26 | IoTeX ioTube validator key compromise ($4.4M) | B15 | Added new key-compromise case + keeper key hygiene emphasis |
 | 2026-02-25 | Moonwell oracle incident ($1.78M bad debt) | A3, A10, B18 | Added oracle unit-normalization misuse pattern, governance timelock recovery-gap note, and feed-composition sanity defenses |
 
 ## Defense Failure Patterns (Meta, Purple-Team Informed)
@@ -98,7 +102,7 @@ Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실�
 
 ## Execution Methodology
 
-For each of the 28 vectors:
+For each of the 31 vectors:
 
 1. **Historical Reference** — Which real incident used this vector, what was the mechanism
 2. **Code Mapping** — Identify exact file:line in target code where vector applies
@@ -135,7 +139,7 @@ Output as structured markdown:
 # Black Team Report — {Protocol Name}
 
 ## 0) Summary Dashboard
-- Total vectors evaluated: 28
+- Total vectors evaluated: 31
 - CRITICAL: X | HIGH: X | MEDIUM: X | LOW: X
 - Undefended (immediately exploitable): X
 
@@ -161,7 +165,7 @@ Black R1 → Blue fix → Black R2 → Blue fix → ... → ZERO CRITICAL/HIGH
 ```
 
 On repeat runs (R2+):
-- Re-evaluate ALL 28 vectors against updated code
+- Re-evaluate ALL 31 vectors against updated code
 - Verify previous fixes actually work (bypass attempts)
 - Check for regression (new vulnerabilities from fixes)
 - Only report NEW or UNFIXED findings
