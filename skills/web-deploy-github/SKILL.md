@@ -148,3 +148,10 @@ GitHub Actions automatically deploys on push to main branch. The workflow:
 - `templates/portfolio/` - Portfolio/CV template
 - `templates/landing/` - Landing page template
 - `.github/workflows/deploy.yml` - GitHub Actions workflow template
+
+## Guardrails
+
+- **배포 전 git status 클린 확인 필수** — uncommitted changes나 untracked 파일이 있으면 배포 중단. `git status` 결과가 clean인지 확인 후 진행.
+- **민감 정보 커밋 금지** — API 키, 토큰, 비밀번호를 소스에 포함하면 안 됨. 배포 전 `.gitignore` 점검 및 `git log --diff-filter=A -- '*.env'` 등으로 시크릿 파일 유입 차단.
+- **빌드 실패 시 롤백 절차** — GitHub Actions 워크플로우 실패 시 이전 커밋 SHA로 `git revert` 또는 `gh run rerun` 전에 롤백 브랜치 확인. `gh-pages` 브랜치 마지막 정상 커밋을 force-push하여 복원.
+- **CNAME/DNS 변경 전 확인 필수** — 커스텀 도메인 설정 또는 CNAME 파일 수정 시 Master에게 확인. DNS 전파 지연(최대 48시간)으로 서비스 중단 가능성 있음.

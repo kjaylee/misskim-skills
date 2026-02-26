@@ -1,0 +1,52 @@
+📊 Agent Skill Trend Sweep Results — 2026-02-10 12:00 KST
+
+✅ Surveyed: Skills.sh, ClawHub, SkillsMP, LobeHub MCP, VSCode Extensions
+
+🎯 Key Findings:
+1. **Skills.sh dominance** — 48K+ installs, Vercel-backed "npm for AI agents"
+2. **inference.sh media skills trending** — Full podcast creation pipeline (TTS + music + mixing)
+3. **ClawHub VirusTotaL live** — Daily malware scanning but prompt injection risk remains
+4. **SKILL.md standard adopted by 19+ agents** — Cross-platform compatibility growing
+5. **No new security incidents** — AMOS stealer still active via typosquats
+
+📈 Top Skills.sh (48K total):
+• vercel-labs/agent-skills (22,600) — Web Interface Guidelines
+• vercel-labs/agent-browser (1,400) — Browser automation
+• coreyhaines31/marketingskills (1,200) — 7 marketing sub-skills
+• inference-sh/skills — Media generation ecosystem
+
+🎮 Game Dev Relevance:
+• inference.sh → Game trailers, audio ads, marketing podcasts
+• agent-browser → Playwright alternative for game testing
+• marketingskills → CRO/copywriting for landing pages
+• Web guidelines skill already covers Vercel patterns
+
+🔒 Security Status:
+✅ VirusTotal partnership adds malware detection
+⚠️ Prompt injection undetectable by scanning
+⚠️ 13.4% critical skills still (Snyk ToxicSkills)
+✅ Our "Audit → Rewrite" policy validated
+
+💰 Pricing Models:
+• Skills.sh: FREE (Vercel)
+• ClawHub: FREE (VT-scanned)
+• SkillsMP: FREE (160K+ skills)
+• SkillHub: Freemium (AI-evaluated)
+• Agent37: Creator monetization (early)
+
+📅 Action Items:
+1. Evaluate inference.sh for game marketing (podcasts/trailers)
+2. Test skills.sh CLI with OpenClaw compatibility
+3. Audit Vercel web guidelines vs existing skill
+4. Monitor NewsAPI.ai MCP for daily digest
+
+📊 Ecosystem Health:
+• Skills.sh: Healthy (48K+ installs, active dev)
+• ClawHub: Improving (VT partnership)
+• SkillsMP: Stable (160K+ skills)
+• MCP Market: Growing (enterprise focus)
+
+🔮 Trend: Media generation skills rising, SKILL.md standard adoption accelerating, security improving but prompt injection remains challenge.
+
+📁 Full report: misskim-skills/sweep-2026-02-10-summary.md
+Log: misskim-skills/INTAKE_LOG.md

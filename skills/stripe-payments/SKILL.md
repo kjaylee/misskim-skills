@@ -82,3 +82,10 @@ const session = await stripe.checkout.sessions.create({
 - 통합 옵션: docs.stripe.com/payments/payment-methods/integration-options
 - API 투어: docs.stripe.com/payments-api/tour
 - Go-live 체크리스트: docs.stripe.com/get-started/checklist/go-live
+
+## Guardrails
+
+- **테스트 모드 vs 라이브 모드 명시적 구분 필수** — 코드 실행 전 현재 키가 `sk_test_` (테스트) 또는 `sk_live_` (라이브)인지 명시. 라이브 모드 작업 시 항상 로그에 `[LIVE]` 태그 출력.
+- **금액/통화 변경 시 double-confirm** — `unit_amount`, `currency` 값을 수정할 때는 변경 전/후 금액을 Master에게 확인 후 실행. 센트 단위 혼동($9.99 → 999) 주의.
+- **웹훅 시크릿 노출 절대 금지** — `STRIPE_WEBHOOK_SECRET` 값을 로그, 응답 바디, 클라이언트 코드에 절대 출력하지 않음. 환경 변수로만 관리.
+- **환불/취소 작업은 실행 전 Master 확인** — `stripe.refunds.create()`, 구독 `cancel()` 등 금전 영향 작업은 실행 전 Master 명시적 승인 필수. 자동화 스크립트에서 이 작업 단독 실행 금지.

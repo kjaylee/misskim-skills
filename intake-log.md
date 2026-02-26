@@ -1,6 +1,39 @@
 # MissKim Skills Intake Log
 
 
+## 2026-02-26 04:00 KST — Agent Skill Trend Sweep (Critical Absorption)
+
+### 📊 Executive Summary
+- **브라우저 제약 준수:** Mac Studio host 브라우저 미사용, MiniPC browser.proxy 미사용.
+- **수집 경로:** `web_fetch` (Brave API 429로 중단) + `clawhub` CLI.
+- **SkillsMP:** 기존 대체지표 유지.
+- **MCP Market:** `web_fetch` Vercel checkpoint 429 차단.
+- **SkillHub:** `web_fetch` 추출 실패.
+- **ClawHub:** CLI `search mcp`/`search agent` 정상 호출 (`playwright-mcp`, `agent-directory` 등 확인).
+- **VSCode Agent Skills:** 기존 지표 유지.
+- **변화 판단:** 의미 있는 신규 변화 **0건**.
+
+### 🔍 Filtered Candidates
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| SkillsMP 직접 흡수 | ⚠️ 참고만 | Q1 부분적 / Q2 대체 가능 / Q3 중간 / Q4 높음. |
+| MCP Market 상위군 | ⚠️ 참고만 | Q1 부분적 / Q2 대체 가능(coding-agent, browser-cdp) / Q3 낮음 / Q4 중간. |
+| SkillHub 상위군 | ⚠️ 참고만 | Q1 부분적 / Q2 대체 가능 / Q3 낮음 / Q4 중간. |
+| ClawHub 검색 결과 (`mcp`/`agent`) | ⚠️ 참고만 | Q1 낮음 / Q2 대체 가능(`gateway`, `browser-cdp`) / Q3 낮음 / Q4 중간. |
+| VSCode Agent Skills 확장 | ⚠️ 참고만 | Q1 낮음 / Q2 대체 가능 / Q3 낮음 / Q4 중간(설치수 편향). |
+
+**❌ 불필요 판정:** 5건
+
+### ✅ Actions
+1. ClawHub 검색 항목(playwright-mcp, upgrade-openclaw 등)은 기존 스택으로 완전 대체 가능하여 불필요 판정.
+2. Molt Road/molt.host **ABSOLUTE BLOCK** + 외부 스킬 **No blind install** 유지.
+
+### 📁 Full Report
+- `intake-log/2026-02-26-04h-trend-sweep.md`
+
+---
+
+
 ## 2026-02-26 00:00 KST — Agent Skill Trend Sweep (Critical Absorption)
 
 ### 📊 Executive Summary

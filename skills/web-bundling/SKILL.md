@@ -80,3 +80,9 @@ npx html-inline dist/index.html -o bundle.html
 2. **itch.io** → HTML 파일 직접 업로드
 3. **GitHub Pages** → 레포에 push
 4. **CrazyGames/Poki** → 플랫폼 요구사항 확인
+
+## Guardrails
+
+- **번들 크기 제한** — 100KB 초과 시 경고 출력 및 최적화 방안 검토 필수. 500KB 초과 번들은 배포 불가 — 이미지 압축, 코드 스플리팅, 불필요 의존성 제거 후 재시도.
+- **외부 CDN 의존성 최소화** — 프로덕션 번들에 `cdn.jsdelivr.net`, `unpkg.com` 등 외부 CDN 링크 포함 금지. 오프라인 작동 보장을 위해 모든 의존성을 번들에 인라인.
+- **소스맵 프로덕션 배포 시 제거** — `--no-source-maps` 옵션 또는 빌드 설정에서 `sourcemap: false` 확인. 프로덕션 번들에 `.map` 파일 또는 `//# sourceMappingURL=` 주석이 포함되지 않도록 검증.
