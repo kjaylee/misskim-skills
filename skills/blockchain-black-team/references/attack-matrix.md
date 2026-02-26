@@ -299,6 +299,82 @@ let price = twap_oracle.get_price_checked(max_age_slots)?;
 4. Simulate MEV extraction potential before deploying: if a bot can replicate your exploit contract profitably, the attack will happen
 **Source**: https://rekt.news/makina-rekt
 
+### A34. Fragmented Security Stack Failure
+**Historical**: Balancer (2025-11, $100M) — precision-loss in composable stable pool scaling math
+**Mechanism**: Each security control (audit, bug bounty, monitoring, incident response) operated correctly in isolation but shared no data or detection rules. A rounding-error class was disclosed via Immunefi in 2023, patched for that pool type, but never abstracted into a detection rule applied to other pool variants. Same vulnerability class recurred 2 years later in composable stable pools. Attacker manipulated raw token balances into small-value ranges, then exploited integer division precision-loss in scaled math repeatedly to extract $100M.
+**Root insight**: Individual controls do not prevent systemic failure when they have no shared visibility. Vulnerability class knowledge siloed inside a single audit/report never fortified adjacent pool designs.
+**Code pattern to find**:
+```solidity
+// RISKY: scaled-math division with raw balances that can be pushed small
+uint256 scaledAmount = (rawBalance * scalingFactor) / 1e18;
+// If rawBalance is tiny (attacker-controlled via flash swap), precision drops significantly
+// Repeated extraction of tiny rounding dust across many swaps = material loss
+```
+**Microstable relevance**: Any protocol that reads a ratio/price-scaled value for mint/redeem math must verify that:
+  (a) raw inputs cannot be pushed to extremes within a single TX (per-TX volume caps)
+  (b) bounty/audit findings for this class are propagated across **all** entry points that share the same math pattern
+**Defense**:
+1. Maintain a "vulnerability class registry" — when a class is discovered anywhere, audit all code using the same math pattern
+2. Unified observability: monitoring rules derived from past exploit mechanics, not just generic anomaly detection
+3. Test precision-loss at boundary values (very small raw balances) during invariant fuzz runs
+4. Emergency pause scope: ensure any governance-level pausing can halt all affected pool/entry types, not just the specific reported path
+**Source**: https://immunefi.com/blog/expert-insights/how-fragmented-security-enabled-balancer-exploit/
+
+### A35. AI-Assisted Commit Oracle Regression
+**Historical**: Moonwell (2026, $1.78M bad debt) — cbETH oracle priced at $1.12 instead of ~$2,200; commit co-authored by Claude Opus 4.6
+**Mechanism**: An AI coding assistant generated code that used `cbETH/ETH` ratio directly as the USD price, omitting the second multiplication step (`ratio × ETH_USD`). The unit mismatch produced a 99%+ mispricing. Liquidation bots acted on the malformed price, creating $1.78M in bad debt. This is considered the first documented major DeFi exploit triggered by AI-generated smart contract code ("vibe-coded contracts").
+**Key insight**: AI coding assistants can generate syntactically valid, functionally incorrect oracle composition. Standard code review and CI may pass because no syntax or compilation error exists — only a semantic unit violation. The assistant likely treated `cbETH/ETH` as a USD price because it satisfied the type interface (uint256) without catching the unit chain.
+**Code pattern to find**:
+```rust
+// VULNERABLE: ratio feed used directly as USD price (no base multiplication)
+let price = cbeth_eth_ratio;  // ≈ 0.95, not ~2200
+
+// SAFE: explicit unit chain
+let cbeth_eth: u64 = ratio_oracle.get_price()?;  // ~0.95
+let eth_usd: u64 = usd_oracle.get_price()?;       // ~2300
+let cbeth_usd = (cbeth_eth as u128 * eth_usd as u128) / SCALE;
+```
+**Microstable relevance**: Any oracle feed change reviewed with AI assistance must be gated by a mandatory unit-invariant assertion. The existing `unit-invariant canary` recommendation from PT-ARCH-2026-0225-01 is directly validated by this incident.
+**Defense**:
+1. **Unit-invariant test for every oracle feed**: CI must verify that `reported_price` for each asset falls within `[expected_usd * 0.8, expected_usd * 1.2]` using a hardcoded sanity range
+2. **Two-person review for oracle feed changes** — AI-assisted commits are not exempt
+3. **On-chain sanity assertion at deploy time**: `assert(min_price <= feed_result <= max_price)` for new oracle integrations
+4. **AI commit tagging**: when AI tools co-author a security-critical commit, flag it for elevated human review in CI policy
+**Source**: https://rekt.news/moonwell-rekt
+
+### D32. AI Agent Skill/Identity Poisoning
+**Historical**: OpenClaw skill poisoning (2026) — "20% of skills poisoned on OpenClaw. Now someone wants to give these AI agents access to bank accounts."
+**Mechanism**: Attacker compromises the skill/tool library that an AI agent loads at runtime. Unlike prompt injection (which attacks a single context window), skill poisoning attacks the **persistent behavioral configuration** of the agent. A poisoned skill file can:
+  (a) Override the agent's security policy by injecting fake "system-like" authorization rules
+  (b) Redirect tool calls (wallet signing, RPC admin actions) to attacker-controlled endpoints
+  (c) Exfiltrate secrets by modifying the agent's read/write behavior silently over many sessions
+  (d) Persist across restarts because the agent reloads skills from a tampered source
+**Key insight vs B29 (Confused-Deputy)**: B29 is a runtime attack via content the agent processes. D32 is a supply-chain attack on the agent's identity/policy layer — the agent believes it is following its own rules while executing attacker instructions. Detection is harder because the agent exhibits authorized behavior (from its poisoned perspective).
+**DeFi agent relevance**: Keeper agents, AI ops assistants, or governance proposal drafters that load skills/tools from a shared registry are fully exposed. One poisoned skill file = full access to all privileged operations the agent can perform.
+**Code/config pattern to find**:
+```yaml
+# VULNERABLE: agent loads skills from a mutable, unverified directory
+skill_dirs:
+  - /var/agent/skills/   # any write access = compromise
+
+# SAFE: cryptographically pinned skills with explicit allowlist
+skill_dirs:
+  - /var/agent/skills/  # read-only mount
+skill_manifest: /etc/agent/skill-manifest.sha256  # verified on load
+allowed_skills:
+  - oracle-monitor@1.2.3@sha256:abc...
+  - keeper-submit@2.0.1@sha256:def...
+```
+**Defense**:
+1. Cryptographic integrity verification of all skill files at load time (SHA-256 manifest pinning)
+2. Read-only skill directory mounts in production environments
+3. Explicit allowlist of permitted skills with version + hash locks
+4. Skill update path requires multi-party approval (same as code deploy)
+5. Behavioral audit log: surface when agent takes actions outside observed historical pattern
+6. Separate execution context for untrusted research/browsing tasks vs. privileged tool invocations
+7. Human quorum gate for any action that involves signing/broadcasting to chain
+**Source**: https://rekt.news/identity-theft-2
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -340,5 +416,8 @@ let price = twap_oracle.get_price_checked(max_age_slots)?;
 | B35 Keeper Parameter Misconfiguration | 스마트컨트랙트 파라미터 검증에 집중하여 오퍼레이터 운영 파라미터(슬리피지·임계값) 실수를 감사 외로 취급 (YO Protocol). |
 | B36 Social-Engineering Stake Authority Hijack | 스마트컨트랙트 무결성 감사가 인간 계층(디바이스·피싱·RAT)까지 확장되지 않아 핫키 운영 리스크를 운영이슈로 분리 (Step Finance). |
 | A33 Audit-Scope-Exclusion Exploitation | 감사 범위 제외 항목을 '검토 완료'로 착각하여 알려진 공격 벡터를 미수정 상태로 배포하고, MEV 봇의 2차 증폭 가능성을 평가하지 않음 (Makina). |
+| A34 Fragmented Security Stack Failure | 각 보안 레이어(감사·바운티·모니터링·대응)가 격리 운영되어 취약점 클래스 지식이 인접 코드에 전파되지 않음. 2023 bounty report가 2025 exploit으로 재발한 Balancer 패턴이 전형적 사례. |
+| A35 AI-Assisted Commit Oracle Regression | AI 어시스턴트가 단위 합성(ratio × base_usd) 의미론을 검증하지 않고 타입 호환 코드를 생성함. CI/컴파일 오류 없이 통과하여 감사도 '구문 정확'으로 승인할 위험 (Moonwell cbETH). |
+| D32 AI Agent Skill/Identity Poisoning | AI 에이전트 스킬 파일을 공급망 공격면으로 보지 않고, 런타임 컨텍스트 무결성 위협(B29)과 동일하게 취급하여 에이전트 정책 레이어 자체의 오염 가능성을 누락. |
 
 
