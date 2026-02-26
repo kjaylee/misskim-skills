@@ -215,6 +215,43 @@ pub collateral_mint: Account<'info, Mint>,
 **Mechanism**: Off-chain clients over-trust generated metadata and infer ownership/safety guarantees for accounts that are actually external, leading to unsafe automation or signing UX.
 **Defense**: Treat generated IDL/schema as advisory; enforce runtime owner/program checks and account invariants in clients before signing/submitting transactions.
 
+### A32. Cross-Chain Bridge Message Forgery
+**Historical**: Saga / SagaEVM (2026-01-21, $7M) — IBC precompile bypass enabling collateral-free minting
+**Mechanism**: Attacker deployed a helper contract that crafted custom IBC payloads mimicking legitimate cross-chain deposit events. The EVM precompile bridge layer accepted these forged messages without verifying that real collateral existed on the source chain. Protocol's mint logic consumed the fake deposit event and minted $7M in stablecoins from thin air. Attacker converted to yETH/yUSD/tBTC, bridged to Ethereum as 2,000+ ETH.
+**Root cause in Ethermint codebase**: `IBC precompile` did not authenticate the on-chain origin of `deposit` events — any contract could emit a compliant message structure and trigger the collateral credit logic.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: no verification that source-chain deposit actually occurred
+function handleIBCDeposit(bytes calldata payload) external {
+    (address user, uint256 amount) = abi.decode(payload, (address, uint256));
+    _mint(user, amount);  // no cross-chain proof checked
+}
+```
+**Solana relevance**: Not directly applicable (Microstable is Solana-native, no IBC layer). Relevant if adding Wormhole/IBC integration — would require verifying VAA signatures / light client proofs before crediting collateral.
+**Defense**: Require cryptographic proof of source-chain state (Merkle proofs, VAA signatures, or sequencer attestation). Never credit collateral from a message alone; verify the deposit event is anchored to a finalized source block. Separate the "message received" and "collateral credited" state transitions with explicit proof verification.
+**Source**: https://rekt.news/saga-rekt | https://x.com/cosmoslabs_io/status/2014428829423706156
+
+### B35. Keeper Parameter Misconfiguration (Operational Slippage Error)
+**Historical**: YO Protocol (2026-02, $3.71M) — vault operator fat-fingered a $3.84M swap with broken slippage params; only $112K recovered
+**Mechanism**: A keeper/vault-operator submitted a swap transaction with near-zero or invalid slippage tolerance. The DEX routed the trade at a catastrophically unfavorable price. The operator noticed $3.72M loss after execution; team backstopped quietly and delayed disclosure 2 days.
+**Code pattern to find**:
+```rust
+// VULNERABLE: slippage parameter accepted from config with no enforcement cap
+let min_amount_out = config.slippage_min_out; // user-supplied, could be 0
+swap(amount_in, min_amount_out, ...)?;
+
+// SAFE: enforce hard floor from protocol constants
+let max_allowed_slippage = MAX_SLIPPAGE_BPS; // e.g., 300 bps = 3%
+let floor_amount_out = amount_in * (10_000 - max_allowed_slippage) / 10_000 * oracle_price / SCALE;
+let effective_min_out = std::cmp::max(min_amount_out, floor_amount_out);
+```
+**Defense**:
+1. Hard-cap slippage tolerance in code (not just config) — reject any swap where `min_amount_out` implies >N% slippage vs. current oracle price
+2. Two-operator sign-off for swaps above a dollar threshold (e.g., >$100K)
+3. Simulation pre-check: simulate swap, compare expected vs. actual output before broadcasting
+4. Alarm + auto-cancel if realized slippage exceeds threshold after execution
+**Source**: https://rekt.news/yo-protocols-slippage-bomb
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -252,5 +289,7 @@ pub collateral_mint: Account<'info, Mint>,
 | D31 Metadata Confusion | 생성된 IDL/스키마를 사실상 신뢰원으로 취급해 런타임 검증이 생략됨. |
 | A14 Out-of-Scope Composability | 감사 대상 커밋과 실제 배포된 Hook/Proxy 간 런타임 결합 추적 부재로 우회 공격 발생 (Nemo, Cork). |
 | B33 OpSec & Key Management | 스마트컨트랙트 무결성에 집중하여 멀티시그, 배포 파이프라인 등 오프체인 키 운영을 감사 밖으로 취급 (Radiant). |
+| A32 Cross-Chain Bridge Message Forgery | 온체인 로직만 감사하고 크로스체인 메시지 페이로드 검증 경계를 별도 신뢰영역으로 분리 (Saga IBC precompile). |
+| B35 Keeper Parameter Misconfiguration | 스마트컨트랙트 파라미터 검증에 집중하여 오퍼레이터 운영 파라미터(슬리피지·임계값) 실수를 감사 외로 취급 (YO Protocol). |
 
 
