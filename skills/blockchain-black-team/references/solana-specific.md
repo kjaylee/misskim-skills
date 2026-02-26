@@ -163,6 +163,32 @@ Recent RustSec advisories (`rpc-check`, `tracing-check`) show short-lived malici
 - Registry-source allowlist (crates.io only unless explicitly approved).
 - Two-person review for dependency additions/renames near common crate names.
 
+## Hot Key & Stake Authority Patterns (2026 Addition)
+
+### Social-Engineering-to-Stake-Authority-Hijack
+Step Finance (2026-01-31, $27.3M): Executive device phished → stake delegation authority transferred to attacker wallet → 261,854 SOL unstaked in 90 minutes. Audited contracts, bug bounties, and security reviews were irrelevant.
+
+**Solana-specific risk**: Stake delegation model separates `StakeAuthority` and `WithdrawAuthority`. Both can be re-assigned unilaterally by the current controller via a single signed instruction. No program code involved. Indistinguishable from legitimate on-chain operations.
+
+**Keeper relevance**: Keeper hot keys on operator's machine have the same exposure. If keeper host is compromised:
+- Attacker signs privileged keeper instructions (oracle updates, rebalance)
+- Steals treasury-authority keypair → drains treasury
+- If MANUAL_ORACLE_MODE path is accessible via keeper key, attacker gains price manipulation surface
+
+**Pattern to detect in codebase**:
+```rust
+// Check: is the keeper keypair also the stake withdrawal authority?
+// If yes → compromise of keeper host = loss of staked collateral
+// SAFE: separate keypairs for keeper ops vs treasury/stake authority
+```
+
+**Defense**:
+1. Hardware keys for any keypair controlling SOL stake or treasury withdrawal
+2. Stake accounts split into small sub-accounts (cap loss per account)
+3. `StakeAuthorize` changes require M-of-N signatures (multisig delegate)
+4. Keeper keypair scope-limited: can only submit to program, cannot re-assign authority
+5. EDR on all operator machines; phishing simulation training
+
 ## Solana-Specific Defense Checklist
 
 1. ☐ All accounts have owner checks (Anchor `Account<>` type)
@@ -178,3 +204,7 @@ Recent RustSec advisories (`rpc-check`, `tracing-check`) show short-lived malici
 11. ☐ No sensitive data in logs or error messages
 12. ☐ Upgrade authority secured (multisig or frozen)
 13. ☐ Oracle feed composition enforces unit normalization + price sanity range
+14. ☐ Keeper keypair is NOT the stake/treasury withdrawal authority (principle of least privilege)
+15. ☐ Stake accounts split into sub-accounts (no single monolithic stake)
+16. ☐ Dependency audit: `bytes`, `libcrux-psq`, `libcrux-ecdh` pinned to patched versions in Cargo.lock
+17. ☐ Audit scope exclusions tracked as open backlog items (never ship with known-excluded vectors)

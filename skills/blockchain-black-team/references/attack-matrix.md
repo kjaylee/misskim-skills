@@ -231,6 +231,31 @@ function handleIBCDeposit(bytes calldata payload) external {
 **Defense**: Require cryptographic proof of source-chain state (Merkle proofs, VAA signatures, or sequencer attestation). Never credit collateral from a message alone; verify the deposit event is anchored to a finalized source block. Separate the "message received" and "collateral credited" state transitions with explicit proof verification.
 **Source**: https://rekt.news/saga-rekt | https://x.com/cosmoslabs_io/status/2014428829423706156
 
+### B36. Social-Engineering-to-Stake-Authority-Hijack
+**Historical**: Step Finance (2026-01-31, $27.3M) — executive device compromised via spear-phish; stake delegation authority transferred to attacker wallet; 261,854 SOL unstaked in ~90 minutes.
+**Mechanism**: Attacker does not need a smart contract exploit. Solana's stake delegation model separates stake authority from withdrawal authority, both reassignable unilaterally by the current controller. If an operator's hot device (laptop, workstation) is compromised, the attacker can sign a `StakeAuthorize` instruction to redirect staking rights to their wallet, then unstake and drain. The on-chain action looks legitimate — no program exploit, no anomalous CPI.
+**Key insight**: "Audited contracts, bug bounties, public security reviews" were all irrelevant — the attack surface was the human layer and the key held in memory on a compromised device. Private-key compromise now accounts for 88% of Q1 2025 crypto losses (Chainalysis 2026).
+**Code pattern to find**:
+```
+# No on-chain code vulnerability — the vector is:
+# 1. Operator device has plaintext or session-accessible hot key
+# 2. Phishing / infosteal / RAT payload extracts or misuses key
+# 3. Attacker signs: StakeAuthorize(stake_account, new_authority)
+# 4. Then: Deactivate → Wait epoch → Withdraw
+```
+**Solana keeper relevance**: Keeper keypairs are active hot keys on the operator's machine. If keeper host is compromised, attacker gains:
+- Ability to drain treasury by submitting privileged keeper instructions
+- Ability to manipulate oracle write path (if MANUAL_ORACLE_MODE enabled)
+- Config injection (if keeper reads writable config)
+**Defense**:
+1. Hardware keys (Ledger/YubiKey) for treasury-level operations — never hot
+2. Separate stake/withdrawal authority from day-to-day keeper keypair
+3. Per-operation stake amount limits (partial stake accounts, not single monolithic stake)
+4. Multi-device / time-delayed confirmation for stake authority re-assignment
+5. Endpoint Detection & Response (EDR) on all operator devices
+6. Device phishing hygiene: email sandboxing, link preview policies, no unverified attachments
+**Source**: https://rekt.news/step-finance-rekt
+
 ### B35. Keeper Parameter Misconfiguration (Operational Slippage Error)
 **Historical**: YO Protocol (2026-02, $3.71M) — vault operator fat-fingered a $3.84M swap with broken slippage params; only $112K recovered
 **Mechanism**: A keeper/vault-operator submitted a swap transaction with near-zero or invalid slippage tolerance. The DEX routed the trade at a catastrophically unfavorable price. The operator noticed $3.72M loss after execution; team backstopped quietly and delayed disclosure 2 days.
@@ -251,6 +276,28 @@ let effective_min_out = std::cmp::max(min_amount_out, floor_amount_out);
 3. Simulation pre-check: simulate swap, compare expected vs. actual output before broadcasting
 4. Alarm + auto-cancel if realized slippage exceeds threshold after execution
 **Source**: https://rekt.news/yo-protocols-slippage-bomb
+
+### A33. Audit-Scope-Exclusion Exploitation
+**Historical**: Makina Finance (2026-01-20, $4.13M) — oracle manipulation via `lastTotalAum` from spot Curve pool price. The exact attack vector was documented in Cantina's audit scope as explicitly *out-of-scope*. Six audit firms (ChainSecurity, OtterSec, SigmaPrime, Enigma Dark, Cantina) signed off. Protocol deployed with the known gap unfixed.
+**Mechanism**: Flash loan → inflate Curve pool spot price → `lastTotalAum` reads manipulated price → DUSD share price mismatch → over-mint/drain. $280M flash borrowed. Original attacker deployed an unverified exploit contract; an MEV searcher decompiled it in the same block and front-ran the attacker, capturing most of the $4.13M across two addresses.
+**Key insight**: Audit scope exclusions are not "this can't be exploited" — they're "we didn't look here." Attackers scan scope limitation lists as *roadmaps to unfixed attack surface*. MEV bots add a second-order amplification: any exploit contract on a public mempool can be decompiled and replayed faster than the original attacker.
+**Microstable relevance**: Any oracle path that uses a manipulable spot price (AMM pool, single-source Pyth without TWAP) is vulnerable if not explicitly covered in audit scope. Current hardening: TWAP + Pyth confidence + staleness checks are in scope. But: if a new operator integration excludes part of the oracle composition from audit scope, the gap becomes exploitable.
+**Code pattern to find**:
+```rust
+// VULNERABLE: total_aum or collateral value derived from spot AMM pool
+let total_aum = pool.get_virtual_price(); // manipulable in same TX
+let share_price = total_aum / total_shares;
+mint(user, deposit / share_price);
+
+// SAFE: use TWAP or committed price with staleness guard
+let price = twap_oracle.get_price_checked(max_age_slots)?;
+```
+**Defense**:
+1. Treat audit scope exclusions as mandatory backlog items — never ship with known-excluded vectors
+2. Require TWAP or multi-source oracle for any value used in mint/burn/share-price calculation
+3. Per-TX mint cap limits damage even if oracle is manipulated
+4. Simulate MEV extraction potential before deploying: if a bot can replicate your exploit contract profitably, the attack will happen
+**Source**: https://rekt.news/makina-rekt
 
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
@@ -291,5 +338,7 @@ let effective_min_out = std::cmp::max(min_amount_out, floor_amount_out);
 | B33 OpSec & Key Management | 스마트컨트랙트 무결성에 집중하여 멀티시그, 배포 파이프라인 등 오프체인 키 운영을 감사 밖으로 취급 (Radiant). |
 | A32 Cross-Chain Bridge Message Forgery | 온체인 로직만 감사하고 크로스체인 메시지 페이로드 검증 경계를 별도 신뢰영역으로 분리 (Saga IBC precompile). |
 | B35 Keeper Parameter Misconfiguration | 스마트컨트랙트 파라미터 검증에 집중하여 오퍼레이터 운영 파라미터(슬리피지·임계값) 실수를 감사 외로 취급 (YO Protocol). |
+| B36 Social-Engineering Stake Authority Hijack | 스마트컨트랙트 무결성 감사가 인간 계층(디바이스·피싱·RAT)까지 확장되지 않아 핫키 운영 리스크를 운영이슈로 분리 (Step Finance). |
+| A33 Audit-Scope-Exclusion Exploitation | 감사 범위 제외 항목을 '검토 완료'로 착각하여 알려진 공격 벡터를 미수정 상태로 배포하고, MEV 봇의 2차 증폭 가능성을 평가하지 않음 (Makina). |
 
 
