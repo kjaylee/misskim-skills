@@ -379,6 +379,31 @@ allowed_skills:
 7. Human quorum gate for any action that involves signing/broadcasting to chain
 **Source**: https://rekt.news/identity-theft-2
 
+### D33. Transitive Payload Relay Typosquat
+**Historical**: RustSec RUSTSEC-2026-0027 (`tracings`) + RUSTSEC-2026-0028 (`tracing_checks`) (2026-02-26)
+**Mechanism**: Attacker publishes a seemingly harmless crate and hides the actual payload in a second transitive dependency. Reviewers inspecting only direct dependencies see low-risk glue code, while credential-stealing logic executes through the nested crate.
+**Key insight vs D28**: D28 covered direct typosquat waves (`rpc-check`, `tracing-check`). D33 is a second-stage pattern: **dependency laundering through transitive indirection**, designed to bypass direct-name checks and shallow package review.
+**DeFi keeper relevance**: High-risk when operators add observability/helper crates quickly during incident response. A single transitive malicious crate can exfiltrate API keys, wallet paths, or signing context before runtime guards trigger.
+**Code/config pattern to find**:
+```toml
+# VULNERABLE: near-name crate chain with hidden transitive payload
+[dependencies]
+tracing_checks = "0.1"   # appears benign
+# internally pulls: tracings = "0.1" (malicious payload)
+
+# SAFER: pinned vetted graph + provenance gate
+[dependencies]
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", default-features = false, features = ["fmt", "env-filter"] }
+```
+**Defense**:
+1. Block newly published crates (<7 days age) for production keeper builds unless emergency-approved
+2. CI gate on full transitive diff (`cargo tree --locked`) — not only `Cargo.toml` direct changes
+3. Add name-distance policy for new crates (Levenshtein proximity to critical ecosystem crate names)
+4. Enforce two-person security sign-off whenever `Cargo.lock` hash attestation is updated
+5. Maintain dependency allowlist by crate name + publisher reputation for keeper-critical binaries
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0027.html | https://rustsec.org/advisories/RUSTSEC-2026-0028.html
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -423,5 +448,6 @@ allowed_skills:
 | A34 Fragmented Security Stack Failure | 각 보안 레이어(감사·바운티·모니터링·대응)가 격리 운영되어 취약점 클래스 지식이 인접 코드에 전파되지 않음. 2023 bounty report가 2025 exploit으로 재발한 Balancer 패턴이 전형적 사례. |
 | A35 AI-Assisted Commit Oracle Regression | AI 어시스턴트가 단위 합성(ratio × base_usd) 의미론을 검증하지 않고 타입 호환 코드를 생성함. CI/컴파일 오류 없이 통과하여 감사도 '구문 정확'으로 승인할 위험 (Moonwell cbETH). |
 | D32 AI Agent Skill/Identity Poisoning | AI 에이전트 스킬 파일을 공급망 공격면으로 보지 않고, 런타임 컨텍스트 무결성 위협(B29)과 동일하게 취급하여 에이전트 정책 레이어 자체의 오염 가능성을 누락. |
+| D33 Transitive Payload Relay Typosquat | 직접 의존성만 검토하는 감사 관행을 악용해, 1차 패키지는 무해하게 보이게 두고 2차(전이) 의존성에 페이로드를 숨김. Cargo.lock 변경 승인 절차가 형식화되면 공격이 그대로 통과될 수 있음 (tracings → tracing_checks). |
 
 

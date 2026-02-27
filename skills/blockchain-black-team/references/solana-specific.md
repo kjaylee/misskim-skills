@@ -177,6 +177,24 @@ Recent RustSec advisories (`rpc-check`, `tracing-check`) show short-lived malici
 - Registry-source allowlist (crates.io only unless explicitly approved).
 - Two-person review for dependency additions/renames near common crate names.
 
+### Transitive Payload Relay (tracings → tracing_checks, 2026-02-26)
+New RustSec advisories (`RUSTSEC-2026-0027`, `RUSTSEC-2026-0028`) show a second-stage pattern: the top-level crate looks lightweight while malware is hidden in a transitive dependency.
+
+**Solana/Anchor impact pattern**:
+- Keeper teams often add telemetry crates (`tracing*`) during incident response.
+- Direct dependency review can miss transitive payload crates that execute build/runtime hooks.
+- Cargo.lock attestation protects against *unexpected* lock changes, but if a malicious dependency is deliberately merged and attested, runtime checks will still pass.
+
+**Mitigation upgrade**:
+- CI must diff full transitive graph (`cargo tree --locked`) for every dependency change.
+- Quarantine newly published crates (<7 days) unless emergency security override is approved.
+- Add crate-name distance checks (e.g., `tracing` vs `tracings`) before merge.
+- Require two-person security sign-off specifically on Cargo.lock hash updates.
+
+**Sources**:
+- https://rustsec.org/advisories/RUSTSEC-2026-0027.html
+- https://rustsec.org/advisories/RUSTSEC-2026-0028.html
+
 ## Hot Key & Stake Authority Patterns (2026 Addition)
 
 ### Social-Engineering-to-Stake-Authority-Hijack
@@ -222,3 +240,4 @@ Step Finance (2026-01-31, $27.3M): Executive device phished → stake delegation
 15. ☐ Stake accounts split into sub-accounts (no single monolithic stake)
 16. ☐ Dependency audit: `bytes`, `libcrux-psq`, `libcrux-ecdh` pinned to patched versions in Cargo.lock
 17. ☐ Audit scope exclusions tracked as open backlog items (never ship with known-excluded vectors)
+18. ☐ Transitive dependency review enforced (`cargo tree --locked`) + newly published crate quarantine window for keeper builds
