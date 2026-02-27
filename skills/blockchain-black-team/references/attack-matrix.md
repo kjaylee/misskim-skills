@@ -19,9 +19,11 @@ transfer(attacker, amount);
 **Defense**: Checks-Effects-Interactions (CEI), reentrancy guards, token program ID pinning.
 
 ### A2. Flash Loan + Price Manipulation
-**Historical**: Mango Markets (2022, $114M), Euler (2023, $197M), Harvest (2020, $25M), PancakeBunny (2021, $45M), BonqDAO (2023, $120M)
-**Mechanism**: Borrow massive capital in single TX → manipulate AMM/oracle price → exploit mispriced mint/redeem/liquidation → repay loan with profit.
-**Key insight**: Any protocol that reads price from a manipulable source within the same TX is vulnerable.
+**Historical**: Mango Markets (2022, $114M), Euler (2023, $197M), Harvest (2020, $25M), PancakeBunny (2021, $45M), BonqDAO (2023, $120M), Stake Nova (2026-02-27, $2.39M)
+**Mechanism**: Borrow massive capital in single TX → manipulate AMM/oracle price or redeem path invariants → exploit mispriced mint/redeem/liquidation → repay loan with profit.
+**Key insight**: Any protocol that reads price from a manipulable source *or* executes redeem logic without strict invariant checks can be flash-loan-amplified in one transaction.
+**2026 reinforcement (Stake Nova)**: Unchecked validation in `RedeemNovaSol()` enabled a flash-loan-assisted liquidity drain.
+**Source**: https://hacked.slowmist.io/
 **Code pattern to find**:
 ```
 // VULNERABLE: same-block price read for critical operation
@@ -32,9 +34,10 @@ mint(user, mint_amount);
 **Defense**: TWAP oracles, staleness checks (>N slots = reject), confidence interval checks, mint/redeem cooldowns, per-block volume limits.
 
 ### A3. Oracle Manipulation
-**Historical**: Mango (Pyth feed manipulation), BonqDAO (TellorFlex oracle), Harvest (Curve pool as oracle), Moonwell (2026, $1.78M bad debt)
+**Historical**: Mango (Pyth feed manipulation), BonqDAO (TellorFlex oracle), Harvest (Curve pool as oracle), Moonwell (2026, $1.78M bad debt), YieldBlox (2026-02-22, $10.97M)
 **Mechanism**: Push stale/false price data to oracle → protocol acts on wrong price → value extraction.
-**2026 reinforcement (Moonwell)**: Oracle-composition unit mismatch (`cbETH/ETH` ratio treated as USD price) created a 99%+ mispricing window and automated liquidations.
+**2026 reinforcement (Moonwell + YieldBlox)**: (1) Oracle-composition unit mismatch (`cbETH/ETH` ratio treated as USD price), and (2) low-liquidity market exploitation where tiny self-trades distorted quoted collateral value and enabled excess borrowing.
+**Source**: https://rekt.news/moonwell-rekt | https://rekt.news/yieldblox-rekt
 **Solana/Pyth specific**: Pyth confidence intervals, staleness (slot age), status checks.
 **Code pattern to find**:
 ```
@@ -102,10 +105,11 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Multisig upgrade authority, timelock, freeze authority, eventual immutability.
 
 ### A10. Logic Bug
-**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression)
+**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap)
 **Mechanism**: Incorrect business logic allows unintended state transitions or value extraction.
-**2026 reinforcement (Moonwell)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission if unit-invariant tests are missing.
-**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`).
+**2026 reinforcement (Moonwell + Stake Nova)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission (Moonwell) or unchecked redeem-path validation (`RedeemNovaSol`) that becomes flash-loan-amplified (Stake Nova).
+**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`), plus redeem invariant assertions (`min_out`, vault/account binding, and per-tx flow caps).
+**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/
 
 ### A11. Rent/Lamport Drain (Solana)
 **Historical**: Multiple small-scale

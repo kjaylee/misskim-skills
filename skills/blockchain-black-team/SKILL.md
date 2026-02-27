@@ -83,6 +83,8 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-02-28 | Stake Nova redeem-path exploit ($2.39M) | A2, A10 | Reinforced flash-loan-amplified redeem validation failures (`RedeemNovaSol`) and added Solana-specific redeem-path hardening pattern |
+| 2026-02-28 | YieldBlox oracle manipulation ($10.97M) | A3 | Added low-liquidity oracle distortion case (tiny trade → inflated collateral valuation) and tightened oracle-composition defense notes |
 | 2026-02-26 | IoTeX ioTube validator key compromise ($4.4M) | B15 | Added new key-compromise case + keeper key hygiene emphasis |
 | 2026-02-25 | Moonwell oracle incident ($1.78M bad debt) | A3, A10, B18 | Added oracle unit-normalization misuse pattern, governance timelock recovery-gap note, and feed-composition sanity defenses |
 

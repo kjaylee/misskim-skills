@@ -155,6 +155,20 @@ Protocols with global per-slot caps can be DoSed by one actor who consumes most 
 - Priority lanes for small/organic redeems.
 - Burst scoring + grief penalties.
 
+### Redeem Path Validation Bypass (Stake Nova Pattern)
+Stake Nova (2026-02-27, Solana) was drained (~$2.39M) after an unchecked validation path in `RedeemNovaSol()` was combined with flash-loan liquidity.
+
+**Solana-specific risk**:
+- Redeem code may appear safe under normal flow but fail when atomic liquidity is amplified in one slot.
+- If redeem output/account constraints are incomplete, attacker can drain vaults before invariant checks catch up.
+
+**Mitigation**:
+- Enforce strict `min_out` and account-binding checks at instruction boundary.
+- Apply per-TX + per-slot redeem caps even for keeper-assisted flows.
+- Require invariant assertions before and after transfer CPI (`supply`, `vault balances`, `user position`).
+
+**Source**: https://hacked.slowmist.io/
+
 ### Typosquat Waves Targeting Solana Rust Tooling
 Recent RustSec advisories (`rpc-check`, `tracing-check`) show short-lived malicious crates aimed at credential theft in a specific ecosystem.
 

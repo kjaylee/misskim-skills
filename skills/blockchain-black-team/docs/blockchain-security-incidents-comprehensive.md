@@ -3,6 +3,14 @@
 > Scope: real-world incidents with explicit mechanisms. Entries without confirmed mechanisms are intentionally omitted.
 
 ## 2026
+- **2026-02-27 — Stake Nova (Solana)** — Unchecked validation in `RedeemNovaSol()` was flash-loan-amplified to drain protocol liquidity (~$2.39M).  
+  Vector mapping: **A2 Flash Loan + Price/Path Manipulation**, **A10 Logic Bug**.  
+  Source: https://hacked.slowmist.io/
+
+- **2026-02-22 — YieldBlox (Stellar)** — Attacker manipulated thin-liquidity collateral valuation, then borrowed against inflated oracle-derived value and drained ~$10.97M.  
+  Vector mapping: **A3 Oracle Manipulation**.  
+  Source: https://rekt.news/yieldblox-rekt
+
 - **2026-02-21 — IoTeX ioTube bridge** — Validator private-key compromise granted admin control and drained assets (~$4.4M).  
   Vector mapping: **B15 Key Compromise**.  
   Source: https://hacked.slowmist.io/
