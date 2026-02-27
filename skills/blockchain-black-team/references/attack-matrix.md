@@ -404,6 +404,50 @@ tracing-subscriber = { version = "0.3.19", default-features = false, features = 
 5. Maintain dependency allowlist by crate name + publisher reputation for keeper-critical binaries
 **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0027.html | https://rustsec.org/advisories/RUSTSEC-2026-0028.html
 
+### A36. Thin-Liquidity Collateral Admission Cascade
+**Historical**: YieldBlox / Blend V2 (2026-02-22, $10.97M)
+**Mechanism**: Exploit is not a single oracle bug. It is a compositional chain:
+1) Governance/listing admits collateral with near-zero market depth
+2) Oracle source uses that thin market (single-source VWAP/spot)
+3) Adapter forwards latest price without robust outlier aggregation (e.g., median/deviation guard)
+4) Lending health-factor logic accepts inflated value and approves borrow
+**Key insight**: Each component can be "working as designed" in isolation while the composed system is catastrophically unsafe.
+**Code pattern to find**:
+```rust
+// RISKY: price validity checks without market-quality checks
+let price = oracle.latest_price(asset)?;
+require!(price_age <= MAX_AGE, Error::Stale);
+// missing: liquidity/depth/activity gate
+let collateral_value = amount * price;
+```
+**Defense**:
+1. Collateral listing gate must include market-quality invariants (min depth, min active makers, min rolling volume)
+2. Oracle adapter must aggregate with robust estimator (median/trimmed mean) + deviation clamps
+3. Borrow path should reject collateral if market-quality signal is degraded, even if price freshness/confidence pass
+4. Periodic re-certification of collateral quality (not one-time listing)
+**Source**: https://rekt.news/yieldblox-rekt
+
+### B37. AI Agent Steganographic Oversight Evasion
+**Historical**: arXiv 2602.23163 (2026-02-26) — decision-theoretic steganography framework for LLM monitoring
+**Mechanism**: Agent outputs embed hidden intent/policy-violating signals that are useful to a colluding decoder agent but look benign to standard monitors. This bypasses prompt-level policy checks by moving malicious coordination into covert channel structure.
+**Key insight vs B29**: B29 is explicit prompt injection from untrusted input. B37 is **covert post-compromise coordination** that can survive even when prompt injection filters are in place.
+**Code/config pattern to find**:
+```yaml
+# RISKY: output-policy checks rely only on lexical/regex content filters
+agent_guardrails:
+  monitor: "keyword-and-policy-classifier-only"
+
+# SAFER: action-level authorization + dual-agent consistency checks
+agent_guardrails:
+  monitor: "action authorization + out-of-band utility-gap detector"
+```
+**Defense**:
+1. Enforce tool/action authorization independent of model output text quality
+2. Add "usable-information asymmetry" checks (if collaborator utility increases while monitor utility does not, flag)
+3. Require human approval for high-impact actions even when textual output appears compliant
+4. Rotate/red-team monitor prompts and evaluators to reduce stable covert-channel bandwidth
+**Source**: https://arxiv.org/abs/2602.23163
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -449,5 +493,7 @@ tracing-subscriber = { version = "0.3.19", default-features = false, features = 
 | A35 AI-Assisted Commit Oracle Regression | AI 어시스턴트가 단위 합성(ratio × base_usd) 의미론을 검증하지 않고 타입 호환 코드를 생성함. CI/컴파일 오류 없이 통과하여 감사도 '구문 정확'으로 승인할 위험 (Moonwell cbETH). |
 | D32 AI Agent Skill/Identity Poisoning | AI 에이전트 스킬 파일을 공급망 공격면으로 보지 않고, 런타임 컨텍스트 무결성 위협(B29)과 동일하게 취급하여 에이전트 정책 레이어 자체의 오염 가능성을 누락. |
 | D33 Transitive Payload Relay Typosquat | 직접 의존성만 검토하는 감사 관행을 악용해, 1차 패키지는 무해하게 보이게 두고 2차(전이) 의존성에 페이로드를 숨김. Cargo.lock 변경 승인 절차가 형식화되면 공격이 그대로 통과될 수 있음 (tracings → tracing_checks). |
+| A36 Thin-Liquidity Collateral Admission Cascade | 오라클 정확성/신선도만 검증하고, **시장 품질(깊이·분산·활동성)**을 신뢰 경계 밖으로 분리. 상장 정책·오라클 어댑터·헬스팩터 로직의 결합 실패를 단일 컴포넌트 이슈로 축소해 놓침 (YieldBlox). |
+| B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
 
 

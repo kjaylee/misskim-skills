@@ -28,7 +28,7 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (31 Vectors)
+## Attack Matrix (31+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -49,7 +49,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 12 | CPI Confusion (Solana) | Crema ($8.8M) | HIGH |
 | 13 | PDA Seed Collision (Solana) | Multiple | MEDIUM |
 
-### B. Off-chain/Keeper (8 vectors)
+### B. Off-chain/Keeper (9 vectors)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 14 | RPC Manipulation | Multiple | HIGH |
@@ -60,6 +60,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 19 | Memory/Log Leak | Slope wallet drain | MEDIUM |
 | 20 | Denial of Service | Solana network halts | MEDIUM |
 | 29 | AI Agent Prompt-Injection Confused-Deputy | Trail of Bits Comet audit (2026) | HIGH |
+| 37 | AI Agent Steganographic Oversight Evasion | arXiv 2602.23163 (2026-02-26) | HIGH |
 
 ### C. Economic (6 vectors)
 | # | Vector | Historical Example | Typical Severity |
@@ -83,8 +84,9 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-02-28 | YieldBlox Blend V2 collateral chain exploit ($10.97M) | A3, A36 | Elevated "thin-liquidity collateral + raw-latest oracle adapter + lending health-factor" as a compositional failure chain (not single oracle bug) |
+| 2026-02-28 | AI oversight-evasion research signal (arXiv 2602.23163) | B37 | Added covert-channel/steganographic agent bypass pattern (post-prompt-injection hardening bypass class) |
 | 2026-02-28 | Stake Nova redeem-path exploit ($2.39M) | A2, A10 | Reinforced flash-loan-amplified redeem validation failures (`RedeemNovaSol`) and added Solana-specific redeem-path hardening pattern |
-| 2026-02-28 | YieldBlox oracle manipulation ($10.97M) | A3 | Added low-liquidity oracle distortion case (tiny trade → inflated collateral valuation) and tightened oracle-composition defense notes |
 | 2026-02-26 | IoTeX ioTube validator key compromise ($4.4M) | B15 | Added new key-compromise case + keeper key hygiene emphasis |
 | 2026-02-25 | Moonwell oracle incident ($1.78M bad debt) | A3, A10, B18 | Added oracle unit-normalization misuse pattern, governance timelock recovery-gap note, and feed-composition sanity defenses |
 
@@ -97,6 +99,8 @@ Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실�
 3. **Assumption Drift**: 배포 당시 안전하던 임계치/가정이 시장·인프라 변화로 무효화.
 4. **Confused-Deputy Ops**: AI/자동화 도구가 비신뢰 입력을 권한 있는 행동으로 변환.
 5. **Capacity Griefing**: 단일 대형 공격보다 지속 저강도 압박으로 운영 여유를 소진.
+6. **Market-Quality Blindness**: 가격 정확성만 보고 시장 깊이/분산도/거래활동 품질을 신뢰 경계에 포함하지 않음.
+7. **Telemetry-Truth Drift**: 대응 단계에서 공지 지표(순손실/동결액)와 온체인 사실이 분리되어 의사결정·포렌식이 오염됨.
 
 리포트의 각 HIGH/CRITICAL 항목에 아래를 추가:
 - `Why defense failed` (설계/운영/조직 중 어디가 끊겼는지)
