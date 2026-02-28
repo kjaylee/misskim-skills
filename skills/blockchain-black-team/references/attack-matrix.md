@@ -1,4 +1,4 @@
-# Attack Matrix — 31 Vectors with Historical Mechanisms & Defense Patterns
+# Attack Matrix — 42 Vectors with Historical Mechanisms & Defense Patterns
 
 ## A. Smart Contract Vectors
 
@@ -161,10 +161,12 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Rate limiting, circuit breakers, graceful degradation, health monitoring.
 
 ### B29. AI Agent Prompt-Injection Confused-Deputy
-**Historical**: Trail of Bits Comet audit (2026) + SkillInject benchmark (arXiv 2602.20156)
+**Historical**: Trail of Bits Comet audit (2026-02-20) + SkillInject benchmark (arXiv 2602.20156)
 **Mechanism**: Attacker-controlled content (page/skill file/reference doc) injects instructions that make an autonomous agent use trusted tools (browser, wallet, RPC admin actions) to exfiltrate secrets or perform unauthorized actions.
-**Bypass insight**: Even when model resists direct malicious prompts, structured "system-like" fragments and fake safety workflows can still trigger tool misuse.
-**Defense**: Tool-level authorization policy (not prompt-only), data/command channel separation, explicit allowlists for side effects, and human approval for privileged actions.
+**2026 reinforcement (Comet)**: Real exploit chains combined (a) fake CAPTCHA/security validator flows, (b) fake system-message delimiters, (c) fake user-request delimiters, and (d) multi-step "fragment assembly" prompts. Result: agent navigated from attacker page to authenticated Gmail context and exfiltrated mailbox contents to attacker endpoint.
+**Bypass insight**: Even when model rejects simple direct prompts, semi-structured wrappers (`[BEGIN SYSTEM MESSAGE]`, "policy update", "abuse prevention") and staged tasks can still hijack tool execution.
+**Defense**: Tool-level authorization policy (not prompt-only), data/command channel separation, strict side-effect allowlists, authenticated provenance tags for instructions, and human approval for privileged actions.
+**Source**: https://blog.trailofbits.com/2026/02/20/using-threat-modeling-and-prompt-injection-to-audit-comet/ | https://arxiv.org/abs/2602.20156
 
 ## C. Economic Vectors
 
@@ -427,6 +429,29 @@ let collateral_value = amount * price;
 4. Periodic re-certification of collateral quality (not one-time listing)
 **Source**: https://rekt.news/yieldblox-rekt
 
+### A38. ZK Verifier Key Misbinding / Proof-Parameter Drift
+**Historical**: FOOMCASH (2026-02-26, ~$2.26M)
+**Mechanism**: Verifier configuration drift (or incorrect verification-key binding) allowed forged/invalid proofs to pass verification checks. Attacker minted/withdrew funds by replaying the protocol flow with a proof that should have failed under the intended circuit parameters.
+**Key insight**: ZK systems fail open when verification parameters (verification key hash, circuit ID, public-input schema) are mutable or inconsistently bound across contracts/services. This is not a generic oracle bug — it is cryptographic trust-root misbinding.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: verifier key can be swapped without strict governance + integrity checks
+function setVerifier(address newVerifier) external onlyOwner {
+    verifier = newVerifier;
+}
+
+function mint(bytes calldata proof, uint256[4] calldata publicInputs) external {
+    require(IVerifier(verifier).verify(proof, publicInputs), "bad proof");
+    _mint(msg.sender, publicInputs[0]);
+}
+```
+**Defense**:
+1. Pin immutable verification-key hash (or circuit ID) in contract state and validate every proof against it
+2. Use two-step timelocked verifier upgrades with independent quorum + on-chain hash precommit
+3. Enforce public-input schema/version checks (domain separation across circuits)
+4. Add canary proofs (expected-pass and expected-fail) to upgrade/deploy pipeline
+**Source**: https://hacked.slowmist.io/ | https://www.cryptotimes.io/2026/02/26/foomcash-loses-2-26m-in-copycat-zksnark-exploit/
+
 ### B37. AI Agent Steganographic Oversight Evasion
 **Historical**: arXiv 2602.23163 (2026-02-26) — decision-theoretic steganography framework for LLM monitoring
 **Mechanism**: Agent outputs embed hidden intent/policy-violating signals that are useful to a colluding decoder agent but look benign to standard monitors. This bypasses prompt-level policy checks by moving malicious coordination into covert channel structure.
@@ -494,6 +519,7 @@ agent_guardrails:
 | D32 AI Agent Skill/Identity Poisoning | AI 에이전트 스킬 파일을 공급망 공격면으로 보지 않고, 런타임 컨텍스트 무결성 위협(B29)과 동일하게 취급하여 에이전트 정책 레이어 자체의 오염 가능성을 누락. |
 | D33 Transitive Payload Relay Typosquat | 직접 의존성만 검토하는 감사 관행을 악용해, 1차 패키지는 무해하게 보이게 두고 2차(전이) 의존성에 페이로드를 숨김. Cargo.lock 변경 승인 절차가 형식화되면 공격이 그대로 통과될 수 있음 (tracings → tracing_checks). |
 | A36 Thin-Liquidity Collateral Admission Cascade | 오라클 정확성/신선도만 검증하고, **시장 품질(깊이·분산·활동성)**을 신뢰 경계 밖으로 분리. 상장 정책·오라클 어댑터·헬스팩터 로직의 결합 실패를 단일 컴포넌트 이슈로 축소해 놓침 (YieldBlox). |
+| A38 ZK Verifier Key Misbinding / Proof-Parameter Drift | ZK 증명 검증 루트(verification key / circuit id / public input schema)를 운영 설정으로 느슨하게 관리해, 암호학적 신뢰 경계 자체가 교란되는 위험을 감사 범위 밖으로 분리 (FOOMCASH). |
 | B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
 
 

@@ -7,6 +7,10 @@
   Vector mapping: **A2 Flash Loan + Price/Path Manipulation**, **A10 Logic Bug**.  
   Source: https://hacked.slowmist.io/
 
+- **2026-02-26 — FOOMCASH** — Copycat exploit abused zkSNARK verification-key/configuration drift, enabling forged-proof acceptance and ~$2.26M drain.  
+  Vector mapping: **A38 ZK Verifier Key Misbinding / Proof-Parameter Drift**.  
+  Source: https://hacked.slowmist.io/ | https://www.cryptotimes.io/2026/02/26/foomcash-loses-2-26m-in-copycat-zksnark-exploit/
+
 - **2026-02-22 — YieldBlox (Stellar)** — Attacker manipulated thin-liquidity collateral valuation, then borrowed against inflated oracle-derived value and drained ~$10.97M.  
   Vector mapping: **A3 Oracle Manipulation**.  
   Source: https://rekt.news/yieldblox-rekt

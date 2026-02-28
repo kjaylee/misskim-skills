@@ -24,15 +24,15 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 ## Quick Start
 
 1. Read the target codebase (on-chain + off-chain)
-2. Load `references/attack-matrix.md` for the 31-vector framework
+2. Load `references/attack-matrix.md` for the 42-vector framework
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (31+ Vectors, continuously extended)
+## Attack Matrix (42+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
-### A. Smart Contract (13 vectors)
+### A. Smart Contract (core 13 + extended A32/A33/A34/A35/A36/A38)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 1 | Reentrancy | The DAO ($60M), Curve/Vyper ($70M) | HIGH-CRITICAL |
@@ -49,7 +49,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 12 | CPI Confusion (Solana) | Crema ($8.8M) | HIGH |
 | 13 | PDA Seed Collision (Solana) | Multiple | MEDIUM |
 
-### B. Off-chain/Keeper (9 vectors)
+### B. Off-chain/Keeper (core 7 + extended B29/B35/B36/B37)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 14 | RPC Manipulation | Multiple | HIGH |
@@ -72,7 +72,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 25 | MEV Extraction | MEV ecosystem | MEDIUM |
 | 30 | Liquidity-Exhaustion Griefing | Intent bridge study (2026) | MEDIUM |
 
-### D. Infrastructure (4 vectors)
+### D. Infrastructure (core 4 + extended D32/D33)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 26 | Frontend XSS/Injection | BadgerDAO ($120M) | HIGH |
@@ -84,6 +84,8 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-01 | FOOMCASH zkSNARK verifier drift exploit (~$2.26M) | A38 | Added new ZK verifier-key misbinding vector with code-level key-hash/circuit-version defenses |
+| 2026-03-01 | Trail of Bits Comet prompt-injection audit techniques | B29 | Reinforced confused-deputy vector with fake system/user delimiters + fake validator/CAPTCHA multi-step exfil patterns |
 | 2026-02-28 | YieldBlox Blend V2 collateral chain exploit ($10.97M) | A3, A36 | Elevated "thin-liquidity collateral + raw-latest oracle adapter + lending health-factor" as a compositional failure chain (not single oracle bug) |
 | 2026-02-28 | AI oversight-evasion research signal (arXiv 2602.23163) | B37 | Added covert-channel/steganographic agent bypass pattern (post-prompt-injection hardening bypass class) |
 | 2026-02-28 | Stake Nova redeem-path exploit ($2.39M) | A2, A10 | Reinforced flash-loan-amplified redeem validation failures (`RedeemNovaSol`) and added Solana-specific redeem-path hardening pattern |
@@ -108,7 +110,7 @@ Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실�
 
 ## Execution Methodology
 
-For each of the 31 vectors:
+For each of the 42 vectors:
 
 1. **Historical Reference** — Which real incident used this vector, what was the mechanism
 2. **Code Mapping** — Identify exact file:line in target code where vector applies
@@ -145,7 +147,7 @@ Output as structured markdown:
 # Black Team Report — {Protocol Name}
 
 ## 0) Summary Dashboard
-- Total vectors evaluated: 31
+- Total vectors evaluated: 42
 - CRITICAL: X | HIGH: X | MEDIUM: X | LOW: X
 - Undefended (immediately exploitable): X
 
@@ -171,7 +173,7 @@ Black R1 → Blue fix → Black R2 → Blue fix → ... → ZERO CRITICAL/HIGH
 ```
 
 On repeat runs (R2+):
-- Re-evaluate ALL 31 vectors against updated code
+- Re-evaluate ALL 42 vectors against updated code
 - Verify previous fixes actually work (bypass attempts)
 - Check for regression (new vulnerabilities from fixes)
 - Only report NEW or UNFIXED findings

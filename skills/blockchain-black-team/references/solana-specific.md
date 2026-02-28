@@ -195,6 +195,34 @@ New RustSec advisories (`RUSTSEC-2026-0027`, `RUSTSEC-2026-0028`) show a second-
 - https://rustsec.org/advisories/RUSTSEC-2026-0027.html
 - https://rustsec.org/advisories/RUSTSEC-2026-0028.html
 
+### ZK Verifier Key Binding Drift (FOOMCASH Pattern)
+FOOMCASH (2026-02-26, ~$2.26M) was exploited after verification-key configuration drift enabled forged/invalid zkSNARK proof acceptance.
+
+**Solana-specific risk**:
+- Programs integrating zk verifiers (Groth16/Plonk wrappers or proof-verification CPI) may trust mutable verifier account/config without strict hash binding.
+- If verifier key, circuit ID, or public-input schema changes without hard invariants, proof checks can pass for the wrong statement.
+
+**Pattern to detect in codebase**:
+```rust
+// RISKY: verifier account accepted from mutable config with weak governance
+let verifier = load_verifier_account(ctx.accounts.verifier_config)?;
+require!(verify_proof(proof, public_inputs, verifier), ErrorCode::InvalidProof);
+
+// SAFER: pin expected verifier key hash / circuit id and assert on every call
+require!(verifier.key_hash == EXPECTED_VK_HASH, ErrorCode::VerifierMismatch);
+require!(public_inputs.version == EXPECTED_CIRCUIT_VERSION, ErrorCode::CircuitVersionMismatch);
+```
+
+**Mitigation**:
+1. Immutable verifier-key hash (or two-step timelocked update with quorum)
+2. Circuit ID + public-input schema version checks (domain separation)
+3. Upgrade pipeline canary proofs (expected-pass + expected-fail)
+4. Emergency pause if verifier-integrity check fails
+
+**Sources**:
+- https://hacked.slowmist.io/
+- https://www.cryptotimes.io/2026/02/26/foomcash-loses-2-26m-in-copycat-zksnark-exploit/
+
 ## Hot Key & Stake Authority Patterns (2026 Addition)
 
 ### Social-Engineering-to-Stake-Authority-Hijack
@@ -241,3 +269,4 @@ Step Finance (2026-01-31, $27.3M): Executive device phished → stake delegation
 16. ☐ Dependency audit: `bytes`, `libcrux-psq`, `libcrux-ecdh` pinned to patched versions in Cargo.lock
 17. ☐ Audit scope exclusions tracked as open backlog items (never ship with known-excluded vectors)
 18. ☐ Transitive dependency review enforced (`cargo tree --locked`) + newly published crate quarantine window for keeper builds
+19. ☐ ZK verifier integrations pin verification-key hash/circuit version and enforce canary-proof checks on upgrades
