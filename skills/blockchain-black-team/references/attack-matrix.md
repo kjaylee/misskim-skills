@@ -1,4 +1,4 @@
-# Attack Matrix — 42 Vectors with Historical Mechanisms & Defense Patterns
+# Attack Matrix — 42+ Vectors with Historical Mechanisms & Defense Patterns
 
 ## A. Smart Contract Vectors
 
@@ -473,6 +473,31 @@ agent_guardrails:
 4. Rotate/red-team monitor prompts and evaluators to reduce stable covert-channel bandwidth
 **Source**: https://arxiv.org/abs/2602.23163
 
+### B38. Multi-turn Tool-Return Boundary Takeover (Indirect Prompt Injection)
+**Historical**: arXiv 2602.22724 AgentSentry (2026-02-26), arXiv 2602.22302 Agent Behavioral Contracts (2026-02-25)
+**Mechanism**: Attacker-controlled context is injected through tool/retrieval returns over multiple turns. No single response looks malicious enough to block, but cumulative context gradually steers the agent into unauthorized actions (slow takeover).
+**Key insight vs B29/B37**: B29 is explicit instruction hijack in prompt/input text, B37 is covert-channel coordination after compromise. B38 is a **temporal boundary attack** that exploits trust at each tool-return boundary and accumulates drift across turns.
+**Code/config pattern to find**:
+```yaml
+# RISKY: approve privileged actions based on latest turn only
+agent_runtime:
+  approval_scope: "per-turn"
+  context_trust: "append-all-tool-output"
+  pre_action_invariant_check: false
+
+# SAFER: enforce cross-turn contracts + boundary checks
+agent_runtime:
+  approval_scope: "cross-turn-contract"
+  context_trust: "taint-and-purify-untrusted-tool-output"
+  pre_action_invariant_check: true
+```
+**Defense**:
+1. Add action preconditions/invariants that must hold before every privileged tool call (contract-style runtime guards)
+2. Treat each tool-return boundary as a trust reset point: run counterfactual sanity checks before state-changing actions
+3. Preserve provenance labels on untrusted context and purge/clip context slices that cause policy drift
+4. Require human quorum for high-impact actions when cross-turn drift score exceeds threshold
+5. Red-team multi-turn trajectories (not one-shot prompts only) in evaluation harnesses
+**Source**: https://arxiv.org/abs/2602.22724 | https://arxiv.org/abs/2602.22302
 
 ### D34. WASI Hostcall Exhaustion + Async Drop Panic Chain
 **Historical**: RustSec `RUSTSEC-2026-0020/0021/0022` (Wasmtime, 2026-02-24)
@@ -544,6 +569,7 @@ let _ = fut.await?; // if callers sometimes drop before completion, panic chain 
 | A36 Thin-Liquidity Collateral Admission Cascade | 오라클 정확성/신선도만 검증하고, **시장 품질(깊이·분산·활동성)**을 신뢰 경계 밖으로 분리. 상장 정책·오라클 어댑터·헬스팩터 로직의 결합 실패를 단일 컴포넌트 이슈로 축소해 놓침 (YieldBlox). |
 | A38 ZK Verifier Key Misbinding / Proof-Parameter Drift | ZK 증명 검증 루트(verification key / circuit id / public input schema)를 운영 설정으로 느슨하게 관리해, 암호학적 신뢰 경계 자체가 교란되는 위험을 감사 범위 밖으로 분리 (FOOMCASH). |
 | B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
+| B38 Multi-turn Tool-Return Boundary Takeover | 단일 프롬프트/단일 턴 필터링 중심 평가로는 누적 컨텍스트 드리프트를 포착하지 못함. 도구 반환값 경계를 신뢰 재설정 지점으로 다루지 않아, 합법처럼 보이는 다중 턴 경로를 통해 권한 오용이 점진적으로 유도됨 (arXiv 2602.22724/2602.22302). |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 
 

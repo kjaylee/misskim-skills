@@ -24,7 +24,7 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 ## Quick Start
 
 1. Read the target codebase (on-chain + off-chain)
-2. Load `references/attack-matrix.md` for the 42-vector framework
+2. Load `references/attack-matrix.md` for the 42+ vector framework
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
@@ -49,7 +49,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 12 | CPI Confusion (Solana) | Crema ($8.8M) | HIGH |
 | 13 | PDA Seed Collision (Solana) | Multiple | MEDIUM |
 
-### B. Off-chain/Keeper (core 7 + extended B29/B35/B36/B37)
+### B. Off-chain/Keeper (core 7 + extended B29/B35/B36/B37/B38)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 14 | RPC Manipulation | Multiple | HIGH |
@@ -61,6 +61,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 20 | Denial of Service | Solana network halts | MEDIUM |
 | 29 | AI Agent Prompt-Injection Confused-Deputy | Trail of Bits Comet audit (2026) | HIGH |
 | 37 | AI Agent Steganographic Oversight Evasion | arXiv 2602.23163 (2026-02-26) | HIGH |
+| 38 | Multi-turn Tool-Return Boundary Takeover (IPI) | arXiv 2602.22724 + 2602.22302 (2026-02-25/26) | HIGH |
 
 ### C. Economic (6 vectors)
 | # | Vector | Historical Example | Typical Severity |
@@ -72,7 +73,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 25 | MEV Extraction | MEV ecosystem | MEDIUM |
 | 30 | Liquidity-Exhaustion Griefing | Intent bridge study (2026) | MEDIUM |
 
-### D. Infrastructure (core 4 + extended D32/D33)
+### D. Infrastructure (core 4 + extended D32/D33/D34)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
 | 26 | Frontend XSS/Injection | BadgerDAO ($120M) | HIGH |
@@ -84,6 +85,8 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-01 | AgentSentry + Agent Behavioral Contracts (arXiv 2602.22724 / 2602.22302) | B38 | Added multi-turn tool-return boundary takeover vector and runtime contract-based mitigation notes |
+| 2026-03-01 | Immunefi bug-bounty telemetry lag signal (2-week disclosure delay) | A34, B15 | Added signal-latency-blindness note: public bounty metrics lag should not drive real-time incident prioritization |
 | 2026-03-01 | FOOMCASH zkSNARK verifier drift exploit (~$2.26M) | A38 | Added new ZK verifier-key misbinding vector with code-level key-hash/circuit-version defenses |
 | 2026-03-01 | Trail of Bits Comet prompt-injection audit techniques | B29 | Reinforced confused-deputy vector with fake system/user delimiters + fake validator/CAPTCHA multi-step exfil patterns |
 | 2026-02-28 | YieldBlox Blend V2 collateral chain exploit ($10.97M) | A3, A36 | Elevated "thin-liquidity collateral + raw-latest oracle adapter + lending health-factor" as a compositional failure chain (not single oracle bug) |
@@ -103,6 +106,7 @@ Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실�
 5. **Capacity Griefing**: 단일 대형 공격보다 지속 저강도 압박으로 운영 여유를 소진.
 6. **Market-Quality Blindness**: 가격 정확성만 보고 시장 깊이/분산도/거래활동 품질을 신뢰 경계에 포함하지 않음.
 7. **Telemetry-Truth Drift**: 대응 단계에서 공지 지표(순손실/동결액)와 온체인 사실이 분리되어 의사결정·포렌식이 오염됨.
+8. **Signal-Latency Blindness**: 공개 바운티/리포트 통계의 지연(예: 2주 지연 반영)을 실시간 위협 지표로 오용해, 이미 진행 중인 변형 공격 대응 우선순위를 놓침.
 
 리포트의 각 HIGH/CRITICAL 항목에 아래를 추가:
 - `Why defense failed` (설계/운영/조직 중 어디가 끊겼는지)
@@ -110,7 +114,7 @@ Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실�
 
 ## Execution Methodology
 
-For each of the 42 vectors:
+For each of the 42+ vectors:
 
 1. **Historical Reference** — Which real incident used this vector, what was the mechanism
 2. **Code Mapping** — Identify exact file:line in target code where vector applies
