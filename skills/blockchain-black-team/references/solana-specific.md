@@ -142,6 +142,25 @@ Anchor patched IDL generation to exclude externally owned account types from int
 - In off-chain clients, validate `account.owner` and expected program IDs before signing.
 - Treat IDL/schema as descriptive, never as an authorization boundary.
 
+
+### Anchor IDL Program-ID Drift (PMP Refactor Surface)
+Anchor `Refactor IDL PMP commands` (2026-02-27) introduced `--allow-localnet` and optional `--program-id` for IDL init/upgrade flows.
+
+**Risk pattern**:
+- CI/ops scripts that previously depended on implicit workspace/program resolution can now execute IDL writes against the wrong cluster/program when flags are omitted or environment variables drift.
+- If a privileged deploy key runs the command with a wrong `program-id`, the wrong IDL metadata account may be initialized/upgraded.
+- Off-chain clients that auto-consume IDL metadata can then trust a mismatched schema, creating a metadata-confusion foothold (D31 bypass variant).
+
+**Mitigation**:
+1. In production, pin both cluster and `program-id` explicitly in scripts (never rely on defaults)
+2. Block `--allow-localnet` in release pipelines
+3. Preflight check: fetch on-chain program metadata and assert expected authority + program id before `idl upgrade`
+4. Postflight check: compare deployed IDL hash against expected artifact hash
+
+**Sources**:
+- https://github.com/solana-foundation/anchor/commit/21e67c99471134fe565c5dc6f3e23d7ee481a66a
+- https://github.com/solana-foundation/anchor/commits/master.atom
+
 ### Slot-Flow Quota Capture (Redemption Griefing)
 Protocols with global per-slot caps can be DoSed by one actor who consumes most of the quota early each slot.
 

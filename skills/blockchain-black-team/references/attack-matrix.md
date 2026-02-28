@@ -473,6 +473,29 @@ agent_guardrails:
 4. Rotate/red-team monitor prompts and evaluators to reduce stable covert-channel bandwidth
 **Source**: https://arxiv.org/abs/2602.23163
 
+
+### D34. WASI Hostcall Exhaustion + Async Drop Panic Chain
+**Historical**: RustSec `RUSTSEC-2026-0020/0021/0022` (Wasmtime, 2026-02-24)
+**Mechanism**: If a protocol embeds untrusted/partially-trusted Wasm components (strategy plugins, quote engines, simulation adapters), a malicious guest can force host-side over-allocation (large `string/list<T>`, unbounded resource handles, oversized HTTP header fields) to exhaust memory or trigger panic-abort. A second-stage trigger drops unresolved `call_async` futures and re-enters the same component instance, causing repeatable panic conditions.
+**Key insight**: This is not classic on-chain logic exploitation. It is an **off-chain execution-plane kill switch** against keeper/simulator infrastructure that often has signing authority or trade-execution rights.
+**Code/config pattern to find**:
+```rust
+// RISKY: Wasmtime/WASI embedding with default (or very high) limits
+let mut store = Store::new(&engine, state);
+// missing: store.set_hostcall_fuel(...)
+// missing: resource_table.set_max_capacity(...)
+
+let fut = typed_func.call_async(&mut store, params)?;
+let _ = fut.await?; // if callers sometimes drop before completion, panic chain risk
+```
+**Defense**:
+1. Enforce strict Wasmtime limits (`set_hostcall_fuel`, `set_max_capacity`, `max_http_fields_size`, `max_random_size`) per embedding
+2. Treat any dropped unresolved `call_async` future as a terminal fault for that store/component instance (recreate fresh instance)
+3. Run untrusted Wasm in a separate worker process with supervisor restart and signer isolation
+4. Never colocate signing keys with Wasm execution workers
+5. Patch Wasmtime to fixed versions (`>=24.0.6`, `>=36.0.6`, `>=40.0.4`, `>=41.0.4`)
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0020.html | https://rustsec.org/advisories/RUSTSEC-2026-0021.html | https://rustsec.org/advisories/RUSTSEC-2026-0022.html
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -521,5 +544,6 @@ agent_guardrails:
 | A36 Thin-Liquidity Collateral Admission Cascade | 오라클 정확성/신선도만 검증하고, **시장 품질(깊이·분산·활동성)**을 신뢰 경계 밖으로 분리. 상장 정책·오라클 어댑터·헬스팩터 로직의 결합 실패를 단일 컴포넌트 이슈로 축소해 놓침 (YieldBlox). |
 | A38 ZK Verifier Key Misbinding / Proof-Parameter Drift | ZK 증명 검증 루트(verification key / circuit id / public input schema)를 운영 설정으로 느슨하게 관리해, 암호학적 신뢰 경계 자체가 교란되는 위험을 감사 범위 밖으로 분리 (FOOMCASH). |
 | B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
+| D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 
 
