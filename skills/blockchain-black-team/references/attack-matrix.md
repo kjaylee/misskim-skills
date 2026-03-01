@@ -523,6 +523,43 @@ let _ = fut.await?; // if callers sometimes drop before completion, panic chain 
 5. Patch Wasmtime to fixed versions (`>=24.0.6`, `>=36.0.6`, `>=40.0.4`, `>=41.0.4`)
 **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0020.html | https://rustsec.org/advisories/RUSTSEC-2026-0021.html | https://rustsec.org/advisories/RUSTSEC-2026-0022.html
 
+### A39. Inherited Fork Vulnerability Blindspot
+**Historical**: SagaEVM ($7M, January 2026), Roguelike chain EVM forks (recurring pattern)
+**Mechanism**: A protocol forks an upstream EVM framework (e.g., Ethermint) that contains an unknown or newly discovered vulnerability. The forked code is treated as "already reviewed" base infrastructure. The attacker discovers the upstream bug and exploits it in the derivative protocol — in SagaEVM's case, crafting transactions that bypass Ethermint's precompile bridge validation logic to mint unlimited stablecoins without collateral, draining $7M.
+**Key insight**: Fork inheritance creates a **transitive trust assumption**. Auditors review protocol-added code against the forked baseline but rarely re-audit the baseline itself. When upstream code has an undisclosed/unpatched vulnerability, all derivative protocols inherit it silently.
+**Code/config pattern to find**:
+```solidity
+// Inherited precompile call — assumed safe from upstream fork
+// No secondary validation of cross-chain message payload
+function mintFromBridge(bytes calldata message) external onlyBridge {
+    (address to, uint256 amount) = abi.decode(message, (address, uint256));
+    _mint(to, amount);  // <-- assumes upstream bridge validated collateral
+}
+```
+**Defense**:
+1. Maintain a "fork delta manifest" — document every divergence from upstream and re-review upstream on each upstream security advisory
+2. Subscribe to upstream security channels (e.g., Ethermint, Cosmos SDK) as a first-class dependency risk signal
+3. Add independent on-chain collateral invariant checks at every mint entry point, regardless of bridging layer trust
+4. Pin fork commit hashes and include in audit scope disclosure
+**Source**: https://www.halborn.com/blog/post/explained-the-sagaevm-hack-january-2026
+
+### B39. AI Code Reviewer False-Negative Trust Cascade
+**Historical**: Immunefi Magnus Code Review Agent launch (Nov 2025), pattern generalizable to Copilot/Cursor-based review workflows
+**Mechanism**: Teams integrate AI-powered PR review tools (static analysis, LLM-based) into their security workflow. As AI-reviewed PRs accumulate without incident, teams psychologically recalibrate the "human review required" threshold upward. When the AI tool has systematic blind spots (e.g., only covers Solidity+npm, misses economic/protocol-level logic, can't reason about cross-contract composability), those gaps become a structured, team-wide vulnerability surface — validated by apparent clean review history.
+**Key insight**: The danger is not that AI misses something once. It is that **repeated clean AI verdicts lower human vigilance** for exactly the categories the AI cannot analyze. This is a meta-defense failure: the security tooling itself shapes the audit culture and coverage.
+**DeFi-specific blind spots of current AI code review tools**:
+- Economic/tokenomics logic (correct code, wrong incentive design)
+- Multi-tx / multi-block attack sequences
+- Cross-protocol composability when external contracts change post-audit
+- Admin key / operational security alignment
+- Anything outside declared scope (language, npm ecosystem, line-count limits)
+**Defense**:
+1. Explicitly document AI tool coverage boundaries and require manual sign-off for categories outside those boundaries
+2. Maintain a "human review required" checklist independent of AI verdicts — especially for oracle integration, mint/redeem logic, and privilege escalation paths
+3. Treat AI review as a first-pass filter, not an audit substitute; audit velocity should never exceed human review capacity for critical paths
+4. Red-team the AI reviewer periodically: submit known-vulnerable PRs and verify it catches them
+**Source**: https://immunefi.com/blog/company-announcement/code-review-agent/ | https://securityboulevard.com/2026/01/why-smart-contract-security-cant-wait-for-better-ai-models/
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -574,5 +611,8 @@ let _ = fut.await?; // if callers sometimes drop before completion, panic chain 
 | B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
 | B38 Multi-turn Tool-Return Boundary Takeover | 단일 프롬프트/단일 턴 필터링 중심 평가로는 누적 컨텍스트 드리프트를 포착하지 못함. 도구 반환값 경계를 신뢰 재설정 지점으로 다루지 않아, 합법처럼 보이는 다중 턴 경로를 통해 권한 오용이 점진적으로 유도됨 (arXiv 2602.22724/2602.22302). |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
+| A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
+| B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
+| SC02-2026 Business Logic Audit Underweight | OWASP SC Top 10 2026에서 Business Logic이 #2로 상승했지만, 감사 관행은 여전히 코드 수준 취약점 taxonomy에 편중. 설계·경제 모델 수준 검증이 감사 시간의 20% 미만으로 유지되어 설계 결함이 사후에 발견됨 (OWASP SCS 2026). |
 
 
