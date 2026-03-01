@@ -85,6 +85,8 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-02 | Holdstation DeFAI Smart Wallet (2026-02-25, $462K) | B15 (tentative) | Added to incidents timeline; mechanism pending (MFA bypass / session theft in AI-integrated wallet). DeFAI surface note added: AI intent layer + signing authority co-location amplifies B15/B29 exposure |
+| 2026-03-02 | February 2026 monthly loss total (~$37.7M, lowest since Mar 2025) | Meta | Contextual stat: phishing = $8.5M of total (22%). Key-compromise-class still dominant vector |
 | 2026-03-01 | AgentSentry + Agent Behavioral Contracts (arXiv 2602.22724 / 2602.22302) | B38 | Added multi-turn tool-return boundary takeover vector and runtime contract-based mitigation notes |
 | 2026-03-01 | Immunefi bug-bounty telemetry lag signal (2-week disclosure delay) | A34, B15 | Added signal-latency-blindness note: public bounty metrics lag should not drive real-time incident prioritization |
 | 2026-03-01 | FOOMCASH zkSNARK verifier drift exploit (~$2.26M) | A38 | Added new ZK verifier-key misbinding vector with code-level key-hash/circuit-version defenses |

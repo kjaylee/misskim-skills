@@ -3,6 +3,11 @@
 > Scope: real-world incidents with explicit mechanisms. Entries without confirmed mechanisms are intentionally omitted.
 
 ## 2026
+- **2026-02-25 — Holdstation DeFAI Smart Wallet (World Chain / BNB Chain / zkSync)** — Second exploit against Holdstation in <30 days (prior incident Jan 2026, ~$100K). 462,000 USDT confirmed stolen. Root cause officially under investigation; reported attack vector is MFA bypass ("Hacker bypassed MFA and drained user funds in 2 min"). Jan incident drained WLD/USD1/BNB/BERA across World Chain, BSC, Berachain, zkSync → ETH → BTC via THORChain, suggesting private key or session credential compromise enabling multi-chain sweep.  
+  Vector mapping (tentative): **B15 Key Compromise / Session Credential Theft**. Full vector pending mechanism confirmation.  
+  Note: "DeFAI" wallet integrates AI intent layer with on-chain execution — if the session layer controls signing authority, AI prompt-injection (B29) or credential theft may be amplified path.  
+  Source: https://hacked.slowmist.io/ | https://x.com/HoldstationW/status/2026487570751008932
+
 - **2026-02-27 — Stake Nova (Solana)** — Unchecked validation in `RedeemNovaSol()` was flash-loan-amplified to drain protocol liquidity (~$2.39M).  
   Vector mapping: **A2 Flash Loan + Price/Path Manipulation**, **A10 Logic Bug**.  
   Source: https://hacked.slowmist.io/

@@ -133,9 +133,11 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Multi-RPC consensus, TLS pinning, response validation against known state.
 
 ### B15. Key Compromise
-**Historical**: Ronin ($624M), Harmony ($100M), Slope wallet, IoTeX ioTube (2026, $4.4M)
-**Mechanism**: Private key stolen from file/memory/HSM → full control of associated accounts.
-**Defense**: HSM, threshold signatures, key rotation, file encryption, memory zeroization.
+**Historical**: Ronin ($624M), Harmony ($100M), Slope wallet, IoTeX ioTube (2026-02-21, $4.4M), Holdstation DeFAI (2026-02-25, $462K — tentative; root cause under investigation)
+**Mechanism**: Private key stolen from file/memory/HSM → full control of associated accounts. IoTeX ioTube: validator owner private key for the Ethereum-side bridge was compromised; attacker minted two extra tokens on top of the drain. Holdstation: "MFA bypass" in 2 minutes across multi-chain wallet (World Chain, BSC, Berachain, zkSync → ETH → BTC). Both incidents converted stolen funds to ETH/BTC via THORChain.
+**DeFAI amplification note (2026-02-25)**: AI-integrated wallets (DeFAI = DeFi + AI intent layer) introduce a compounded surface: session credential theft or AI prompt-injection (B29) can bypass the AI's intent-parsing layer, gaining direct signing authority. If the AI orchestration component and the signing key share the same runtime context, a single compromise gives full autonomous-fund-access without human approval.
+**Defense**: HSM, threshold signatures, key rotation, file encryption, memory zeroization. For AI-integrated wallets: strict separation of AI intent context from signing authority; require human-gated MFA that cannot be bypassed by AI session continuity.
+**Source**: https://hacked.slowmist.io/ | https://x.com/HoldstationW/status/2026487570751008932
 
 ### B16. Race Condition
 **Mechanism**: Multiple keepers submit conflicting TXs → inconsistent state.
@@ -558,6 +560,7 @@ let _ = fut.await?; // if callers sometimes drop before completion, panic chain 
 | D31 Metadata Confusion | 생성된 IDL/스키마를 사실상 신뢰원으로 취급해 런타임 검증이 생략됨. |
 | A14 Out-of-Scope Composability | 감사 대상 커밋과 실제 배포된 Hook/Proxy 간 런타임 결합 추적 부재로 우회 공격 발생 (Nemo, Cork). |
 | B33 OpSec & Key Management | 스마트컨트랙트 무결성에 집중하여 멀티시그, 배포 파이프라인 등 오프체인 키 운영을 감사 밖으로 취급 (Radiant). |
+| B15 Key Compromise (DeFAI 변종) | AI intent layer가 서명 권한과 같은 런타임 컨텍스트를 공유하는 DeFAI 지갑에서, AI 세션 연속성 자체가 MFA 우회 경로가 될 수 있음을 감사 범위에서 누락 (Holdstation 2026-02-25). |
 | A32 Cross-Chain Bridge Message Forgery | 온체인 로직만 감사하고 크로스체인 메시지 페이로드 검증 경계를 별도 신뢰영역으로 분리 (Saga IBC precompile). |
 | B35 Keeper Parameter Misconfiguration | 스마트컨트랙트 파라미터 검증에 집중하여 오퍼레이터 운영 파라미터(슬리피지·임계값) 실수를 감사 외로 취급 (YO Protocol). |
 | B36 Social-Engineering Stake Authority Hijack | 스마트컨트랙트 무결성 감사가 인간 계층(디바이스·피싱·RAT)까지 확장되지 않아 핫키 운영 리스크를 운영이슈로 분리 (Step Finance). |
