@@ -289,3 +289,30 @@ Step Finance (2026-01-31, $27.3M): Executive device phished → stake delegation
 17. ☐ Audit scope exclusions tracked as open backlog items (never ship with known-excluded vectors)
 18. ☐ Transitive dependency review enforced (`cargo tree --locked`) + newly published crate quarantine window for keeper builds
 19. ☐ ZK verifier integrations pin verification-key hash/circuit version and enforce canary-proof checks on upgrades
+
+## Third-Party Staking Provider Authority Risk (Cross-Customer Blast Radius)
+
+### Provider-API-to-Multi-Platform Authority Hijack (SwissBorg/Kiln, Sep 2025)
+Staking providers (Kiln, Figment, Blockdaemon etc.) that hold `StakeAuthority`+`WithdrawAuthority` on behalf of multiple DeFi clients create a **cross-customer blast radius**. Compromise of the provider's central API → all clients' stake accounts simultaneously exposed.
+
+**Solana on-chain mechanics**: `StakeAuthorize` instruction requires only current-authority signature. No program code. Indistinguishable from legitimate ops on-chain.
+
+**Attack timeline**: Authority transfer (instant) → stake deactivation → 1 epoch cooldown (~2–2.5 days) → withdrawal.
+
+**Microstable-specific risk**: LOW for core protocol (no third-party staking custodian). ELEVATED if LST collateral is added whose backing depends on a centralized provider API.
+
+**Red-team application**:
+- When evaluating new LST collateral: enumerate whose API holds stake/withdraw authority for that LST's backing validators.
+- If a third-party custodian holds multi-customer authority: model a cascade attack on that custodian to assess collateral safety.
+
+**Mitigation**:
+1. Require LST collateral integration docs to detail staking authority model.
+2. Prefer LSTs backed by validator networks using distributed or hardware-secured authority.
+3. Apply additional haircut to LST collateral with known-centralized custodian authority.
+4. Track known providers and their authority architecture in a curated registry.
+
+**Sources**: SwissBorg/Kiln (Sep 2025, $41.5M); infstones.com (Feb 2026)
+
+## Solana-Specific Defense Checklist Update
+20. ☐ LST collateral staking authority model audited (no single-custodian blast radius)
+21. ☐ crates.io ecosystem namespace provenance check before adding new DeFi SDK dependencies (CI + manual review)
