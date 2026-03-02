@@ -560,6 +560,70 @@ function mintFromBridge(bytes calldata message) external onlyBridge {
 4. Red-team the AI reviewer periodically: submit known-vulnerable PRs and verify it catches them
 **Source**: https://immunefi.com/blog/company-announcement/code-review-agent/ | https://securityboulevard.com/2026/01/why-smart-contract-security-cant-wait-for-better-ai-models/
 
+### A40. ERC4626/Share-Price Donation Attack via Wrapped Stablecoin
+**Historical**: Inverse Finance / LlamaLend (2026-03-02, ~$240K) — sDOLA share-price manipulation forced liquidation of 27 users on LlamaLend using ~$30M flash loans.
+**Mechanism**: The attacker exploited the ERC4626 vault model where `share_price = totalAssets / totalSupply`. By flash-loan-donating DOLA directly into the sDOLA vault (inflating `totalAssets`), the share price of sDOLA spiked. External lending protocols (LlamaLend) that used sDOLA as collateral read the now-inflated exchange rate, making collateral positions appear undercollateralized → forced liquidations. Attacker profits from the liquidation spread.
+**Key insight**: The donation attack does not exploit the vault itself — it exploits any **external protocol that reads the vault's share price** as collateral valuation. The vault contract was "working correctly"; the composability surface was the exploit path.
+**Relationship to existing vectors**: This is a composability amplification of A2 (Flash Loan) and A3 (Oracle Manipulation), but the oracle being manipulated is the vault's own `totalAssets/totalSupply` ratio rather than a Pyth feed.
+**Code pattern to find**:
+```rust
+// VULNERABLE: share price derived from raw totalAssets (donatable by anyone)
+fn get_share_price(vault: &Vault) -> u64 {
+    vault.total_assets / vault.total_shares  // totalAssets inflatable via direct transfer
+}
+
+// SAFE: Microstable uses tracked accounting field (not raw token balance)
+// vault.total_deposits is only updated via mint() / redeem() instructions
+// Direct SPL token transfers to vault ATA do NOT update total_deposits
+```
+**Microstable relevance**: ✅ **DEFENDED** — Microstable tracks `vault.total_deposits` as an explicit accounting field updated only through program instructions (`mint`, `redeem`, `rebalance`). Raw SPL token transfers (donations) to vault ATAs do NOT update this field, so share-price inflation via donation is not possible in the current architecture.
+**Risk surface if composability changes**: If Microstable is ever used as collateral in an external lending protocol (e.g., a future "Microstable Lend"), and that protocol reads the MSTB/collateral ratio from on-chain supply accounting, it must verify that `total_deposits` cannot be inflated externally before using it for collateral valuation.
+**Defense**:
+1. Never use raw SPL token account balance as share-price numerator — always use tracked accounting fields
+2. For any ERC4626-style wrapper over protocol assets, add donation-resistant floor: `share_price = max(tracked_assets, real_balance) / total_shares` with donation detection alarm
+3. Before listing protocol tokens as collateral in external protocols, audit their oracle adapter for donation-attack resistance
+4. Monitor vault `totalAssets / totalShares` ratio for sudden jumps within a single block (on-chain anomaly flag)
+**Source**: https://www.cryptotimes.io/2026/03/02/inversefinance-faces-240k-loss-in-dola-manipulation-alert/ | https://hacked.slowmist.io/
+
+### A41. Burn-Path Fee-Exempt Flash Loan Amplification
+**Historical**: SOF token (BNB Chain, 2026-02-14, ~$248K) + LAXO token (2026-02-22, ~$190K) — Burn logic with fee-exempt transfer path allowed flash-loan amplification, draining pool BSC-USD. Copycat attackers struck within 13 minutes of the LAXO breach.
+**Mechanism**: The vulnerable contracts had a "mining reward" path that exempted tokens from transfer fees when sent to the mining contract. The attack chain:
+1. Flash borrow ~$590M in assets
+2. Swap large BSC-USD for pool token (SOF/LAXO) — pool is now token-heavy, USD-light
+3. Send tokens to the fee-exempt mining contract (skips transfer fee, pool balances update before payout)
+4. The mining contract burns tokens — supply drops, updating pool balances BEFORE computing payout
+5. Claim the ~875 reward SOF tokens
+6. Sell reward tokens back into the now-skewed pool — the pool's exchange rate is based on heavily distorted token/USD ratio
+7. Drain entire pool USD, repay flash loan, pocket profit
+**Key insight**: The vulnerability combines two flaws: (a) a fee-exempt path that bypasses normal transfer accounting, and (b) burn-then-payout ordering that allows the burn step to change the denominator before the payout is computed.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: fee-exempt path + burn-before-payout ordering
+function claimReward(address user) external {
+    uint256 reward = pendingReward[user];
+    _burnFeeExempt(rewardToken, user, reward);  // burn first → supply drops → price inflates
+    uint256 payout = (vault.balance * reward) / rewardToken.totalSupply();  // too late
+    vault.transfer(user, payout);
+}
+
+// SAFE: compute payout before any state-changing burn
+function claimReward(address user) external {
+    uint256 reward = pendingReward[user];
+    uint256 payout = (vault.balance * reward) / rewardToken.totalSupply();  // compute first
+    _burn(rewardToken, user, reward);
+    vault.transfer(user, payout);
+}
+```
+**Microstable relevance**: ✅ **DEFENDED** — Microstable has no mining/reward contract with fee-exempt transfer paths. The `redeem()` instruction applies fees uniformly via `effective_redeem_fee_rate` and follows CEI pattern: fee is computed before any state modification, and burn is applied against `total_supply` before payout is calculated. The per-slot flow caps (`MAX_ABSOLUTE_REDEEM_PER_SLOT`) also limit flash-loan-scale extraction even if a similar logic flaw existed.
+**Watch for**: If any future yield-farming or reward mechanism is added to Microstable, verify that: (a) no fee-exempt paths exist, (b) all payout computations occur before burn/transfer actions that change the denominator.
+**Defense**:
+1. **CEI (Checks-Effects-Interactions)**: compute payout amount BEFORE executing burn
+2. No fee-exempt transfer paths — apply fees uniformly including during reward claims
+3. Flash loan guard: if `supply_after_burn / supply_before_burn` changes by more than N%, reject the redemption
+4. Per-tx payout cap: no single transaction can drain more than X% of pool BSC-USD
+5. Copycat prevention: once a vulnerability is exploited, pause the affected function within the same block using monitoring hooks
+**Source**: https://www.cryptotimes.io/2026/02/27/flash-loan-attack-drains-438k-from-sof-and-laxo-on-bnb-chain/
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -614,5 +678,7 @@ function mintFromBridge(bytes calldata message) external onlyBridge {
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
 | SC02-2026 Business Logic Audit Underweight | OWASP SC Top 10 2026에서 Business Logic이 #2로 상승했지만, 감사 관행은 여전히 코드 수준 취약점 taxonomy에 편중. 설계·경제 모델 수준 검증이 감사 시간의 20% 미만으로 유지되어 설계 결함이 사후에 발견됨 (OWASP SCS 2026). |
+| A40 ERC4626 Share-Price Donation Attack | 프로토콜 자체 vault 로직은 "정상 동작"으로 감사 통과. 외부 프로토콜이 해당 share price를 담보 평가에 쓰는 composability 구간을 감사 범위 밖으로 분리하여, donation→가격 조작→강제청산 경로를 놓침 (Inverse Finance/LlamaLend 2026-03-02). |
+| A41 Burn-Path Fee-Exempt Flash Loan Amplification | 리워드·마이닝 계약의 fee-exempt 경로가 일반 이체와 동일한 fee 정책을 적용받는다고 가정. burn-before-payout 순서 오류와 결합될 때 플래시론으로 분모 왜곡이 증폭됨. 단일 경로 fuzz로는 fee-exempt 결합 시나리오가 충분히 재현되지 않음 (SOF/LAXO 2026-02). |
 
 

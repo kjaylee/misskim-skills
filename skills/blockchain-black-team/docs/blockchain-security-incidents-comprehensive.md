@@ -3,6 +3,14 @@
 > Scope: real-world incidents with explicit mechanisms. Entries without confirmed mechanisms are intentionally omitted.
 
 ## 2026
+- **2026-03-02 — Inverse Finance / LlamaLend (Ethereum)** — Attacker used ~$30M flash loan to inflate sDOLA (wrapped DOLA ERC4626 vault) share price via direct donation to vault `totalAssets`. 27 users whose LlamaLend collateral positions were denominated in sDOLA were forcibly liquidated as their collateral appeared undercollateralized after the artificial price spike. Profit: ~$240K. Inverse Finance itself was not breached; the exploit path ran through LlamaLend's collateral oracle reading sDOLA exchange rate.  
+  Vector mapping: **A40 ERC4626/Share-Price Donation Attack**, **A2 Flash Loan + Price Manipulation**.  
+  Source: https://www.cryptotimes.io/2026/03/02/inversefinance-faces-240k-loss-in-dola-manipulation-alert/ | https://hacked.slowmist.io/
+
+- **2026-02-27 — SOF token + LAXO token (BNB Smart Chain)** — SOF (Feb 14, ~$248K) and LAXO (Feb 22, ~$190K). Both exploited a burn-path fee-exempt logic flaw. Attacker flash-borrowed ~$590M, swapped into pool token, sent tokens to fee-exempt mining contract, burned tokens (changing pool ratio denominator), then sold the 875 reward SOF tokens at the now-inflated rate to drain the entire pool BSC-USD. LAXO copycat attacker struck within 13 minutes of the original exploit.  
+  Vector mapping: **A41 Burn-Path Fee-Exempt Flash Loan Amplification**, **A2 Flash Loan + Price Manipulation**.  
+  Source: https://www.cryptotimes.io/2026/02/27/flash-loan-attack-drains-438k-from-sof-and-laxo-on-bnb-chain/
+
 - **2026-02-25 — Holdstation DeFAI Smart Wallet (World Chain / BNB Chain / zkSync)** — Second exploit against Holdstation in <30 days (prior incident Jan 2026, ~$100K). 462,000 USDT confirmed stolen. Root cause officially under investigation; reported attack vector is MFA bypass ("Hacker bypassed MFA and drained user funds in 2 min"). Jan incident drained WLD/USD1/BNB/BERA across World Chain, BSC, Berachain, zkSync → ETH → BTC via THORChain, suggesting private key or session credential compromise enabling multi-chain sweep.  
   Vector mapping (tentative): **B15 Key Compromise / Session Credential Theft**. Full vector pending mechanism confirmation.  
   Note: "DeFAI" wallet integrates AI intent layer with on-chain execution — if the session layer controls signing authority, AI prompt-injection (B29) or credential theft may be amplified path.  

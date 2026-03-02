@@ -24,11 +24,11 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 ## Quick Start
 
 1. Read the target codebase (on-chain + off-chain)
-2. Load `references/attack-matrix.md` for the 42+ vector framework
+2. Load `references/attack-matrix.md` for the 44+ vector framework
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (42+ Vectors, continuously extended)
+## Attack Matrix (44+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -116,7 +116,7 @@ Black Team 점검 시, "취약점 존재"만 보지 말고 **방어가 왜 실�
 
 ## Execution Methodology
 
-For each of the 42+ vectors:
+For each of the 44+ vectors:
 
 1. **Historical Reference** — Which real incident used this vector, what was the mechanism
 2. **Code Mapping** — Identify exact file:line in target code where vector applies
@@ -153,7 +153,7 @@ Output as structured markdown:
 # Black Team Report — {Protocol Name}
 
 ## 0) Summary Dashboard
-- Total vectors evaluated: 42
+- Total vectors evaluated: 44
 - CRITICAL: X | HIGH: X | MEDIUM: X | LOW: X
 - Undefended (immediately exploitable): X
 
@@ -179,7 +179,7 @@ Black R1 → Blue fix → Black R2 → Blue fix → ... → ZERO CRITICAL/HIGH
 ```
 
 On repeat runs (R2+):
-- Re-evaluate ALL 42 vectors against updated code
+- Re-evaluate ALL 44 vectors against updated code
 - Verify previous fixes actually work (bypass attempts)
 - Check for regression (new vulnerabilities from fixes)
 - Only report NEW or UNFIXED findings
