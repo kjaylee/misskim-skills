@@ -624,6 +624,51 @@ function claimReward(address user) external {
 5. Copycat prevention: once a vulnerability is exploited, pause the affected function within the same block using monitoring hooks
 **Source**: https://www.cryptotimes.io/2026/02/27/flash-loan-attack-drains-438k-from-sof-and-laxo-on-bnb-chain/
 
+### A42. Anchor Post-CPI Stale Account Cache
+**Signal**: Asymmetric Research "Invocation Security" (Apr 2025); resurfaced 2026-03-03.
+**Mechanism**: In Anchor, `Account<'info, T>` data is deserialized at instruction entry. If a CPI call (e.g., Token-2022 transfer hook) modifies the same PDA on-chain during the instruction, Anchor's in-memory struct still holds pre-CPI values. Reading from the struct post-CPI yields stale data — price, balance, or state may be wrong. Attack: if a vault account is updated by a Token-2022 hook triggered during `transfer_checked`, the outer program's cached price is pre-hook and may be exploited to over-mint.
+**Why distinct from A12 (CPI Confusion)**: No wrong program is called. The CPI target is correct; the flaw is trusting cached data after a valid CPI mutates the account.
+**Code pattern to find**:
+```rust
+// VULNERABLE: vault data cached before CPI, not reloaded after
+let price = ctx.accounts.vault.price;  // cached at entry
+token_2022::transfer_checked(...)?;    // hook may modify vault.price
+let mint_amount = collateral * price;  // stale price used!
+
+// SAFE: reload after CPI
+token_2022::transfer_checked(...)?;
+ctx.accounts.vault.reload()?;
+let price = ctx.accounts.vault.price;  // fresh
+```
+**Trigger condition**: Token-2022 transfer hooks + writable PDA in same instruction.
+**Defense**: Call `.reload()?` on any PDA that a CPI might have modified. Add as a mandatory code review checklist item before any Token-2022 migration.
+**Source**: https://blog.asymmetric.re/invocation-security-navigating-vulnerabilities-in-solana-cpis/
+
+### B40. ACE Fairness / Keeper Oracle-Freshness Ordering Collapse
+**Signal**: Blockdaemon Solana 2026 technical roadmap (2026-02-19). Alpenglow + ACE "limits opportunistic reordering."
+**Mechanism**: Protocols relying on priority-fee-based ordering for security (e.g., keeper oracle updates land before user mints) lose that guarantee under ACE fair-ordering. The keeper's oracle-update TX no longer predictably precedes user TXs in the same block under congestion. This means user TXs may execute on stale oracle data, relying entirely on the protocol's staleness guard as the last line of defense. If the staleness guard is the only protection and keeper cycle latency increases under ACE, the window of oracle staleness widens.
+**Microstable impact**: Protocol transitions from "keeper ordering protects freshness" to "staleness check alone protects freshness" — structural model shift.
+**Not a value-extraction attack** if staleness checks hold, but creates liveness degradation under congestion (OracleDegraded reverts) and a narrower safety margin.
+**Defense**: (1) Redundant keeper runner on separate node; (2) Pre-benchmark keeper cycle under ACE congestion; (3) Consider widening staleness guard slightly while tightening confidence checks.
+**Source**: https://www.blockdaemon.com/blog/solana-in-2026-technical-roadmap
+
+### A43. Commit/Reveal Threshold Circumvention via Turnover Segmentation
+**Signal**: Direct Microstable code audit, 2026-03-03.
+**Mechanism**: Protocols that require commit/reveal only above a turnover/value threshold can be bypassed by splitting a large operation into multiple smaller sub-threshold ones. Each sub-operation passes without triggering the commit/reveal delay. Over N steps, attacker achieves the full cumulative effect of the large operation — while avoiding all the front-running protection, delay, and transparency that commit/reveal provides.
+**Solana/Anchor specifics**: Applies to any instruction with: `if value >= threshold { require_commit_reveal() }`. Attacker simply keeps each call's `value < threshold` and batches across multiple slots.
+**Code pattern to find**:
+```rust
+// VULNERABLE: single-call threshold only, no cumulative tracking
+if turnover >= LARGE_REBALANCE_THRESHOLD {
+    verify_commit_reveal()?;  // only triggered per-call
+}
+// Attacker: call 10x with turnover < threshold each time
+// = same total effect, no commit/reveal ever fired
+```
+**Arithmetic (Microstable example)**: LARGE_REBALANCE_THRESHOLD=4%, WEIGHT_STEP_LIMIT=2%, BATCH_WINDOW_SLOTS=32. Attacker can zero out one collateral weight from 10% → 0% in 5 calls × 32 slots = 160 slots ≈ 64 seconds.
+**Defense**: Track per-epoch cumulative drift. If `sum(|current_weight - epoch_start_weight|) > THRESHOLD`, require commit/reveal regardless of per-call turnover.
+**Source**: Microstable lib.rs lines 1534–1600
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -680,5 +725,8 @@ function claimReward(address user) external {
 | SC02-2026 Business Logic Audit Underweight | OWASP SC Top 10 2026에서 Business Logic이 #2로 상승했지만, 감사 관행은 여전히 코드 수준 취약점 taxonomy에 편중. 설계·경제 모델 수준 검증이 감사 시간의 20% 미만으로 유지되어 설계 결함이 사후에 발견됨 (OWASP SCS 2026). |
 | A40 ERC4626 Share-Price Donation Attack | 프로토콜 자체 vault 로직은 "정상 동작"으로 감사 통과. 외부 프로토콜이 해당 share price를 담보 평가에 쓰는 composability 구간을 감사 범위 밖으로 분리하여, donation→가격 조작→강제청산 경로를 놓침 (Inverse Finance/LlamaLend 2026-03-02). |
 | A41 Burn-Path Fee-Exempt Flash Loan Amplification | 리워드·마이닝 계약의 fee-exempt 경로가 일반 이체와 동일한 fee 정책을 적용받는다고 가정. burn-before-payout 순서 오류와 결합될 때 플래시론으로 분모 왜곡이 증폭됨. 단일 경로 fuzz로는 fee-exempt 결합 시나리오가 충분히 재현되지 않음 (SOF/LAXO 2026-02). |
+| A42 Anchor Post-CPI Stale Account Cache | Anchor 프레임워크가 명령 진입 시 PDA 데이터를 한 번만 역직렬화한다는 사실을 이해하지 못하고, CPI 이후 동일 계정을 재읽는 코드를 안전하다고 간주. Token-2022 hook이 vault를 수정할 수 있는 경로를 별도 감사 범위로 분리함. `.reload()` 누락이 정적 분석에 잘 걸리지 않음 (Asymmetric Research CPI post, 2025-04). |
+| B40 ACE Fairness / Keeper Ordering Collapse | 실행 레이어 공정성 업그레이드가 프로토콜 보안 모델(keeper priority 선순위 보장)에 미치는 영향을 감사 외 운영 사항으로 분리. 신선도 검사를 코드 수준에서 확인하지만 정렬 모델 변경을 가용성 위협 시나리오로 연결하지 않음 (Blockdaemon ACE 로드맵, 2026-02). |
+| A43 Commit/Reveal Threshold Circumvention | 단일 호출 기준 임계값 검사를 충분한 보호로 간주하고 에포크 누적 drift 추적을 미반영. 감사는 코드 경로의 정확성을 확인하지만, 여러 호출로 분할 시 누적 효과가 동일 임계를 우회함을 경제 시뮬레이션으로 검증하지 않음 (직접 코드 감사, 2026-03). |
 
 

@@ -316,3 +316,62 @@ Staking providers (Kiln, Figment, Blockdaemon etc.) that hold `StakeAuthority`+`
 ## Solana-Specific Defense Checklist Update
 20. ☐ LST collateral staking authority model audited (no single-custodian blast radius)
 21. ☐ crates.io ecosystem namespace provenance check before adding new DeFi SDK dependencies (CI + manual review)
+
+## Anchor Post-CPI Stale Account Cache (A42)
+
+### Mechanism
+Anchor `Account<'info, T>` deserializes PDA data once at instruction entry. If a subsequent CPI modifies that PDA on-chain (e.g., via Token-2022 transfer hook), the in-memory Rust struct remains stale. Reads from the struct post-CPI yield pre-CPI values.
+
+```rust
+// VULNERABLE: no reload after CPI that may modify vault
+let price = ctx.accounts.vault.price;           // cached at entry
+token_2022::transfer_checked(cpi_ctx, amount)?; // hook may write vault.price
+let minted = collateral * price / SCALE;        // uses stale pre-hook price!
+
+// SAFE: reload after CPI
+token_2022::transfer_checked(cpi_ctx, amount)?;
+ctx.accounts.vault.reload()?;                   // re-fetch from on-chain bytes
+let price = ctx.accounts.vault.price;
+```
+
+**Trigger condition**: Any CPI (transfer, callback, hook) that writes to an account that the outer program also reads.
+
+**Microstable risk**: LOW currently (SPL Token classic — no hooks). HIGH if any collateral migrates to Token-2022 with transfer hooks.
+
+**Source**: https://blog.asymmetric.re/invocation-security-navigating-vulnerabilities-in-solana-cpis/
+
+## ACE Fairness / Keeper Oracle-Freshness Ordering (B40)
+
+### Mechanism
+Solana's Alpenglow/ACE execution model reduces priority-fee-based ordering advantage. Keeper oracle-update TXs no longer predictably precede user mint/redeem TXs under congestion. Protocols that rely on keeper ordering guarantees face increased staleness windows.
+
+**Microstable defense**: `MINT_ORACLE_STALENESS_MAX = 20 slots` is the guard. Under ACE congestion, keeper cycle may exceed 20 slots → OracleDegraded → liveness degradation (not value extraction).
+
+**Mitigation**: Redundant keeper on second node; pre-benchmark keeper latency under ACE congestion scenarios.
+
+**Source**: Blockdaemon Solana 2026 Technical Roadmap (2026-02-19)
+
+## Commit/Reveal Threshold Segmentation Bypass (A43)
+
+### Mechanism
+Protocols with `if turnover >= threshold { require_commit_reveal() }` can be bypassed by splitting one large operation into multiple sub-threshold calls. Cumulative effect equals the large operation; commit/reveal delay is never triggered.
+
+```rust
+// Per-call check only (BYPASSABLE via segmentation):
+if turnover >= LARGE_THRESHOLD { verify_commit_reveal()?; }
+
+// Fix: add cumulative epoch tracking
+if turnover >= LARGE_THRESHOLD
+    || epoch_drift + turnover >= LARGE_THRESHOLD {
+    verify_commit_reveal()?;
+}
+```
+
+**Microstable specifics**: WEIGHT_STEP_LIMIT=2%, LARGE_THRESHOLD=4%, BATCH_WINDOW_SLOTS=32. 5 calls × 32 slots = 160 slots to zero any collateral weight.
+
+**Requires**: 2-of-3 keeper compromise. Eliminates commit/reveal MEV-protection once keepers are compromised.
+
+## Solana-Specific Defense Checklist Update
+22. ☐ Post-CPI `.reload()` called on any PDA that a CPI hook may have modified (mandatory for Token-2022 integration)
+23. ☐ ACE/Alpenglow ordering impact assessed for keeper oracle-freshness model; redundant keeper runner in place
+24. ☐ Commit/reveal threshold checks include cumulative epoch drift (not per-call only)
