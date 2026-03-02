@@ -669,6 +669,51 @@ if turnover >= LARGE_REBALANCE_THRESHOLD {
 **Defense**: Track per-epoch cumulative drift. If `sum(|current_weight - epoch_start_weight|) > THRESHOLD`, require commit/reveal regardless of per-call turnover.
 **Source**: Microstable lib.rs lines 1534–1600
 
+### B41. Audit Multi-Engagement Scope Fragmentation
+**Signal**: SigIntZero 2026 Software Security Report (Feb 28, 2026); Euler Finance ($197M, 6 auditors, 10 engagements).
+**Mechanism**: When a protocol is audited by multiple firms across multiple engagements, each auditor reviews their assigned scope in isolation. Cross-function interactions — especially between modules audited by different firms — become structurally orphaned: no single auditor reviews the interface between their scope and the adjacent module. In Euler Finance, `donateToReserves()` was only in scope for 1 of 10 engagements; the interaction with the lending mechanism (the actual exploit path) was never evaluated end-to-end.
+**Why distinct from A34 (Fragmented Security Stack)**: A34 is about different security *layers* (audit + bounty + monitoring) not talking to each other. B41 is about multiple auditors within the audit layer each covering disjoint code *scopes*, with cross-scope interactions falling through.
+**Meta pattern**: "More auditors → more safety" assumption is wrong. More auditors with disjoint scopes → higher probability of interface-level blind spots.
+**Code pattern to find**: Functions that call into another module not in the current audit scope. Cross-module call sites where the caller and callee were audited by different firms.
+**Defense**:
+1. Require one auditor per engagement to perform explicit **cross-scope integration review** — specifically testing all function interactions across audit scope boundaries.
+2. Maintain a "scope overlap matrix": for every pair of audited modules, record which firm reviewed their interface.
+3. Treat any function in scope for only 1 engagement as HIGH risk; escalate to mandatory secondary review.
+**Microstable relevance**: If future audits use multiple firms (e.g., one for Keeper, one for on-chain contracts), require explicit review of the Keeper ↔ on-chain data handoff boundary.
+**Source**: https://www.prweb.com/releases/2026-software-security-report-audited-applications-account-for-only-10-8-of-exploit-losses---but-the-failures-reveal-a-systemic-blind-spot-302699518.html
+
+### B42. Audit Severity Miscalibration — Informational-to-Critical Escalation Blindspot
+**Signal**: SigIntZero 2026 Report; CertiK-audited Merlin DEX ($1.8M), Swaprum ($3M), Arbix Finance ($10M) — all exploited via admin privilege abuse that audits flagged as *informational* findings.
+**Mechanism**: Auditors correctly identify a vulnerability (e.g., centralized admin key can rug-pull users) but classify it as "informational" or "low" because the code logic is syntactically correct. The business risk — "team could drain the protocol" — is treated as a trust assumption, not a severity-raising factor. Exploiters (including insiders or compromised devs) then execute exactly the "informational" attack path.
+**Why distinct from B39 (AI code reviewer false-negative)**: B39 is about AI tooling creating false safety perception. B42 is about human auditors correctly flagging but systematically underrating severity when code is correct but business intent is malicious.
+**Economic logic**: Admin privilege exploits are rated informational because "the team is trusted." But every malicious insider hack and rug-pull exploits this assumption. The severity of a finding should include the worst-case business outcome, not just code-level impact.
+**Meta pattern**: "Code-level severity heuristic ignores economic blast radius of operational trust assumptions."
+**Code pattern to find**: Admin-only functions with no timelock/multisig. `only_admin` guards on drain/pause/mint functions. Informational findings in audit reports involving "centralization risk."
+**Defense**:
+1. Any admin-only function that can affect user funds without timelock → automatically MEDIUM severity floor.
+2. Run a "finding re-calibration pass" on past audits: re-score all informational findings for economic blast radius.
+3. Require timelock (≥24h) on all privileged operations affecting liquidity.
+4. Include a "Trust Assumption Attack Tree" in every audit deliverable: what happens if admin/team is compromised or malicious?
+**Microstable relevance**: Review all past audit findings classified as informational/low involving keeper authority, oracle authority, or admin keys. Re-evaluate each for worst-case economic blast radius.
+**Source**: https://www.prweb.com/releases/2026-software-security-report-audited-applications-account-for-only-10-8-of-exploit-losses---but-the-failures-reveal-a-systemic-blind-spot-302699518.html
+
+### B43. AI Agent Memory Injection Attack
+**Signal**: Princeton University & Sentient Foundation — "AI Agents in Cryptoland: Practical Attacks and No Silver Bullet" (2026).
+**Mechanism**: AI agents managing crypto wallets store conversation history, cached authorizations, and task context in a memory system. An attacker injects malicious data into the agent's memory — via poisoned tool outputs, crafted chat messages, or adversarial documents in the agent's knowledge base — to make the agent believe it has prior authorization to transfer funds to a specific address. The agent then executes the transfer based on this false memory, without re-verifying with the human principal.
+**Why distinct from B29 (Confused-Deputy)**: B29 = agent given excessive permissions at design time. B43 = agent's runtime memory is poisoned to *believe* it has authorization it was never granted.
+**Why distinct from B37 (Steganographic Oversight Evasion)**: B37 = covert signals between cooperating malicious agents. B43 = adversarial memory pollution of a single honest agent.
+**Why distinct from B38 (Multi-turn Boundary Takeover)**: B38 = accumulated context drift across conversation turns. B43 = external adversarial injection into the memory store itself (not just conversation drift).
+**Architecture components at risk**: Memory System (conversation history, user preferences), Decision Engine (LLM trust in cached context), Action Module (wallet/transaction execution).
+**DeFi-specific risk**: Blockchain transactions are irreversible. A single successful memory injection that redirects one transaction is permanent and unrecoverable.
+**Code pattern to find**: AI agents that (a) cache prior authorization events in memory, (b) use memory context to skip re-verification, (c) accept external documents or tool results as authoritative memory inputs.
+**Defense**:
+1. **Ephemeral authorization model**: Never cache "user authorized X" in persistent memory. Re-verify authorization at every execution step.
+2. **Memory isolation**: Separate untrusted external data (research context, tool outputs) from trusted authorization context. Never mix.
+3. **Action confirmation gate**: All irreversible actions (transactions above threshold) require explicit out-of-band human confirmation regardless of memory state.
+4. **Memory integrity logging**: Log all memory writes with source attribution; flag any write from external tool output that references authorization or transfer permissions.
+**Microstable relevance**: If any AI agent is used for keeper operation, governance proposal drafting, or treasury management, apply ephemeral authorization + confirmation gate. Agent ↔ Governance ↔ Parameter chain is highest risk.
+**Source**: https://blog.sentient.xyz/posts/ai-agents-in-cryptoland
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -728,5 +773,8 @@ if turnover >= LARGE_REBALANCE_THRESHOLD {
 | A42 Anchor Post-CPI Stale Account Cache | Anchor 프레임워크가 명령 진입 시 PDA 데이터를 한 번만 역직렬화한다는 사실을 이해하지 못하고, CPI 이후 동일 계정을 재읽는 코드를 안전하다고 간주. Token-2022 hook이 vault를 수정할 수 있는 경로를 별도 감사 범위로 분리함. `.reload()` 누락이 정적 분석에 잘 걸리지 않음 (Asymmetric Research CPI post, 2025-04). |
 | B40 ACE Fairness / Keeper Ordering Collapse | 실행 레이어 공정성 업그레이드가 프로토콜 보안 모델(keeper priority 선순위 보장)에 미치는 영향을 감사 외 운영 사항으로 분리. 신선도 검사를 코드 수준에서 확인하지만 정렬 모델 변경을 가용성 위협 시나리오로 연결하지 않음 (Blockdaemon ACE 로드맵, 2026-02). |
 | A43 Commit/Reveal Threshold Circumvention | 단일 호출 기준 임계값 검사를 충분한 보호로 간주하고 에포크 누적 drift 추적을 미반영. 감사는 코드 경로의 정확성을 확인하지만, 여러 호출로 분할 시 누적 효과가 동일 임계를 우회함을 경제 시뮬레이션으로 검증하지 않음 (직접 코드 감사, 2026-03). |
+| B41 Audit Multi-Engagement Scope Fragmentation | 다수 감사사가 각자 지정 범위를 독립 검토해 "범위 간 인터페이스"가 구조적으로 고아가 됨. Euler Finance에서 `donateToReserves()`는 10개 감사 중 1개만 커버. "감사사 많을수록 안전"이라는 역설적 가정이 크로스-모듈 상호작용 blind spot을 생성 (SigIntZero 2026 Report). |
+| B42 Audit Severity Miscalibration | 감사자가 취약점을 올바르게 식별했지만 "코드가 문법적으로 정확하므로" 심각도를 정보성/낮음으로 분류. 어드민 권한 남용 등 경제적 폭발 반경이 큰 운영 신뢰 가정을 코드 수준 심각도 휴리스틱으로 평가해 critical 에스컬레이션 실패 (CertiK-audited Merlin/Swaprum/Arbix, SigIntZero 2026). |
+| B43 AI Agent Memory Injection Attack | 에이전트 권한을 설계 시 과다 부여(B29)나 단기 누적 드리프트(B38)와 달리, 런타임 메모리 스토어 자체에 악의적 데이터를 주입해 에이전트가 존재하지 않는 사전 승인을 "기억"하도록 유도. 블록체인 트랜잭션 불가역성 때문에 단일 성공으로 영구 손실 발생. 에이전트 메모리를 신뢰 경계로 보지 않고 운영 컨텍스트로만 취급해 보안 검토 범위 밖으로 분리 (Princeton/Sentient, 2026). |
 
 
