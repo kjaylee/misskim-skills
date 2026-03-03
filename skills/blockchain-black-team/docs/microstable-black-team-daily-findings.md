@@ -1,6 +1,67 @@
 
 ---
 
+## 2026-03-04 Daily Check
+
+### New Patterns Added Today
+| Vector | Incident | Amount | Date |
+|--------|---------|--------|------|
+| B44: SPL Token Account Persistent Delegate Drain | Ledger/Canissolana (Solana) | ~$30K USDC | 2026-03-02/03 |
+
+### A36 Thin-Liquidity Collateral Cascade — Field Confirmation
+Blend/YieldBlox ($10.8M, 2026-02-22): USTRY token on Stellar SDEX had near-zero liquidity. Reflector oracle used single-source "latest price" without TWAP or market-depth gate. Attacker inflated USTRY 100× in one block → borrow $10M+ against <$100K real collateral. Stellar validators froze ~$7.5M XLM. A36 mechanism fully confirmed in production at scale.
+
+### Full 45-Vector Check Results (Microstable)
+
+**B44 SPL Delegate Drain (NEW)**
+- Vault ATAs are PDA-owned by `protocol_state` → ✅ external delegate setting IMPOSSIBLE
+- User collateral ATAs: `mint()` does NOT check `user_collateral.delegate` field → ⚠️ PARTIAL
+  - Attacker with stale delegation can initiate `transfer_checked` to Microstable vault, receiving MSTB in return (launder path). Protocol funds not at risk; user fund attribution is.
+  - **Recommendation (MEDIUM)**: Add `require!(ctx.accounts.user_collateral.delegate.is_none(), ErrorCode::DelegateNotAllowed)` to `mint()` instruction.
+
+**A43 Commit/Reveal Threshold Circumvention (carry-forward)**
+- `rebalance()` enforces commit/reveal only when `turnover >= LARGE_REBALANCE_THRESHOLD (4%)`
+- Per-call enforcement only — no epoch-level cumulative drift tracking
+- Attacker (keeper compromise) can run 5× `turnover = 3.9%` rebalances across 160 slots → zero a collateral weight from 10% to 0% with no commit/reveal ever triggered
+- ⚠️ PARTIAL — defense exists per-call, not across epoch window
+- **Recommendation (MEDIUM)**: Track `epoch_cumulative_drift` per collateral index; require commit/reveal when `sum(epoch_drift) >= LARGE_REBALANCE_THRESHOLD`
+
+**A42 Anchor Post-CPI Stale Account Cache**
+- Microstable uses `token::transfer_checked` (classic SPL Token), NOT Token-2022
+- No transfer hooks in current collateral mints (USDC, USDT, DAI, USDS)
+- Trigger condition for A42 = Token-2022 transfer hooks — not present
+- ✅ N/A (for current architecture); watch if Token-2022 collateral ever added
+
+**A40 ERC4626 Share-Price Donation Attack** — ✅ DEFENDED
+`vault.total_deposits` accounting field; raw SPL transfers cannot inflate protocol accounting. Already confirmed in yesterday's check.
+
+**A41 Burn-Path Fee-Exempt Flash Loan** — ✅ DEFENDED
+No fee-exempt paths. CEI ordering. Per-slot caps. Already confirmed.
+
+**A1–A13 (Smart Contract Core)** — ✅ ALL DEFENDED
+CEI, checked math, PDA discriminators, Pyth feed-ID binding, 2-of-3 keeper, flow caps, TWAP/staleness/confidence guards.
+
+**B14–B20 (Keeper/Infra)** — ✅ DEFENDED / ⚠️ PARTIAL
+- Multi-RPC: ✅ | 2-of-3 keeper: ✅ | Leader rotation: ✅
+- B17 Checkpoint checksums: ⚠️ (carry-forward)
+- B19 Log masking: ⚠️ (carry-forward)
+
+**C21–C30 (Economic)** — ✅ ALL DEFENDED
+Circuit breaker (3% depeg threshold), per-slot caps, multi-collateral TWAP, progressive fees.
+
+**D26–D34 (Infra/AI)** — ✅ DEFENDED / ⚠️ PARTIAL
+- D33 Cargo.lock attestation: ⚠️ (carry-forward)
+- All others: ✅
+
+**A32, A38, A39, B44 (protocol-level)** — ✅ N/A or DEFENDED as above
+
+### Today's Verdict
+**0 CRITICAL / 0 HIGH / 2 MEDIUM new findings (B44 delegate check, A43 epoch drift).**
+Carry-forward operational items: B17, B19, D33.
+Matrix: 44 → **45 vectors**. New incident: Ledger/Canissolana SPL delegate drain.
+
+---
+
 ## 2026-03-03 Daily Check
 
 ### New Patterns Added Today

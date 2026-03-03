@@ -714,6 +714,53 @@ if turnover >= LARGE_REBALANCE_THRESHOLD {
 **Microstable relevance**: If any AI agent is used for keeper operation, governance proposal drafting, or treasury management, apply ephemeral authorization + confirmation gate. Agent ↔ Governance ↔ Parameter chain is highest risk.
 **Source**: https://blog.sentient.xyz/posts/ai-agents-in-cryptoland
 
+### B44. SPL Token Account Persistent Delegate Drain (Solana)
+**Historical**: Ledger/Canissolana incident (2026-03-02/03, ~$30K USDC on Solana) — USDC drained from hardware-wallet-secured account with no recent user interaction.
+**Mechanism**: SPL token accounts (and Token-2022 accounts) have a separate `delegate` field alongside the `owner` field. A token delegate, once approved via `Approve` instruction, can transfer up to `delegated_amount` tokens WITHOUT the account owner's signature on subsequent transactions. Attack chain:
+1. User interacts with a malicious or compromised dApp and signs an `Approve` instruction, setting the attacker's address as delegate on their USDC ATA with a large or max `delegated_amount`
+2. User closes the dApp session and forgets the delegation was ever granted
+3. Weeks or months later, attacker executes `Transfer`/`TransferChecked` from the delegated USDC account to their own address — requires only the delegate's signature, NOT the owner's
+4. Funds drain silently; no new signature from victim required
+**Solana Token-2022 amplification**: The `PermanentDelegate` extension assigns an irrevocable delegate authority at mint creation time that can transfer ALL token accounts of that mint without per-account approval. If a stablecoin mint ever enables `PermanentDelegate`, the mint authority's compromise = full drain of all holders.
+**Why distinct from B15 (Key Compromise)**: No private key is stolen. The attacker holds a legitimately granted authorization that the user forgot to revoke. The on-chain action is "valid" from the program's perspective.
+**Why distinct from A6 (Account Substitution)**: A6 is about the protocol accepting wrong accounts. B44 is about a user's token account having a latent attacker-controlled delegation that the protocol cannot detect or prevent.
+**Code pattern to find**:
+```rust
+// SOLANA RISK: any instruction that accepts user-supplied collateral token account
+// must check that no active delegate exists, OR enforce CpiGuard
+pub fn mint(ctx: Context<Mint>, ...) -> Result<()> {
+    // VULNERABLE: no check for ctx.accounts.user_collateral_ata.delegate
+    // If delegate is set to attacker, attacker can route this transfer
+    token::transfer_checked(
+        ctx.accounts.into_transfer_ctx(),
+        collateral_amount,
+        COLLATERAL_DECIMALS_EXPECTED,
+    )?;
+}
+
+// SAFER: verify no active delegate before accepting collateral
+let user_ata = &ctx.accounts.user_collateral_ata;
+require!(
+    user_ata.delegate.is_none(),
+    ErrorCode::DelegateNotAllowed
+);
+// OR: use Token-2022 CpiGuard to block any CPI-mediated transfers
+```
+**Microstable relevance**: 
+- Vault ATAs are PDA-owned by `protocol_state` — external parties CANNOT set delegates on vault ATAs. ✅ Protocol funds are safe.
+- User-side collateral ATAs: Microstable accepts collateral via `transfer_checked` from user's own ATA. A malicious delegate could initiate this transfer without the user's knowledge. **The attacker would deposit into Microstable and receive MSTB — effectively laundering the stolen collateral through the protocol.**
+- This is a user-protection gap, not a protocol-safety gap, but protocol-level delegate rejection would prevent Microstable from being used as a drain conduit.
+**Mitigation for Microstable**:
+1. Add `require!(ctx.accounts.user_collateral.delegate.is_none(), ErrorCode::DelegateNotAllowed)` to `mint()` instruction — prevents protocol from being used as launder vector
+2. If Token-2022 collateral is ever added, explicitly check for and reject `PermanentDelegate` extension
+3. User-facing: emit on-chain event when mint is called with any delegated account (monitoring hook)
+**Defense**:
+1. Protocols: reject user ATAs with active delegates for collateral deposit instructions
+2. Wallet UX: display active delegates prominently; prompt for revocation on token account view
+3. Users: periodically run `spl-token accounts --verbose` to audit active delegates; revoke immediately after dApp use
+4. Monitoring: alert on any `Approve` instruction that sets a delegate on accounts holding >$1K in stablecoins
+**Source**: https://www.cryptotimes.io/2026/03/03/ledger-under-scrutiny-30k-usdc-vanishes-from-air-gapped-wallet/ | https://solana.com/docs/tokens/extensions/permanent-delegate
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -776,5 +823,6 @@ if turnover >= LARGE_REBALANCE_THRESHOLD {
 | B41 Audit Multi-Engagement Scope Fragmentation | 다수 감사사가 각자 지정 범위를 독립 검토해 "범위 간 인터페이스"가 구조적으로 고아가 됨. Euler Finance에서 `donateToReserves()`는 10개 감사 중 1개만 커버. "감사사 많을수록 안전"이라는 역설적 가정이 크로스-모듈 상호작용 blind spot을 생성 (SigIntZero 2026 Report). |
 | B42 Audit Severity Miscalibration | 감사자가 취약점을 올바르게 식별했지만 "코드가 문법적으로 정확하므로" 심각도를 정보성/낮음으로 분류. 어드민 권한 남용 등 경제적 폭발 반경이 큰 운영 신뢰 가정을 코드 수준 심각도 휴리스틱으로 평가해 critical 에스컬레이션 실패 (CertiK-audited Merlin/Swaprum/Arbix, SigIntZero 2026). |
 | B43 AI Agent Memory Injection Attack | 에이전트 권한을 설계 시 과다 부여(B29)나 단기 누적 드리프트(B38)와 달리, 런타임 메모리 스토어 자체에 악의적 데이터를 주입해 에이전트가 존재하지 않는 사전 승인을 "기억"하도록 유도. 블록체인 트랜잭션 불가역성 때문에 단일 성공으로 영구 손실 발생. 에이전트 메모리를 신뢰 경계로 보지 않고 운영 컨텍스트로만 취급해 보안 검토 범위 밖으로 분리 (Princeton/Sentient, 2026). |
+| B44 SPL Token Account Persistent Delegate Drain | 계정 소유권(owner)과 위임 권한(delegate)의 분리를 감사가 "정상 Solana 토큰 모델"로 취급하여 dApp 사용 후 delegate 잔존을 별도 공격 벡터로 분류하지 않음. 프로토콜 감사는 vault ATA 보안에 집중하고, 사용자 측 ATA delegate가 프로토콜 mint 흐름을 통해 세탁 경로로 악용될 수 있음을 수신 측에서 거부해야 한다는 점을 놓침 (Ledger/Canissolana 2026-03-02). |
 
 

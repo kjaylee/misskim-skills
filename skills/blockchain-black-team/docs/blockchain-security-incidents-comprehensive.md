@@ -3,6 +3,10 @@
 > Scope: real-world incidents with explicit mechanisms. Entries without confirmed mechanisms are intentionally omitted.
 
 ## 2026
+- **2026-03-02/03 — Ledger/Canissolana (Solana)** — Reported unauthorized drain of ~$30,000 USDC from a hardware-wallet-secured Solana account. User claims no recent dApp interaction, no seed phrase exposure. Community analysis points to a previously signed `Approve` instruction that set an attacker-controlled delegate on the user's USDC ATA. SPL token delegates persist until explicitly revoked; the attacker waited, then called `TransferChecked` using only their delegate authority — no victim signature required. SOL (~2,000) was not drained (separate account authority). USDC drained to Bitget exchange. Ledger began investigation 2026-03-03.  
+  Vector mapping: **B44 SPL Token Account Persistent Delegate Drain** (new).  
+  Source: https://www.cryptotimes.io/2026/03/03/ledger-under-scrutiny-30k-usdc-vanishes-from-air-gapped-wallet/
+
 - **2026-03-02 — Inverse Finance / LlamaLend (Ethereum)** — Attacker used ~$30M flash loan to inflate sDOLA (wrapped DOLA ERC4626 vault) share price via direct donation to vault `totalAssets`. 27 users whose LlamaLend collateral positions were denominated in sDOLA were forcibly liquidated as their collateral appeared undercollateralized after the artificial price spike. Profit: ~$240K. Inverse Finance itself was not breached; the exploit path ran through LlamaLend's collateral oracle reading sDOLA exchange rate.  
   Vector mapping: **A40 ERC4626/Share-Price Donation Attack**, **A2 Flash Loan + Price Manipulation**.  
   Source: https://www.cryptotimes.io/2026/03/02/inversefinance-faces-240k-loss-in-dola-manipulation-alert/ | https://hacked.slowmist.io/
