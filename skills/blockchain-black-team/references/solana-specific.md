@@ -375,3 +375,22 @@ if turnover >= LARGE_THRESHOLD
 22. ☐ Post-CPI `.reload()` called on any PDA that a CPI hook may have modified (mandatory for Token-2022 integration)
 23. ☐ ACE/Alpenglow ordering impact assessed for keeper oracle-freshness model; redundant keeper runner in place
 24. ☐ Commit/reveal threshold checks include cumulative epoch drift (not per-call only)
+
+### Utility-Impersonating Env-Stealer Crate (A44, RUSTSEC-2026-0030)
+Fresh-named malicious crate (not a typosquat) added as a direct dependency that silently exfiltrates `.env` files via HTTP POST at build or init time. Distinct from Typosquat Waves and Transitive Payload Relay (D33).
+
+**Microstable keeper specific attack path**:
+1. Keeper's `Cargo.toml` gains a new crate added via social engineering or compromised PR.
+2. `cargo build` runs on MiniPC (`/home/spritz/microstable-keeper/`); crate reads `.env` at same path.
+3. `DEFAULT_KEEPER_ENV_PATH = "/home/spritz/microstable-keeper/.env"` — signing key exfiltrated.
+4. Attacker issues malicious oracle/rebalance/circuit-breaker transactions with the leaked keypair.
+
+**Defense (Solana keeper specific)**:
+- Strict crate allowlist in `cargo deny` (`[bans]` section); reject any unlisted crate.
+- `cargo audit --deny` in CI + `cargo deny check bans` pre-build gate.
+- Run `cargo build` in a sandboxed environment with NO access to the production `.env` path (Docker/nsjail with `/home/spritz/microstable-keeper/.env` not bind-mounted).
+- Move signing key out of `.env` into a hardware signer or remote KMS; no plaintext key at build path.
+- Enforce mandatory >7-day quarantine window before any new crate is permitted in the production build.
+
+**Sources**:
+- RUSTSEC-2026-0030: https://rustsec.org/advisories/RUSTSEC-2026-0030.html

