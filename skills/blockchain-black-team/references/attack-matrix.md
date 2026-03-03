@@ -859,4 +859,85 @@ fn init() {
 **Defense**: Cargo.lock hash attestation (CI rejects non-approved lock changes); mandatory 7-day quarantine for new crates; `cargo deny check bans` policy; do NOT run `cargo build` with `.env` in working directory; move keeper secrets to `--secret-file` arg with restricted path that cannot be found by working-directory `.env` scan; add `deny_unknown_fields` checks on new deps in CI.
 **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0030.html (RUSTSEC-2026-0030, March 3, 2026)
 
+### B45. Post-Audit Deployment Delta
+**Signal**: SigIntZero 2026 Software Security Report (Feb 28, 2026); Nomad Bridge ($190M, 2022); AIUC-1 Consortium briefing (2026-03).
+**Mechanism**: Smart contract audits are scoped to a specific commit hash. After the audit completes, code continues to be modified — patches, features, governance upgrades — without triggering a mandatory re-audit or even a delta-review. The production deploy may share only a small fraction of its bytecode with the audited version. In the Nomad Bridge case, only 18.6% of the critical contract matched what auditors had reviewed; the exploit targeted code that existed entirely in the un-audited 81.4%. Meanwhile, the protocol continued displaying its "Audited by X" attestations with no indication of the deployment delta.
+**Why distinct from A33 (Audit-Scope-Exclusion Exploitation)**: A33 = auditor knew of a scope exclusion and documented it; attacker used that exclusion as a roadmap. B45 = there was NO declared scope exclusion; the gap was created after the audit by post-audit code changes. The audit report was accurate when issued, but became misleading over time as the code evolved.
+**Why distinct from A9 (Proxy Upgrade Attack)**: A9 = attacker compromises upgrade authority to replace logic. B45 = the team's own legitimate post-audit modifications create the gap, no adversary required for the gap creation itself.
+**Structural meta-failure**: Audit attestations have no TTL (time-to-live). There is no standard mechanism to express "this audit covers commit X with confidence Y; beyond Z% code drift the attestation expires." Protocols exploit this by deploying divergent code while retaining the legitimacy signal of prior audits.
+**Code/config pattern to find**:
+```bash
+# Detect post-audit deployment delta
+git diff <audit-commit-hash> HEAD -- src/
+# If critical-path functions appear in diff, re-audit is required
+# Minimum: all diff'd functions in oracle/, mint/, redeem/, access-control/ paths
+# get explicit secondary review before deploy
+
+# SAFE: CI gate compares deployed bytecode hash to audit attestation
+AUDIT_COMMIT="abc123"
+CRITICAL_PATHS="programs/microstable/src/instructions/ programs/microstable/src/state/"
+if ! git diff --quiet $AUDIT_COMMIT HEAD -- $CRITICAL_PATHS; then
+  echo "CRITICAL PATH DELTA DETECTED — re-audit or secondary review required"
+  exit 1
+fi
+```
+**Defense**:
+1. Maintain an explicit `audit-attestation.json` in the repo: `{ "audit_commit": "...", "auditor": "...", "date": "...", "critical_paths": [...] }` — updated only by a formal review process
+2. CI gate: any PR that touches declared critical paths triggers a block requiring either (a) a new audit attestation or (b) a signed secondary-review approval from a qualified auditor
+3. Fast-track review path (≥1 senior auditor, ≤72h) for post-audit changes to critical paths
+4. Public deployment disclosures should include `last_audited_commit` field — any divergence > N% should be disclosed
+5. Before any deployment, run: `git diff <audit_commit> <deploy_commit> | wc -l` and reject if delta exceeds policy threshold for critical paths
+**Microstable relevance**: Any keeper or on-chain change after the formal audit creates a deployment delta. The `docs/` audit reports should include a `last-audited-commit: <hash>` field. Post-audit PRs touching `oracle.rs`, `mint.rs`, `redeem.rs`, `access_control.rs` must auto-require the fast-track review gate before merge.
+**Source**: https://www.prweb.com/releases/2026-software-security-report-audited-applications-account-for-only-10-8-of-exploit-losses---but-the-failures-reveal-a-systemic-blind-spot-302699518.html | Nomad Bridge post-mortem (2022)
+
+### B46. Agentic AI Overprivilege via Non-Adversarial Normal Operation
+**Signal**: AIUC-1 Consortium "The End of Vibe Adoption" whitepaper (2026-03); Barracuda Networks "Agentic AI: The 2026 Threat Multiplier" (2026-02-27); Help Net Security enterprise AI survey (2026-03-03).
+**Mechanism**: AI agents in production execute multi-step tasks, call external tools, and make decisions without per-action human approval. In 80% of organizations surveyed, risky agent behaviors emerged without any adversarial input — agents performing unauthorized system access, improper data exposure, or unintended cross-system operations through ordinary task execution. Only 21% of executives reported complete visibility into agent permissions. The failure mode is NOT prompt injection (B29), memory poisoning (B43), or accumulated context drift (B38): it is systemic scope creep through normal authorized operation. The agent does exactly what it is designed to do, but the combination of (a) overprivileged tool access + (b) multi-step task composition + (c) poor containment boundaries = unauthorized-equivalent outcomes via legitimate paths.
+**Why distinct from B29 (Confused-Deputy)**: B29 = adversary exploits agent's over-granted permissions via malicious injected instructions. B46 = no adversary; the agent's normal authorized workflow autonomously traverses a capability chain that produces unintended security outcomes.
+**Why distinct from B43 (Memory Injection)**: B43 = external attacker poisons agent memory. B46 = no poisoning needed; normal memory accumulation + tool composition creates emergent unauthorized capability.
+**Why distinct from B38 (Multi-turn Boundary Takeover)**: B38 = adversarial manipulation accumulates across turns. B46 = no manipulation; the agent is following its design and tasks faithfully.
+**DeFi-specific pattern (governance AI assistant)**:
+An AI assistant granted:
+- (a) read access to all protocol parameters
+- (b) ability to draft governance proposals
+- (c) ability to push drafts to proposal review queue
+- (d) ability to simulate parameter changes
+
+→ In normal high-workload operation, the agent may:
+1. Read sensitive parameter interdependencies (oracle topology, keeper thresholds) → expose in proposal history
+2. Auto-push insufficiently-reviewed proposals when workload is high and the task queue backlog is large
+3. Compose read + simulate + write capabilities into a full cycle that submits a parameter change proposal without explicit human approval at the critical stage transition
+
+No adversary, no injection — the agent is faithfully executing its granted task scope.
+**Code/config pattern to find**:
+```yaml
+# RISKY: agent granted broad tool composition without containment boundaries
+ai_assistant_permissions:
+  - read: [all_protocol_params, governance_queue, keeper_logs, oracle_config]
+  - write: [governance_proposal_draft, proposal_review_queue]
+  - execute: [keeper_simulation, parameter_validation, oracle_sanity_check]
+# Problem: read+write+execute compose into full proposal-submission pipeline
+# Normal workload → agent pushes to review queue autonomously
+# No adversary needed; this is intended-but-unsafe design
+
+# SAFER: atomic roles with explicit stage-gate authorization
+ai_assistant_permissions:
+  - read: [public_params_only]         # no sensitive oracle topology
+  - write: [proposal_DRAFT_only]       # writes to staging area only
+  - execute: [read_only_simulation]    # no side-effects
+# Separate gate: human must explicitly invoke "submit to review queue"
+# Agent cannot self-advance proposal through the pipeline
+```
+**Defense**:
+1. **Principle of least privilege at tool-COMPOSITION level**: enumerate all possible tool-chain combinations the agent can invoke and evaluate whether the composed capability is intended and bounded
+2. **Minimum-autonomy design for irreversible actions**: any action that advances state irreversibly (proposal submission, parameter change, transaction broadcast) requires explicit out-of-band human authorization — agent must NOT be able to traverse the full pipeline autonomously
+3. **Behavioral observability at composition level**: log which tools were called in what sequence and what the combined effect was, not just individual tool invocations
+4. **Permission audit cadence**: quarterly review of all AI agent tool grants; for each agent, enumerate composed capabilities and assess whether they constitute intended or unintended authority
+5. **Scope creep circuit breaker**: if agent takes N tool invocations that combine into a capability it was not explicitly granted (e.g., 3 reads + 1 write = effective parameter exfiltration + draft), halt and escalate to human
+6. **"Vibe adoption" prohibition**: before granting an AI agent access to any DeFi-critical tool (governance, oracle, treasury), require a formal composition-level security review — not just a per-tool permission grant
+**Microstable relevance**: Agent ↔ Governance ↔ Parameter chain. Any AI tooling in governance proposal drafting, keeper parameter monitoring, or risk adjustment workflows must have stage-gate authorization preventing full-cycle autonomous proposal submission or parameter modification. Human approval is required at each pipeline stage transition regardless of task load.
+**Source**: https://www.aiuc-1.com/research/whitepaper-the-end-of-vibe-adoption | https://blog.barracuda.com/2026/02/27/agentic-ai--the-2026-threat-multiplier-reshaping-cyberattacks | https://www.helpnetsecurity.com/2026/03/03/enterprise-ai-agent-security-2026/
+
 | A44 Utility-Impersonating Env-Stealer Crate | 신규 크레이트를 "유용한 유틸리티"로 직접 추가할 때, 작업 디렉토리나 알려진 운영 경로의 `.env` 파일을 읽어 공격자 서버에 업로드하는 인라인 페이로드를 포함하는 위협을 검토 범위에서 제외. 타이포스쿼트(이름 혼동)·전이 의존성 릴레이와 달리, 직접 추가된 1차 의존성이 공격 매체. `check_dotenv_permissions()` 600모드 강제는 외부 읽기 차단이지만 동일 프로세스 내 의존성 접근은 방지 못함 (RUSTSEC-2026-0030, time_calibrator, 2026-03-03). |
+| B45 Post-Audit Deployment Delta | 감사 보고서가 특정 커밋 해시에 귀속되지만, 배포 파이프라인은 해당 해시와의 delta 검증 없이 임의 커밋을 프로덕션에 올릴 수 있음. "Audited by X" 뱃지가 배포된 코드와의 실제 매칭율을 전혀 표시하지 않아, 감사 후 변경된 critical 코드 경로가 완전히 미검토 상태로 운영됨 (Nomad Bridge $190M — 배포 코드 18.6%만 감사 버전과 일치). |
+| B46 Agentic AI Overprivilege via Normal Operation | 적대적 공격 없이도 AI 에이전트의 설계상 과도한 툴 접근 권한이 정상 태스크 실행 중 권한 없는 행동을 유발함. 단일 툴 권한 검토에 치우쳐 툴 조합(read+write+execute)이 만들어내는 합성 capability를 평가하지 않음. 80% 조직에서 적대자 없이 발생한 risky agent behavior가 이를 실증 (AIUC-1 Consortium / Barracuda 2026-02). |
