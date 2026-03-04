@@ -1,6 +1,55 @@
 
 ---
 
+## 2026-03-05 Daily Check
+
+### Source Sweep (24h~7d)
+- Reviewed: `rekt.news`, `hacked.slowmist.io`, GitHub Advisory DB (Solana/Anchor/SPL queries), Solana security channels, Trail of Bits / OtterSec / Neodyme blogs, and X hashtag fallback.
+- **No new incident-validated exploit pattern** requiring new vector creation in this cycle.
+- OtterSec 2026-03-03 zkVM research is a strong technical signal but not a confirmed loss incident in the requested window, so it was not added as a new matrix vector.
+
+### Full 58-Vector Check Results (Microstable)
+
+**❌ HIGH — B45 Post-Audit Deployment Delta**
+- Audit report states audited revision: `f327e7c6df0fae25171f0e00be316f8f7cf4a5c8` (`microstable/docs/audit-report.md`).
+- Current critical-path delta vs audited commit:
+  - `solana/programs/microstable/src/lib.rs`
+  - `solana/keeper/src/*`
+  - measured diff: `adds=3281`, `dels=324`.
+- No explicit `audit-attestation.json` + CI delta gate found to block critical-path post-audit drift.
+- **Risk**: production/security claims can diverge materially from audited scope.
+- **Blue-team directive**:
+  1. Add `audit-attestation.json` with `audit_commit`, `critical_paths`, `attestor`, `timestamp`.
+  2. CI-block any PR touching critical paths unless attestation is refreshed or signed secondary review is attached.
+  3. Publish `last_audited_commit` on dashboard/security docs.
+
+**⚠️ MEDIUM — A43 Commit/Reveal Threshold Segmentation**
+- `rebalance()` enforces commit/reveal only when per-call `turnover >= LARGE_REBALANCE_THRESHOLD`.
+- No epoch/window cumulative drift accumulator was found.
+- **Risk**: repeated sub-threshold rebalances can bypass commit/reveal intent over multiple calls.
+- **Blue-team directive**: add cumulative drift accounting per epoch/window and force commit/reveal when cumulative drift crosses threshold.
+
+**⚠️ MEDIUM — B44 SPL Delegate Drain Conduit (User-side ATA)**
+- `mint()` uses user ATA `transfer_checked` path but no `delegate` rejection check was found in `lib.rs`.
+- Vault-side protocol assets remain protected (PDA-owned vault ATAs), but delegated user ATAs can still be abused as a laundering ingress.
+- **Blue-team directive**: reject delegated user collateral accounts (`delegate.is_none()` + delegated amount guard) and add explicit event/log for rejected delegated attempts.
+
+**⚠️ LOW — D33/A44 Residual Supply-Chain Trust Gap**
+- Keeper now enforces Cargo.lock hash attestation at runtime, but build-time hash is derived from local lockfile (`keeper/build.rs`).
+- This mitigates drift-at-runtime but does not fully prevent malicious lock updates introduced before build in compromised developer flows.
+- **Blue-team directive**: pin attestation hash from external signed provenance (CI signer / release manifest), not local build context alone.
+
+### Carry-forward Status Improvements
+- **B17 Checkpoint Poisoning**: now materially hardened (HMAC integrity tag + 0600 perms + owner UID checks in keeper checkpoint load/save paths).
+- **B19 Memory/Log Leak**: improved (redacted pubkey logging and no direct secret material logging path observed in current keeper runtime code).
+
+### Today’s Verdict
+- New vectors added: **0**
+- Findings: **1 HIGH / 2 MEDIUM / 1 LOW**
+- Immediate notification required for HIGH finding (B45).
+
+---
+
 ## 2026-03-04 Daily Check
 
 ### New Patterns Added Today
