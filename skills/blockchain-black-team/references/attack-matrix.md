@@ -973,5 +973,26 @@ ai_assistant_permissions:
 4. Operationally distribute keeper runners across independent network paths/providers to reduce correlated packet filtering impact.
 **Source**: https://arxiv.org/abs/2603.02661
 
+### B48. Localhost Trust-Boundary Collapse for Agent-Controlled Keeper Ops
+**Signal**: OpenClaw security hardening shipped in `v2026.2.25` explicitly added (1) origin checks for direct browser WebSocket clients, (2) password-auth throttling for localhost browser attempts, and (3) blocking silent auto-pairing for non-Control-UI browser clients. This patch pattern indicates a real-world takeover chain existed around localhost trust exceptions.
+**Mechanism**: A malicious website opened in the operator’s browser can initiate cross-origin WebSocket connections to localhost agent gateway endpoints. If the gateway treats localhost as inherently trusted (no rate limits, relaxed pairing, weak origin gate), browser JavaScript can brute-force password/session state and register an attacker-controlled client. Result: remote control of automation tooling that can trigger keeper/governance actions.
+**Why distinct from B29**: B29 requires prompt-level payload delivery into the agent context. B48 compromises the gateway/auth boundary first, then issues actions as an authenticated control channel.
+**Why distinct from B43**: B43 poisons memory/log context to steer reasoning. B48 is pre-reasoning session takeover through local transport trust failures.
+**Why distinct from B46**: B46 assumes no adversary (unsafe normal operation). B48 is an active adversarial path that weaponizes browser-to-localhost trust assumptions.
+**Protocol impact pattern**:
+- attacker gains authenticated gateway session tied to keeper operator workstation
+- can enumerate connected nodes/credentials metadata and invoke privileged tooling
+- bridge/oracle/parameter ops may be triggered outside normal review flow while telemetry appears as “local legitimate session”
+**Defense**:
+1. **Zero localhost exemptions** for auth controls: apply identical password failure limits and lockouts to loopback and non-loopback traffic.
+2. **Strict origin allowlist + client attestation** for browser WebSocket clients (deny by default).
+3. **No silent auto-pairing** for localhost browser contexts; all pairings require explicit operator confirmation.
+4. **Operator-browser isolation**: dedicated hardened browser profile/workstation for keeper consoles; no arbitrary web browsing on the same profile.
+5. **Gateway command-risk segmentation**: keep high-risk actions (tx submit, param update, bridge admin) behind second-factor or out-of-band approval even after gateway auth.
+6. **Session provenance logging**: distinguish CLI/control-ui/browser origins and alert on anomalous browser-origin privileged calls.
+**Microstable relevance**: Keeper ↔ On-chain + Agent ↔ Governance ↔ Parameter 경계에서 “로컬호스트는 신뢰 가능” 가정이 깨지면, 코드 취약점 없이도 운영 경계가 붕괴할 수 있음.
+**Source**: https://www.oasis.security/blog/openclaw-vulnerability | https://github.com/openclaw/openclaw/releases/tag/v2026.2.25
+
 | A45 Post-Takedown Clone-Rotation Env-Stealer Campaign | 단일 악성 크레이트 차단 직후 유사 이름 클론이 연쇄 재게시되는 적응형 공급망 공격. 개별 crate명/단일 advisory 기반 차단으로는 방어 실패. `RUSTSEC-2026-0030~0032`처럼 24~48시간 내 동일 `.env` 유출 페이로드가 반복 출현 가능. |
 | B47 Deterministic Leader-Schedule Isolation for Oracle-Liveness Collapse | 솔라나 리더 스케줄 예측성을 이용해 예정 리더를 집중 격리/부하해 슬롯 진행과 최종화를 저하시킴. 가격 위조 없이도 오라클 신선도 가드가 연쇄 실패하며 프로토콜 가용성 붕괴를 유발하는 통신계층 공격. |
+| B48 Localhost Trust-Boundary Collapse for Agent-Controlled Keeper Ops | "localhost는 안전"이라는 운영 가정 때문에 브라우저-origin WebSocket, 로컬 루프백 rate-limit 예외, 자동 페어링 우회가 결합되어 에이전트 게이트웨이 세션 탈취가 가능해짐. 코드 감사가 온체인/프롬프트 계층에 집중할 때 로컬 전송 경계 위협 모델이 누락되기 쉬움. |
