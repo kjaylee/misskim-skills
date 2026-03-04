@@ -394,3 +394,41 @@ Fresh-named malicious crate (not a typosquat) added as a direct dependency that 
 
 **Sources**:
 - RUSTSEC-2026-0030: https://rustsec.org/advisories/RUSTSEC-2026-0030.html
+
+### Campaign-Clone Env-Stealer Rotation (A45, RustSec 0031/0032)
+After `time_calibrator` takedown, near-clone crates (`time_calibrators`, `dnp3times`) appeared within hours with the same `.env` exfiltration objective and fake `timeapi.io`-style endpoint theme.
+
+**Solana keeper-specific risk**:
+- Incident response often adds/changes utility crates quickly under uptime pressure.
+- Name-level denylisting (`block time_calibrator`) is too narrow; next clone passes unless policy is campaign-wide.
+- Cargo.lock attestation remains green if the malicious clone is intentionally merged and hash is re-attested.
+
+**Mitigation upgrade**:
+1. Security quarantine: reject newly published crates (<7 days) for keeper builds unless emergency waiver + dual review.
+2. Campaign-level deny rule: when one malicious crate is confirmed, block semantic siblings (`time*`, `slot*`, `rpc*`) until manual clearance.
+3. CI static scan for outbound HTTP/file-read in `build.rs` and global initializers of new crates.
+4. Maintainer trust gate: require minimum maintainer age/history for newly added dependencies.
+
+**Sources**:
+- https://rustsec.org/advisories/RUSTSEC-2026-0031.html
+- https://rustsec.org/advisories/RUSTSEC-2026-0032.html
+
+### Solana Leader-Isolation / Stopping Liveness Attack (B47)
+New comparative research (`arXiv:2603.02661`) identifies Solana as vulnerable to leader-isolation and stopping attacks under adversarial communication conditions.
+
+**Solana-specific risk to protocol operators**:
+- Deterministic leader schedule enables targeted pre-slot disruption of expected leaders.
+- Even with honest keepers/oracles, slot progression/finality lag can push protocol freshness gates into repeated fail-closed mode.
+- Availability degradation can cascade into rebalance delay, watchdog churn, and user-facing mint/redeem rejection spikes.
+
+**Mitigation**:
+1. Add leader-isolation chaos drills to ops runbook (targeted packet loss around known leader windows).
+2. Track chain-liveness SLOs (`finalized slot lag`, `slot production continuity`) separately from RPC endpoint health checks.
+3. Define explicit degraded-mode behavior (safe pause + operator escalation) when liveness SLO breaches persist.
+4. Keep geographically/network-diverse keeper runners to reduce correlated path disruption.
+
+**Source**: https://arxiv.org/abs/2603.02661
+
+## Solana-Specific Defense Checklist Update
+25. ☐ Dependency policy handles campaign-level clone waves (semantic sibling block + new-crate quarantine)
+26. ☐ Leader-isolation/stopping chaos tests executed and linked to oracle freshness SLO alarms

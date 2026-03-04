@@ -941,3 +941,37 @@ ai_assistant_permissions:
 | A44 Utility-Impersonating Env-Stealer Crate | 신규 크레이트를 "유용한 유틸리티"로 직접 추가할 때, 작업 디렉토리나 알려진 운영 경로의 `.env` 파일을 읽어 공격자 서버에 업로드하는 인라인 페이로드를 포함하는 위협을 검토 범위에서 제외. 타이포스쿼트(이름 혼동)·전이 의존성 릴레이와 달리, 직접 추가된 1차 의존성이 공격 매체. `check_dotenv_permissions()` 600모드 강제는 외부 읽기 차단이지만 동일 프로세스 내 의존성 접근은 방지 못함 (RUSTSEC-2026-0030, time_calibrator, 2026-03-03). |
 | B45 Post-Audit Deployment Delta | 감사 보고서가 특정 커밋 해시에 귀속되지만, 배포 파이프라인은 해당 해시와의 delta 검증 없이 임의 커밋을 프로덕션에 올릴 수 있음. "Audited by X" 뱃지가 배포된 코드와의 실제 매칭율을 전혀 표시하지 않아, 감사 후 변경된 critical 코드 경로가 완전히 미검토 상태로 운영됨 (Nomad Bridge $190M — 배포 코드 18.6%만 감사 버전과 일치). |
 | B46 Agentic AI Overprivilege via Normal Operation | 적대적 공격 없이도 AI 에이전트의 설계상 과도한 툴 접근 권한이 정상 태스크 실행 중 권한 없는 행동을 유발함. 단일 툴 권한 검토에 치우쳐 툴 조합(read+write+execute)이 만들어내는 합성 capability를 평가하지 않음. 80% 조직에서 적대자 없이 발생한 risky agent behavior가 이를 실증 (AIUC-1 Consortium / Barracuda 2026-02). |
+
+### A45. Post-Takedown Clone-Rotation Env-Stealer Campaign
+**Signal**: RustSec advisory wave in 48h — `RUSTSEC-2026-0030` (`time_calibrator`), `RUSTSEC-2026-0031` (`time_calibrators`), `RUSTSEC-2026-0032` (`dnp3times`) (2026-03-03~2026-03-04).
+**Mechanism**: After one malicious crate is detected/removed, the same actor re-publishes near-clone packages within hours under new names, keeping the same `.env` exfiltration behavior and fake upstream endpoint theme (`timeapi.io` impersonation). This defeats controls that block a single crate name or advisory ID only.
+**Why distinct from A44**: A44 is one deceptive direct dependency insertion. A45 is **adaptive mutation pressure**: repeated re-seeding of the ecosystem to outrun static deny-lists and reviewer attention.
+**Attack chain (keeper/operator)**:
+1. Team blocks `time_calibrator` after advisory.
+2. Attacker immediately re-seeds `time_calibrators`/`dnp3times` with same payload.
+3. Emergency PR or local hotfix adds one "replacement" package.
+4. Build/runtime exfiltrates `.env`/keys before new IOC reaches policy.
+**Defense**:
+1. Enforce **campaign-level policy**, not name-level blocklist: reject all newly published crates (<7 days) unless explicitly security-approved.
+2. Add CI rule: fail if any new dependency has maintainer account age <30 days or zero prior trusted packages.
+3. Scan crate source for network egress from `build.rs` / static initializers before allowlisting.
+4. Treat semantically-related package clusters (`time*`, `rpc*`, `slot*`) as one incident domain during active advisories.
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0031.html | https://rustsec.org/advisories/RUSTSEC-2026-0032.html
+
+### B47. Deterministic Leader-Schedule Isolation for Oracle-Liveness Collapse
+**Signal**: arXiv `2603.02661` (2026-03): comparative study reports Solana vulnerability to stopping attacks and leader-isolation attacks under adversarial communication conditions.
+**Mechanism**: Solana leader schedule predictability enables an attacker to focus packet filtering/load on imminent leaders. Even without price forgery or key compromise, repeated leader isolation can degrade slot production/finality and push protocol-side oracle freshness checks into repeated fail-closed behavior.
+**Why distinct from B40**: B40 models fairness/ordering changes under normal network stress (ACE). B47 is **active network adversary** targeting deterministic leaders to induce liveness collapse.
+**Protocol impact pattern**:
+- mint/redeem paths increasingly hit stale-oracle guards (availability loss)
+- keeper update loop submits but lands too late / cannot confirm in time
+- prolonged chain slowdown can trigger cascading operational failsafes
+**Defense**:
+1. Run explicit leader-isolation chaos tests (simulate targeted slot-leader packet loss).
+2. Keep dual-RPC + cross-validation, but add chain-level liveness SLO alarms (slot progression / finalized-slot lag) independent of RPC health.
+3. Predefine degraded-mode policy: when chain liveness degrades, prioritize circuit-breaker safety and user messaging over throughput.
+4. Operationally distribute keeper runners across independent network paths/providers to reduce correlated packet filtering impact.
+**Source**: https://arxiv.org/abs/2603.02661
+
+| A45 Post-Takedown Clone-Rotation Env-Stealer Campaign | 단일 악성 크레이트 차단 직후 유사 이름 클론이 연쇄 재게시되는 적응형 공급망 공격. 개별 crate명/단일 advisory 기반 차단으로는 방어 실패. `RUSTSEC-2026-0030~0032`처럼 24~48시간 내 동일 `.env` 유출 페이로드가 반복 출현 가능. |
+| B47 Deterministic Leader-Schedule Isolation for Oracle-Liveness Collapse | 솔라나 리더 스케줄 예측성을 이용해 예정 리더를 집중 격리/부하해 슬롯 진행과 최종화를 저하시킴. 가격 위조 없이도 오라클 신선도 가드가 연쇄 실패하며 프로토콜 가용성 붕괴를 유발하는 통신계층 공격. |
