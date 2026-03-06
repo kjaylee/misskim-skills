@@ -1087,3 +1087,40 @@ ai_assistant_permissions:
 | B48 Localhost Trust-Boundary Collapse for Agent-Controlled Keeper Ops | "localhost는 안전"이라는 운영 가정 때문에 브라우저-origin WebSocket, 로컬 루프백 rate-limit 예외, 자동 페어링 우회가 결합되어 에이전트 게이트웨이 세션 탈취가 가능해짐. 코드 감사가 온체인/프롬프트 계층에 집중할 때 로컬 전송 경계 위협 모델이 누락되기 쉬움. |
 | A46 ERC721 Callback Reentrancy / Dual-Execution Mint | `onERC721Received()` 콜백이 `_mint`를 포함하고 있을 때, 감사는 A1 재진입(루프 추출)을 체크하지만 콜백 내부 + 원본 함수 내부의 이중 실행 경로를 독립 코드 흐름으로 분석하지 않음. 단일 TX 내 교환율 고정과 결합되어 지수적 공급량 팽창을 야기하는 패턴이 "콜백이 정상 반환됨"으로 통과될 수 있음 (Solv Protocol BRO vault 2026-03-06, $2.7M). | | A1 경량 변형: `onERC721Received()` 콜백에서 `_mint`가 호출되고, 콜백 반환 후 원본 `mint()`도 `_mint`를 다시 호출하는 이중 실행 경로 결함. 루프 재진입(The DAO 유형)과 달리 단일 콜스택 내 두 코드 경로가 모두 실제 실행됨. 동일 TX 내 교환율 고정으로 22회 반복 → 135 BRO → 5.67억 BRO 팽창 (Solv Protocol 2026-03-06, $2.7M). ERC721 통합 시 callback 내부에서 절대 `_mint` 호출 금지. |
 | D35 RPC Proxy HTTP Request Smuggling | HTTP/1.1 proxy가 `Upgrade` 헤더 처리 시 101 응답 대기 없이 즉각 바이트를 백엔드에 포워딩할 경우, 공격자가 두 번째 요청을 밀수해 WAF·IP 허용목록·인증 헤더 등 프록시 보안 레이어를 완전 우회 가능. DeFi 인프라 감사가 온체인/프롬프트 계층에 집중하고 RPC 경로 상의 프록시 취약점(RUSTSEC-2026-0033, CVE-2026-2833, CVSS 9.3 CRITICAL)을 운영 외부 이슈로 분리할 때 놓침. pingora-core ≥0.8.0 패치 필수. |
+| A47 Per-Element Aggregate Invariant Bypass | 루프 내 개별 슬롯 검증의 정확성("각 토큰 슬롯이 비어있으면 안전")을 확인하는 수준에서 그치고, 전체 구조(strategy/vault 레벨)에서 "이미 초기화된 집합체인가"를 검증하는 집계 수준 불변식이 분리되어 있는지 확인하지 않음. "코드가 명세대로 동작한다" 결론이 명세 자체의 추상화 수준 오류를 가린다. 불변이어야 할 전략에 새 토큰을 주입하는 공격이 per-slot emptiness check를 통과해 감사 무효화 (Block Magnates Breaking Immutability, 2026-02-25). |
+
+### A47. Per-Element Aggregate Invariant Bypass
+**Signal**: Bug bounty report "Breaking Immutability: How I Bypassed a Core Security Invariant in a Major DeFi Protocol" (Block Magnates, 2026-02-25 / confirmed 2026-03-06).
+**Mechanism**: A protocol guarantees "structural immutability" — once a strategy/vault/position is initialized, its token composition cannot change. The enforcement check is placed **inside a per-element loop**: it validates whether EACH individual token's storage slot is empty, NOT whether the aggregate structure has already been initialized. Attack: call `initializeStrategy()` with a strategy hash that already exists, but pass NEW tokens whose individual slots are empty. Each token passes `require(slot.isEmpty())` because that specific token's slot has never been written — even though the strategy-level invariant (immutability of the whole) has been violated. Attacker injects arbitrary tokens into an "immutable" strategy.
+**Why distinct from A10 (Logic Bug)**: A10 covers general incorrect business logic. A47 is the specific pattern where the code is **locally correct** at every per-element check while the **aggregate architectural invariant** is never enforced. Each line of code passes review individually; only the missing structural-level guard is the flaw.
+**Why distinct from A43 (Commit/Reveal Threshold Circumvention)**: A43 exploits per-call VALUE thresholds by splitting amounts. A47 exploits per-element STRUCTURAL checks by passing elements that are individually new but collectively violate aggregate immutability.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: per-slot check doesn't enforce aggregate (strategy-level) immutability
+function initializeStrategy(bytes calldata data, address[] calldata tokens, uint256[] calldata amounts) external {
+    bytes32 hash = keccak256(data);
+    for (uint i = 0; i < tokens.length; i++) {
+        // Only checks if THIS token slot is empty — not whether strategy already exists!
+        require(_balances[msg.sender][hash][tokens[i]].isEmpty(), "slot not empty");
+        _balances[msg.sender][hash][tokens[i]].set(amounts[i]);  // attacker adds new token to existing strategy
+    }
+}
+
+// SAFE: check aggregate existence before any per-element work
+function initializeStrategy(bytes calldata data, address[] calldata tokens, uint256[] calldata amounts) external {
+    bytes32 hash = keccak256(data);
+    require(!_strategyInitialized[msg.sender][hash], "strategy already exists");  // aggregate gate
+    _strategyInitialized[msg.sender][hash] = true;  // set atomically at creation
+    for (uint i = 0; i < tokens.length; i++) {
+        _balances[msg.sender][hash][tokens[i]].set(amounts[i]);
+    }
+}
+```
+**Solana/Anchor relevance**: Anchor programs that manage multi-asset vaults or strategy accounts may use per-account constraints (e.g., `require!(account.amount == 0)`) as initialization guards instead of a dedicated `is_initialized` discriminator field on the parent account. A second call with unused collateral accounts bypasses these per-element checks.
+**Microstable relevance**: Rebalance and collateral-admission instructions — verify that the vault-level initialization state (`vault.is_initialized` or discriminator check) is validated at the **instruction entry point**, not only inferred from per-asset slot states. If collateral admission is gated per-asset without an aggregate vault guard, a new collateral type could be injected outside the intended governance flow.
+**Defense**:
+1. Gate ALL structurally immutable entities with an **aggregate existence flag** set atomically at first initialization (separate from per-element state)
+2. In Anchor: use `Account<'info, Strategy>` with Anchor's discriminator check + an explicit `is_initialized: bool` field verified in the instruction constraint
+3. Invariant test: `test_cannot_inject_token_into_initialized_strategy` — verify second call with any token combination fails after first initialization
+4. Audit checklist item: for every "immutable after init" invariant in docs/whitepaper, trace the enforcement to a structural-level check (whole-object existence gate), not a loop-level per-slot check
+**Source**: https://blog.blockmagnates.com/breaking-immutability-how-i-bypassed-a-core-security-invariant-in-a-major-defi-protocol-6038be8a4f94
