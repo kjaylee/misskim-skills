@@ -28,7 +28,7 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (44+ Vectors, continuously extended)
+## Attack Matrix (46+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -85,6 +85,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-07 | Solv Protocol BRO vault ERC721 callback double-mint exploit (2026-03-06, $2.7M / 38 SolvBTC drained via 22-iteration dual-execution) | A46 (NEW) | Added ERC721 Callback Reentrancy / Dual-Execution Mint vector; distinct from A1 (not loop re-entry); reinforced NFT-callback CEI discipline; Microstable ✅ not applicable (SPL Token classic, no callbacks) |
 | 2026-03-05 | Localhost WebSocket takeover hardening signal (OpenClaw v2026.2.25 + Oasis disclosure) | B48 | Added localhost trust-boundary collapse vector for agent-controlled keeper ops; reinforced browser-origin gateway threat modeling, no-loopback-exception controls, and pairing/origin hardening requirements |
 | 2026-03-02 | Holdstation DeFAI Smart Wallet (2026-02-25, $462K) | B15 (tentative) | Added to incidents timeline; mechanism pending (MFA bypass / session theft in AI-integrated wallet). DeFAI surface note added: AI intent layer + signing authority co-location amplifies B15/B29 exposure |
 | 2026-03-02 | February 2026 monthly loss total (~$37.7M, lowest since Mar 2025) | Meta | Contextual stat: phishing = $8.5M of total (22%). Key-compromise-class still dominant vector |

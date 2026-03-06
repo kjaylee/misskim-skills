@@ -1,6 +1,95 @@
 
 ---
 
+## 2026-03-07 Daily Check
+
+### Source Sweep (24h~7d)
+- Reviewed: `rekt.news` (fetched live), `hacked.slowmist.io` (fetched live), DeFiLlama hacks DB, QuillAudits exploit analysis, SlowMist tracker, Chainalysis 2026 report intro, SearXNG fallback.
+- **1 new incident-validated exploit pattern** identified: Solv Protocol ERC721 Callback Double-Mint (2026-03-06, $2.7M).
+- **1 notable aftermath**: Step Finance officially shut down post-$27.3M hack (B36 confirmed).
+
+### New Patterns Added Today
+
+| Vector | Incident | Amount | Date |
+|--------|---------|--------|------|
+| **A46 (NEW): ERC721 Callback Reentrancy / Dual-Execution Mint** | Solv Protocol BRO vault | ~$2.7M (38.0474 SolvBTC → 1,211 ETH) | 2026-03-06 |
+
+**A46 Technical Summary**: `BitcoinReserveOffering.mint()` initiates an ERC721 NFT transfer → `onERC721Received()` fires → `_mint()` runs (first time) → callback returns → `mint()` calls `_mint()` AGAIN (second time). Exchange rate constant within TX → each mint call yields double supply for same collateral. 22 iterations: 135 BRO → 567M BRO. Root cause distinct from A1 (no attacker-controlled re-entry loop; the contract's own code paths create the dual execution). Security firm Decurity automated bot detected the attack.
+
+### Full 46-Vector Check Results (Microstable)
+
+**A46 ERC721 Callback Reentrancy / Dual-Execution Mint** — ✅ **N/A (Not Applicable)**
+- Microstable uses classic SPL Token, NOT ERC721 or Token-2022
+- No NFT transfer mechanism in any mint/redeem instruction path
+- SPL Token classic: no `onERC721Received()` equivalent
+- Even under Token-2022: Microstable mint path follows CEI (collateral transferred IN first via `transfer_checked`, THEN `mint_mstb_to_user` called once) — no dual-execution path possible
+- ✅ Architecture fundamentally immune to this vector
+
+**A1 Reentrancy** — ✅ DEFENDED
+- CEI pattern throughout. SPL Token: no reentrancy hooks. Classic program model: not re-entrant.
+
+**A2 Flash Loan + Price Manipulation** — ✅ DEFENDED
+- TWAP + Pyth confidence + staleness guards + per-slot flow caps + per-TX limits
+
+**A3 Oracle Manipulation** — ✅ DEFENDED
+- Feed-ID binding, staleness checks (20 slots mint, 45 slots redeem), confidence 2% max, TWAP deviation guard 2.5%, unit-invariant feeds (USD-denominated collateral only, no ratio composition)
+
+**A4 Access Control** — ✅ DEFENDED
+- 2-of-3 keeper quorum, `TRUSTED_INITIALIZER` constraint, `require_keys_eq!` guards throughout
+
+**A5 Integer Overflow** — ✅ DEFENDED
+- `checked_*` operations, u128 intermediates in mul_div
+
+**A6 Account Substitution** — ✅ DEFENDED
+- `require_keys_eq!` on all mint/vault/ATA accounts; Pyth feed-ID allowlist; ATA canonicalization verified
+
+**A7–A13** — ✅ DEFENDED (carry-forward from prior checks)
+
+**A33 Audit-Scope-Exclusion Exploitation** — ✅ No known exclusions on oracle composition path
+
+**A40 ERC4626 Donation Attack** — ✅ DEFENDED (accounting field `vault.total_deposits`, not raw balance)
+
+**A41 Burn-Path Fee-Exempt** — ✅ DEFENDED (CEI + uniform fees + per-slot caps)
+
+**A42 Anchor Post-CPI Stale Cache** — ✅ N/A (classic SPL Token, no transfer hooks)
+
+**A43 Commit/Reveal Threshold Circumvention** — ⚠️ PARTIAL (carry-forward)
+- Per-call commit/reveal guard at `turnover >= 4%`, no epoch-level cumulative drift tracking
+- 5× sub-threshold rebalances bypass intent over 160 slots
+
+**A44/A45 Env-Stealer / Clone-Rotation Campaign** — ⚠️ PARTIAL (carry-forward, D33)
+- Runtime Cargo.lock hash attestation in place; build-time provenance pinning to external CI signer not complete
+
+**A46** — ✅ N/A (see above)
+
+**B14–B20** — ✅/⚠️ (carry-forward)
+- B17 Checkpoint HMAC: ✅ | B19 Log masking: improved
+
+**B36 Social-Engineering Stake Authority** — ⚠️ OPERATIONAL RISK
+- Step Finance shutdown confirmed: audited contracts irrelevant; hot device compromise = protocol death
+- Microstable keeper keypairs remain hot. Ledger/HSM for treasury ops still recommended.
+
+**B44 SPL Delegate Drain** — ⚠️ MEDIUM (carry-forward)
+- `mint()` does NOT check `user_collateral.delegate` field
+- Protocol funds ✅ safe (PDA-owned vault ATAs); user fund launder path ⚠️ remains unpatched
+
+**B45 Post-Audit Deployment Delta** — ❌ HIGH (carry-forward from 2026-03-05)
+- Critical-path delta vs audited commit: `adds=3281, dels=324` lines unreviewed
+- No `audit-attestation.json` or CI delta gate in place
+
+**B46/B47/B48** — ✅ Addressed operationally / design-time; no new code-level risk since last check
+
+**C21–C30 Economic** — ✅ ALL DEFENDED
+**D26–D34 Infra/AI** — ✅/⚠️ (carry-forward D33)
+
+### Today's Verdict
+- New vectors added: **1 (A46 ERC721 Callback Reentrancy / Dual-Execution Mint)**
+- Findings: **0 CRITICAL / 0 HIGH new (B45 HIGH still open from 2026-03-05) / 0 MEDIUM new**
+- Carry-forward: B45 HIGH, B44 MEDIUM, A43 MEDIUM, D33 LOW
+- Matrix: 45 → **46 vectors**
+
+---
+
 ## 2026-03-05 Daily Check
 
 ### Source Sweep (24h~7d)

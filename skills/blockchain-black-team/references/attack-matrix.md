@@ -761,6 +761,53 @@ require!(
 4. Monitoring: alert on any `Approve` instruction that sets a delegate on accounts holding >$1K in stablecoins
 **Source**: https://www.cryptotimes.io/2026/03/03/ledger-under-scrutiny-30k-usdc-vanishes-from-air-gapped-wallet/ | https://solana.com/docs/tokens/extensions/permanent-delegate
 
+### A46. ERC721 Callback Reentrancy / Dual-Execution Mint (NFT onReceived Double-Mint)
+**Historical**: Solv Protocol — BitcoinReserveOffering BRO vault (2026-03-06, $2.7M / 38.0474 SolvBTC → 1,211 ETH)
+**Mechanism**: When `mint()` is called, the contract initiates an ERC721 NFT transfer. During the transfer, `onERC721Received()` fires in the same receiver contract. Inside this callback, `_mint()` is called and tokens are minted at the current exchange rate. After the callback returns, execution resumes in the original `mint()` function — which **also calls `_mint()` again** at the same exchange rate. Because both paths execute within a single transaction (exchange rate constant throughout), each call to `mint()` effectively mints **twice the intended tokens** for the same collateral. Repeating this 22 times in one TX turned 135 BRO into 567,000,000 BRO. The inflated tokens were swapped BRO → SolvBTC → WBTC → WETH → ETH.
+**Why distinct from A1 (Classic Reentrancy)**: A1 (The DAO style) requires an attacker-controlled `fallback()` that re-enters the vulnerable function before state is updated, enabling an extraction loop. A46 is **not a loop re-entry** — it is a **dual-execution path fault** where the same contract's own code calls `_mint` through two separate execution branches (callback path AND continuation path) within one call to `mint()`. No re-entry into the same function by an external actor is needed; the design itself creates two mint paths.
+**Why distinct from A10 (Logic Bug)**: A10 covers general business logic errors. A46 is specifically the class of logic failure arising from the interaction between an ERC721 transfer callback and the calling function — a callback-triggered dual-execution pattern with defined industry prevalence and detection methodology.
+**Attack flow (Solv Protocol)**:
+1. Attacker calls `BitcoinReserveOffering.mint(goefs_amount, nftId)` with 135 BRO worth of GOEFS + NFT #4932
+2. `mint()` calls `nft.transferFrom(user, contract, nftId)` → triggers `onERC721Received()` callback
+3. Inside callback: `_mint(attacker, amount_at_exchange_rate)` → BRO minted (first occurrence)
+4. Callback returns `IERC721Receiver.selector`; execution resumes in `mint()`
+5. `mint()` continues and calls `_mint(attacker, amount_at_same_exchange_rate)` again (second occurrence)
+6. Steps 1–5 repeated 22× in single TX (exchange rate unchanged) → exponential inflation
+7. Final: 567M BRO → swap 165M BRO to SolvBTC → WBTC → WETH → 1,211 ETH withdrawn
+**Code pattern to find**:
+```solidity
+// VULNERABLE: _mint called in both the callback AND the calling function
+function mint(uint256 nftId, uint256 goefsAmount) external {
+    // ... validate, transfer GOEFS ...
+    nft.transferFrom(msg.sender, address(this), nftId);  // triggers onERC721Received
+    // BUG: _mint also called here after callback returns → double mint
+    _mint(msg.sender, computeAmount(exchangeRate));
+}
+
+function onERC721Received(address, address from, uint256, bytes calldata) external returns (bytes4) {
+    // BUG: _mint called inside callback — should NEVER mint here
+    _mint(from, computeAmount(exchangeRate));
+    return IERC721Receiver.onERC721Received.selector;
+}
+
+// SAFE: _mint called EXACTLY once; never inside callbacks
+function mint(uint256 nftId, uint256 goefsAmount) external nonReentrant {
+    // ... validate, burn GOEFS ...
+    nft.transferFrom(msg.sender, address(this), nftId);
+    // Callback returns without minting (or callback not implemented)
+    _mint(msg.sender, computeAmount(exchangeRate));  // single authoritative mint
+}
+```
+**Solana relevance**: ✅ **NOT APPLICABLE** to Microstable — SPL Token classic has no transfer hook mechanism; no ERC721 `onReceived` callback exists in the current Solana token model. Token-2022 does support transfer hooks, but Microstable uses classic SPL Token. Even with Token-2022, the specific A46 pattern requires `_mint` to be placed both inside the hook AND after the hook call site — which Microstable's CEI pattern prevents.
+**Defense**:
+1. **Never call `_mint` / `_burn` inside ERC721/ERC1155 callbacks** — callbacks should validate and return only
+2. **CEI (Checks-Effects-Interactions)**: update minted supply / user balances BEFORE the external NFT transfer call
+3. **`nonReentrant` modifier** on all `mint()` / `burn()` functions that perform external token/NFT transfers
+4. **Callback contract audit gate**: if your contract implements `onERC721Received`, add to audit checklist: "does this callback modify supply-critical state?"
+5. **State-idempotency guard**: track a per-callstack `_minting` flag (or use transient storage EIP-1153) that prevents any re-execution of mint logic once it has started
+6. **Token-2022 note (Solana)**: if hooks are ever added, `.reload()` account cache post-hook AND add single-execution guard for the mint CPI path
+**Source**: https://www.quillaudits.com/blog/hack-analysis/solv-protocol-exploit | https://hacked.slowmist.io/ | https://financefeeds.com/solv-protocol-exploit-drains-2-7m-in-solvbtc-from-bro-vault/ | https://coincentral.com/solv-protocol-seeks-fund-return-after-2-7m-crypto-exploit/
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -996,3 +1043,4 @@ ai_assistant_permissions:
 | A45 Post-Takedown Clone-Rotation Env-Stealer Campaign | 단일 악성 크레이트 차단 직후 유사 이름 클론이 연쇄 재게시되는 적응형 공급망 공격. 개별 crate명/단일 advisory 기반 차단으로는 방어 실패. `RUSTSEC-2026-0030~0032`처럼 24~48시간 내 동일 `.env` 유출 페이로드가 반복 출현 가능. |
 | B47 Deterministic Leader-Schedule Isolation for Oracle-Liveness Collapse | 솔라나 리더 스케줄 예측성을 이용해 예정 리더를 집중 격리/부하해 슬롯 진행과 최종화를 저하시킴. 가격 위조 없이도 오라클 신선도 가드가 연쇄 실패하며 프로토콜 가용성 붕괴를 유발하는 통신계층 공격. |
 | B48 Localhost Trust-Boundary Collapse for Agent-Controlled Keeper Ops | "localhost는 안전"이라는 운영 가정 때문에 브라우저-origin WebSocket, 로컬 루프백 rate-limit 예외, 자동 페어링 우회가 결합되어 에이전트 게이트웨이 세션 탈취가 가능해짐. 코드 감사가 온체인/프롬프트 계층에 집중할 때 로컬 전송 경계 위협 모델이 누락되기 쉬움. |
+| A46 ERC721 Callback Reentrancy / Dual-Execution Mint | `onERC721Received()` 콜백이 `_mint`를 포함하고 있을 때, 감사는 A1 재진입(루프 추출)을 체크하지만 콜백 내부 + 원본 함수 내부의 이중 실행 경로를 독립 코드 흐름으로 분석하지 않음. 단일 TX 내 교환율 고정과 결합되어 지수적 공급량 팽창을 야기하는 패턴이 "콜백이 정상 반환됨"으로 통과될 수 있음 (Solv Protocol BRO vault 2026-03-06, $2.7M). | | A1 경량 변형: `onERC721Received()` 콜백에서 `_mint`가 호출되고, 콜백 반환 후 원본 `mint()`도 `_mint`를 다시 호출하는 이중 실행 경로 결함. 루프 재진입(The DAO 유형)과 달리 단일 콜스택 내 두 코드 경로가 모두 실제 실행됨. 동일 TX 내 교환율 고정으로 22회 반복 → 135 BRO → 5.67억 BRO 팽창 (Solv Protocol 2026-03-06, $2.7M). ERC721 통합 시 callback 내부에서 절대 `_mint` 호출 금지. |
