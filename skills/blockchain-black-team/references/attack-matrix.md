@@ -808,6 +808,48 @@ function mint(uint256 nftId, uint256 goefsAmount) external nonReentrant {
 6. **Token-2022 note (Solana)**: if hooks are ever added, `.reload()` account cache post-hook AND add single-execution guard for the mint CPI path
 **Source**: https://www.quillaudits.com/blog/hack-analysis/solv-protocol-exploit | https://hacked.slowmist.io/ | https://financefeeds.com/solv-protocol-exploit-drains-2-7m-in-solvbtc-from-bro-vault/ | https://coincentral.com/solv-protocol-seeks-fund-return-after-2-7m-crypto-exploit/
 
+### D35. RPC Proxy HTTP Request Smuggling (pingora-core)
+**Historical**: RUSTSEC-2026-0033, CVE-2026-2833, CVSS 9.3 CRITICAL (Cloudflare pingora-core <0.8.0, reported 2026-03-04, issued 2026-03-05)
+**Mechanism**: Pingora-based reverse proxies (<v0.8.0) immediately forward bytes following a request with an `Upgrade` header to the backend — without first waiting for the backend's `101 Switching Protocols` response. An attacker exploits this timing gap to inject (smuggle) a second malicious request to the backend. Because the smuggled request arrives through an already-established, authenticated proxy tunnel, it bypasses proxy-level security controls: WAF rules, IP allowlists, authentication headers, and rate limits applied at the proxy layer are not evaluated for the smuggled content.
+**DeFi infrastructure attack chain**:
+1. Attacker identifies a keeper, RPC gateway, or admin API endpoint that is fronted by a Cloudflare/Pingora proxy
+2. Sends a crafted HTTP/1.1 request with `Connection: Upgrade` and `Upgrade: <protocol>` headers
+3. Before the backend sends `101 Switching Protocols`, attacker's bytes are forwarded directly to the RPC server
+4. Smuggled bytes form a second valid HTTP/1.1 request to an admin-only RPC method (`sendTransaction`, `setNodeVersion`, or custom admin RPC) — bypassing WAF rules that block those methods for external callers
+5. RPC server processes the smuggled request as if it came from the proxy's trusted internal network
+**Why distinct from D27 (RPC Endpoint Takeover)**: D27 is about DNS/BGP hijacking the routing path to a legitimate RPC (full endpoint substitution). D35 is an application-layer smuggling attack on an existing, legitimate proxy connection — the routing is correct; the attacker piggybacks inside an authenticated proxy session.
+**Why distinct from B14 (RPC Manipulation)**: B14 covers MITM or compromised RPC returning false state. D35 does not require MITM or endpoint compromise — it exploits the proxy's own HTTP parsing logic to bypass its security controls.
+**Code/config pattern to find**:
+```yaml
+# VULNERABLE: Pingora reverse proxy <0.8.0 in front of RPC endpoints
+# GCP/Cloudflare reverse proxy config — any pingora-core dependency
+[package]
+pingora-core = "0.7.*"  # vulnerable — upgrade to >=0.8.0
+
+# SAFER: patched version
+pingora-core = "0.8.0"  # patched CVE-2026-2833
+
+# ALTERNATIVE: Restrict Upgrade-header handling at proxy edge
+# Reject or strip Upgrade headers for RPC-bound traffic (JSON-RPC over HTTPS has no legitimate use for WebSocket upgrades)
+location /rpc {
+    proxy_set_header Upgrade "";
+    proxy_set_header Connection "";
+}
+```
+**Microstable relevance**:
+- Microstable keeper Cargo.lock: `pingora-core` NOT present → **keeper binary is NOT directly vulnerable** ✅
+- BUT: TOOLS.md documents GCP VM (34.19.69.41) running **Traefik v3.6.1 + Cloudflare** as a proxy layer for services. If Cloudflare's CDN edge or any Cloudflare-managed Pingora instance routes keeper/RPC traffic, unpatched Pingora instances in that path expose the backend RPC to smuggling.
+- If any internal service (oracle feed relay, keeper webhook receiver, admin API) is proxied through a Pingora-based gateway, those services' security controls may be bypassed.
+- **Risk scenario**: An attacker in the same datacenter or co-tenant network segment sends a crafted Upgrade request to the Cloudflare-fronted oracle API. The smuggled request reaches the GCP VM's internal service (bypassing WAF rules) and triggers an unauthorized oracle price write or admin operation.
+**Defense**:
+1. **Patch immediately**: upgrade all `pingora-core` deployments to >=0.8.0
+2. **Strip/reject Upgrade headers** at the edge for all RPC and internal API routes (JSON-RPC has no valid use for `Upgrade`)
+3. **Verify Cloudflare CDN version**: confirm Cloudflare's managed Pingora instances are on patched versions for any worker/proxy config in the keeper path
+4. **Audit all proxy layers** between keeper and RPC endpoints; document which use Pingora and verify versions
+5. **RPC response integrity**: if feasible, sign or hash expected RPC responses so smuggling-induced injections fail response validation
+6. **HTTP/2 for all internal RPC traffic**: HTTP/2 does not have the same `Upgrade` ambiguity vulnerability; migrate critical keeper↔RPC connections to HTTP/2 where possible
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0033 | https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-2833 | https://blog.cloudflare.com/resolving-a-request-smuggling-vulnerability-in-pingora/
+
 ## Why Audits Miss It — Vector Notes (Purple Reinforcement)
 
 | Vector | 왜 감사가 놓치는가 (메타 원인) |
@@ -1044,3 +1086,4 @@ ai_assistant_permissions:
 | B47 Deterministic Leader-Schedule Isolation for Oracle-Liveness Collapse | 솔라나 리더 스케줄 예측성을 이용해 예정 리더를 집중 격리/부하해 슬롯 진행과 최종화를 저하시킴. 가격 위조 없이도 오라클 신선도 가드가 연쇄 실패하며 프로토콜 가용성 붕괴를 유발하는 통신계층 공격. |
 | B48 Localhost Trust-Boundary Collapse for Agent-Controlled Keeper Ops | "localhost는 안전"이라는 운영 가정 때문에 브라우저-origin WebSocket, 로컬 루프백 rate-limit 예외, 자동 페어링 우회가 결합되어 에이전트 게이트웨이 세션 탈취가 가능해짐. 코드 감사가 온체인/프롬프트 계층에 집중할 때 로컬 전송 경계 위협 모델이 누락되기 쉬움. |
 | A46 ERC721 Callback Reentrancy / Dual-Execution Mint | `onERC721Received()` 콜백이 `_mint`를 포함하고 있을 때, 감사는 A1 재진입(루프 추출)을 체크하지만 콜백 내부 + 원본 함수 내부의 이중 실행 경로를 독립 코드 흐름으로 분석하지 않음. 단일 TX 내 교환율 고정과 결합되어 지수적 공급량 팽창을 야기하는 패턴이 "콜백이 정상 반환됨"으로 통과될 수 있음 (Solv Protocol BRO vault 2026-03-06, $2.7M). | | A1 경량 변형: `onERC721Received()` 콜백에서 `_mint`가 호출되고, 콜백 반환 후 원본 `mint()`도 `_mint`를 다시 호출하는 이중 실행 경로 결함. 루프 재진입(The DAO 유형)과 달리 단일 콜스택 내 두 코드 경로가 모두 실제 실행됨. 동일 TX 내 교환율 고정으로 22회 반복 → 135 BRO → 5.67억 BRO 팽창 (Solv Protocol 2026-03-06, $2.7M). ERC721 통합 시 callback 내부에서 절대 `_mint` 호출 금지. |
+| D35 RPC Proxy HTTP Request Smuggling | HTTP/1.1 proxy가 `Upgrade` 헤더 처리 시 101 응답 대기 없이 즉각 바이트를 백엔드에 포워딩할 경우, 공격자가 두 번째 요청을 밀수해 WAF·IP 허용목록·인증 헤더 등 프록시 보안 레이어를 완전 우회 가능. DeFi 인프라 감사가 온체인/프롬프트 계층에 집중하고 RPC 경로 상의 프록시 취약점(RUSTSEC-2026-0033, CVE-2026-2833, CVSS 9.3 CRITICAL)을 운영 외부 이슈로 분리할 때 놓침. pingora-core ≥0.8.0 패치 필수. |

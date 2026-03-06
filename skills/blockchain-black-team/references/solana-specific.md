@@ -432,3 +432,23 @@ New comparative research (`arXiv:2603.02661`) identifies Solana as vulnerable to
 ## Solana-Specific Defense Checklist Update
 25. ☐ Dependency policy handles campaign-level clone waves (semantic sibling block + new-crate quarantine)
 26. ☐ Leader-isolation/stopping chaos tests executed and linked to oracle freshness SLO alarms
+
+### RPC Proxy HTTP Request Smuggling (D35, RUSTSEC-2026-0033)
+Cloudflare `pingora-core` <0.8.0 allows HTTP request smuggling via premature Upgrade handling. CVSS 9.3 CRITICAL.
+
+**Solana keeper-specific risk**:
+- Microstable keeper does NOT directly depend on pingora-core (confirmed via Cargo.lock scan).
+- However, if any RPC endpoint, oracle feed relay, or internal API used by the keeper is fronted by a Cloudflare/Pingora proxy (as documented in TOOLS.md: GCP VM 34.19.69.41 + Cloudflare), an unpatched proxy instance exposes internal services to request smuggling that bypasses WAF and IP allowlist controls.
+- JSON-RPC over HTTPS has no valid use case for the `Upgrade` header — any Upgrade-bearing request to an RPC proxy should be considered anomalous and rejected.
+
+**Mitigation**:
+1. Patch all `pingora-core` deployments to >=0.8.0 (CVE-2026-2833).
+2. Configure proxy/WAF to strip `Upgrade` and `Connection` headers for all RPC-bound routes.
+3. Verify Cloudflare CDN edge is on patched Pingora for all keeper/oracle traffic paths.
+4. Add chain-infra monitoring rule: alert on `Upgrade` headers observed in RPC request logs.
+5. Migrate critical keeper↔RPC connections to HTTP/2 where possible.
+
+**Defense Checklist Item**:
+27. ☐ All proxy layers in RPC/oracle traffic path use pingora-core ≥0.8.0 or HTTP/2 (CVE-2026-2833 defense)
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0033 | https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-2833
