@@ -452,3 +452,16 @@ Cloudflare `pingora-core` <0.8.0 allows HTTP request smuggling via premature Upg
 27. ☐ All proxy layers in RPC/oracle traffic path use pingora-core ≥0.8.0 or HTTP/2 (CVE-2026-2833 defense)
 
 **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0033 | https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-2833
+
+### ZK Trusted Setup Misconfiguration Future Watch (A49)
+Microstable is currently Solana-native with no ZK components. However, if ZK proof integration is ever planned (private transactions, ZK oracle attestation, ZK governance proofs):
+
+**Solana-specific ZK risks**:
+- Solana's `zk-token` (SPL Token Confidential Transfers) uses BulletProofs, not Groth16 — different trusted setup model, but same class of ceremony verification requirement.
+- Any custom Groth16 verifier implemented as a Solana program (on-chain verification) must have its verifying key cross-checked against the ceremony transcript.
+- Program-level verifying key storage (as PDA data or hardcoded constants) can be inspected on-chain — publish and verify before deployment.
+
+**Defense Checklist Item**:
+28. ☐ If any ZK proof verifier is introduced: third-party ceremony verification (gamma2 ≠ delta2, correct circuit hash, Powers of Tau transcript) completed BEFORE deployment
+
+**Source**: https://rekt.news/the-unfinished-proof | https://blog.zksecurity.xyz/posts/groth16-setup-exploit/

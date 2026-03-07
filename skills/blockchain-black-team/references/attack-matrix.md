@@ -1173,3 +1173,56 @@ function initializeStrategy(bytes calldata data, address[] calldata tokens, uint
 3. Invariant test: `test_cannot_inject_token_into_initialized_strategy` — verify second call with any token combination fails after first initialization
 4. Audit checklist item: for every "immutable after init" invariant in docs/whitepaper, trace the enforcement to a structural-level check (whole-object existence gate), not a loop-level per-slot check
 **Source**: https://blog.blockmagnates.com/breaking-immutability-how-i-bypassed-a-core-security-invariant-in-a-major-defi-protocol-6038be8a4f94
+
+### A49. ZK Groth16 Trusted Setup Ceremony Misconfiguration (gamma=delta Collapse)
+**Signal**: FoomCash ($2.26M, 2026-02-26) and Veil Cash (days prior, Base network) — first confirmed live exploits of ZK cryptographic misconfiguration in production DeFi. Both used Groth16 verifiers where gamma2 == delta2 (collapsed to the same elliptic curve point).
+**Mechanism**: Groth16 zero-knowledge proofs rely on a trusted setup ceremony that generates cryptographic parameters including `gamma` and `delta`. These values must be distinct — if they are set to the same elliptic curve point (e.g., `gamma2 == delta2`), the algebraic soundness of the verifier collapses. An attacker can then compute a forged `pC` value that satisfies the verification equation for *any* nullifier hash, without possessing a valid witness or having made a deposit. The attack is pure arithmetic: a script iterates nullifier hashes, computes valid-looking proof components for each, and drains the contract repeatedly. No cryptographic breakthrough needed — the setup was wrong from day one.
+**Attack specifics (FoomCash)**:
+- Protocol: ZK private lottery on Ethereum + Base
+- Verifier flaw: `delta2 == gamma2` in deployed Groth16 verifier constants
+- Attack: compute `pC` for arbitrary `nullifierHash` (deposit-free). Repeated 22+ times → drain.
+- Second attacker (Decurity) rescued Ethereum side ($1.84M) as white-hat. Base-side drained by original attacker ($320K). Net loss: $420K + platform death.
+- Source copycat chain: Veil Cash discovered first → FoomCash hit with same technique days later (A45 cluster pattern: "read the post-mortem, scale it up").
+**Why distinct from existing vectors**:
+- NOT A4 (access control missing): The smart contract code correctly verifies the proof. The flaw is in the *cryptographic parameters*, not the verification call.
+- NOT A10 (logic bug): The Solidity code logic is correct. The deployed constants are wrong.
+- NOT A25 (parameter griefing): No manipulation of live parameters. Setup was broken before deployment.
+- A49 is specifically the **ZK setup/parameter misconfiguration** class: the protocol's entire security guarantee is invalidated at the cryptographic layer, not the application layer. Auditing the code finds nothing wrong; auditing the *setup ceremony outputs* reveals the flaw.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: gamma and delta are set to the same point (copy-paste / default error)
+// In deployed verifier contract:
+VerifyingKey memory vk;
+vk.gamma2 = Pairing.G2Point(
+    [0x1234..., 0x5678...],
+    [0xabcd..., 0xef01...]
+);
+vk.delta2 = Pairing.G2Point(  // SAME as gamma2 — fatal
+    [0x1234..., 0x5678...],
+    [0xabcd..., 0xef01...]
+);
+
+// SAFE: gamma and delta must be distinct toxic waste commitments from ceremony
+// Verify: vk.gamma2 != vk.delta2 (different points); ceremony outputs match compiled circuit
+```
+**On-chain detection**:
+```bash
+# Read deployed verifier contract storage; compare gamma2 and delta2 field values
+# They must not be equal (as G2Point coordinates)
+cast call $VERIFIER_ADDRESS "verifyingKey()(tuple)" | grep -E "gamma|delta"
+# Also: compare deployed bytecode constants against ceremony output transcript
+```
+**Microstable relevance**: ✅ **NOT APPLICABLE (current)** — Microstable is a Solana-native oracle-collateralized stablecoin with no ZK proof verifier. Groth16 setup misconfiguration cannot affect the current codebase. **FUTURE WATCH**: If ZK privacy/proof components are ever integrated (e.g., ZK oracle attestation, privacy-preserving mint/redeem), mandate:
+1. Third-party ceremony verification: independent audit of setup parameters (`gamma2 ≠ delta2`, correct circuit hash, Powers of Tau transcript)
+2. Published setup transcript with third-party attestation before deployment
+3. On-chain verifier parameter storage that can be read and cross-checked against ceremony output
+4. Canary test: write an explicit test that confirms a forged proof (no deposit) is rejected
+**Defense**:
+1. **Ceremony verification**: Never deploy a ZK verifier without third-party verification of the trusted setup outputs (gamma2 ≠ delta2, correct Powers of Tau, circuit constraint hash matches)
+2. **Audit scope extension**: ZK-protocol audits must include verifying key inspection, not just Solidity code review
+3. **Setup transcript publication**: Publish ceremony transcripts publicly; require external parties to verify before mainnet deploy
+4. **Forged-proof CI test**: Add a test that generates a fake proof (invalid witness) and confirms the verifier rejects it
+5. **Post-mortem copycat window**: After a ZK exploit is public, treat all same-setup ZK protocols as HIGH-PRIORITY targets within 72h (copycat attacker pattern confirmed)
+**Source**: https://rekt.news/the-unfinished-proof | https://rekt.news/default-settings | https://www.quillaudits.com/blog/hack-analysis/foomcash-exploit-explained | https://blog.zksecurity.xyz/posts/groth16-setup-exploit/
+
+| A49 ZK Groth16 Trusted Setup Ceremony Misconfiguration | ZK verifier의 gamma2==delta2 (동일 타원곡선 점)으로 인한 Groth16 soundness 완전 붕괴. 코드 감사가 Solidity 로직만 검토하고 배포된 verifying key 파라미터를 검증하지 않으면 발견 불가. 예치 없이 임의 nullifier로 유효한 proof 위조 가능 → 무한 인출. 세리머니 아웃풋 제3자 검증 필수. FoomCash $2.26M, Veil Cash (2026-02-26). |
