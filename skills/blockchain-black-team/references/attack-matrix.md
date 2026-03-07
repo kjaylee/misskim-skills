@@ -1226,3 +1226,43 @@ cast call $VERIFIER_ADDRESS "verifyingKey()(tuple)" | grep -E "gamma|delta"
 **Source**: https://rekt.news/the-unfinished-proof | https://rekt.news/default-settings | https://www.quillaudits.com/blog/hack-analysis/foomcash-exploit-explained | https://blog.zksecurity.xyz/posts/groth16-setup-exploit/
 
 | A49 ZK Groth16 Trusted Setup Ceremony Misconfiguration | ZK verifier의 gamma2==delta2 (동일 타원곡선 점)으로 인한 Groth16 soundness 완전 붕괴. 코드 감사가 Solidity 로직만 검토하고 배포된 verifying key 파라미터를 검증하지 않으면 발견 불가. 예치 없이 임의 nullifier로 유효한 proof 위조 가능 → 무한 인출. 세리머니 아웃풋 제3자 검증 필수. FoomCash $2.26M, Veil Cash (2026-02-26). |
+
+---
+
+### B49. AI-Speed Adversary Latency Assumption Violation
+**Signal**: Cecuro AI Security Research (2026-03): Purpose-built offensive AI agents execute end-to-end exploits on **72% of known-vulnerable contracts**. Baseline GPT-5.1 coding agent detects 34% of vulnerabilities; domain-specialized AI security agent detects 92%. Stellar Cyber / HelpNet Security (2026-03-03): "persistence, autonomy, and scale" — attackers have industrialized agent memory, tool access, and inter-agent dependencies exploitation. The "attacker AI agents vs defenders AI agents" regime is now confirmed in production DeFi.
+**Mechanism**: Existing DeFi defense stacks (Discord alerts, keeper check-in intervals, on-call human response, manual parameter review) are calibrated for human-operated attacks that require minutes to hours to prepare and execute. Purpose-built offensive AI agents operate at a fundamentally different tempo:
+1. **Parallel contract scanning**: probe thousands of contracts simultaneously to identify exploitable state
+2. **Condition convergence detection**: continuously monitor for the precise block/slot where multiple vulnerability conditions converge (stale oracle + boundary collateral + keeper gap + flash loan availability)
+3. **Sub-second exploit execution**: once conditions detected, full exploit chain (flashloan → manipulate → extract → repay) executes in a single transaction — before any human-speed alert can be acted on
+4. **Copycat acceleration**: FoomCash/Veil Cash pattern confirmed — once a ZK setup exploit is published, AI generates adapted exploits for same-tech protocols within hours, not days
+**Why distinct from B37–B48** (all AI vectors):
+- B37: adversary steganographically evades *within* the defense AI agent
+- B38: multi-turn injection into AI agent tool return handling
+- B43: memory/log poisoning to steer AI reasoning
+- B46: non-adversarial normal operation risk (no attacker)
+- B48: browser-localhost gateway takeover
+- **B49**: EXTERNAL AI attacker operating at machine speed vs a protocol defended at human-response speed — **temporal asymmetry, not prompt/memory manipulation**. The protocol's code and defenses may be correct; the response time assumption is the vulnerability.
+**Microstable relevance**: HIGH — all four architecture chains are affected
+- **Oracle ↔ Price ↔ Mint/Redeem**: Pyth staleness window (e.g., 600 slots ~= 5 min). AI detects staleness event AND collateral boundary condition within the same slot → single-TX exploit before keeper next run
+- **Keeper ↔ On-chain**: keeper runs every N blocks. AI probes protocol state at each block within the interval, identifies exploitable combinations invisible in steady-state
+- **Agent ↔ Governance ↔ Parameter**: AI-assisted governance influence (posting, framing, timing) at machine speed can overwhelm human deliberation window
+- **Dashboard ↔ RPC ↔ On-chain**: AI-driven RPC probing (D35 class) at scale can bypass rate limits through distributed origination
+**Specific exploit scenario (Microstable)**:
+```
+Block N:    AI agent probes → oracle price stale (slot_age = 595), collateral near threshold
+Block N+1:  Staleness guard triggers (slot_age ≥ 600) — keeper hasn't checked in
+Block N+1:  Same block — AI executes: flashloan → overprice collateral via stale feed → 
+            mint excess stablecoin → swap → repay flashloan
+Block N+1:  Human Discord alert fires ~30 sec later — exploit already landed
+```
+**Defense**:
+1. **On-chain mechanical circuit breakers**: oracle staleness → auto-pause mint/redeem (no human in the loop; the chain enforces it)
+2. **Keeper heartbeat as invariant**: if keeper has not submitted an uptime proof within X slots, protocol halts — not an alert, a state machine transition
+3. **Sub-block response requirement**: any invariant that requires human response after an alert is a structural vulnerability against AI attackers; design for keeper-or-halt, not keeper-or-notify
+4. **Adversarial latency assumption**: all timing parameters (staleness limits, keeper intervals, circuit breaker thresholds) must assume an attacker with sub-second reaction time and perfect state visibility
+5. **Copycat response SLA**: when any same-tech protocol exploit is published (ZK, oracle, bridge), trigger 24h mandatory review of same attack class in Microstable — no grace period
+**Why auditors miss it**: Security audits model human-paced attackers who require preparation time (hours/days) between discovery and exploitation. AI-speed adversarial conditions require that every time window > 0 blocks with exploitable state be treated as a live vulnerability — a fundamentally different security model than what static/manual code audits apply.
+**Source**: https://securityboulevard.com/2026/03/purpose-built-ai-security-agent-detected-92-of-defi-contracts-vulnerabilities/ | https://www.helpnetsecurity.com/2026/03/03/enterprise-ai-agent-security-2026/ | Cecuro AI Security Research (2026-03)
+
+| B49 AI-Speed Adversary Latency Assumption Violation | 감사가 "공격자는 발견 후 수 시간~수 일 내에 실행" 모델을 암묵적으로 전제. AI 에이전트는 수천 계약을 병렬 스캔하고 조건 수렴(staleness + 경계 담보 + keeper 공백)을 블록 단위로 탐지해 단일 TX로 즉시 실행. 인간-응답-루프 의존 방어 설계(alert→human→act)는 AI 속도 공격자에 구조적으로 무효. 온체인 기계적 circuit breaker + keeper heartbeat invariant 필수. (Cecuro 2026-03: AI agent 72% known-vulnerable 계약 실제 익스플로잇 확인) |
