@@ -11,7 +11,7 @@ description: Execute real-world blockchain attack scenarios against smart contra
 - **Use `blockchain-purple-team`** for meta-level coverage gaps, audit failure causes, and architecture/ops blind spots.
 
 
-Execute battle-tested attack vectors from 68+ historical blockchain incidents ($10B+ total losses) against target protocol code.
+Execute battle-tested attack vectors from 69+ historical blockchain incidents ($10B+ total losses) against target protocol code.
 
 ## When to Use
 
@@ -28,7 +28,7 @@ Execute battle-tested attack vectors from 68+ historical blockchain incidents ($
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (46+ Vectors, continuously extended)
+## Attack Matrix (48+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -85,6 +85,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-08 | CrossCurve bridge ReceiverAxelar.expressExecute() missing gateway validation (2026-02-02, $3M multi-chain) | A48 (NEW) | Added Unguarded Cross-Chain Receiver Function vector; distinct from A32 (IBC content forgery) — attacker bypasses relay entirely by directly calling receiver; Microstable ✅ not applicable (no bridge receiver); onlyGateway modifier pattern documented |
 | 2026-03-07 | Solv Protocol BRO vault ERC721 callback double-mint exploit (2026-03-06, $2.7M / 38 SolvBTC drained via 22-iteration dual-execution) | A46 (NEW) | Added ERC721 Callback Reentrancy / Dual-Execution Mint vector; distinct from A1 (not loop re-entry); reinforced NFT-callback CEI discipline; Microstable ✅ not applicable (SPL Token classic, no callbacks) |
 | 2026-03-05 | Localhost WebSocket takeover hardening signal (OpenClaw v2026.2.25 + Oasis disclosure) | B48 | Added localhost trust-boundary collapse vector for agent-controlled keeper ops; reinforced browser-origin gateway threat modeling, no-loopback-exception controls, and pairing/origin hardening requirements |
 | 2026-03-02 | Holdstation DeFAI Smart Wallet (2026-02-25, $462K) | B15 (tentative) | Added to incidents timeline; mechanism pending (MFA bypass / session theft in AI-integrated wallet). DeFAI surface note added: AI intent layer + signing authority co-location amplifies B15/B29 exposure |

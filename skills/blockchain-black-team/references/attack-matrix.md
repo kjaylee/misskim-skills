@@ -1088,6 +1088,55 @@ ai_assistant_permissions:
 | A46 ERC721 Callback Reentrancy / Dual-Execution Mint | `onERC721Received()` 콜백이 `_mint`를 포함하고 있을 때, 감사는 A1 재진입(루프 추출)을 체크하지만 콜백 내부 + 원본 함수 내부의 이중 실행 경로를 독립 코드 흐름으로 분석하지 않음. 단일 TX 내 교환율 고정과 결합되어 지수적 공급량 팽창을 야기하는 패턴이 "콜백이 정상 반환됨"으로 통과될 수 있음 (Solv Protocol BRO vault 2026-03-06, $2.7M). | | A1 경량 변형: `onERC721Received()` 콜백에서 `_mint`가 호출되고, 콜백 반환 후 원본 `mint()`도 `_mint`를 다시 호출하는 이중 실행 경로 결함. 루프 재진입(The DAO 유형)과 달리 단일 콜스택 내 두 코드 경로가 모두 실제 실행됨. 동일 TX 내 교환율 고정으로 22회 반복 → 135 BRO → 5.67억 BRO 팽창 (Solv Protocol 2026-03-06, $2.7M). ERC721 통합 시 callback 내부에서 절대 `_mint` 호출 금지. |
 | D35 RPC Proxy HTTP Request Smuggling | HTTP/1.1 proxy가 `Upgrade` 헤더 처리 시 101 응답 대기 없이 즉각 바이트를 백엔드에 포워딩할 경우, 공격자가 두 번째 요청을 밀수해 WAF·IP 허용목록·인증 헤더 등 프록시 보안 레이어를 완전 우회 가능. DeFi 인프라 감사가 온체인/프롬프트 계층에 집중하고 RPC 경로 상의 프록시 취약점(RUSTSEC-2026-0033, CVE-2026-2833, CVSS 9.3 CRITICAL)을 운영 외부 이슈로 분리할 때 놓침. pingora-core ≥0.8.0 패치 필수. |
 | A47 Per-Element Aggregate Invariant Bypass | 루프 내 개별 슬롯 검증의 정확성("각 토큰 슬롯이 비어있으면 안전")을 확인하는 수준에서 그치고, 전체 구조(strategy/vault 레벨)에서 "이미 초기화된 집합체인가"를 검증하는 집계 수준 불변식이 분리되어 있는지 확인하지 않음. "코드가 명세대로 동작한다" 결론이 명세 자체의 추상화 수준 오류를 가린다. 불변이어야 할 전략에 새 토큰을 주입하는 공격이 per-slot emptiness check를 통과해 감사 무효화 (Block Magnates Breaking Immutability, 2026-02-25). |
+| A48 Unguarded Cross-Chain Receiver Function (Bridge Receiver Access Control) | 크로스체인 브릿지 수신 함수에 호출자 검증(`onlyGateway` 또는 동등한 제어)이 없을 때, 임의 주소가 위조 크로스체인 메시지로 직접 호출해 토큰 언락을 유발하는 패턴을 감사가 놓침. A32(IBC 메시지 콘텐츠 위조)와 달리 릴레이/게이트웨이를 완전히 우회한 직접 호출이며, 수신 함수 가시성(`external`, `public`)과 msg.sender 검증 누락을 동시에 확인하지 않으면 발견 불가 (CrossCurve ReceiverAxelar expressExecute, 2026-02-02, $3M). |
+
+### A48. Unguarded Cross-Chain Receiver Function (Bridge Receiver Access Control)
+**Historical**: CrossCurve (formerly EYWA) bridge (2026-02-02, ~$3M) — `ReceiverAxelar.expressExecute()` had no caller/gateway validation; any address could trigger unauthorized token unlocks across multiple chains.
+**Mechanism**: A cross-chain bridge system typically consists of: (1) a source-chain lock/burn, (2) a relay/gateway that routes a proof of the source event, and (3) a destination-chain receiver that unlocks/mints. In CrossCurve's implementation, the `expressExecute` function on the `ReceiverAxelar` contract accepted calls from **any address** — not just the authorized Axelar gateway relay. There was no `require(msg.sender == GATEWAY_ADDRESS)` or equivalent guard. An attacker could directly call this function with fabricated message payloads, bypassing the gateway's proof verification entirely. Exploiting across multiple networks: most malicious activity on Arbitrum, converting stolen tokens to WETH via CoW Protocol.
+**Why distinct from A32 (SagaEVM Cross-Chain Bridge Message Forgery)**:
+- **A32**: Attacker crafts valid-looking IBC payload → IBC precompile *accepts it through the relay path* (content forgery that fools the relay/bridge)
+- **A48**: Attacker *never uses the relay path at all* — directly calls the receiver function bypassing gateway entirely (access control missing at receiver). The relay's proof verification is irrelevant because the receiver doesn't check who called it.
+**Why distinct from A4 (Access Control)**:
+A4 is the general missing-auth category. A48 is the specific cross-chain receiver pattern that has caused repeated losses across bridge protocols. The "receiver function" pattern deserves separate tracking because:
+  (a) bridge auditors often verify message content validation without checking receiver-side caller validation
+  (b) the function appears "internal-only" in design but is `external`/`public` in implementation
+  (c) cross-chain context means the attacker doesn't need any on-chain balance on the source chain
+**Code pattern to find**:
+```solidity
+// VULNERABLE: no caller check — anyone can call directly with fake payload
+function expressExecute(
+    bytes32 commandId,
+    string calldata sourceChain,
+    string calldata sourceAddress,
+    bytes calldata payload
+) external override {
+    // missing: require(msg.sender == GATEWAY, "not gateway");
+    (address recipient, uint256 amount, address token) = abi.decode(payload, (address, uint256, address));
+    PortalV2(portalV2).unlock(token, recipient, amount);  // unauthorized unlock!
+}
+
+// SAFE: validate caller before any message processing
+modifier onlyGateway() {
+    require(msg.sender == gateway, "CrossCurve: not gateway");
+    _;
+}
+function expressExecute(...) external override onlyGateway {
+    // process only if called by authorized gateway relay
+}
+```
+**Solana relevance**: Solana Wormhole (if integrated): Wormhole VAA verification is handled by the Wormhole program itself, but any instruction that acts on a "cross-chain message" must still verify the calling CPI context is the authorized bridge program. If a `handle_message(ctx, payload)` instruction exists:
+```rust
+// CHECK: verify this is called by the authorized bridge program ID, not arbitrary CPI
+require_keys_eq!(ctx.accounts.bridge_program.key(), WORMHOLE_PROGRAM_ID, ErrorCode::UnauthorizedBridge);
+```
+**Microstable relevance**: ✅ **NOT APPLICABLE** — Microstable is Solana-native with no cross-chain bridge receiver. If Wormhole/IBC integration is ever added, enforce: (1) `require_keys_eq!(bridge_program, AUTHORIZED_BRIDGE_ID)` at instruction level, (2) require VAA signature verification before any collateral credit, (3) never allow the "receive" instruction to be called from arbitrary CPI sources.
+**Defense**:
+1. **`onlyGateway` modifier (or Solana: program-ID constraint)** on all receiver/message-handler functions — verify `msg.sender` (EVM) or calling program ID (Solana)
+2. **Receiver function audit checklist item**: for any function that processes incoming cross-chain messages, confirm: caller must be the authorized gateway relay; any other caller reverts immediately
+3. **Defense-in-depth**: even with `onlyGateway`, validate message payload against expected schema/version (A32 defense)
+4. **Test**: write an explicit test: `assert_reverts: non_gateway_calls_expressExecute()` — must be in CI before any bridge integration deploy
+5. **Invariant monitoring**: alert on any unlock/mint triggered without a corresponding source-chain event confirmed by the relay
+**Source**: https://www.scworld.com/brief/crosscurve-bridge-loses-3-million-in-smart-contract-exploit | https://thecyberexpress.com/crosscurve-bridge-3m-cyberattack/ | https://quillaudits.medium.com/crosscurve-1-4m-exploit-c2ef752c4e84
 
 ### A47. Per-Element Aggregate Invariant Bypass
 **Signal**: Bug bounty report "Breaking Immutability: How I Bypassed a Core Security Invariant in a Major DeFi Protocol" (Block Magnates, 2026-02-25 / confirmed 2026-03-06).

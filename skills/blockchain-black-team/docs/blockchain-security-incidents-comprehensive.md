@@ -48,6 +48,10 @@
   Vector mapping: **A3 Oracle Manipulation**, **A10 Logic Bug**.  
   Source: https://hacked.slowmist.io/
 
+- **2026-02-02 — CrossCurve (formerly EYWA) bridge (Multi-chain — Arbitrum primary)** — CrossCurve's cross-chain bridge protocol was attacked via a gateway verification bypass in the `ReceiverAxelar` contract. The `expressExecute` function had no `onlyGateway` caller check — any address could call it with fabricated cross-chain message payloads. Attacker directly called the receiver function (bypassing the Axelar relay entirely), triggering unauthorized token unlocks on the `PortalV2` contract across multiple networks. ~$3M drained; most activity on Arbitrum, converting stolen tokens to WETH via CoW Protocol. QuillAudits post-mortem confirmed access control was the root cause.
+  Vector mapping: **A48 Unguarded Cross-Chain Receiver Function** (NEW), **A4 Access Control**.
+  Source: https://www.scworld.com/brief/crosscurve-bridge-loses-3-million-in-smart-contract-exploit | https://thecyberexpress.com/crosscurve-bridge-3m-cyberattack/ | https://quillaudits.medium.com/crosscurve-1-4m-exploit-c2ef752c4e84
+
 - **2026-02-23 — WLFI USD1** — Co-founder account compromise + coordinated social-engineering/FUD attempt; no confirmed loss reported.  
   Vector mapping: **B15 Key Compromise / Social Engineering**.  
   Source: https://hacked.slowmist.io/
