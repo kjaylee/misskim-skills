@@ -465,3 +465,86 @@ Microstable is currently Solana-native with no ZK components. However, if ZK pro
 28. ☐ If any ZK proof verifier is introduced: third-party ceremony verification (gamma2 ≠ delta2, correct circuit hash, Powers of Tau transcript) completed BEFORE deployment
 
 **Source**: https://rekt.news/the-unfinished-proof | https://blog.zksecurity.xyz/posts/groth16-setup-exploit/
+
+## Token-2022 Hook Security Patterns (2026 Addition)
+
+### A51. ExtraAccountMetaList Account Injection (Transfer Hook Context Confusion)
+**Signal**: Zealynx Security Blog "Solana Smart Contract Audit Guide 2026" (2026-03)
+
+Token-2022 transfer hooks receive additional accounts via `ExtraAccountMetaList`. If the hook program doesn't validate that these accounts match expected PDA seeds, an attacker can inject a malicious account (e.g., spoofed whitelist) to bypass transfer logic.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE: ExtraAccountMetaList account accepted without seed verification
+fn execute_hook(ctx: Context<HookCtx>) -> Result<()> {
+    require!(ctx.accounts.whitelist.allowed, ErrorCode::Blocked);  // attacker-supplied → always true
+}
+
+// SAFE: derive and verify PDA address before trusting account data
+fn execute_hook(ctx: Context<HookCtx>) -> Result<()> {
+    let (expected, _) = Pubkey::find_program_address(
+        &[b"whitelist", ctx.accounts.mint.key().as_ref()],
+        ctx.program_id,
+    );
+    require_keys_eq!(ctx.accounts.whitelist.key(), expected, ErrorCode::InvalidAccount);
+    require!(ctx.accounts.whitelist.allowed, ErrorCode::Blocked);
+}
+```
+
+**Microstable risk**: LOW (SPL Token classic, no hooks). HIGH if Token-2022 migration.
+
+**Secondary: Confidential Transfer Auditor Key**: If `auditor_elgamal_pubkey` ≠ `[0u8; 32]`, auditor can decrypt all confidential balances — compliance backdoor. Explicitly disable unless required.
+
+**Mitigation**:
+1. Anchor `seeds` + `bump` constraints on ALL hook context accounts (no exceptions)
+2. Explicitly set `auditor_elgamal_pubkey = None` in Confidential Transfer config
+3. Include hook account seed validation in Token-2022 audit checklist
+
+### A52. Transfer Hook Infinite Recursion Griefing (Asset Freeze DoS)
+**Signal**: Zealynx Security Blog "Solana Smart Contract Audit Guide 2026" (2026-03)
+
+If a transfer hook triggers a CPI that transfers the *same mint*, the runtime invokes the hook again — recursive chain. Runtime halts with compute budget exceeded → every transfer of that mint reverts → asset freeze DoS.
+
+**Microstable risk**: LOW currently. HIGH risk if Token-2022 mints are used.
+
+**Attack surface**: Protocols that accept user-supplied Token-2022 collateral with user-controlled hooks.
+
+**Mitigation**:
+1. **Acyclicity invariant**: hook must never initiate a transfer of the same mint (prove mathematically, not just code-review)
+2. Freeze hook upgrade authority post-deployment
+3. Reject collateral mints with mutable hook authority or unverified hook acyclicity
+
+## Firedancer Finality Patterns (2026 Addition)
+
+### B50. Skip-Vote Structural Finality Lag
+**Signal**: Zealynx Security Blog "Solana Smart Contract Audit Guide 2026" (2026-03); Solana SIMD-0370
+
+Under Firedancer dynamic block sizing, validators running Agave or older hardware may skip voting on oversized blocks → structural finality delay. During the lag window, transactions may appear "on-chain" but not finalized — creating a micro-reorg risk window for finality-dependent operations.
+
+**Distinct from B40**: B40 is about TX ordering (ACE fairness). B50 is about finality *timing* from heterogeneous validator hardware.
+**Distinct from B47**: B47 requires an adversary targeting leaders. B50 is structural (no adversary needed).
+
+**Microstable-specific risk**:
+- Slot-based staleness guards (`STALE_ORACLE_PENALTY_PER_SLOT`, `Clock::get()?.slot`) are NOT directly affected (slots advance continuously)
+- `Confirmed` commitment (keeper default) has a skip-vote micro-reorg window
+- If bridge/large-withdrawal instructions using `Finalized` are added, they face unexpected latency
+
+**Pattern to detect**:
+```rust
+// RISKY: hard-coded 400ms finality assumption
+let deadline = current_slot + 1;  // assumes 400ms = finalized → no longer holds under Firedancer
+
+// SAFER: use slot range with skip-vote buffer
+let deadline = current_slot + 3;  // +2–3 slot buffer for heterogeneous validator lag
+// AND: require Finalized commitment for irrevocable operations
+```
+
+**Mitigation**:
+1. Use `Finalized` commitment for all irrevocable/large-value keeper operations
+2. Add +2–3 slot slack to any deadline calculation assuming 400ms finality
+3. Monitor `confirmed → finalized` slot delta in keeper telemetry; alert if > 3 slots
+
+## Solana-Specific Defense Checklist Update
+29. ☐ Token-2022 hooks: all ExtraAccountMetaList accounts verified via seed derivation (not caller-supplied)
+30. ☐ Token-2022 hooks: acyclicity proven (no same-mint CPI transfer within hook); hook upgrade authority frozen
+31. ☐ Firedancer skip-vote buffer: irrevocable operations use `Finalized` commitment; deadline calculations include +2–3 slot slack

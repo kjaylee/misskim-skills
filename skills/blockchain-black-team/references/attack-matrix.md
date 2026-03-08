@@ -1322,3 +1322,89 @@ grep -n "squeeze\|absorb\|challenge" Verifier.sol | head -40
 **Source**: https://osec.io/blog/2026-03-03-zkvms-unfaithful-claims/ | https://blog.polyhedra.network/expander-bug-bounty/ | https://rekt.news/default-settings
 
 | A50 zkVM Fiat-Shamir Public-Claim Unbound Variable Bypass | Jolt/Nexus/Cairo-M/Ceno/Expander/Binius64 등 6개 zkVM에서 public-claim 데이터(입출력)가 Fiat-Shamir transcript에 challenge 생성 전 바인딩되지 않음. 결과: 검증 방정식 후반부에서 statement 값이 공격자 제어 변수로 변환 → 임의 허위 명제 증명 가능 → 블록체인 컨텍스트에서 유효 예치 없이 출금/민팅. A49(gamma=delta 셋업 상수 오류)와 구별: A50은 상수 정상, transcript 흡수 순서 오류. 현재 Microstable 미해당(ZK 미사용). zkVM 통합 시 transcript 바인딩 순서 외부 감사 필수. (OtterSec 2026-03-03) |
+
+### A51. Token-2022 ExtraAccountMetaList Account Injection (Transfer Hook Context Confusion)
+**Signal**: Zealynx Security Blog "Solana Smart Contract Audit Guide 2026" (2026-03); SPL Token-2022 transfer hook architecture.
+**Mechanism**: Token-2022 transfer hooks require additional accounts passed via an `ExtraAccountMetaList` PDA. These extra accounts are resolved from seeds stored in the account meta list. If the hook program fails to strictly validate that incoming extra accounts match the expected seed derivation (does NOT verify PDA address = `find_program_address(seeds, hook_program_id)`), an attacker can pass a different account that looks structurally valid (same data layout) but is attacker-controlled. Example: a transfer whitelist check that reads from an "allowed" account — attacker passes their own account with a forged whitelist entry, bypassing the transfer restriction entirely.
+**Secondary risk — Confidential Transfer Auditor Key**: In Token-2022 Confidential Transfer extension, if the Auditor Key is not set to `[0u8; 32]` (disabled), a non-zero Auditor Key represents a compliance backdoor allowing the auditor to decrypt all confidential balances. Failure to audit this key creates silent surveillance/extraction capability.
+**Why distinct from A42 (Anchor Post-CPI Stale Account Cache)**: A42 is about reading *stale data* from a correct account after CPI. A51 is about the hook receiving and accepting the *wrong account entirely* due to missing seed validation — two different failure modes in the same Token-2022 hook context.
+**Why distinct from A6 (Account Substitution)**: A6 is at the outer program level. A51 is specifically within the hook execution context triggered during token transfer — substitution happens inside the hook's own account validation.
+**Code pattern to find**:
+```rust
+// VULNERABLE: extra accounts not verified against expected PDA seeds
+fn execute_transfer_hook(ctx: Context<TransferHook>) -> Result<()> {
+    let whitelist = &ctx.accounts.whitelist;  // caller-supplied, not seed-verified
+    require!(whitelist.allowed, ErrorCode::TransferNotAllowed);  // attacker's fake → always true!
+}
+
+// SAFE: verify PDA derivation matches expected seeds
+fn execute_transfer_hook(ctx: Context<TransferHook>) -> Result<()> {
+    let (expected_pda, _bump) = Pubkey::find_program_address(
+        &[b"whitelist", ctx.accounts.mint.key().as_ref()],
+        ctx.program_id,
+    );
+    require_keys_eq!(ctx.accounts.whitelist.key(), expected_pda, ErrorCode::InvalidWhitelistAccount);
+    require!(ctx.accounts.whitelist.allowed, ErrorCode::TransferNotAllowed);
+}
+```
+**Microstable relevance**: ✅ **LOW (current)** — Microstable uses SPL Token classic with no transfer hooks. HIGH risk if collateral or MSTB token is ever migrated to Token-2022 with transfer hooks.
+**Defense**:
+1. Always derive and verify PDA addresses for all ExtraAccountMetaList accounts; never accept caller-provided accounts without seed validation
+2. Use Anchor's `seeds` and `bump` constraints on all hook context accounts
+3. For Confidential Transfer: explicitly set `auditor_elgamal_pubkey = None` (disabled) unless regulatory audit is intentionally required; document custody of any non-None auditor key
+4. Token-2022 hook audit checklist: (a) account seed validation, (b) acyclicity check, (c) auditor key setting
+**Source**: Zealynx Security Blog (zealynx.io/blogs/solana-2026-security); SPL Token-2022 specification
+
+### A52. Token-2022 Transfer Hook Infinite Recursion Griefing (Asset Freeze DoS)
+**Signal**: Zealynx Security Blog "Solana Smart Contract Audit Guide 2026" (2026-03); SPL Token-2022 hook execution model.
+**Mechanism**: A Token-2022 transfer hook is invoked during every `transfer_checked` CPI. If the hook program itself executes a CPI that initiates a second transfer of the *same mint*, the Token-2022 runtime invokes the hook again — recursive chain. The Solana runtime eventually halts (CPI depth exceeded / compute budget exceeded), but the result is a consistent revert. Consequence: **no transfer of that token can complete** — all token movement for that mint is frozen. A malicious or poorly designed hook creates a permanent DoS on the mint.
+**Attack vector**: If a DeFi protocol accepts user-supplied Token-2022 mints whose hooks are user-controlled, the attacker deploys a mint with a recursive hook. Any protocol interaction triggering a transfer will be permanently griefed.
+**Why distinct from A1 (Reentrancy)**: A1 re-enters the same program to drain funds before state update. A52 creates recursive token transfers consuming all compute units — goal is asset *freeze* (DoS), not extraction.
+**Why distinct from B20 (DoS)**: B20 covers network-level or quota-based DoS. A52 is a program-logic recursive trap specific to Token-2022 hook architecture.
+**Code pattern to find**:
+```rust
+// VULNERABLE: hook triggers CPI that transfers same mint → recurse
+fn transfer_hook(ctx: Context<TransferHook>, amount: u64) -> Result<()> {
+    token_2022::transfer_checked(
+        cpi_ctx,
+        fee_amount,
+        decimals,
+    )?;  // SAME MINT → triggers hook again! → infinite recursion
+    Ok(())
+}
+
+// SAFE: hook must be mathematically acyclic — never transfer the same mint
+fn transfer_hook(ctx: Context<TransferHook>, amount: u64) -> Result<()> {
+    ctx.accounts.protocol_state.pending_rebalance += amount / 100;  // state only, no CPI transfer
+    Ok(())
+}
+```
+**Microstable relevance**: ✅ **LOW (current)** — SPL Token classic has no transfer hooks; recursive hook DoS cannot affect current mints. HIGH risk if Token-2022 migration is planned: ensure all future MSTB or collateral mint hooks are audited for acyclicity.
+**Defense**:
+1. **Acyclicity requirement**: prove at audit time that it is mathematically impossible for the hook to initiate a transfer of the same mint
+2. **No same-mint CPIs in hooks**: hooks should validate, emit events, or update state — never initiate token transfers of the hook mint
+3. **Hook upgrade authority freeze**: after deployment, freeze upgrade authority to prevent malicious hook replacement
+4. **Accept-list for Token-2022 mints**: protocols accepting user-supplied Token-2022 collateral must validate hook acyclicity before listing; mints with mutable hook authority receive a safety discount or are rejected
+**Source**: Zealynx Security Blog (zealynx.io/blogs/solana-2026-security); SPL Token-2022 transfer hook specification
+
+### B50. Firedancer Skip-Vote Structural Finality Lag
+**Signal**: Zealynx Security Blog "Solana Smart Contract Audit Guide 2026" (2026-03); Solana SIMD-0370 (Firedancer dynamic block sizing); Alpenglow consensus model.
+**Mechanism**: Under Firedancer's Alpenglow consensus with SIMD-0370, dynamic block sizing replaces rigid CU caps — high-performance Firedancer leaders can produce blocks with hundreds of millions of CUs. Validators running older hardware or the Agave client may fail to process these oversized blocks within the 400ms slot time. Rather than halt, these validators *skip voting* — the block progresses without their vote weight. Result: a transaction included by a Firedancer leader may experience **delayed finality** as non-Firedancer validators catch up. During this finality lag window:
+- Bridge protocols assuming "400ms ≈ finalized" may release funds prematurely
+- Large-withdrawal instructions using `Finalized` commitment level face unexpected delays
+- Oracle update sequences appear final on the leader's side but haven't propagated to weaker validators
+- Micro-reorg risk increases during the finality lag window
+**Why distinct from B40 (ACE Fairness / Keeper Ordering Collapse)**: B40 is about TX *ordering* within blocks being changed by ACE fair-ordering — no finality delay, ordering guarantee is the issue. B50 is about *finality timing* itself being structurally delayed because the validator cohort splits on vote participation. Different root cause, different exploit surface.
+**Why distinct from B47 (Deterministic Leader-Schedule Isolation)**: B47 requires an *adversary* actively targeting specific leaders with packet filtering. B50 is a *structural* consequence of heterogeneous hardware in the validator set under normal Firedancer operation — no adversary needed.
+**Microstable relevance**: MEDIUM — slot-based staleness guards (`STALE_ORACLE_PENALTY_PER_SLOT`, `Clock::get()?.slot`) function normally since slot numbers advance even during finality lag. However, if Microstable adds operations requiring `Finalized` commitment (bridge integrations, large collateral releases), those would be affected. Keeper's RPC commitment level matters: if using `Confirmed` rather than `Finalized`, skip-vote micro-reorg window exists.
+**Defense**:
+1. All irrevocable/large-value operations must use `Finalized` commitment with explicit timeout handling for delayed finality
+2. Keepers should benchmark confirmation latency under Firedancer congestion to calibrate timeout parameters
+3. Add `valid_until_slot` checks with extra slack (+2–3 slots beyond normal 400ms assumption) for time-sensitive instructions
+4. Monitor: track confirmed-to-finalized slot delta for keeper TXs; alert when delta exceeds 3 slots consistently
+5. Audit any time-sensitive instruction for hard-coded 400ms finality assumptions; replace with slot-range tolerances
+**Source**: Zealynx Security Blog (zealynx.io/blogs/solana-2026-security); Solana SIMD-0370; Firedancer documentation
+
+| A51 Token-2022 ExtraAccountMetaList Account Injection | Transfer Hook 실행 컨텍스트에서 ExtraAccountMetaList 계정의 시드 파생 검증이 별도 감사 포인트로 다루어지지 않음. 외부 프로그램 계정 검증(A6)은 확인하지만, Hook 내부 caller-supplied 계정을 seed-check 없이 신뢰하는 패턴이 "프레임워크가 해준다"는 가정으로 통과. Confidential Transfer Auditor Key 미설정 위험도 ZK 감사 항목으로 분리되어 Token-2022 전체 감사 시 누락 가능 (Zealynx 2026-03). |
+| A52 Token-2022 Transfer Hook Infinite Recursion Griefing | Hook 비순환성(acyclicity) 요건이 공식 문서에서 보안 요구사항이 아닌 설계 지침으로 다루어짐. 감사자가 Hook 실행 로직을 점검하지만, 동일 민트의 재귀 전송 경로를 "CPI 깊이 초과로 안전하게 실패"로 간주하고 자산 동결 DoS 위협으로 연결하지 않음. Hook 업그레이드 권한 동결 여부도 Token-2022 감사 체크리스트에서 누락되기 쉬움 (Zealynx 2026-03). |
+| B50 Firedancer Skip-Vote Structural Finality Lag | 감사가 슬롯 기반 스테일니스 검사를 확인하지만, 검증자 하드웨어 이질성으로 인한 구조적 최종성 지연(skip-vote)이 온체인 로직 리뷰 범위 밖으로 분리됨. B40(ACE 순서 변경)·B47(적대적 리더 격리)과 달리 정상 Firedancer 운영에서 발생하는 구조적 리스크임을 인식하지 못해 finality 의존 작업의 400ms 가정을 별도 검증하지 않음 (Zealynx/SIMD-0370 2026-03). |
