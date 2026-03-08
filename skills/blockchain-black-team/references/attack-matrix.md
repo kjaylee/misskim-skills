@@ -1408,3 +1408,61 @@ fn transfer_hook(ctx: Context<TransferHook>, amount: u64) -> Result<()> {
 | A51 Token-2022 ExtraAccountMetaList Account Injection | Transfer Hook 실행 컨텍스트에서 ExtraAccountMetaList 계정의 시드 파생 검증이 별도 감사 포인트로 다루어지지 않음. 외부 프로그램 계정 검증(A6)은 확인하지만, Hook 내부 caller-supplied 계정을 seed-check 없이 신뢰하는 패턴이 "프레임워크가 해준다"는 가정으로 통과. Confidential Transfer Auditor Key 미설정 위험도 ZK 감사 항목으로 분리되어 Token-2022 전체 감사 시 누락 가능 (Zealynx 2026-03). |
 | A52 Token-2022 Transfer Hook Infinite Recursion Griefing | Hook 비순환성(acyclicity) 요건이 공식 문서에서 보안 요구사항이 아닌 설계 지침으로 다루어짐. 감사자가 Hook 실행 로직을 점검하지만, 동일 민트의 재귀 전송 경로를 "CPI 깊이 초과로 안전하게 실패"로 간주하고 자산 동결 DoS 위협으로 연결하지 않음. Hook 업그레이드 권한 동결 여부도 Token-2022 감사 체크리스트에서 누락되기 쉬움 (Zealynx 2026-03). |
 | B50 Firedancer Skip-Vote Structural Finality Lag | 감사가 슬롯 기반 스테일니스 검사를 확인하지만, 검증자 하드웨어 이질성으로 인한 구조적 최종성 지연(skip-vote)이 온체인 로직 리뷰 범위 밖으로 분리됨. B40(ACE 순서 변경)·B47(적대적 리더 격리)과 달리 정상 Firedancer 운영에서 발생하는 구조적 리스크임을 인식하지 못해 finality 의존 작업의 400ms 가정을 별도 검증하지 않음 (Zealynx/SIMD-0370 2026-03). |
+
+### B51. EVMBench AI Auditor Coverage Benchmark Gaming
+**Signal**: OpenAI + Paradigm EVMBench (2026-02) — open benchmark testing AI agents on detect/patch/exploit of real smart contract vulnerabilities. Smartcontractshacking.com (2026-03-04) coverage.
+**Mechanism**: When an AI-powered audit tool becomes an industry benchmark (e.g., EVMBench), protocols under audit pressure optimize their code to pass the benchmark. Audit firms market "EVMBench-validated" status. The benchmark's coverage gaps become structural blindspots:
+1. EVMBench validates known vulnerability patterns → protocols deploy code that passes the benchmark
+2. Novel or compositional vulnerabilities outside benchmark training distribution remain undetected
+3. Auditors over-rely on AI tool verdicts ("the model found nothing") → reduce depth of manual review
+4. Attackers study the benchmark to identify what it cannot detect → deliberately craft attacks in the coverage shadow
+**Why distinct from A34 (Fragmented Security Stack Failure)**: A34 is about isolated security controls (audit + bounty + monitoring) not sharing signal. B51 is about a *single* standardized tool becoming the authority — reducing the diversity of security scrutiny that catches edge cases.
+**Why distinct from A35 (AI-Assisted Commit Oracle Regression)**: A35 is a developer using AI to write buggy code. B51 is an auditor using AI to evaluate code — the AI auditor itself has blind spots that become systematic.
+**Defense failure pattern**: "AI said it's clean" verdict suppresses human auditor skepticism. The AI auditor's training data determines what it can see; anything outside that distribution is invisible.
+**Code pattern to find**: Not a code pattern — an organizational pattern. Protocols that:
+- Advertise "AI-audited by EVMBench/similar" as primary security credential
+- Reduce bug bounty scope after AI audit certification
+- Do not supplement AI audit with manual domain-specific review (tokenomics, composability)
+**DeFi-specific risk**: EVMBench tests known EVM vulnerability classes. Solana-specific patterns (CPI security, account substitution, Token-2022 hooks) are outside its scope. Cross-chain composability risks are outside its scope. Novel economic attacks are outside its scope.
+**Microstable relevance**: MEDIUM — If Solana-based audit tooling (analogous to EVMBench) is used, verify it covers: PDA derivation, CPI authority, oracle staleness, per-block rate limits. AI audit tools designed for EVM have near-zero Solana coverage.
+**Defense**:
+1. Treat AI audit certifications as one signal, not a conclusion — always supplement with manual domain-expert review
+2. Explicitly list what the AI tool does NOT cover (chain-specific, compositional, economic) and commission separate review for those gaps
+3. Maintain a "benchmark shadow checklist" — vulnerability classes the adopted AI tool was not trained to detect
+4. Never reduce manual audit scope or bug bounty coverage in response to an AI tool certification
+**Source**: https://smartcontractshacking.com/learn/security/ai-assisted-smart-contract-auditing | OpenAI + Paradigm EVMBench (Feb 2026)
+
+### B52. Slow-Drip AI Memory Poisoning for Long-term Protocol Steering
+**Signal**: Microsoft Security Blog "AI as tradecraft: How threat actors operationalize AI" (2026-03-06) — documents "AI memory poisoning attacks that manipulate AI-driven decision-making, conduct influence operations, and erode trust in AI systems over time."
+**Mechanism**: Unlike B43 (single-session memory injection for immediate fund transfer), B52 targets AI agents involved in long-term governance or parameter management via persistent, low-amplitude poisoning:
+1. Attacker identifies an AI agent used for governance risk summaries, parameter recommendations, or proposal drafting
+2. Over multiple sessions, injects subtly biased information: poisoned tool outputs, crafted documents in the agent's knowledge base, manipulated RAG chunks, or systematically biased external data feeds the agent monitors
+3. Each individual session appears normal — no single response is obviously wrong
+4. Cumulatively, the agent's world model shifts: dangerous collateral is assessed as safe, attack-prone mechanisms are recommended as efficient, risky parameters are normalized
+5. The agent produces recommendations that systematically benefit the attacker's position without any single transaction being anomalous
+**Why distinct from B43 (AI Agent Memory Injection Attack)**: B43 = single injected memory event → immediate unauthorized fund transfer. B52 = many small, gradual injections over time → slow drift of the agent's judgment that steers protocol decisions without triggering anomaly detection.
+**Why distinct from B37 (Steganographic Oversight Evasion)**: B37 = cooperating malicious agents coordinating covertly. B52 = adversarial long-term manipulation of a single honest agent's memory and judgment.
+**Why distinct from B38 (Multi-turn Boundary Takeover)**: B38 = prompt drift within a conversation. B52 = persistent memory store corruption across many separate sessions over weeks/months.
+**DeFi governance specific risk**: AI agents assisting with:
+- Collateral risk assessments → recommend accepting dangerous collateral
+- Interest rate parameter recommendations → tune parameters to create favorable liquidation windows
+- Protocol upgrade proposals → draft proposals with subtle security regressions
+- Treasury allocation → gradually bias toward counterparties controlled by the attacker
+**Detection is hard because**: Temporal correlation between injections and outcomes spans days/weeks. Individual AI outputs are plausible. The agent passes single-session audits. Only analysis of drift over time reveals the manipulation.
+**Code/architecture pattern to find**:
+- AI agents with persistent memory stores (RAG, vector databases, chat history logs) that are writable by external inputs
+- Governance agents that consume external reports, market data, or news feeds as memory inputs
+- No "memory audit trail" — writes to agent memory are not logged with source attribution
+- No periodic "memory reset" or "world model refresh" policy
+**Microstable relevance**: HIGH if any AI agent assists with governance, parameter management, or risk assessment. The Agent ↔ Governance ↔ Parameter boundary is the highest-risk zone. A compromised governance AI that recommends unsafe collateral admission creates long-term protocol risk with no single attack event to block.
+**Defense**:
+1. **Ephemeral sessions for high-stakes decisions**: governance and parameter-change AI sessions must use fresh context only — no persistent memory carry-over from previous sessions
+2. **Source-bound memory**: any external data (market reports, news, tool outputs) that enters agent memory must be tagged with source provenance; agent may not treat unverified external data as authoritative for governance decisions
+3. **Recommendation auditing**: AI-generated governance recommendations must cite specific on-chain data or verified sources; "based on memory" recommendations are blocked
+4. **Human-required final gate**: all parameter changes and governance submissions require explicit human sign-off with independent on-chain data review
+5. **Periodic memory integrity checks**: sample agent memory content on a schedule; compare world-model assertions against verifiable on-chain state; flag divergence
+6. **Drift detection**: track agent recommendation patterns over time (e.g., collateral risk scores); statistically detect systematic bias toward specific outcomes
+**Source**: https://www.microsoft.com/en-us/security/blog/2026/03/06/ai-as-tradecraft-how-threat-actors-operationalize-ai/ | Princeton/Sentient Foundation AI Agents in Cryptoland (2026)
+
+| B51 EVMBench AI Auditor Benchmark Gaming | AI 자동화 감사 도구가 업계 표준이 되면, 도구의 커버리지 밖 취약점 클래스가 구조적 사각지대로 변함. "AI가 통과시켰다"는 판정이 인간 감사자의 추가 검토를 억제하며, 벤치마크 훈련 분포 외부 공격(체인 특화, 합성, 경제적)이 감사 레이더 밖에 놓임. EVMBench 같은 EVM-중심 도구는 Solana/크로스체인/신규 경제 공격에 대해 근접 제로 커버리지 (OpenAI+Paradigm EVMBench 2026-02). |
+| B52 Slow-Drip AI Memory Poisoning for Long-term Protocol Steering | 단회 B43(즉각 자금 이동용 권한 위조)와 달리 장기간 낮은 진폭의 메모리 편향 주입으로 에이전트의 세계관을 점진적으로 왜곡. 개별 세션 결과는 정상처럼 보여 탐지 불가; 주 단위 누적으로만 드리프트 확인 가능. 거버넌스/파라미터 보조 AI에서 콜래터럴 위험 과소평가·위험 파라미터 정상화로 이어짐 (Microsoft Security 2026-03-06). |
