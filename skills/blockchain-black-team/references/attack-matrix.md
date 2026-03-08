@@ -1266,3 +1266,59 @@ Block N+1:  Human Discord alert fires ~30 sec later — exploit already landed
 **Source**: https://securityboulevard.com/2026/03/purpose-built-ai-security-agent-detected-92-of-defi-contracts-vulnerabilities/ | https://www.helpnetsecurity.com/2026/03/03/enterprise-ai-agent-security-2026/ | Cecuro AI Security Research (2026-03)
 
 | B49 AI-Speed Adversary Latency Assumption Violation | 감사가 "공격자는 발견 후 수 시간~수 일 내에 실행" 모델을 암묵적으로 전제. AI 에이전트는 수천 계약을 병렬 스캔하고 조건 수렴(staleness + 경계 담보 + keeper 공백)을 블록 단위로 탐지해 단일 TX로 즉시 실행. 인간-응답-루프 의존 방어 설계(alert→human→act)는 AI 속도 공격자에 구조적으로 무효. 온체인 기계적 circuit breaker + keeper heartbeat invariant 필수. (Cecuro 2026-03: AI agent 72% known-vulnerable 계약 실제 익스플로잇 확인) |
+
+---
+
+### A50. zkVM Fiat-Shamir Public-Claim Unbound Variable Bypass
+**Signal**: OtterSec "Unfaithful Claims: Breaking 6 zkVMs" (2026-03-03) — six production zkVM systems (Jolt, Nexus, Cairo-M, Ceno, Expander, Binius64) found vulnerable to complete proof forgery via public-claim binding failure in Fiat-Shamir transcripts.
+**Mechanism**: Groth16/PLONK/STARK-based zkVMs rely on the Fiat-Shamir heuristic to make interactive proofs non-interactive. In the Fiat-Shamir transcript, the prover absorbs public data (program inputs, claimed outputs, public statement) and *then* squeezes out random challenge values. In the six affected systems, public-claim data (the values the proof claims to assert about the program's inputs/outputs) was **not absorbed into the transcript before challenge generation**. This creates a mathematical gap: the challenge values become independent of the public claims, so the verification equations in later proof steps have the statement values as **free attacker-controlled variables**. An attacker can set any statement they wish (e.g., "I ran program X with input 1 and got output $1,000,000") and compute valid proof components that satisfy the unbound verification equation — without actually executing the program or holding the witness.
+**Attack impact (blockchain context)**: If a zkVM verifier has this flaw and guards value flows (e.g., "proof that correct execution produced collateral credit"), an attacker can:
+1. Claim a deposit of $1M without depositing anything
+2. Forge an oracle attestation with arbitrary price
+3. Mint unbacked stablecoins by claiming a valid execution path that never occurred
+**Why distinct from A49 (Groth16 gamma=delta)**:
+- A49: Setup ceremony used *wrong cryptographic constants* (gamma2 == delta2) — constants are committed, flaw is in the trusted setup output
+- A50: Constants are *correct*, but the transcript *ordering* is wrong — public claims are squeezed/evaluated in the wrong sequence before being bound into the Fiat-Shamir hash, making them unbound at challenge time
+- A49 is a deployment/ceremony error; A50 is a protocol/implementation error in how the verifier constructs its transcript
+**Affected systems (OtterSec 2026-03-03 disclosure)**:
+- Jolt: `claimed_sum` unbound in GKR sumcheck challenges
+- Nexus: public-input commitment not absorbed before OODS challenges
+- Cairo-M: MLE evaluation claim unbound before FRI challenges
+- Ceno: LogUp `opening_claim` unbound in lookup challenges
+- Expander: GKR claimed values unbound before circuit challenges (Polyhedra launched public bug bounty)
+- Binius64: sumcheck claimed values unbound before polynomial commitment challenges
+**Code pattern to find**:
+```python
+# VULNERABLE: public claims absorbed AFTER challenge squeezing
+transcript.absorb(proof_commitments)
+challenge = transcript.squeeze()          # challenges don't depend on claimed_outputs!
+transcript.absorb(claimed_outputs)        # too late — challenge is already fixed
+verified = verify_sumcheck(proof, challenge, claimed_outputs)  # claimed_outputs are free variables
+
+# SAFE: absorb ALL public claims BEFORE squeezing challenges
+transcript.absorb(proof_commitments)
+transcript.absorb(claimed_outputs)        # bind claims first
+challenge = transcript.squeeze()          # now challenge cryptographically depends on claims
+verified = verify_sumcheck(proof, challenge, claimed_outputs)
+```
+**On-chain detection**:
+```bash
+# For Solidity zkVM verifier: check absorb/squeeze ordering in IOP protocol
+# Specifically: does squeeze() for any challenge appear BEFORE absorb(claimed_outputs)?
+grep -n "squeeze\|absorb\|challenge" Verifier.sol | head -40
+# Red flag: "squeeze" before "absorb(public_inputs)" for ANY challenge in the chain
+```
+**Microstable relevance**: ✅ **NOT APPLICABLE (current)** — Microstable is a Solana-native stablecoin using Pyth oracle feeds. No zkVM component exists in the current architecture. Fiat-Shamir transcript binding is irrelevant to current codebase.
+**FUTURE WATCH**: If zkVM components are ever integrated (e.g., ZK oracle attestation, privacy-preserving proof of collateral adequacy, zkCoprocessor for keeper logic), MANDATE:
+1. Third-party review of Fiat-Shamir transcript ordering — not just proof verification logic
+2. Test with "forged claim" proof (arbitrary output, no witness): must be rejected
+3. Verify affected systems (Jolt, Nexus, etc.) are patched before any integration
+4. Apply A49 + A50 auditing jointly for any ZK integration: verify setup ceremony AND transcript binding order
+**Defense**:
+1. **Binding-order audit**: ZK protocol audits must verify that ALL public claims (inputs, outputs, statement) are absorbed into the Fiat-Shamir transcript BEFORE the challenge that depends on them is squeezed
+2. **Forged-claim CI test**: for any zkVM-based system, add a test that submits a proof with false public claims (no valid witness) and confirms rejection
+3. **Protocol-level fix over library fix**: transcript binding order is a protocol property, not just a code bug; fix must be verified at the protocol spec level, not just patched in one file
+4. **Post-disclosure 72h review window**: OtterSec's disclosure confirmed the A45 copycat pattern applies to zkVM vulnerabilities; when a zkVM binding flaw is published for one system, all same-family systems should be treated as HIGH priority within 72h
+**Source**: https://osec.io/blog/2026-03-03-zkvms-unfaithful-claims/ | https://blog.polyhedra.network/expander-bug-bounty/ | https://rekt.news/default-settings
+
+| A50 zkVM Fiat-Shamir Public-Claim Unbound Variable Bypass | Jolt/Nexus/Cairo-M/Ceno/Expander/Binius64 등 6개 zkVM에서 public-claim 데이터(입출력)가 Fiat-Shamir transcript에 challenge 생성 전 바인딩되지 않음. 결과: 검증 방정식 후반부에서 statement 값이 공격자 제어 변수로 변환 → 임의 허위 명제 증명 가능 → 블록체인 컨텍스트에서 유효 예치 없이 출금/민팅. A49(gamma=delta 셋업 상수 오류)와 구별: A50은 상수 정상, transcript 흡수 순서 오류. 현재 Microstable 미해당(ZK 미사용). zkVM 통합 시 transcript 바인딩 순서 외부 감사 필수. (OtterSec 2026-03-03) |
