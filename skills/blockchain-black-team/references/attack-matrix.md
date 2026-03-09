@@ -1514,3 +1514,78 @@ const recentAddr = txHistory[0].from.slice(0,6) + '...' + txHistory[0].from.slic
 **Source**: https://finance.yahoo.com/news/crypto-influencer-sillytuna-loses-24m-071842352.html | https://www.bitget.com/news/detail/12560605240525 | https://en.spaziocrypto.com/hack/sillytuna-24-million-stolen-with-address-poisoning/ | PeckShield on-chain analysis 2026-03-04
 
 | B53 Address Poisoning + Physical Coercion Hybrid | 피해자의 트랜잭션 히스토리에 닮은 지갑 주소로 더스트 TX를 주입, 실수로 잘못된 주소로 송금 유도 (Sillytuna 2026-03-04, $24M aEthUSDC). 물리적 강압 병행. 스마트컨트랙트 버그 아님 — 모든 트랜잭션이 암호학적으로 유효. 클립보드 복사 시 전체 주소 표시, 첫 수신 주소 경고, 더스트 필터, 하드웨어 키로 방어. |
+
+### D36. HTTP Caching Layer Oracle Response Poisoning
+**Historical**: RUSTSEC-2026-0035 (`pingora-cache` <0.8.0, CVE-2026-2836, CVSS 8.4 HIGH, reported/issued 2026-03-04/05)
+**Mechanism**: Cloudflare's Pingora reverse proxy caching layer (pingora-cache) generated cache keys using **only the URI path** — excluding critical factors such as the `Host` header. An attacker exploits this by:
+1. Sending a crafted HTTP request to a Pingora-fronted proxy with a URI path matching the legitimate oracle/RPC API endpoint
+2. Supplying a different (attacker-controlled) `Host` header pointing to their own server
+3. Pingora's cache stores the attacker's forged response under the shared URI-only cache key
+4. When legitimate consumers (keeper, dashboard, RPC relay) query the same URI path, the poisoned entry is served — regardless of which host the request targets
+5. Consumers receive cross-origin stale/forged price data or config responses from cache with no network anomaly visible at the transport layer
+
+**Why distinct from D35 (HTTP Request Smuggling in pingora-core)**:
+- **D35**: Attacker exploits premature Upgrade-header byte forwarding to smuggle a second HTTP request past WAF/auth controls — an active protocol-layer attack during a single connection
+- **D36**: Attacker poisons the cache by exploiting incomplete cache key construction — a persistent, passive attack that affects all subsequent legitimate consumers using the same proxy cache. No active MITM or authentication bypass required; only HTTP request access to the shared proxy is needed.
+
+**Why distinct from B14 (RPC Manipulation)**:
+B14 requires MITM or endpoint compromise to return false chain state. D36 requires neither — the attacker only needs the ability to send HTTP requests to a Pingora-proxied endpoint to insert their response into the shared cache.
+
+**DeFi infrastructure attack chain**:
+1. Attacker identifies a keeper or oracle relay fronted by a `pingora-cache`-based caching proxy (<0.8.0)
+2. Sends a crafted HTTP GET to the proxy's exposed interface: URI path = `/api/v2/price/SOL_USD`, Host = `attacker.com`
+3. Attacker's server responds with a forged oracle price (e.g., SOL = $0.001 or $999,999)
+4. Pingora stores the response under cache key = hash(`/api/v2/price/SOL_USD`) (host excluded)
+5. Keeper's legitimate request to `pyth-oracle.example.com/api/v2/price/SOL_USD` hits the same cache key
+6. Keeper receives the poisoned price data as a cached response from a "trusted" local proxy
+7. If keeper feeds this to on-chain oracle state, the forged price propagates to all protocol users — mint/redeem/liquidation calculations operate on attacker-controlled data
+8. Pyth staleness/confidence checks in `lib.rs` still pass (the cached response can include valid-looking timestamp and confidence metadata)
+
+**Code/config pattern to find**:
+```toml
+# VULNERABLE: pingora-cache dependency below patched version
+[dependencies]
+pingora-cache = "0.7.*"   # URI-only cache key — cross-origin poisoning possible
+
+# SAFE: upgrade to patched version
+pingora-cache = "0.8.0"   # includes Host header in cache key
+
+# ALTERNATIVE: disable caching entirely for oracle/RPC paths
+# Nginx/Traefik pattern: add Cache-Control: no-store header
+location /api/v2/price/ {
+    add_header Cache-Control "no-store, no-cache, must-revalidate";
+    proxy_cache off;
+}
+```
+**Oracle response verification pattern (defense-in-depth)**:
+```rust
+// KEEPER DEFENSE: always verify response origin/provenance independently of cache
+// When fetching oracle price via HTTP, compare against on-chain Pyth state directly
+let cached_price = http_client.get(oracle_url).send().await?.json::<OracleResponse>()?;
+let onchain_price = fetch_pyth_price_from_rpc(&connection, &price_account)?;
+
+// Divergence check: cached response should match on-chain within tolerance
+let divergence = (cached_price.price - onchain_price.price).abs();
+require!(
+    divergence <= onchain_price.price * MAX_CACHE_DIVERGENCE_BPS / 10_000,
+    "Oracle cache divergence exceeds threshold — possible cache poisoning"
+);
+```
+
+**Microstable relevance**:
+- **Keeper `Cargo.toml` direct dependency**: `pingora-cache` NOT present → ✅ keeper binary is NOT directly vulnerable
+- **GCP VM (34.19.69.41)**: runs Traefik v3.6.1 (Go-based) — Traefik is NOT Pingora-based → ✅ GCP VM proxy layer unaffected
+- **Cloudflare CDN**: Cloudflare operates Pingora internally; if any oracle relay API is fronted by an operator-deployed pingora-cache <0.8.0 instance between keeper and Pyth/Switchboard, D36 applies
+- **Pyth SDK direct fetch path**: `pyth-sdk-solana = "0.10.6"` in keeper — fetches price data directly from Solana RPC, not through an HTTP caching proxy → LOW risk for primary oracle path
+- **Risk scenario**: If operator adds an HTTP caching layer for RPC load balancing or oracle rate-limit mitigation using Pingora-based tooling, any unpatched instance becomes D36-vulnerable
+- **Overall Microstable risk**: LOW (current architecture), MEDIUM (if HTTP caching proxy added to keeper path)
+
+**Defense**:
+1. **Patch**: all `pingora-cache` deployments → upgrade to >=0.8.0 immediately
+2. **No-cache for oracle/RPC paths**: add `Cache-Control: no-store` on all oracle price feed and RPC response routes — oracle data must always be fresh, never cached
+3. **Cache key verification**: if caching layer is unavoidable, explicitly include `Host`, `Authorization`, and `X-API-Key` headers in cache key construction
+4. **Cross-validation**: keeper should maintain a secondary RPC verification path; reject any oracle price that cannot be confirmed against on-chain Pyth price account state directly
+5. **Deny new caching layers by default**: any introduction of an HTTP caching proxy to the keeper-oracle path requires security review for cache key completeness and oracle-data-specific bypass rules
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0035.html | https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-2836 | https://blog.cloudflare.com/pingora-0-8-0-release/
+
+| D36 HTTP Caching Layer Oracle Response Poisoning | oracle/RPC API 경로에 캐싱 프록시를 추가하거나 기존 프록시의 캐시 키 구성을 점검하지 않는 관행. `pingora-cache` <0.8.0은 URI 경로만으로 캐시 키를 생성하여 Host 헤더를 무시한다. 공격자가 자신의 Host로 위조 응답을 캐시에 심으면, 이후 legitimate 키퍼 요청이 poisoned 오라클 가격을 캐시에서 수신한다. D35(요청 밀수입, 프로토콜 계층)와 달리 B14(MITM 불필요)와 달리, 단순 HTTP 요청 권한만으로 지속적 가격 위조 가능. RUSTSEC-2026-0035, CVE-2026-2836, CVSS 8.4 HIGH (2026-03-05). |
