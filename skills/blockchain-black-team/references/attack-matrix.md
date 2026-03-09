@@ -1588,4 +1588,33 @@ require!(
 5. **Deny new caching layers by default**: any introduction of an HTTP caching proxy to the keeper-oracle path requires security review for cache key completeness and oracle-data-specific bypass rules
 **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0035.html | https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-2836 | https://blog.cloudflare.com/pingora-0-8-0-release/
 
+### B54. Nation-State APT AI Tradecraft — DeFi Attack Capability Upgrade
+**Signal**: Microsoft Security Blog "AI as tradecraft: How threat actors operationalize AI" (2026-03-06) — documents Jasper Sleet and Coral Sleet (North Korean APT groups) systematically operationalizing AI for code analysis, targeted social engineering, and exploit generation. Halborn Feb 2026 summary confirms crypto APT campaigns continue at scale ($23.5M in one month).
+**Mechanism**: Nation-state actors historically responsible for crypto's largest thefts ($Ronin $624M, Harmony $100M, Bybit $1.5B+) now combine their established playbooks with AI capabilities:
+1. **AI-assisted vulnerability scanning**: automated code analysis across entire protocol codebases at scale — what once took weeks takes hours
+2. **Personalized spear-phishing at scale** (B36 amplified): AI generates convincing, context-specific social engineering for each target (operator devices, developer accounts, validator owners) using harvested on-chain + OSINT identity linkage
+3. **Rapid exploit code generation** (B49 amplified): upon vulnerability identification, AI generates working PoC code within minutes; full exploit chain within hours
+4. **AI-optimized laundering routes**: route selection (THORChain, mixers, bridges) optimized for speed and detection evasion using real-time on-chain analysis
+5. **Sustained multi-vector campaign**: unlike opportunistic attackers, nation-state actors sustain months-long targeted campaigns combining all of the above simultaneously
+**Why distinct from existing vectors**:
+- **vs B49 (AI-Speed Adversary)**: B49 focuses on temporal asymmetry of single-TX exploitation. B54 is about THREAT ACTOR CAPABILITY UPGRADE across the full attack lifecycle — from target selection to fund extraction to laundering
+- **vs B52 (Slow-drip memory poisoning)**: B52 is one specific technique. B54 is a campaign meta-pattern combining multiple techniques simultaneously with nation-state resources and persistence
+- **vs B36 (Social-Engineering Stake Authority)**: B36 is a specific technique category. B54 uses B36 as one weapon in a coordinated AI-enhanced arsenal
+**DeFi-specific escalation**: Nation-state actors are already responsible for the largest crypto thefts in history. AI tradecraft does not introduce new vulnerability CLASSES — it reduces the per-vulnerability COST (time/skill/capital) so attackers can operate across more targets simultaneously with less overhead per attack.
+**Attack surface for Microstable (all 4 chains)**:
+- **Keeper operator** (B54 + B36): AI-crafted spear-phish targeting keeper operator devices — now personalized using social graph from on-chain + GitHub + LinkedIn
+- **Oracle staleness window** (B54 + B49): AI detects staleness convergence opportunity and executes full flash-loan exploit within single slot window
+- **Governance** (B54 + B52): sustained campaign to bias governance AI agents over weeks using automated injection
+- **Protocol codebase** (B54 + B45): AI scans post-audit deployment delta to identify unreviewed critical-path changes before defenders notice
+**Why auditors miss it**: Security audits review code and architecture for technical flaws. Nation-state threat actor capability analysis requires a separate "threat actor model" assessment — what is the capability of the adversary, not just what is the vulnerability in the code? Most protocol audits do not include a realistic threat actor capability model, defaulting to "skilled individual attacker" assumptions that are now systematically below the actual threat bar.
+**Defense**:
+1. **Threat actor model update**: explicitly include APT-class adversary in security design — assume attacker has AI-assisted code analysis, personalized social engineering, and multi-month persistence
+2. **All operators**: hardware keys (Ledger/YubiKey) — non-negotiable given nation-state phishing sophistication. Keys that can be phished will be phished.
+3. **Device isolation**: dedicated hardened devices for keeper/signing operations, no general browsing; EDR on all operator devices (B36 defense, now APT-hardened)
+4. **Codebase exposure minimization**: assume adversary can analyze your full codebase (public or via supply chain). Treat every post-audit change as potentially known to sophisticated attackers within 24h.
+5. **24h post-exploit copycat window**: when any protocol using similar architecture (Solana oracle stablecoin, bridge with keeper) is exploited, treat Microstable as targeted within 24h — not 72h — given APT capacity for rapid exploit adaptation
+6. **Multi-layer defense coherence**: maintain a "threat campaign map" — for each known APT technique (key compromise, social engineering, code analysis), verify the corresponding Microstable defense is active and tested
+**Source**: https://www.microsoft.com/en-us/security/blog/2026/03/06/ai-as-tradecraft-how-threat-actors-operationalize-ai/ | Halborn DeFi Hack Review Feb 2026 | Chainalysis 2026 Crypto Crime Report
+
 | D36 HTTP Caching Layer Oracle Response Poisoning | oracle/RPC API 경로에 캐싱 프록시를 추가하거나 기존 프록시의 캐시 키 구성을 점검하지 않는 관행. `pingora-cache` <0.8.0은 URI 경로만으로 캐시 키를 생성하여 Host 헤더를 무시한다. 공격자가 자신의 Host로 위조 응답을 캐시에 심으면, 이후 legitimate 키퍼 요청이 poisoned 오라클 가격을 캐시에서 수신한다. D35(요청 밀수입, 프로토콜 계층)와 달리 B14(MITM 불필요)와 달리, 단순 HTTP 요청 권한만으로 지속적 가격 위조 가능. RUSTSEC-2026-0035, CVE-2026-2836, CVSS 8.4 HIGH (2026-03-05). |
+| B54 Nation-State APT AI Tradecraft — DeFi Capability Upgrade | 국가 지원 공격자(Jasper Sleet, Coral Sleet 등 북한 APT)가 AI를 체계적 무기로 운용하면서 기존 DeFi 공격 플레이북(B15 키 탈취, B36 소셜엔지니어링, B49 AI속도 익스플로잇)이 규모·지속성·타게팅 정밀도 측면에서 동시 강화됨. 단일 벡터(B49는 속도, B52는 메모리)가 아닌 조합 캠페인 전략: AI 코드 분석 → 취약점 발굴 → 개인화 스피어피싱(B36) → 자동화 익스플로잇 생성(B49) → AI-최적화 세탁 경로. 개별 공격 기법 감사로는 이 조합 위협 업그레이드를 포착하지 못함 (Microsoft Security 2026-03-06). |
