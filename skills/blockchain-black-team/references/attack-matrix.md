@@ -1466,3 +1466,51 @@ fn transfer_hook(ctx: Context<TransferHook>, amount: u64) -> Result<()> {
 
 | B51 EVMBench AI Auditor Benchmark Gaming | AI 자동화 감사 도구가 업계 표준이 되면, 도구의 커버리지 밖 취약점 클래스가 구조적 사각지대로 변함. "AI가 통과시켰다"는 판정이 인간 감사자의 추가 검토를 억제하며, 벤치마크 훈련 분포 외부 공격(체인 특화, 합성, 경제적)이 감사 레이더 밖에 놓임. EVMBench 같은 EVM-중심 도구는 Solana/크로스체인/신규 경제 공격에 대해 근접 제로 커버리지 (OpenAI+Paradigm EVMBench 2026-02). |
 | B52 Slow-Drip AI Memory Poisoning for Long-term Protocol Steering | 단회 B43(즉각 자금 이동용 권한 위조)와 달리 장기간 낮은 진폭의 메모리 편향 주입으로 에이전트의 세계관을 점진적으로 왜곡. 개별 세션 결과는 정상처럼 보여 탐지 불가; 주 단위 누적으로만 드리프트 확인 가능. 거버넌스/파라미터 보조 AI에서 콜래터럴 위험 과소평가·위험 파라미터 정상화로 이어짐 (Microsoft Security 2026-03-06). |
+
+### B53. Address Poisoning + Physical Coercion Hybrid Attack
+**Historical**: Sillytuna (2026-03-04, ~$24M aEthUSDC) — combined address-poisoning digital attack with physical violence to drain crypto assets from a long-time on-chain holder.
+**Mechanism**: Two-phase attack:
+  **Phase 1 — Digital (Address Poisoning)**:
+  1. Attacker identifies a high-value wallet (public on-chain history makes targets visible)
+  2. Generates a vanity/look-alike wallet address matching the victim's frequent counterparty: same first 4–6 hex chars AND last 4–6 hex chars
+  3. Sends tiny "dust" transactions (fractions of a cent) from the lookalike address to the victim's wallet, poisoning recent transaction history
+  4. Victim's wallet UI shows the lookalike address as a "recent sender/recipient" 
+  5. When victim next needs to send funds, they copy the lookalike address from transaction history instead of the legitimate counterpart
+  6. 23,596,293 aEthUSDC sent to attacker address in a single transaction; confirmed by PeckShield on-chain analysis
+
+  **Phase 2 — Physical (Coercion)**:
+  In the Sillytuna case, this was not purely digital misdirection — a physical attack / coercion component accompanied the digital phase. Attacker leveraged knowledge of victim's real identity (gleaned from on-chain footprint + open-source intelligence) to apply physical pressure, circumventing any digital safeguards the victim had in place.
+
+**Key distinction from B15 (Key Compromise)**: No private key was stolen. The victim was induced (digitally or by force) to sign a legitimate-looking transfer to an attacker-controlled address. All on-chain transactions were cryptographically valid.
+**Key distinction from A7 (Signature Replay)**: Not a replay; the victim signed a fresh transaction.
+**Key metric**: On-chain research shows address poisoning attacks drained >$1.2B across 2024–2026 period. This class is systematically underweighted in protocol security models because it does not exploit smart contract logic.
+**Code/UX pattern to find**:
+```javascript
+// VULNERABLE WALLET UI PATTERN:
+// Displays recent transaction addresses in truncated form only
+// User copies address from "recent" list without full verification
+const recentAddr = txHistory[0].from.slice(0,6) + '...' + txHistory[0].from.slice(-4);
+// ^ attacker-generated lookalike passes visual inspection
+
+// SAFER PATTERN:
+// 1. Full address displayed for copy (no truncation in clipboard)
+// 2. Address book verification — warn on first-time destinations
+// 3. Checksum validation (EIP-55 / Solana Base58)
+// 4. Minimum send threshold confirmation step
+```
+**Dashboard relevance for Microstable**:
+- The `index.html` "Live Transaction Feed" shows transaction signatures (not from/to addresses), so not a direct dust-injection surface
+- `walletAddressView` shows connected wallet address — rendering mechanism in `app.js` should display full address for copy actions (not truncated)
+- MEDIUM risk if a future dashboard update adds "recent counterparty" address shortcuts without full-address display
+**Microstable on-chain program**: N/A — `lib.rs` processes accounts verified at CPI/instruction level, not user transaction history
+**Keeper**: N/A — automated signing, no human-copy-paste UX
+**Defense**:
+1. Always copy full address (not truncated) to clipboard; truncated display is for readability only
+2. Add first-time-address warning: "You have not sent to this address before — confirm full address"
+3. Integrate SNS/ENS domain names as primary identifier when available; hex address as secondary
+4. For protocol operators: hardware keys (Ledger/YubiKey) require physical button confirmation — physical coercion would need device present + PIN; separate device from known location
+5. Dust filter: wallet UI should optionally hide transactions below threshold (0.001 SOL/USDC) from "recent" address list to reduce poisoning surface
+6. Operational security: high-value holders should minimize on-chain linkage to real-world identity (minimize doxxing surface that enables Phase 2)
+**Source**: https://finance.yahoo.com/news/crypto-influencer-sillytuna-loses-24m-071842352.html | https://www.bitget.com/news/detail/12560605240525 | https://en.spaziocrypto.com/hack/sillytuna-24-million-stolen-with-address-poisoning/ | PeckShield on-chain analysis 2026-03-04
+
+| B53 Address Poisoning + Physical Coercion Hybrid | 피해자의 트랜잭션 히스토리에 닮은 지갑 주소로 더스트 TX를 주입, 실수로 잘못된 주소로 송금 유도 (Sillytuna 2026-03-04, $24M aEthUSDC). 물리적 강압 병행. 스마트컨트랙트 버그 아님 — 모든 트랜잭션이 암호학적으로 유효. 클립보드 복사 시 전체 주소 표시, 첫 수신 주소 경고, 더스트 필터, 하드웨어 키로 방어. |

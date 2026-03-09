@@ -240,3 +240,69 @@ Progressive fees, circuit breaker (MINT_DEPEG_PAUSE_THRESHOLD 3%), per-slot caps
 **0 CRITICAL / 0 HIGH / 0 MEDIUM new findings.**  
 Existing ⚠️ PARTIAL items (B17, B19, D33) are carried operational items from prior cycles — no regression.  
 Matrix: 42 → **44 vectors**. Incidents timeline updated.
+
+---
+
+## 2026-03-10 Daily Check
+
+### Source Sweep (24h~7d window)
+- Reviewed: rekt.news, hacked.slowmist.io, Bitget news, Yahoo Finance, SpazioCrypto, PeckShield on-chain data, IDOSLaunchpad, AllCryptocurrencyDaily, InvEzz, Blockchain Magazine, SearXNG fallback.
+- **1 new incident-validated exploit pattern** identified: Sillytuna Address Poisoning + Physical Coercion (2026-03-04, $24M).
+- **0 new Solana-native smart contract vulnerabilities** in this window (Solv Protocol A46 from 03-06 already added 03-07).
+- Step Finance shutdown confirmed (B36 aftermath) — no new vector required.
+- B52 (AI Memory Poisoning) from Microsoft Security Blog 2026-03-06 already added in prior run.
+
+### New Patterns Added Today
+
+| Vector | Incident | Amount | Date |
+|--------|---------|--------|------|
+| **B53 (NEW): Address Poisoning + Physical Coercion Hybrid** | Sillytuna wallet (Ethereum) | ~$24M aEthUSDC | 2026-03-04 |
+
+**B53 Technical Summary**: Two-phase attack. Digital phase: attacker generates vanity look-alike wallet (matching first/last 4-6 chars of victim's regular counterpart), sends dust transactions to poison victim's transaction history, victim copies wrong address when initiating next large transfer → 23.6M aEthUSDC drained in one TX. Physical phase: coercion (violence) confirmed in reporting. All on-chain transactions cryptographically valid — no smart contract vulnerability. Class accounts for >$1.2B losses 2024–2026. PeckShield detected on-chain in real time; funds laundered via Monero.
+
+### Full 53-Vector Check Results (Microstable)
+
+**B53 Address Poisoning + Physical Coercion Hybrid** — ✅ **N/A (On-chain Program)**
+- `lib.rs` does not process user wallet transaction history; account resolution is at instruction level via Anchor accounts
+- Keeper (automated): N/A — no human copy-paste UX path
+- Dashboard (`index.html`):
+  - "Live Transaction Feed" shows transaction **signatures** only — not from/to addresses; not a dust-injection surface
+  - `walletAddressView` renders connected wallet address in HTML (line 850) — JS rendering in `app.js` not yet audited for truncation-only display
+  - ⚠️ LOW risk: if `app.js` renders address truncated in clipboard copy actions, it could create a lookalike confusion surface in future UX
+  - No "recent counterparty address" shortcuts found in current dashboard
+- **Verdict: ✅ N/A for on-chain + keeper; ⚠️ LOW residual dashboard UX risk**
+
+**A1 Reentrancy** — ✅ DEFENDED (carry-forward)
+**A2 Flash Loan + Price Manipulation** — ✅ DEFENDED (carry-forward)
+**A3 Oracle Manipulation** — ✅ DEFENDED (carry-forward)
+**A4 Access Control** — ✅ DEFENDED (carry-forward)
+**A5 Integer Overflow** — ✅ DEFENDED (carry-forward)
+**A6–A13** — ✅ DEFENDED (carry-forward)
+**A32–A36** — ✅ DEFENDED / carry-forward (no code changes detected)
+**A38–A40** — ✅ DEFENDED (carry-forward)
+**A41–A43** — ✅/⚠️ A43 partial (carry-forward)
+**A44–A52** — ✅/⚠️ N/A or carry-forward
+**A46** — ✅ N/A (SPL Token, no ERC721 path)
+**B14–B20** — ✅/⚠️ (carry-forward)
+**B29** — ✅ DEFENDED (carry-forward)
+**B35–B40** — ✅/⚠️ (carry-forward)
+**B41–B52** — ✅/⚠️ (carry-forward)
+
+**❌ HIGH (carry-forward) — B45 Post-Audit Deployment Delta**
+- Still open from 2026-03-05. Audited commit: `f327e7c6df0fae25171f0e00be316f8f7cf4a5c8`. Current delta vs audited: `adds=3281, dels=324`. No `audit-attestation.json` or CI delta gate found.
+- **Blue-team directive** (unchanged): add `audit-attestation.json`, CI-block PRs on critical path without attestation refresh, publish `last_audited_commit` on dashboard.
+
+**⚠️ MEDIUM (carry-forward) — A43 Commit/Reveal Threshold Circumvention**
+- No epoch-level cumulative drift accumulator found. Risk: repeated sub-threshold rebalances bypass commit/reveal over 160 slots.
+
+**⚠️ MEDIUM (carry-forward) — B44 SPL Delegate Drain Conduit**
+- `mint()` does not check `user_collateral.delegate` field. Protocol PDA vaults ✅ safe; user ATA delegate launder path ⚠️ unpatched.
+
+**⚠️ LOW — B53 Dashboard Residual**
+- `walletAddressView` full-address rendering in `app.js` not confirmed. Recommend: verify clipboard copy uses full Base58 address, not truncated display string.
+
+### Today's Verdict
+- New vectors added: **1 (B53 Address Poisoning + Physical Coercion Hybrid)**
+- Findings: **0 CRITICAL / 0 HIGH new** (B45 HIGH still open from 2026-03-05) / 1 LOW new (B53 dashboard UX)
+- Carry-forward: B45 HIGH, B44 MEDIUM, A43 MEDIUM, B53 LOW, D33 LOW
+- Matrix: 52 → **53 vectors**
