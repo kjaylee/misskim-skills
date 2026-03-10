@@ -1632,5 +1632,128 @@ require!(
 6. **Multi-layer defense coherence**: maintain a "threat campaign map" — for each known APT technique (key compromise, social engineering, code analysis), verify the corresponding Microstable defense is active and tested
 **Source**: https://www.microsoft.com/en-us/security/blog/2026/03/06/ai-as-tradecraft-how-threat-actors-operationalize-ai/ | Halborn DeFi Hack Review Feb 2026 | Chainalysis 2026 Crypto Crime Report
 
+---
+
+### B55. AI Agent Soul File Exfiltration (Infostealer)
+**Historical**: Vidar infostealer variant (2026-02-13) — first documented infostealer campaign specifically targeting `.openclaw/` directory. Hudson Rock documented the pattern as "transition from stealing browser credentials to harvesting the 'souls' and identities of personal AI agents." CVE-2026-25253.
+**Mechanism**: Commodity infostealer (Vidar/Redline variant) adds `.openclaw/` as a high-priority collection target alongside browser credential stores. Upon compromise of operator device:
+1. **Gateway token** (`~/.openclaw/gateway.token`): grants remote API access to the victim's OpenClaw instance
+2. **Signing keys** (`~/.openclaw/keys/`): used to authenticate agent-to-agent or agent-to-service calls
+3. **SOUL.md**: AI assistant personality, trust configuration, preferred communication style
+4. **MEMORY.md + memory/*.md**: complete operational history — trusted contacts, daily workflows, active projects, past decisions, secrets stored in plaintext context
+5. **AGENTS.md**: what tools the agent has, what it is allowed to do, what subagents it spawns
+
+Attacker outcome: a complete **behavioral digital twin** of the victim's AI agent. This enables:
+- **Ultra-precision spear-phishing**: forge messages that precisely mimic how the victim's AI assistant writes, what it references, and who it trusts
+- **AI agent impersonation**: connect to the same channels with the stolen gateway token, impersonating the victim's AI
+- **Context-poisoning preparation**: study MEMORY.md to craft future injections that the victim's AI will find plausible (B52 amplifier)
+- **Key discovery**: MEMORY.md often records where signing keys, RPC endpoints, and wallet addresses are located
+
+**Why distinct from B52 (Slow-drip memory poisoning)**:
+- B52: attacker writes malicious content INTO the agent's memory to bias future behavior
+- B55: attacker READS the agent's complete memory/soul to impersonate or amplify subsequent attacks
+
+**Why distinct from B29 (AI Agent Confused-Deputy)**: B29 exploits tool permission boundaries through prompt injection. B55 requires no prompt injection — attacker operates outside the agent entirely, using stolen files as intelligence.
+
+**Why distinct from B54 (Nation-State APT AI)**: B54 is about APT groups using AI tools to conduct external code analysis + spear-phishing. B55 is about infostealer malware specifically targeting AI agent configuration files — a commodity-level threat, not APT-class, that provides higher-quality input for any subsequent B54-class attack.
+
+**Attack chain for DeFi operators**:
+1. Operator's Mac Studio gets infected with Vidar via malicious PDF/GitHub action/npm package
+2. Infostealer exfiltrates `.openclaw/` → gateway token + MEMORY.md + AGENTS.md
+3. Attacker reads MEMORY.md: learns keeper hot key location, RPC credentials, Slack/Discord DMs with team, 2FA backup codes stored in context
+4. Attacker crafts keeper-specific phish using precise context from MEMORY.md (e.g., "following up on the Pyth staleness issue you noted March 5")
+5. Operator's AI agent (running on attacker-controlled session via stolen token) confirms the "legitimate" request from the attacker-impersonated co-worker
+6. Keeper private key transferred or protocol paused/drained
+
+**Microstable impact**: HIGH (operator risk). If Mac Studio is compromised:
+- `MEMORY.md` contains keeper operational notes and addresses → full operational context for targeted attack
+- Gateway token → attacker can interface with OpenClaw agent, appearing as the operator
+- SOUL.md → attacker learns exactly how the AI agent makes trust decisions, enabling B52-style injections that pass the agent's own judgment heuristics
+
+**Code/config pattern to find**:
+```bash
+# VULNERABLE: sensitive data in plaintext MEMORY.md
+cat ~/.openclaw/workspace/MEMORY.md | grep -E "key|password|token|RPC|seed"
+
+# VULNERABLE: gateway token stored without encryption
+ls -la ~/.openclaw/gateway.token  # world-readable or accessible to any process
+
+# SAFER: Restrict .openclaw/ directory permissions
+chmod 700 ~/.openclaw/
+chmod 600 ~/.openclaw/gateway.token
+
+# SAFER: Never store hot key paths or RPC credentials in MEMORY.md
+# Use only references to external secret managers (1Password/HSM)
+
+# Detection: monitor for unexpected reads of .openclaw/ by processes other than openclaw binary
+# macOS: use fs_usage or Endpoint Security framework to alert on cross-process reads
+```
+
+**Defense**:
+1. **Restrict `.openclaw/` permissions**: `chmod 700 ~/.openclaw/` — no world-readable agent files
+2. **Never store raw secrets in MEMORY.md**: use references (e.g., `stored in 1Password: "keeper-mainnet-key"`) not values
+3. **EDR on all operator devices**: detect infostealer exfiltration patterns (mass file reads from `.openclaw/`, network upload)
+4. **Gateway token rotation**: rotate gateway tokens weekly; invalidate immediately on any suspected device compromise
+5. **MEMORY.md sanitization**: periodic review to remove sensitive operational notes; archive completed tasks to separate encrypted store
+6. **Behavioral monitoring**: alert on new OpenClaw session from unexpected IP/device fingerprint
+7. **Hardware key for signing**: keeper hot key in hardware wallet (Ledger/YubiKey); even if MEMORY.md notes its location, the key itself is not extractable
+**Source**: https://rekt.news/identity-theft-2 | https://www.bleepingcomputer.com/news/security/infostealer-malware-found-stealing-openclaw-secrets-for-first-time/ | https://thehackernews.com/2026/02/infostealer-steals-openclaw-ai-agent.html | CVE-2026-25253
+
+---
+
+### B56. DPRK Fake Developer Insider Threat
+**Historical**: Amazon blocked 1,800+ fake North Korean IT worker applications in 2024. 300+ U.S. companies unknowingly hired DPRK operatives in 2024–2025. Multiple crypto/DeFi protocols affected. Pattern escalated in 2026: after departure, operatives hold exfiltrated code hostage for ransom; refusals lead to public data leaks.
+**Mechanism**: DPRK cyber units (IT Worker Program, Kimsuky, Lazarus Group collaboration) operate a large-scale insider threat factory:
+1. **Recruitment phase**: fabricate developer identities (stolen/synthetic personal data, forged employment history, AI-generated portfolio projects, purchased LinkedIn verification badges)
+2. **Employment phase**: pass technical interviews (genuine coding skill + AI-assisted solutions). Work remotely. Ship clean code for weeks/months to establish trust.
+3. **Exfiltration phase** (concurrent): copy entire code repositories to personal cloud; harvest developer credentials, API keys, wallet signing keys; map internal network topology; document security architecture
+4. **Monetization phase**: 
+   - Option A: sell protocol vulnerability details to exploit brokers on the dark web
+   - Option B: execute hack directly using collected access
+   - Option C (escalation): upon departure/detection, contact former employer demanding ransom for stolen data; refuse → leak to competitors or sell
+   - Option D: maintain long-term access for future strategic exploitation (Volt Typhoon "pre-positioning" model)
+
+**Why distinct from B54 (Nation-State APT AI Tradecraft)**:
+- **B54**: external APT attackers using AI tools to study public codebases and conduct spear-phishing from outside
+- **B56**: INTERNAL threat — adversary IS a team member with legitimate codebase access, commit rights, CI/CD permissions, and internal Slack/Discord access. No sophisticated external intrusion needed.
+
+**Why distinct from B15 (Key Compromise)**: B15 is about technical compromise of key infrastructure. B56 is about human infiltration — the attacker's access is legitimately granted, making it invisible to technical security controls.
+
+**DeFi-specific attack surface**:
+- **Keeper codebase**: fake developer PRs introduce subtle backdoors in error handling or timing logic
+- **Deployment scripts**: malicious additions to CI/CD pipeline capture private keys during deploy
+- **Governance documentation**: internal discussion of upcoming parameter changes creates front-running opportunities
+- **Smart contract audit bypass**: fake developer reviews own malicious PR, approves as "clean"
+- **Treasury wallet location**: internal communications reveal multi-sig signer identities and hardware wallet locations
+
+**PoC scenario (Microstable)**:
+```
+Month 1-2: DPRK operative hired as "Rust developer" for keeper improvements
+Month 2: Maps keeper hot key storage pattern from onboarding docs
+Month 2: Opens PR with "performance optimization" — adds logging of keypair path to debug output
+Month 3: Reads RPC credential rotation doc in internal Notion
+Month 4: Departs with: full Cargo.toml dependency graph, RPC credentials, keeper signing key path, team Discord access
+Week after departure: Contacts team for $1M ransom or "codebase release"
+```
+
+**Microstable impact**: HIGH (team/hiring risk). Not a code-level vulnerability — a human operational security gap. If a single DPRK operative is embedded in the keeper development team:
+- Keeper signing logic and key management approach are fully known
+- Any upcoming upgrade/patch cycle is known before deployment → front-run with exploit positioned in advance
+- Governance parameter discussion → MEV opportunity or targeted attack window
+
+**Defense**:
+1. **Identity verification protocol**: for any remote developer hire, require government ID verification through a trusted third-party provider (not self-reported); video interview with verified ID match
+2. **Restricted repository access**: new developers get read-only access to keeper/signing components for minimum 60 days; write access to critical paths requires 2+ approver review
+3. **Code review policy**: no single-reviewer approval for any keeper signing path, deployment script, or oracle integration change
+4. **Behavioral monitoring**: alert on large repository clone operations, unusual file access patterns, or bulk credential reads
+5. **Compartmentalization**: separate keeper signing keys from any developer-accessible context; production secrets in HSM with access logged and MFA-gated
+6. **Departure procedure**: immediate revocation of ALL access (code repos, Slack/Discord, cloud, RPC endpoints) upon departure or detection — no grace period
+7. **Third-party background check**: specialist DPRK IT worker detection services (CISA guidance, FBI advisory) — standard commercial background checks do not catch sophisticated fake identities
+**Source**: https://rekt.news/digital-parasites | https://www.securityweek.com/north-koreas-digital-surge-2b-stolen-in-crypto-as-amazon-blocks-1800-fake-it-workers/ | https://thehackernews.com/2026/02/dprk-operatives-impersonate.html | CISA North Korea IT Worker Advisory 2024
+
+---
+
 | D36 HTTP Caching Layer Oracle Response Poisoning | oracle/RPC API 경로에 캐싱 프록시를 추가하거나 기존 프록시의 캐시 키 구성을 점검하지 않는 관행. `pingora-cache` <0.8.0은 URI 경로만으로 캐시 키를 생성하여 Host 헤더를 무시한다. 공격자가 자신의 Host로 위조 응답을 캐시에 심으면, 이후 legitimate 키퍼 요청이 poisoned 오라클 가격을 캐시에서 수신한다. D35(요청 밀수입, 프로토콜 계층)와 달리 B14(MITM 불필요)와 달리, 단순 HTTP 요청 권한만으로 지속적 가격 위조 가능. RUSTSEC-2026-0035, CVE-2026-2836, CVSS 8.4 HIGH (2026-03-05). |
 | B54 Nation-State APT AI Tradecraft — DeFi Capability Upgrade | 국가 지원 공격자(Jasper Sleet, Coral Sleet 등 북한 APT)가 AI를 체계적 무기로 운용하면서 기존 DeFi 공격 플레이북(B15 키 탈취, B36 소셜엔지니어링, B49 AI속도 익스플로잇)이 규모·지속성·타게팅 정밀도 측면에서 동시 강화됨. 단일 벡터(B49는 속도, B52는 메모리)가 아닌 조합 캠페인 전략: AI 코드 분석 → 취약점 발굴 → 개인화 스피어피싱(B36) → 자동화 익스플로잇 생성(B49) → AI-최적화 세탁 경로. 개별 공격 기법 감사로는 이 조합 위협 업그레이드를 포착하지 못함 (Microsoft Security 2026-03-06). |
+| B55 AI Agent Soul File Exfiltration (Infostealer) | Vidar 인포스틸러 변종이 `.openclaw/` 디렉토리를 타깃으로 SOUL.md·MEMORY.md·AGENTS.md·게이트웨이 토큰·서명 키를 탈취. 공격자는 피해자 AI 에이전트의 완전한 행동 청사진(습관·신뢰 연락처·의사결정 패턴·일일 활동 로그)을 획득해 초정밀 사칭 공격 또는 AI 에이전트 위장을 가능하게 함. 기존 B52(수동 메모리 주입)·B29(혼동 대리)·B54(APT 외부 공격)와 구별: 이 벡터는 공격자가 피해자 AI의 모델 자체를 '읽어' 학습하는 것(Read/Exfil). CVE-2026-25253. DeFi 적용: keeper 운영자 Mac에서 게이트웨이 토큰·MEMORY.md 유출 시 keeper 서명 패턴과 신뢰 컨텍스트가 노출되어 고정밀 소셜 엔지니어링 가능. (rekt.news/identity-theft-2, 2026-02-13 사건) |
+| B56 DPRK Fake Developer Insider Threat | 북한 APT 공작원이 위조 신원(훔친 신분증, 가짜 LinkedIn 인증)으로 DeFi/Web3 팀 원격 개발자로 취업. 급여 수령 중 코드베이스·인프라 지도·자격증명 복사. 해고 후 데이터 인질 협박(ransom) + 거부 시 유출. B54(외부 APT 코드 분석·스피어피싱)와 구별: B56은 내부자 위협(인사 단계의 공격 벡터, 수개월~수년 장기 체류). 300+ 미국 기업 피해, Amazon이 2024년 1,800건 차단. DeFi 적용: keeper 운영 팀에 가짜 개발자 채용 시 keeper 핫키 위치·서명 로직·RPC 설정 전체 노출. (rekt.news/digital-parasites, Hacker News 2026-02) |
