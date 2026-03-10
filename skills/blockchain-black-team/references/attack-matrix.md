@@ -1757,3 +1757,65 @@ Week after departure: Contacts team for $1M ransom or "codebase release"
 | B54 Nation-State APT AI Tradecraft — DeFi Capability Upgrade | 국가 지원 공격자(Jasper Sleet, Coral Sleet 등 북한 APT)가 AI를 체계적 무기로 운용하면서 기존 DeFi 공격 플레이북(B15 키 탈취, B36 소셜엔지니어링, B49 AI속도 익스플로잇)이 규모·지속성·타게팅 정밀도 측면에서 동시 강화됨. 단일 벡터(B49는 속도, B52는 메모리)가 아닌 조합 캠페인 전략: AI 코드 분석 → 취약점 발굴 → 개인화 스피어피싱(B36) → 자동화 익스플로잇 생성(B49) → AI-최적화 세탁 경로. 개별 공격 기법 감사로는 이 조합 위협 업그레이드를 포착하지 못함 (Microsoft Security 2026-03-06). |
 | B55 AI Agent Soul File Exfiltration (Infostealer) | Vidar 인포스틸러 변종이 `.openclaw/` 디렉토리를 타깃으로 SOUL.md·MEMORY.md·AGENTS.md·게이트웨이 토큰·서명 키를 탈취. 공격자는 피해자 AI 에이전트의 완전한 행동 청사진(습관·신뢰 연락처·의사결정 패턴·일일 활동 로그)을 획득해 초정밀 사칭 공격 또는 AI 에이전트 위장을 가능하게 함. 기존 B52(수동 메모리 주입)·B29(혼동 대리)·B54(APT 외부 공격)와 구별: 이 벡터는 공격자가 피해자 AI의 모델 자체를 '읽어' 학습하는 것(Read/Exfil). CVE-2026-25253. DeFi 적용: keeper 운영자 Mac에서 게이트웨이 토큰·MEMORY.md 유출 시 keeper 서명 패턴과 신뢰 컨텍스트가 노출되어 고정밀 소셜 엔지니어링 가능. (rekt.news/identity-theft-2, 2026-02-13 사건) |
 | B56 DPRK Fake Developer Insider Threat | 북한 APT 공작원이 위조 신원(훔친 신분증, 가짜 LinkedIn 인증)으로 DeFi/Web3 팀 원격 개발자로 취업. 급여 수령 중 코드베이스·인프라 지도·자격증명 복사. 해고 후 데이터 인질 협박(ransom) + 거부 시 유출. B54(외부 APT 코드 분석·스피어피싱)와 구별: B56은 내부자 위협(인사 단계의 공격 벡터, 수개월~수년 장기 체류). 300+ 미국 기업 피해, Amazon이 2024년 1,800건 차단. DeFi 적용: keeper 운영 팀에 가짜 개발자 채용 시 keeper 핫키 위치·서명 로직·RPC 설정 전체 노출. (rekt.news/digital-parasites, Hacker News 2026-02) |
+| B57 Third-Party Signing Interface Supply Chain Attack | 프로토콜 코드와 멀티시그 정책은 모두 감사 완료이지만, 공동 서명자들이 트랜잭션을 승인하기 위해 사용하는 제3자 서명 UI(Safe Wallet, Squads Web 등)는 감사 범위 밖. 공격자가 해당 서명 앱 개발자 머신을 타협 → 악성 JS 주입 → 서명자들이 "정상 전송"으로 표시된 화면을 보고 실제로는 공격자 주소로 전액 이체하는 트랜잭션에 서명. 하드웨어 지갑과 멀티시그가 키 추출을 막지만 "키를 자발적으로 사용한 사기 서명"은 막지 못하는 구조적 final-mile 신뢰 갭. 92% 감사 통과 프로젝트 해킹의 근본 원인 — 감사 범위(코드)와 실제 공격면(운영·인프라·제3자) 불일치. Bybit $1.5B (2026-02-21). |
+
+---
+
+### B57. Third-Party Signing Interface Supply Chain Attack
+**Historical**: Bybit ($1.5B, February 21, 2025) — The largest single DeFi exploit in history. Safe{Wallet} developer's machine was compromised weeks prior via social engineering. Malicious JavaScript was injected into the Safe Wallet frontend. All required multi-sig co-signers (CEO Ben Zhou + others) approved what appeared to be a routine cold→warm wallet transfer. 401,000 ETH ($1.5B) drained in 90 seconds. Smart contracts: fully audited. Multi-sig policy: correctly enforced. Cold storage: properly implemented. The attack vector — the UI presenting the transaction for human approval — was never in any audit scope.
+
+**Mechanism**: In multi-party signing workflows, human signers depend on a SOFTWARE LAYER to translate raw transaction data into human-readable approval prompts ("Send 100 ETH to warm wallet 0xABC"). Attackers compromise this translation layer — not the signing keys, not the smart contracts, not the protocol — to present a fraudulent transaction as a legitimate one. Co-signers approve a real signature on a real transaction they believe is something else.
+
+Attack chain:
+1. Identify high-value protocol using a specific multi-sig signing application (Safe, Squads, Gnosis Safe fork, custom signing UI)
+2. Target a developer of that signing application (lower security posture than the protocol itself; often 1-2 developers with full codebase access)
+3. Compromise the developer's machine via social engineering, phishing, or supply chain (weeks of dwell time; very low noise)
+4. Inject malicious JS into the signing frontend (minified, obfuscated; appears as a minor UI update to the signing app's CI pipeline)
+5. Wait for a legitimate signing ceremony that coincides with the fraudulent transaction payload
+6. All co-signers see "Routine cold→warm transfer: 100 ETH" but are signing "Transfer all ETH to attacker address"
+7. Transaction executes; blockchain is immutable; detection takes 8+ minutes; laundry begins immediately
+
+**Why distinct from existing entries**:
+- **B45 (Post-Audit Deployment Delta)**: B45 = YOUR protocol's code changes after YOUR audit. B57 = THIRD-PARTY signing software is compromised; the protocol's own code is unchanged and audit-current.
+- **D26 (Frontend Injection)**: D26 = attacker injects into your own protocol's web frontend (e.g., malicious token approval on your dApp). B57 = attacker compromises a THIRD-PARTY signing tool that your operators depend on for key custody ceremony — higher trust assumption, no security team review.
+- **B15 (Key Compromise)**: B15 = private key material is extracted and used by attacker. B57 = keys are NEVER extracted; owners use them voluntarily. Hardware wallets and MPC provide zero protection — the transaction IS legitimate, only its displayed description is fraudulent.
+- **B36 (Social Engineering → Key Transfer)**: B36 = direct social engineering to get operator to transfer keys. B57 = indirect social engineering of a THIRD-PARTY developer, then technical deception of the signing ceremony.
+- **B55 (Soul File Exfiltration)**: B55 = passive read of operator context files. B57 = active transaction forgery via UI layer deception.
+
+**The "Final Mile Trust Gap"** (Purple meta insight):
+- Hardware keys + multi-sig protect keys FROM extraction, but NOT from being willingly used to sign a fraudulent transaction
+- Hardware wallets display the SAME data the compromised software provides; they cannot independently verify "what this transaction means in business terms"
+- Multi-sig multiplies signing ceremonies → increases third-party UI attack surface (more developers maintaining the signing tool, more machines that must be uncompromised, more CI/CD pipelines that inject the frontend)
+- The "Audited ✓" badge covers the protocol; it says nothing about the tool used to operate the protocol
+
+**Code/config pattern to find** (operational risk indicators):
+```bash
+# HIGH RISK: Single signing tool provider for all co-signers
+# All 5 signers use Safe Wallet web app → one frontend compromise = all signers deceived
+
+# CHECK: Do any signers use independent, locally-built signing interfaces?
+# CHECK: Is the signing app's frontend served from a CDN with subresource integrity (SRI) enforcement?
+# CHECK: Is the signing app's source code commit hash pinned and verified before each ceremony?
+
+# SAFER: Transaction verification via MULTIPLE independent paths
+# 1. Signing UI shows human-readable description
+# 2. Hardware wallet displays raw hex calldata — signer verifies bytes independently
+# 3. Separate CLI tool (locally compiled, not from browser) decodes and displays the same calldata
+# 4. All three must agree before any signer approves
+```
+
+**Microstable impact**: HIGH (governance). 
+- **Keeper hot key (direct signing, no UI)**: Lower B57 exposure — keeper signs algorithmically, no human-facing translation layer in the loop during normal operation
+- **Admin/upgrade multi-sig (Squads/Safe)**: HIGH exposure. Any protocol upgrade, parameter change requiring admin multi-sig uses a signing UI. If Microstable uses Squads (Solana multi-sig), each co-signer's browser session and the Squads web app are potential B57 attack surfaces
+- **Critical parameter ceremonies**: Fee updates, oracle config changes, circuit breaker parameter adjustments that require multi-sig → each ceremony is a B57 attack window
+
+**Defense**:
+1. **Multi-path transaction verification**: Before approving any multi-sig transaction, independently decode and verify the calldata via at minimum TWO different tools (e.g., signing UI + `solana decode-transaction` in CLI). Both must agree.
+2. **Signing UI source integrity**: Enforce Content-Security-Policy + Subresource Integrity (SRI) hashes on signing frontend; any hash mismatch = signing session aborted. Re-verify SRI on every signing ceremony.
+3. **Separate signing devices**: Each co-signer uses a DEDICATED signing device (no general browsing, no email, no external software installation) for multi-sig ceremonies. B57 requires compromising signer machines; air-gapped or signing-dedicated devices make this prohibitively expensive.
+4. **Hardware wallet raw data display**: Require that each signer reads the raw calldata bytes from their hardware wallet display (Ledger, Trezor) and verbally confirms the critical fields (destination address, amount) independently before signing.
+5. **Locally-compiled verification tool**: Before any significant signing ceremony (>10 SOL equivalent), require each signer to run a locally-compiled (not downloaded binary), open-source transaction decoder that outputs structured calldata independently of the signing UI.
+6. **Signing app pinning**: Pin the specific commit hash of the signing application's frontend to CI; any divergence from the pinned hash triggers a mandatory ceremony pause and out-of-band review.
+7. **Ceremony timing controls**: Restrict high-value signing ceremonies to business-hours windows with mandatory dual-confirmation latency (e.g., 24-hour waiting period for transactions >$1M equivalent), reducing the attacker's ability to trigger a ceremony at an opportune moment.
+**Source**: https://markaicode.com/smart-contract-audit-failures-2025/ | Bybit post-mortem (Feb 2025, $1.5B) | https://safe.global/blog/bybit-incident-response (Safe Wallet response) | CISA Supply Chain Security Advisory 2025
+
