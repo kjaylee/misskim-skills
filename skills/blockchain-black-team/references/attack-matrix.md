@@ -1,4 +1,4 @@
-# Attack Matrix — 42+ Vectors with Historical Mechanisms & Defense Patterns
+# Attack Matrix — 54+ Vectors with Historical Mechanisms & Defense Patterns
 
 ## A. Smart Contract Vectors
 
@@ -52,17 +52,33 @@ let usd_price = cbeth_eth_ratio; // missing * eth_usd
 **Defense**: `max_staleness_slots`, `min_confidence_ratio`, `price_status == Trading`, explicit unit normalization (`ratio * base_usd`), on-chain price sanity bands, multi-oracle fallback.
 
 ### A4. Access Control
-**Historical**: Ronin ($624M — 5/9 validator keys), Wormhole ($320M — guardian signature bypass), Poly Network ($611M — role verification bypass)
+**Historical**: Ronin ($624M — 5/9 validator keys), Wormhole ($320M — guardian signature bypass), Poly Network ($611M — role verification bypass), Gondi NFT platform (2026-03-10, $230K — Purchase Bundler missing asset owner/borrower verification)
 **Mechanism**: Missing or bypassable authorization checks allow unauthorized callers to execute privileged operations.
 **Solana specific**: Missing `has_one`, `constraint`, signer checks on authority accounts.
+**2026 reinforcement (Gondi)**: The `Purchase Bundler` function in Gondi's `Sell & Repay` contract (deployed Feb 20, 2026) verified that the caller was authorized to invoke the bundler, but failed to separately verify that the caller was the actual owner or borrower of the specific NFT being operated on. Attacker exploited this to drain 78 NFTs ($230K: 44 Art Blocks, 10 Doodles, 2 Beeple works). Key sub-pattern: function-level authorization ≠ asset-level ownership verification — both checks are required.
 **Code pattern to find**:
 ```rust
-// VULNERABLE: no authority check
+// VULNERABLE: checks caller can invoke the bundler, but not that caller owns THIS asset
+pub fn purchase_bundler(ctx: Context<Bundler>, nft_id: u64) -> Result<()> {
+    require!(ctx.accounts.caller.is_signer, ErrorCode::Unauthorized);
+    // MISSING: require!(nft.owner == caller || loan.borrower == caller)
+    execute_on_behalf_of(nft_id);
+}
+
+// VULNERABLE (Solana): user position operation without owner re-check
+pub fn close_position(ctx: Context<ClosePosition>, position_id: u64) -> Result<()> {
+    // Missing: require_keys_eq!(position.owner, ctx.accounts.user.key())
+    // Checks only that signer is a keeper, not that position belongs to target user
+}
+
+// SAFE: dual-check — function authorization AND asset ownership
 pub fn admin_withdraw(ctx: Context<AdminWithdraw>) -> Result<()> {
-    // missing: require!(ctx.accounts.authority.key() == expected)
+    require_keys_eq!(ctx.accounts.authority.key(), TRUSTED_AUTHORITY, ErrorCode::Unauthorized);
+    require_keys_eq!(vault.owner, ctx.accounts.authority.key(), ErrorCode::WrongOwner);
 }
 ```
-**Defense**: Anchor `has_one`, `constraint`, explicit signer verification, multisig for critical ops.
+**Defense**: Anchor `has_one`, `constraint`, explicit signer verification, multisig for critical ops. **For bundler/batch functions**: separately verify both (a) caller's authorization to invoke the function AND (b) caller's ownership/borrower status for each specific asset operated on.
+**Source (Gondi)**: https://www.theblock.co/post/392909/nft-platform-gondi-moves-users-whole-230000-contract-exploit | https://hacked.slowmist.io/
 
 ### A5. Integer Overflow/Underflow
 **Historical**: Compound ($147M — distribution math error), multiple early Solidity contracts

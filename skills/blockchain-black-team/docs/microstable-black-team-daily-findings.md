@@ -306,3 +306,64 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - Findings: **0 CRITICAL / 0 HIGH new** (B45 HIGH still open from 2026-03-05) / 1 LOW new (B53 dashboard UX)
 - Carry-forward: B45 HIGH, B44 MEDIUM, A43 MEDIUM, B53 LOW, D33 LOW
 - Matrix: 52 → **53 vectors**
+
+---
+
+## 2026-03-11 Daily Check
+
+### Source Sweep (24h~48h window: 2026-03-10 ~ 2026-03-11)
+- Reviewed: rekt.news, hacked.slowmist.io, Bitget news, BTCC, QuillAudits exploit analyses, Brave Search, fallback SearXNG.
+- **1 new incident** identified: Gondi NFT platform (2026-03-10, ~$230K).
+- No new Solana-native smart contract vulnerabilities this window.
+- B54 (Nation-State APT AI Tradecraft) and D36 (HTTP Caching Oracle Poisoning) already documented from prior cycle.
+- No new CVEs affecting Solana/Anchor or Microstable's Rust dependency set detected.
+
+### New Patterns Added Today
+
+| Vector | Incident | Amount | Date |
+|--------|---------|--------|------|
+| **A4 reinforced — NFT Purchase Bundler Missing Asset Owner Verification** | Gondi NFT Platform (Ethereum) | ~$230K (78 NFTs) | 2026-03-10 |
+
+**A4 Reinforcement Technical Summary**: Gondi's `Purchase Bundler` function in the `Sell & Repay` contract (deployed 2026-02-20) verified function-level caller authorization but not asset-level ownership. The function checked "is caller allowed to invoke this bundler?" but omitted "is caller the actual owner or borrower of this specific NFT?" Attacker exploited the gap to drain 78 NFTs (44 Art Blocks, 10 Doodles, 2 Beeple) worth $230K. Key generalization: any bundler/batch function that operates on user assets must independently verify both (a) caller's right to invoke the function AND (b) caller's ownership/authorization for each specific asset. Attack source confirmed: https://hacked.slowmist.io/
+
+### Full 54-Vector Check Results (Microstable)
+
+**A4 Access Control (Gondi sub-pattern: NFT Purchase Bundler Missing Asset Owner Verification)**
+- `lib.rs` `mint()`: `token::transfer_checked(authority: ctx.accounts.user.to_account_info())` — SPL Token enforces user signature as transfer authority. No bundler pattern. ✅ DEFENDED
+- `lib.rs` `redeem()`: similarly user-signed transfer authority. ✅ DEFENDED
+- `lib.rs` `claim_stake()`: triple-verification: `require_keys_eq!(claimant, agent)`, `require_keys_eq!(record.agent, agent)`, `require_keys_eq!(escrow.agent, agent)` — no impersonation path. ✅ DEFENDED
+- `lib.rs` `rebalance()`: 2-of-3 keeper quorum required; no user-specific asset targeted. ✅ DEFENDED
+- No "Purchase Bundler"-style function that operates on user-owned assets exists in lib.rs. ✅ N/A (structural prevention)
+- **Verdict: ✅ DEFENDED — Gondi A4 variant does not apply to Microstable's architecture**
+
+**A1–A3, A5–A13 (carry-forward)** — ✅ DEFENDED (no code changes detected)
+**A32–A43, A44–A52 (carry-forward)** — ✅/⚠️ carry-forward from 2026-03-10
+**A46** — ✅ N/A (SPL Token, no ERC721 path)
+**A49** — ✅ N/A (no ZK verifier)
+**A50** — ✅ N/A (no zkVM)
+**B14–B20, B29, B35–B40, B41–B54 (carry-forward)** — ✅/⚠️ carry-forward from 2026-03-10
+**D26–D36 (carry-forward)** — ✅/⚠️ carry-forward from 2026-03-10
+
+### Carry-Forward Open Items (unchanged)
+
+**❌ HIGH (carry-forward) — B45 Post-Audit Deployment Delta**
+- Open since 2026-03-05. Audited commit: `f327e7c6df0fae25171f0e00be316f8f7cf4a5c8`. Current delta vs audited baseline: `adds=3281, dels=324`. No `audit-attestation.json` or CI delta gate exists.
+- **Blue-team directive**: add `audit-attestation.json`, CI-block PRs on critical path without attestation refresh, publish `last_audited_commit` on dashboard. URGENT — the B54 (Nation-State APT AI Tradecraft) assessment from 2026-03-10 notes that AI-assisted attackers can scan the unreviewed deployment delta within 24h.
+
+**⚠️ MEDIUM (carry-forward) — A43 Commit/Reveal Threshold Circumvention**
+- No epoch-level cumulative drift accumulator found. Risk: repeated sub-threshold rebalances (each <4% turnover) bypass commit/reveal over 160 slots.
+- Blue-team directive: add per-epoch cumulative turnover accumulator; trigger commit/reveal when epoch sum crosses LARGE_REBALANCE_THRESHOLD.
+
+**⚠️ MEDIUM (carry-forward) — B44 SPL Delegate Drain Conduit**
+- `mint()` does not validate `user_collateral.delegate` field. Protocol PDA vaults are unaffected; however, if a user's collateral ATA has an attacker-controlled delegate set from a prior dApp interaction, the attacker could silently drain collateral from that ATA without the user re-signing. The protocol's `transfer_checked` uses the USER as the authority, so this only applies if the ATA already has a delegate set.
+- Blue-team directive: add `require!(ctx.accounts.user_collateral_ata.delegate.is_none(), ErrorCode::DelegatePresent)` in `mint()` to reject ATAs with active delegates.
+
+**⚠️ LOW (carry-forward) — B53 Dashboard Residual**
+- `walletAddressView` full-address clipboard rendering not confirmed in `app.js` (file not audited). Low risk.
+
+### Today's Verdict
+- New incidents found: **1 (Gondi 2026-03-10, $230K — A4 Access Control reinforcement)**
+- New attack vectors added: **0** (Gondi maps to existing A4 sub-pattern)
+- Findings: **0 CRITICAL / 0 HIGH new** (B45 HIGH still open since 2026-03-05) / **0 MEDIUM new** / **0 LOW new**
+- Carry-forward: B45 HIGH, B44 MEDIUM, A43 MEDIUM, B53 LOW, D33 LOW
+- Matrix: **54 vectors** (no new vector added today; A4 reinforced with Gondi sub-pattern)
