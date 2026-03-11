@@ -1819,3 +1819,110 @@ Attack chain:
 7. **Ceremony timing controls**: Restrict high-value signing ceremonies to business-hours windows with mandatory dual-confirmation latency (e.g., 24-hour waiting period for transactions >$1M equivalent), reducing the attacker's ability to trigger a ceremony at an opportune moment.
 **Source**: https://markaicode.com/smart-contract-audit-failures-2025/ | Bybit post-mortem (Feb 2025, $1.5B) | https://safe.global/blog/bybit-incident-response (Safe Wallet response) | CISA Supply Chain Security Advisory 2025
 
+
+| B58 QUIC Transport Panic DoS — Solana RPC Liveness Attack | Solana 네트워크는 2022년부터 QUIC(quinn-proto)를 검증자·RPC 전송 레이어로 사용. RUSTSEC-2026-0037(CVE GHSA-6xvm-j4wr-6v98, CVSS 8.7 HIGH, 2026-03-09): quinn-proto <0.11.14에서 유효하지 않은 QUIC 전송 파라미터 수신 시 panic 발생 → 엔드포인트 연결 드롭. 공격자가 keeper의 Solana RPC QUIC 연결을 반복 중단시켜 오라클 업데이트 실패→ stale price → circuit breaker 오발동 또는 가격 보호 해제. D35(HTTP Request Smuggling, HTTP/1.1 프록시 계층)·B47(리더 격리, 검증자 수준)과 달리, QUIC 전송 프로토콜 파싱 레이어를 네트워크 무인증 접근만으로 공략. `solana-client 2.3.x`의 `solana-quic-client` 전이 의존성으로 quinn-proto 0.11.13이 포함됨. |
+| B59 AI-Assisted Code Co-author Review Accountability Gap | AI 코드 공동 저자(Claude, GPT 등)가 복합 오라클 공식을 구현하고, 인간 리뷰어가 "AI가 기본 수식 오류를 낼 리 없다"는 암묵적 가정으로 독립 수학 검증을 생략. Moonwell MIP-X43(2026-02-15, $1.78M): Claude Opus 4.6 공동 저자 커밋에서 cbETH/USD = cbETH/ETH 비율(×ETH/USD 누락). 가격 $2,200 → $1.12 → 청산봇 4분 내 1,096 cbETH 강제청산. B51(AI 감사 도구 벤치마크 우회)과 구별: B51은 AI 감사 도구가 기존 버그를 놓침. B59는 AI 코드 저자가 신규 수식 오류를 도입하고 인간 리뷰어가 "AI 신뢰 편향"으로 검증 생략. DeFi 적용: 거버넌스 투표로 승인되는 오라클 설정 변경·파라미터 업그레이드에 AI 생성 코드가 포함될 때 복합 가격 공식 독립 검증이 누락되면 청산 엔진 전체가 오작동 |
+
+---
+
+### B58. QUIC Transport Panic DoS — Solana RPC Liveness Attack
+**Historical**: RUSTSEC-2026-0037 (quinn-proto <0.11.14, CVE GHSA-6xvm-j4wr-6v98, CVSS 8.7 HIGH, reported March 9, 2026). Receiving QUIC transport parameters containing invalid values triggers an unwrap() panic in the transport parameter parsing code — endpoint drops connection, no crash recovery until process restart. Confirmed in quinn-rs/quinn PR#2559.
+
+**Mechanism**: Solana uses QUIC (quinn-proto) for its high-throughput transaction submission and RPC connectivity layer (introduced with QUIC transport protocol, active by default on mainnet validators and RPC nodes). DeFi keepers connecting to Solana RPC nodes via `solana-quic-client` (a transitive dep of `solana-client`) inherit this vulnerability when their quinn-proto version is <0.11.14.
+
+Attack chain for keeper disruption:
+1. Identify keeper's Solana RPC endpoint (often deterministic: public RPCs like mainnet-beta, Helius, QuickNode, or operator's own node — identifiable from on-chain transaction sender patterns)
+2. Send crafted QUIC Initial packet with malformed transport parameters to the keeper's QUIC endpoint
+3. quinn-proto panic triggers → connection drops → `solana-quic-client` reconnect loop begins
+4. Repeat packet at keepalive intervals → persistent reconnect storm → oracle update failures accumulate
+5. Keeper cannot submit oracle update transactions → prices become stale → on-chain oracle staleness guard fires (legitimate circuit breaker)
+6. Protocol enters degraded mode: minting/redemption halted without any smart contract exploit
+
+**Why distinct from existing entries**:
+- **D35 (HTTP Request Smuggling)**: D35 targets HTTP/1.1 proxies between keeper and RPC. B58 targets the QUIC protocol layer directly — no proxy involved.
+- **B47 (Deterministic Leader-Schedule DoS)**: B47 exhausts Solana validator leader bandwidth. B58 targets the keeper-side QUIC client connection — no validator-level access needed.
+- **D36 (Cache Poisoning)**: D36 modifies oracle data content. B58 disrupts connectivity entirely — no oracle data modified.
+
+**Code/config pattern to find**:
+```toml
+# keeper/Cargo.toml (or Cargo.lock):
+solana-client = "2.3.x"  
+# → transitive: solana-quic-client → quinn-proto v0.11.13 (VULNERABLE, need >=0.11.14)
+
+# Verify with:
+# cargo tree | grep quinn-proto
+# quinn-proto v0.11.13 (vulnerable) vs v0.11.14+ (patched)
+```
+
+**Microstable impact**: HIGH (DIRECT).
+- Keeper `Cargo.lock`: `quinn-proto v0.11.13` confirmed via `cargo tree`.
+- `solana-client 2.3.0` → `solana-quic-client` → `quinn v0.11.9` → `quinn-proto v0.11.13` (unpatched).
+- Attack: adversary sends malformed QUIC transport parameters to keeper's RPC QUIC endpoint → keeper process panics on the quinn-proto side → oracle update submission halted → dependent on reconnect timing.
+- **Realistic attack**: keeper process itself may not panic (Solana abstracts QUIC in its client layer), but the RPC server's quinn-proto could be targeted if keeper's own RPC server process uses quinn-proto; OR keeper is affected if solana-quic-client exposes a QUIC server component.
+- Either way: upgrade `solana-client` to a version with `quinn-proto >=0.11.14` in its transitive deps.
+
+**Defense**:
+1. **Upgrade solana-client**: Update to a version that pulls `quinn-proto >=0.11.14`. File: `keeper/Cargo.toml`. Run `cargo update quinn-proto` + verify with `cargo tree | grep quinn-proto`.
+2. **Pin quinn-proto directly**: Add `quinn-proto = ">=0.11.14"` as explicit dependency in keeper/Cargo.toml to prevent regression.
+3. **RPC fallback list**: Keeper should maintain multiple RPC endpoint fallbacks; connection drop to one RPC should trigger automatic failover within <5 seconds (prevents sustained oracle staleness from single-endpoint DoS).
+4. **QUIC endpoint access control**: If keeper has any QUIC-listening server component, restrict inbound QUIC to known IP ranges (operator's own infrastructure only).
+5. **Heartbeat monitoring**: Alert on keeper oracle update gaps >2 consecutive slots — distinguishes connectivity DoS from other liveness issues early.
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0037.html | https://github.com/quinn-rs/quinn/pull/2559 | CVSS 8.7 HIGH (2026-03-09)
+
+---
+
+### B59. AI-Assisted Code Co-Author Review Accountability Gap
+**Historical**: Moonwell MIP-X43 (February 15, 2026, $1.78M bad debt). Governance proposal MIP-X43 enabled Chainlink OEV wrapper contracts across Moonwell's core markets. The cbETH oracle configuration commit was co-authored by Claude Opus 4.6. The compound formula should be: `cbETH_price_USD = cbETH_ETH_ratio × ETH_USD_price`. The commit implemented only the first factor — cbETH/ETH ratio ≈ 1.12 — without multiplying by ETH/USD (~$2,200). Result: cbETH priced at $1.12 instead of ~$2,470. Liquidation bots responded within 4 minutes; 1,096 cbETH seized at artificially suppressed prices. Protocol left with $1.78M bad debt. "The commit was co-authored by Claude Opus 4.6" — cited in post-mortem as the first confirmed major DeFi exploit attributable to vibe-coded (AI-assisted, human-rubber-stamped) smart contract changes.
+
+**Mechanism**: The new threat model is not "AI auditor misses existing bugs" (B51) — it is "AI code generator introduces plausible-looking but mathematically incorrect formulas that human reviewers don't independently verify."
+
+Root cause pattern:
+1. Developer uses AI assistant to generate oracle integration code
+2. AI produces syntactically correct, structurally coherent code that passes linting/formatting
+3. The compound formula has a missing or incorrect multiplicative factor (a single-step error in a multi-step derivation)
+4. Human reviewer: sees AI authorship, checks syntax/structure, approves — does NOT independently derive the formula from first principles
+5. Governance vote: sees "AI co-authored, developer reviewed, tests pass" → approves
+6. Tests themselves were insufficient: unit tests may have mocked oracle values without testing formula correctness against real market data
+7. Live deployment: liquidation engine uses the wrong price; bots arbitrage immediately
+
+**Why distinct from existing entries**:
+- **B51 (EVMBench AI Auditor Benchmark Gaming)**: B51 = AI AUDIT TOOLS fail to detect existing bugs in code they review. B59 = AI CODE AUTHORS introduce new errors that HUMAN reviewers fail to catch due to "AI trust bias" (assuming AI code is more reliable than human code for mechanical formula derivation).
+- **A3 (Oracle Price Manipulation)**: A3 = attacker actively manipulates price inputs. B59 = oracle formula is permanently misconfigured at deployment — no active manipulation needed; bots respond to the (wrong) correct price.
+- **D14 (Oracle Staleness)**: D14 = price feed becomes stale (time-based). B59 = price feed is always fresh but always wrong (formula-based error).
+- **B49 (AI-Speed Adversary)**: B49 = attacker uses AI to exploit faster. B59 = the legitimate development team uses AI to introduce the vulnerability.
+
+**The "AI Trust Bias" pattern** (Red Team insight):
+- Human reviewers apply stricter scrutiny to code they know was written by a junior developer than to code they know was written by a senior or AI.
+- This is inverted from security-correct behavior: AI systems confidently produce plausible-looking incorrect formulas, especially for domain-specific derivations (DeFi oracle compound formulas, interest rate models, fee calculations).
+- Governance voters do not independently verify mathematical formulas — they rely on the developer review trail.
+- The new attack surface is: compromise the human review step by ensuring the code appears AI-authored and structurally clean.
+
+**Code/config pattern to find** (red team oracle audit):
+```python
+# For any oracle config change in a DeFi governance proposal:
+# 1. Is this a compound formula (two or more price feed multiplicands)?
+# 2. Was the formula independently verified by a non-AI reviewer?
+# 3. Was the formula tested against live market prices (not mocked values)?
+
+# cbETH pattern (Moonwell):
+# WRONG:  price_usd = cbeth_eth_ratio  # missing × eth_usd
+# RIGHT:  price_usd = cbeth_eth_ratio * eth_usd_price
+
+# Microstable compound formula risk pattern (future):
+# If any collateral is added that uses an exchange-rate-based price
+# (LST, LRT, yield-bearing stablecoin), the formula MUST be:
+# collateral_price_usd = on_chain_exchange_rate × base_asset_price_usd
+```
+
+**Microstable impact**: LOW (current) → MEDIUM-HIGH (future collateral expansion).
+- Current: all collaterals are direct stablecoins (USDC, USDT, DAI, USDS) with single direct USD Pyth feeds. No compound formula needed. ✅
+- Risk trigger: if Microstable adds LST (e.g., mSOL, stSOL, jitoSOL), yield-bearing stablecoins (e.g., sUSDC), or any token priced via an exchange rate × base asset formula → B59 exposure activates immediately on any oracle config governance change.
+- The governance approval flow for oracle parameter changes (currently admin multi-sig) becomes the B59 attack surface if AI tooling is involved in drafting the change.
+
+**Defense**:
+1. **Independent formula verification policy**: Any oracle integration involving compound formulas (two or more price feed multiplicands) requires independent mathematical derivation by a non-AI reviewer before governance submission.
+2. **Live price integration test**: Before mainnet deployment, test oracle formula against live market data (not mocked values). Assert that output matches CoinGecko/CoinMarketCap price ±2%.
+3. **AI co-author flag**: When a commit is AI co-authored, trigger an automatic "compound formula review required" step in CI that blocks merge until a human certifies formula correctness.
+4. **Circuit breaker price sanity check**: Add a sanity check in the oracle config: if any collateral price deviates from its 30-day moving average by >50%, halt liquidations and page the team for manual review before any automated action.
+5. **Governance proposal simulator**: Before voting on any oracle config change, run the proposal's new config against the last 30 days of market data to verify no anomalous liquidation events would have occurred.
+**Source**: https://rekt.news/moonwell-rekt | Moonwell forum post MIP-X43 incident summary | Wazz (@wazzcrypto) thread 2026-02-15 | Patrick Collins / SlowMist response threads
