@@ -1,6 +1,61 @@
 
 ---
 
+## 2026-03-12 Daily Check
+
+### Source Sweep (24h window)
+- Sources checked: rekt.news, hacked.slowmist.io (live fetch), Halborn blog, Brave search, web_fetch on confirmed incident URLs
+- **No new DeFi incidents** in March 11–12 window. SlowMist last entry: 2026-03-10 Gondi ($230K, A4 reinforcement).
+- 0 new vectors this cycle. Matrix holds at **79 vectors**.
+
+### Pattern Reinforcement: Gondi A4 (2026-03-10, confirmed March 12 sweep)
+- Gondi NFT Platform `Purchase Bundler` function (Sell & Repay contract, deployed 2026-02-20): verified caller authorization for bundle invocation but did NOT separately verify caller ownership/borrower status for each specific NFT operated on.
+- 78 NFTs drained ($230K: 44 Art Blocks, 10 Doodles, 2 Beeple). All transfers cryptographically valid.
+- **Meta pattern confirmed**: any batch/multicall abstraction where the calling-function-level auth check is separated from the per-asset ownership check creates a dual-authorization gap. This is architecturally identical to keeper-batch operations over user positions in Microstable — if a future `batch_redeem()` or `batch_liquidate()` function is added, it MUST independently re-verify per-position ownership at the element level.
+
+### Full 79-Vector Microstable Security Check
+
+#### ❌ HIGH — B45 Post-Audit Deployment Delta (CARRY-FORWARD, STILL OPEN)
+- `/Users/kjaylee/.openclaw/workspace/microstable/security/audit-attestation.json`: **NOT FOUND** — confirmed absent again today
+- Delta vs audited commit `f327e7c6df0fae25171f0e00be316f8f7cf4a5c8`: adds=3,281 lines, dels=324 lines, zero CI-gated delta tracking
+- **Status**: 7-day-old open HIGH finding. Every additional day without attestation gate widens the unreviewed production surface.
+- **Blue-team directive (re-escalated)**: Create `security/audit-attestation.json`, add CI gate to block critical-path PRs without attestor sign-off, publish `last_audited_commit` to dashboard security section.
+
+#### ⚠️ MEDIUM — A43 Commit/Reveal Threshold Circumvention (CARRY-FORWARD, STILL OPEN)
+- `lib.rs:1579` — `if turnover >= LARGE_REBALANCE_THRESHOLD { verify_commit_reveal() }` — per-call check only
+- No cumulative drift accumulator found: `grep -n "cumulative|epoch_drift|period_drift|window_drift" lib.rs` → no results
+- Attack path: 5× calls with `turnover = 3.9%` (just below 4% threshold) over 5 × 32 slots = 160 slots (~64s) achieves equivalent of a 19.5% single-step rebalance without any commit/reveal ceremony
+- **Blue-team directive**: add `epoch_weight_start[4]` snapshot and `cumulative_drift: u64` field to `ProtocolState`; accumulate `|current_weight - epoch_start_weight|` per `rebalance()` call; trigger commit/reveal when sum exceeds threshold.
+
+#### ⚠️ MEDIUM — B44 SPL Token Account Persistent Delegate Drain (CARRY-FORWARD, STILL OPEN)
+- `lib.rs` `mint()` instruction: `authority: ctx.accounts.user.to_account_info()` used for transfer_checked — no `delegate.is_none()` check on `user_collateral_ata`
+- `grep -n "delegate" lib.rs` → 0 results
+- Protocol funds: ✅ safe (PDA-owned vault ATAs, no external delegate possible)
+- User-side gap: an attacker holding a stale `Approve`-granted delegation on victim's USDC ATA can drain victim funds into Microstable (attacker receives MSTB, victim's collateral is locked in protocol)
+- **Blue-team directive**: `require!(ctx.accounts.user_collateral_ata.delegate.is_none(), ErrorCode::DelegateNotAllowed)` in `mint()` accounts validation.
+
+#### ⚠️ LOW — D26 Self-Hosted Vendor Script Without SRI Hash (NEW THIS CYCLE)
+- `docs/index.html:994`: `<script src="./vendor/solana-web3-1.95.3.iife.min.js"></script>` — no `integrity=` attribute
+- CSP `script-src 'self'` prevents external script injection ✅, but does not verify integrity of same-origin served files
+- If the server/repository is compromised, a modified `solana-web3.iife.min.js` would load silently with no hash mismatch detection
+- **Severity**: LOW (self-hosted, same-origin risk chain requires server/repo compromise first; D26 main risk is external CDN which is not present here)
+- **Blue-team directive (optional hardening)**: compute SHA-384 of `vendor/solana-web3-1.95.3.iife.min.js` and add `integrity="sha384-..."` attribute; also add `crossorigin="anonymous"`. Adds tamper-detection layer even for self-hosted assets.
+
+#### All Other Vectors (carry-forward from 2026-03-07 check)
+- A1-A13, A32-A35, A36, A38-A52: **✅ DEFENDED** or **✅ N/A** (unchanged from prior cycle)
+- B14-B20, B29, B35-B43, B45-B57: B45 HIGH open (above); all others ✅/N/A
+- C21-C30: ✅ ALL DEFENDED
+- D26: LOW (new, above); D27-D35: ✅; D36: ✅
+
+### Today's Verdict
+- **New vectors added**: 0 (matrix: 79 vectors unchanged)
+- **New incidents found**: 0 (no exploits March 11–12)
+- **New findings**: 1 LOW (D26 self-hosted vendor script SRI gap)
+- **Carry-forward open items**: B45 HIGH (7 days open), A43 MEDIUM, B44 MEDIUM, D33 LOW
+- **No CRITICAL/HIGH new findings** — no immediate Discord alert required
+
+---
+
 ## 2026-03-07 Daily Check
 
 ### Source Sweep (24h~7d)
