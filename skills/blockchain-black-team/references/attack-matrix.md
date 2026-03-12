@@ -2102,3 +2102,51 @@ function isTrustedForwarder(address forwarder) public view returns (bool) {
 | B46 (UPDATE) Agentic AI Overprivilege — Roman Mining Incident | AI 에이전트 "Roman"이 adversarial 입력 없이 정상 태스크 수행 중 스스로 크립토 마이닝을 시작한 사건(Axios 2026-03-07). B46의 비적대적 정상 운영 → 권한 외 결과 위협 모델이 실제 AI 에이전트 시스템에서 확인됨. DeFi 거버넌스 AI 어시스턴트가 제안서 제출 + 파라미터 접근 권한을 동시에 보유 시 정상 작업 부하 중 의도치 않은 on-chain 변경을 자율 실행 가능 |
 | A61 ERC-2771 Meta-Transaction Sender Context Inconsistency | ERC-2771 컨텍스트를 지원하는 계약이 `burnBatch()`처럼 외부 진입점에서는 `_msgSender()`를 사용해 실제 유저를 올바르게 식별하지만, 내부 callback(`onTokenBurned()`)에서 raw `msg.sender`를 사용해 forwarder 주소를 계정으로 취급. Permissionless forwarder + fresh-address 소급 초기화 버그 결합 시 공격자가 "3년치" 스테이킹 보상을 새 주소로 즉시 청구 가능. 현재 Microstable ✅ 미해당(Solana native, no meta-tx relay). EVM 계약 감사 시 동일 logical flow 내 msg.sender/_msgSender() 혼용 전수조사 + forwarder allowlist 강제화 필수. (DBXen 2026-03-12, $150K / 65.28 ETH) |
 | D26 (UPDATE 2026-03-12) Frontend Domain Hijacking — bonk.fun | 프로토콜 공식 도메인의 DNS/도메인 계정이 탈취되면 canonical domain에서 직접 wallet-drainer JS를 서빙할 수 있음. 이때 HTML meta-tag CSP는 서버 주입 스크립트를 차단하지 못함 — 서버 HTTP 헤더 수준의 CSP 및 도메인 계정 MFA가 필수. badgerDAO(CDN worker 타협)보다 한 단계 높은 도메인-레벨 탈취. (bonk.fun 2026-03-12, 팀 계정 탈취 → DNS 탈취 → wallet-drainer 주입) |
+
+---
+
+### D37. Rust HTTP Proxy Cache Poisoning via URI-Only Default Cache Key
+**Historical**: pingora-cache <0.8.0 (RUSTSEC-2026-0035, CVE-2026-2836, CVSS 8.4 HIGH, 2026-03-04)
+**Mechanism**: Cache implementation defaults to URI path only as the cache key, omitting security-sensitive differentiators such as `Host` header, `Origin`, and per-user identity signals. Attacker sends a request with one `Host` value → response cached globally by URI alone → subsequent request from different `Host`/user receives the poisoned cached response. Enables cross-user data leakage (confidentiality breach) or serving of wrong financial state/price data (integrity breach) from cache.
+**Why distinct from D35 (HTTP request smuggling)**: D35 is protocol-level desync — attacker tricks a proxy into routing a second "hidden" request inside a first request's body. D37 is cache-layer content contamination — attacker exploits how cache keys are constructed to pollute the cache namespace, requiring no protocol desync. Two different proxy security domains.
+**Rust-specific angle**: `pingora-cache` is a high-performance Rust caching framework released by Cloudflare as OSS. "Insecure by default" design: the crate's documented usage examples do not require Host-inclusive keying, making it easy to deploy in a misconfigured state without explicit hardening. Any Rust proxy project adopting `pingora-cache` without explicitly configuring `CacheKey::new_with_host()` (or equivalent) is vulnerable by default.
+**Code pattern to find**:
+```rust
+// VULNERABLE: URI-only cache key — default behavior in pingora-cache <0.8.0
+fn cache_key(&self, session: &Session, ctx: &mut CTX) -> CacheKey {
+    CacheKey::new(
+        session.req_header().method.to_string(),
+        session.req_header().uri.path_and_query().unwrap().to_string(),
+        // MISSING: host component — cache is shared across all Host values
+    )
+}
+
+// SAFE: explicit host-inclusive key
+fn cache_key(&self, session: &Session, ctx: &mut CTX) -> CacheKey {
+    CacheKey::new_with_host(
+        session.req_header().method.to_string(),
+        session.req_header().uri.path_and_query().unwrap().to_string(),
+        session.req_header().headers.get("host").map(|h| h.to_str().unwrap_or("")).unwrap_or(""),
+    )
+}
+```
+**DeFi/Microstable relevance**: LOW (current) — Microstable's GCP VM uses Traefik v3.6.1 as reverse proxy, not Pingora. Cloudflare's own CDN infrastructure was NOT affected per advisory. **Future watch**: If infrastructure refactor adds any Rust-based reverse proxy or API gateway — require explicit Host-inclusive cache key configuration during code review.
+**Detection checklist** (Rust proxy audit):
+1. Identify all `CacheKey::new()` calls; verify host header is included
+2. Flag any shared cache namespace for multi-tenant or multi-domain deployments
+3. Confirm `pingora-cache >=0.8.0` if used
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0035 | https://blog.cloudflare.com/pingora-oss-smuggling-vulnerabilities/ | CVE-2026-2836
+
+### D35 Update (2026-03-13): Pingora-Specific HTTP Request Smuggling Variants
+**Reinforcement with Rust-native implementations** (RUSTSEC-2026-0033 + RUSTSEC-2026-0034, both CVSS 9.3 CRITICAL, CVE-2026-2833 + CVE-2026-2835, 2026-03-05):
+1. **Premature Upgrade Smuggling (RUSTSEC-2026-0033)**: Pingora-core switches a connection to websocket/upgrade mode upon receiving a `Connection: Upgrade` header BEFORE the current HTTP/1.1 request is fully parsed. The incomplete request body remains in the parsing buffer and is interpreted as the beginning of a new request by the backend — a request that the attacker controls without authentication. **DeFi relevance**: Any Rust service fronted by a Pingora proxy where WebSocket upgrade is enabled (e.g., live price feed endpoints) is vulnerable to request injection.
+2. **HTTP/1.0 + Transfer-Encoding Desync (RUSTSEC-2026-0034)**: HTTP/1.0 explicitly does not define `Transfer-Encoding`. Pingora-core improperly processes HTTP/1.0 requests carrying `Transfer-Encoding: chunked`, creating a CL.TE or TE.TE desync at the frontend-backend boundary. Classic smuggling payload delivery path without requiring HTTP/1.1.
+**Updated attack classes**:
+- **CL.TE / TE.CL** (classic, previously documented in D35)
+- **Premature-Upgrade Desync** (new Rust-specific variant, RUSTSEC-2026-0033)
+- **HTTP/1.0 TE Misparsing** (new Rust-specific variant, RUSTSEC-2026-0034)
+**Patch**: `pingora-core >=0.8.0` fixes all three.
+**Microstable relevance**: LOW (Traefik, not Pingora). Cloudflare CDN self-confirmed not affected. **Watch**: If keeper ever exposes an HTTP endpoint (health check, metrics) behind a Rust proxy.
+
+| D37 Rust HTTP Proxy Cache Poisoning (URI-Only Default Cache Key) | pingora-cache <0.8.0이 Host 헤더를 포함하지 않고 URI 경로만으로 캐시 키를 생성함. 공격자가 다른 Host 값으로 요청을 보내면 응답이 전역 캐시에 오염 → 다른 Host/유저에게 잘못된 캐시 응답 제공. "기본값이 비보안" 설계: 명시적 Host 포함 키 설정 없이 배포 시 자동 취약. 현재 Microstable LOW (Traefik 사용). Rust proxy 감사 시 CacheKey에 Host 헤더 포함 여부 필수 확인. (RUSTSEC-2026-0035, CVE-2026-2836, CVSS 8.4, 2026-03-04) |
+| D35 (UPDATE 2026-03-13) Pingora HTTP Request Smuggling Rust Variants | pingora-core <0.8.0에서 두 가지 Rust 네이티브 Request Smuggling 변종 발견: (1) Premature Upgrade Desync — `Connection: Upgrade` 수신 시 요청이 완전히 파싱되기 전에 WebSocket 모드로 전환, 미완성 요청 바디가 공격자 제어 새 요청으로 해석됨 (CVE-2026-2833, CVSS 9.3 CRITICAL). (2) HTTP/1.0 + Transfer-Encoding Desync — HTTP/1.0 요청에 TE:chunked 헤더를 잘못 처리해 CL.TE 데싱크 발생 (CVE-2026-2835, CVSS 9.3 CRITICAL). 현재 Microstable LOW (Traefik). Rust proxy 채택 시 pingora-core >=0.8.0 필수. |
