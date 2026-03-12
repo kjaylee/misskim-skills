@@ -17,6 +17,9 @@ Find what Black Team and Red Team **cannot see** — the structural blind spots,
 - Read `references/reporting-thresholds.md` when deciding whether a finding stays internal or is strong enough for external disclosure.
 - Read `references/disclosure-templates.md` when preparing a message for a project team, security inbox, bug bounty form, or maintainer.
 - Read `references/purple-team-pipeline.md` when running Purple Team as an end-to-end workflow from intake to validation to disclosure.
+- Read `references/project-execution-template.md` when opening a new testnet project review.
+- Read `references/triad-investigation-template.md` when combining Black, Red, and Purple outputs into one packet.
+- Read `references/disclosure-tracker-format.md` when tracking sent findings, acknowledgements, fixes, and retests.
 
 ## When to Use
 
