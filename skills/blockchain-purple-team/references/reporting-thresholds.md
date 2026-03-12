@@ -21,6 +21,10 @@ Only disclose externally when all of the following are available:
 2. impact statement
 3. prerequisites / attack conditions
 4. root-cause explanation
+5. exploitability or concrete impact demonstrated beyond mere exposure
+
+## Important clarification
+Exposure-only findings are usually **internal observations**, not external vulnerability reports, unless they already imply clear demonstrated impact.
 
 ## Internal-only queue
 Keep these internal until promoted:

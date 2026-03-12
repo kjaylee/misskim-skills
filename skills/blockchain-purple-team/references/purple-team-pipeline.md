@@ -31,6 +31,9 @@ Promote only when all are true:
 - impact is understandable
 - prerequisites are explicit
 - root cause is specific enough to explain
+- exploitability or concrete attacker impact is demonstrated beyond passive exposure
+
+If the result is only an exposure/misconfiguration observation, keep it internal unless a real exploit path is shown.
 
 ### Stage 4 — Disclosure prep
 For R2+ findings:

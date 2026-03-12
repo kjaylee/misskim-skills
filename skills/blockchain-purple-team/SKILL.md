@@ -11,9 +11,10 @@ description: Meta-security analysis that finds structural gaps missed by Black T
 - **Use `blockchain-red-team`** for novel offensive technique discovery and defense-bypass pressure testing.
 
 
-Find what Black Team and Red Team **cannot see** — the structural blind spots, audit failures, and systemic patterns that make defenses fail.
+Find what Black Team and Red Team **cannot see** — but do not confuse exposure with exploitability. Structural blind spots are useful internally; external vulnerability reports should be exploitability-backed whenever possible.
 
 ## Reference Map
+- Read `references/exploitability-gate.md` before deciding whether a finding is a real vulnerability or just an interesting exposure.
 - Read `references/reporting-thresholds.md` when deciding whether a finding stays internal or is strong enough for external disclosure.
 - Read `references/disclosure-templates.md` when preparing a message for a project team, security inbox, bug bounty form, or maintainer.
 - Read `references/purple-team-pipeline.md` when running Purple Team as an end-to-end workflow from intake to validation to disclosure.
