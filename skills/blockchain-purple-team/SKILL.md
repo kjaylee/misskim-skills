@@ -13,6 +13,11 @@ description: Meta-security analysis that finds structural gaps missed by Black T
 
 Find what Black Team and Red Team **cannot see** — the structural blind spots, audit failures, and systemic patterns that make defenses fail.
 
+## Reference Map
+- Read `references/reporting-thresholds.md` when deciding whether a finding stays internal or is strong enough for external disclosure.
+- Read `references/disclosure-templates.md` when preparing a message for a project team, security inbox, bug bounty form, or maintainer.
+- Read `references/purple-team-pipeline.md` when running Purple Team as an end-to-end workflow from intake to validation to disclosure.
+
 ## When to Use
 
 - Post-audit gap analysis ("what did the auditors miss?")
