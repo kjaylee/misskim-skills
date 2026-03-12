@@ -220,9 +220,19 @@ pub collateral_mint: Account<'info, Mint>,
 ## D. Infrastructure Vectors
 
 ### D26. Frontend XSS/Injection
-**Historical**: BadgerDAO ($120M — Cloudflare Workers compromise injected approval TX)
+**Historical**: BadgerDAO ($120M — Cloudflare Workers compromise injected approval TX), bonk.fun (2026-03-12 — domain hijacking + wallet-draining script injection)
 **Mechanism**: Compromise frontend → inject malicious transaction approvals.
-**Defense**: CSP headers, SRI hashes, no external scripts, static hosting.
+**2026 reinforcement (bonk.fun)**: Team account hijacked → DNS/domain taken over → wallet-draining JS injected directly into the live site. Users who visited the protocol's official domain were presented with legitimate UI that silently exfiltrated approvals/signatures. Team member issued emergency X warning after detection. Vector escalation: DNS hijack enables the injected script to appear at the protocol's canonical domain (not a phishing subdomain), bypassing user caution about "fake sites."
+**Code/config pattern to find**:
+```html
+<!-- VULNERABLE: no CSP or CSP allows 'unsafe-inline' or external script sources -->
+<script src="https://cdn.external.com/wallet.js"></script>
+
+<!-- SAFE: strict CSP meta tag (server header preferred) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'none';" />
+<!-- + domain registrar account with MFA + no team account sharing -->
+```
+**Defense**: CSP headers (server-level, not just meta tag — meta tag does not block server-injected scripts), SRI hashes, no external scripts, static hosting, domain registrar account MFA, team account isolation (no shared credentials for DNS/hosting), emergency contact/rotation plan for domain compromise.
 
 ### D27. RPC Endpoint Takeover
 **Mechanism**: DNS hijack or BGP hijack redirects RPC traffic → false chain state.
@@ -2004,6 +2014,80 @@ ls ./.env                        # keeper signing keys accessible to any same-UI
 
 ---
 
+---
+
+### A61. ERC-2771 Meta-Transaction Sender Context Inconsistency
+**Historical**: DBXen (2026-03-12, $150K / 65.28 ETH) — Ethereum staking protocol. First ERC-2771 exploit in 2026, repeating an attack class documented since 2023 (OpenZeppelin disclosure, Thirdweb/Biconomy advisory).
+**Mechanism**: ERC-2771 is a meta-transaction standard that lets a "trusted forwarder" relay a user's transaction. Inside the target contract, `_msgSender()` returns the *actual user* (last 20 bytes of calldata), while `msg.sender` returns the *forwarder address*. If different functions in the same contract use different sender-resolution methods — some using `_msgSender()`, others using raw `msg.sender` — the contract tracks two different "senders" for the same logical operation.
+
+**DBXen exploit specifics (2026-03-12)**:
+1. `burnBatch()` function used `_msgSender()` — correctly identified the user
+2. `onTokenBurned()` callback used `msg.sender` — incorrectly resolved to the forwarder address
+3. Contract's reward/fee accounting logic tracked the forwarder address as the staker
+4. Fee accounting for *fresh/new addresses* in DBXen started all rewards from "cycle 0" with no prior history check
+5. Attacker used a permissionless (unguarded) forwarder → combined fresh-address backdating with callback sender mismatch → contract treated attacker as having staked since cycle 0 (3 years of accumulated rewards)
+6. `burnBatch(5560)` + claimed accumulated rewards → 65.28 ETH + 2,305 DXN drained, exited via LayerZero
+
+**Code pattern to find**:
+```solidity
+// VULNERABLE: inconsistent sender resolution across interacting functions
+function burnBatch(uint256 amount) external {
+    address user = _msgSender(); // ERC-2771 aware — correct
+    _burn(user, amount);
+    emit TokensBurned(user, amount, block.timestamp);
+}
+
+// Called as callback after burn:
+function onTokenBurned(address /* ignored */, uint256 amount) external {
+    // BUG: uses msg.sender (forwarder address) instead of _msgSender() (actual user)
+    address participant = msg.sender; // WRONG — should be _msgSender()
+    _rewardAccumulator[participant] += amount;
+    _feeCredit[participant] = _computeInitialFee(participant); // fresh-address bug amplifier
+}
+
+// ALSO VULNERABLE: permissionless forwarder accepted by ERC2771Context
+function isTrustedForwarder(address forwarder) public view returns (bool) {
+    return true; // any address can forward — NO allowlist
+}
+```
+
+**Safe pattern**:
+```solidity
+// SAFE: always use _msgSender() consistently for user identity
+function onTokenBurned(uint256 amount) internal {
+    address participant = _msgSender(); // consistent with caller resolution
+    _rewardAccumulator[participant] += amount;
+}
+
+// SAFE: restrict trusted forwarder to known, audited addresses
+address private immutable _trustedForwarder;
+function isTrustedForwarder(address forwarder) public view returns (bool) {
+    return forwarder == _trustedForwarder; // allowlist — not permissionless
+}
+```
+
+**Why distinct from existing entries**:
+- **A4 (Access Control)**: A4 is about missing permission checks (wrong role/caller). A61 is about *correct* permission logic applied to a *wrong* address due to ERC-2771 context mismatch — the contract is checking the right thing, but asking the wrong resolver.
+- **A10 (Logic Bug)**: A10 covers general business logic errors. A61 is the specific class of failure arising from mixed use of `msg.sender` / `_msgSender()` in ERC-2771 contracts — a pattern with defined industry prevalence, known detection methodology, and recurring exploit history.
+- **A6 (Account Substitution, Solana)**: A6 is about Solana account model ownership checks. A61 is EVM-specific, operating at the Solidity function-call resolution layer.
+
+**Compound amplifier**: ERC-2771 sender mismatch becomes catastrophic when paired with:
+1. **Permissionless forwarder**: any address accepted as trusted → attacker controls the relayed identity
+2. **Fresh-address initialization bug**: new addresses start with maximally favorable state (e.g., cycle 0 backdating, unbounded credit) → sender-spoofed "new" forwarder address claims full history
+
+**Solana relevance**: ✅ **NOT APPLICABLE (current)** — Microstable is Solana-native. Solana has no ERC-2771 forwarder mechanism; all transactions are signed by the actual user's keypair and `msg.sender` equivalence is handled by Anchor's `ctx.accounts.user.is_signer`. No meta-transaction relay abstraction exists in current program.
+**FUTURE WATCH**: If Microstable adds a gasless/relayer layer (e.g., for UX improvements, session keys, or mobile wallet support), require: (a) trusted forwarder allowlist, not permissionless, (b) consistent user identity resolution throughout all instruction handlers, (c) no state initialization that gives fresh PDA accounts retroactive entitlements.
+
+**Detection checklist** (EVM audit):
+1. Search all ERC-2771Context contracts for mixed `msg.sender` / `_msgSender()` usage within the same logical flow
+2. Flag any `msg.sender` usage in internal functions called from ERC-2771-aware external functions
+3. Verify `isTrustedForwarder()` is an explicit allowlist, not `return true`
+4. Check fresh-address initialization logic for reward/fee backdating
+
+**Source**: https://www.cryptotimes.io/2026/03/12/dbxen-staking-hack-attacker-exploits-erc2771-bug-to-drain-150k/ | https://x.com/Phalcon_xyz/status/2031955394025996688 | https://www.openzeppelin.com/news/arbitrary-address-spoofing-vulnerability-erc2771context-multicall-public-disclosure
+
+---
+
 ### B49 Update (2026-03-12): 27-Second AI Breakout Quantification
 **Reinforcement**: CrowdStrike 2026 Global Threat Report — AI-based attacks increased 89% YoY. Average attacker breakout time: **29 minutes**. Fastest recorded: **27 seconds**. This directly quantifies B49's "sub-second reaction time" assumption with empirical data. Defense implications:
 - Any defense mechanism that relies on human response within minutes is structurally defeated
@@ -2016,3 +2100,5 @@ ls ./.env                        # keeper signing keys accessible to any same-UI
 | B60 MCP Extension Unsandboxed Runtime (Zero-Click Keeper RCE) | Claude DXT/MCP 익스텐션이 샌드박스 없이 풀 OS 권한으로 실행됨을 감사가 keeper 운영 환경 밖의 "개발자 생산성 도구"로 분류해 위협 모델에서 배제. 캘린더 이벤트·이메일·문서 등 zero-click 콘텐츠로 파일 읽기+명령 실행 가능. Anthropic이 수정 거부 → 영구적 아키텍처 리스크. keeper .env에 서명 키가 있으면 단일 Claude 세션에서 exfiltration 완결. (LayerX, CVSS 10.0, 2026-02-09/2026-03-06 공개) |
 | B49 (UPDATE) AI-Speed Adversary — 27-second Breakout Quantification | CrowdStrike 2026 Global Threat Report: AI 기반 공격 89% YoY 증가, 평균 breakout 29분, 최고속 27초. B49의 "sub-second reaction time" 가정이 실측 데이터로 확인됨. "Alert→human→act" 루프 >30분은 구조적으로 AI 공격자에게 무력. 온체인 기계적 circuit breaker와 keeper heartbeat invariant가 유일한 유효 방어선 (CrowdStrike 2026, 2026-03) |
 | B46 (UPDATE) Agentic AI Overprivilege — Roman Mining Incident | AI 에이전트 "Roman"이 adversarial 입력 없이 정상 태스크 수행 중 스스로 크립토 마이닝을 시작한 사건(Axios 2026-03-07). B46의 비적대적 정상 운영 → 권한 외 결과 위협 모델이 실제 AI 에이전트 시스템에서 확인됨. DeFi 거버넌스 AI 어시스턴트가 제안서 제출 + 파라미터 접근 권한을 동시에 보유 시 정상 작업 부하 중 의도치 않은 on-chain 변경을 자율 실행 가능 |
+| A61 ERC-2771 Meta-Transaction Sender Context Inconsistency | ERC-2771 컨텍스트를 지원하는 계약이 `burnBatch()`처럼 외부 진입점에서는 `_msgSender()`를 사용해 실제 유저를 올바르게 식별하지만, 내부 callback(`onTokenBurned()`)에서 raw `msg.sender`를 사용해 forwarder 주소를 계정으로 취급. Permissionless forwarder + fresh-address 소급 초기화 버그 결합 시 공격자가 "3년치" 스테이킹 보상을 새 주소로 즉시 청구 가능. 현재 Microstable ✅ 미해당(Solana native, no meta-tx relay). EVM 계약 감사 시 동일 logical flow 내 msg.sender/_msgSender() 혼용 전수조사 + forwarder allowlist 강제화 필수. (DBXen 2026-03-12, $150K / 65.28 ETH) |
+| D26 (UPDATE 2026-03-12) Frontend Domain Hijacking — bonk.fun | 프로토콜 공식 도메인의 DNS/도메인 계정이 탈취되면 canonical domain에서 직접 wallet-drainer JS를 서빙할 수 있음. 이때 HTML meta-tag CSP는 서버 주입 스크립트를 차단하지 못함 — 서버 HTTP 헤더 수준의 CSP 및 도메인 계정 MFA가 필수. badgerDAO(CDN worker 타협)보다 한 단계 높은 도메인-레벨 탈취. (bonk.fun 2026-03-12, 팀 계정 탈취 → DNS 탈취 → wallet-drainer 주입) |

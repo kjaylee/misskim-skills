@@ -3,6 +3,16 @@
 > Scope: real-world incidents with explicit mechanisms. Entries without confirmed mechanisms are intentionally omitted.
 
 ## 2026
+- **2026-03-12 — DBXen (Ethereum — ERC-2771 staking exploit)** — DBXen's staking contract was drained for 65.28 ETH (~$150K) via an ERC-2771 meta-transaction sender identity mismatch. The `burnBatch()` function used `_msgSender()` (ERC-2771 context-aware, returns actual user), but the `onTokenBurned()` callback used `msg.sender` (returns the forwarder address). DBXen also accepted a permissionless (unguarded) trusted forwarder. Combined with a fee accounting bug that backdated fresh addresses to cycle 0, the attacker spoofed their identity as the forwarder, tricked the contract into crediting them with 3 years of accumulated staking rewards, and claimed 65.28 ETH + 2,305 DXN. Funds exited via LayerZero. Detected by BlockSec Phalcon monitoring.
+  **Root cause**: Mixed `msg.sender` / `_msgSender()` usage across caller-context-dependent reward logic + permissionless forwarder + fresh-address backdating bug.
+  Vector mapping: **A61 ERC-2771 Meta-Transaction Sender Context Inconsistency** (NEW VECTOR, 2026-03-12).
+  Source: https://www.cryptotimes.io/2026/03/12/dbxen-staking-hack-attacker-exploits-erc2771-bug-to-drain-150k/ | https://x.com/Phalcon_xyz/status/2031955394025996688
+
+- **2026-03-12 — bonk.fun (Solana — domain hijacking)** — A bonk.fun team account was hijacked; attackers took control of the protocol's domain and injected a wallet-draining script into the live website. Team member SolportTom issued emergency X warning advising all users not to use the bonk.fun domain. No confirmed fund loss amount published. Classic domain hijack → frontend script injection pattern; users on the canonical domain exposed to malicious transaction approval requests.
+  **Root cause**: Compromised team DNS/domain account → canonical domain redirected to attacker-controlled server hosting malicious frontend. Server-level injection bypasses any client-side CSP meta tags.
+  Vector mapping: **D26 Frontend XSS/Injection** (2026 reinforcement: domain-level hijacking > CDN worker compromise).
+  Source: https://x.com/SolportTom/status/2031930573342519702 | https://hacked.slowmist.io/
+
 - **2026-03-10 — Gondi NFT Platform (Ethereum — Sell & Repay contract)** — The NFT lending platform Gondi's `Sell & Repay` contract (deployed February 20, 2026) contained a logic flaw in its `Purchase Bundler` function. The function verified the caller was authorized to invoke the bundler but failed to separately verify that the caller was the actual owner or borrower of the specific NFT being operated on. Attacker exploited this dual-check gap to drain 78 high-value NFTs (44 Art Blocks, 10 Doodles, 2 Beeple artworks), totaling approximately $230,000 in losses. All NFT transfers were cryptographically valid — no oracle or flash loan involved.
   **Root cause**: function-level authorization ≠ asset-level ownership verification. The bundler enforced "caller can use this function" but not "caller actually owns/has borrower rights over this specific NFT."
   Vector mapping: **A4 Access Control — NFT Purchase Bundler Missing Asset Owner Verification** (A4 sub-pattern reinforcement, not a new vector).

@@ -28,7 +28,7 @@ Execute battle-tested attack vectors from 69+ historical blockchain incidents ($
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (48+ Vectors, continuously extended)
+## Attack Matrix (61+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -85,6 +85,7 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-13 | **DBXen ERC-2771 sender mismatch exploit** (2026-03-12, $150K): burnBatch() used _msgSender() but onTokenBurned() callback used msg.sender → forwarder addr credited; permissionless forwarder + fresh-address fee backdating bug amplified. **bonk.fun domain hijack** (2026-03-12): team account compromised → DNS takeover → wallet-drainer JS injected on canonical domain. D26 escalation note: server-level CSP header required (meta-tag alone cannot block server-injected scripts). | **A61 NEW** + D26 reinforced | 1 NEW VECTOR (A61). Total matrix: 61 named vectors. Microstable: A61 NOT APPLICABLE (Solana, no ERC-2771). D26: Microstable dashboard has CSP meta tag ✅ — but no server-level HTTP CSP header (static file serving). LOW carry-forward. Full sweep: no new CRITICAL/HIGH findings today. Carry-forwards: B45 HIGH (audit-attestation.json unattested 3,281-line delta persists), A43 MEDIUM, B44 MEDIUM. |
 | 2026-03-12 | Source sweep: no new incidents in 24h window (last: Gondi NFT $230K 2026-03-10, A4 reinforcement); SlowMist/rekt.news/Halborn/Brave confirmed — 0 new DeFi exploits March 11-12. Full 79-vector Microstable sweep: B45 HIGH still open (audit-attestation.json absent; 3,281-line unattested delta persists), A43 MEDIUM open (no cumulative drift accumulator in rebalance()), B44 MEDIUM open (no delegate.is_none() check in mint()). D26 LOW-NEW: vendor/solana-web3-1.95.3.iife.min.js loaded without SRI integrity attribute — self-hosted so low severity, but should be hash-verified for tamper detection parity. | 0 NEW | Matrix holds at 79 vectors. No new pattern from March 11–12 sweep. Open carry-forwards: B45 HIGH (priority), A43 MEDIUM, B44 MEDIUM, D26/D33 LOW. Gondi (2026-03-10) confirmed A4 dual-authorization pattern: function-level auth ≠ asset-level ownership — bundler-pattern applies equally to any batch/multicall abstraction over user-owned assets. |
 | 2026-03-09 | OtterSec "Unfaithful Claims: Breaking 6 zkVMs" (2026-03-03) — Jolt/Nexus/Cairo-M/Ceno/Expander/Binius64 all vulnerable to Fiat-Shamir public-claim unbound variable bypass | A50 (NEW) | Added zkVM Fiat-Shamir Public-Claim Unbound Variable Bypass; distinct from A49 (gamma=delta setup constants) — A50 correct constants but wrong transcript binding order pre-challenge squeeze; proof forgery enables arbitrary false statement claiming; Microstable ✅ not applicable (no zkVM); future integration gate: transcript binding-order audit + forged-claim CI test required |
 | 2026-03-08 | CrossCurve bridge ReceiverAxelar.expressExecute() missing gateway validation (2026-02-02, $3M multi-chain) | A48 (NEW) | Added Unguarded Cross-Chain Receiver Function vector; distinct from A32 (IBC content forgery) — attacker bypasses relay entirely by directly calling receiver; Microstable ✅ not applicable (no bridge receiver); onlyGateway modifier pattern documented |
@@ -148,6 +149,7 @@ Read `references/solana-specific.md` for Solana-specific attack patterns.
 - Reentrancy: external calls before state updates
 - ERC-20 approval: infinite approval + permit signatures
 - Proxy patterns: UUPS/Transparent upgrade risks
+- ERC-2771 meta-transaction: mixed msg.sender/_msgSender() + permissionless forwarder (A61)
 
 Read `references/ethereum-specific.md` for EVM-specific attack patterns.
 
