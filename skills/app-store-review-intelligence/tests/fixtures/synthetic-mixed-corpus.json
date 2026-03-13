@@ -1,0 +1,20 @@
+{
+  "meta": {"app_id": "999999999", "fetched_at": "2026-03-14T00:00:00Z"},
+  "reviews": [
+    {"id": "r001", "rating": 1, "title": "Crashes constantly", "body": "The app crashes every time I open it. Complete waste of time. Crashes on startup after latest update.", "author": "user1", "date": "2026-03-10", "version": "2.1.0"},
+    {"id": "r002", "rating": 1, "title": "Terrible performance", "body": "Battery drain is insane. The app crashes and freezes my phone. Very slow and laggy.", "author": "user2", "date": "2026-03-09", "version": "2.1.0"},
+    {"id": "r003", "rating": 2, "title": "Lots of bugs", "body": "Constant crashes and the app freezes. Battery drain is a real problem. Please fix the crashes.", "author": "user3", "date": "2026-03-08", "version": "2.1.0"},
+    {"id": "r004", "rating": 2, "title": "Needs dark mode", "body": "Please add dark mode. The interface is too bright at night. Also needs dark mode badly.", "author": "user4", "date": "2026-03-07", "version": "2.0.5"},
+    {"id": "r005", "rating": 3, "title": "Average experience", "body": "It works but the app is very slow. Would love to see offline mode added. Dark mode would help.", "author": "user5", "date": "2026-03-06", "version": "2.0.5"},
+    {"id": "r006", "rating": 3, "title": "Okay but missing features", "body": "Decent app but needs offline mode. Also requesting dark mode feature. Performance could be better.", "author": "user6", "date": "2026-03-05", "version": "2.0.5"},
+    {"id": "r007", "rating": 3, "title": "So-so", "body": "Battery drain is noticeable. The app crashes occasionally. Customer support was helpful though.", "author": "user7", "date": "2026-03-04", "version": "2.0.5"},
+    {"id": "r008", "rating": 4, "title": "Pretty good", "body": "Love the clean interface. Great app overall. Customer support is excellent and very responsive.", "author": "user8", "date": "2026-03-03", "version": "2.0.5"},
+    {"id": "r009", "rating": 4, "title": "Works well", "body": "Clean interface and easy to use. Love using this app daily. Customer support responded quickly.", "author": "user9", "date": "2026-03-02", "version": "2.0.5"},
+    {"id": "r010", "rating": 4, "title": "Mostly great", "body": "Great app with clean interface. Just wish it had offline mode. Easy to use and intuitive.", "author": "user10", "date": "2026-03-01", "version": "2.0.5"},
+    {"id": "r011", "rating": 5, "title": "Amazing app", "body": "Best app I have ever used. Love the clean interface. Customer support is amazing and fast.", "author": "user11", "date": "2026-02-28", "version": "2.0.5"},
+    {"id": "r012", "rating": 5, "title": "Love it", "body": "Love this app! The interface is clean and beautiful. Best app for productivity.", "author": "user12", "date": "2026-02-27", "version": "2.0.5"},
+    {"id": "r013", "rating": 5, "title": "Fantastic", "body": "Absolutely love using this app. Great performance and clean interface. Best app hands down.", "author": "user13", "date": "2026-02-26", "version": "2.0.5"},
+    {"id": "r014", "rating": 1, "title": "Broke after update", "body": "Version 2.1.0 completely broke the app. It crashes on startup now. Please rollback this update.", "author": "user14", "date": "2026-03-11", "version": "2.1.0"},
+    {"id": "r015", "rating": 2, "title": "Widget support needed", "body": "Please add widget support for the home screen. Also a notification center widget would be great.", "author": "user15", "date": "2026-02-25", "version": "2.0.5"}
+  ]
+}

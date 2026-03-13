@@ -1,0 +1,2568 @@
+{
+  "feed": {
+    "author": {
+      "name": {
+        "label": "iTunes Store"
+      },
+      "uri": {
+        "label": "http://www.apple.com/itunes/"
+      }
+    },
+    "entry": [
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1582919915"
+          },
+          "name": {
+            "label": "Not Sonja"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-12T00:57:05-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13839467281"
+        },
+        "title": {
+          "label": "Google"
+        },
+        "content": {
+          "label": "Very helpful and resourceful  for searching feedback quick and efficient!!!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1136985581"
+          },
+          "name": {
+            "label": "Ittytinyslimb"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-12T00:25:48-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13839412320"
+        },
+        "title": {
+          "label": "5 Star"
+        },
+        "content": {
+          "label": "Love it",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id758391781"
+          },
+          "name": {
+            "label": "palaniNproud"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-12T00:18:48-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13839400264"
+        },
+        "title": {
+          "label": "Hawaiian \ud83c\udf3a n Proud"
+        },
+        "content": {
+          "label": "iPhone 15",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1410111616"
+          },
+          "name": {
+            "label": "1986 Toyota Delaware"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-12T00:12:16-07:00"
+        },
+        "im:rating": {
+          "label": "4"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13839388795"
+        },
+        "title": {
+          "label": "I like google"
+        },
+        "content": {
+          "label": "I like google. Thank you for your service!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1255641681"
+          },
+          "name": {
+            "label": "taisaga"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T21:38:42-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13839122232"
+        },
+        "title": {
+          "label": "Muchas gracias"
+        },
+        "content": {
+          "label": "He recibido la ayuda de GOOGLE muchas veces porque estoy escribiendo y pregunto continuamente y siempre me responden.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1191067709"
+          },
+          "name": {
+            "label": "Aniboiii5600"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T21:20:59-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13839089629"
+        },
+        "title": {
+          "label": "I hate you Google"
+        },
+        "content": {
+          "label": "Wtf is wrong with Google? Just turned off push notifications. I really like this show shrinking and a new episode literally just dropped about 3 hours ago and I haven\u2019t watched it. And Google sends me a push notification word for word \u201cShrinking Season 3 character Maya dies by suicide.\u201d Yeah thanks Google I really wanted a spoiler for an episode that is less than 3 hours old. I hate Google for this and I do not ever want to use this dumb app ever again. Why would you notify spoilers of a tv show? That\u2019s the dumbest thing I\u2019ve ever seen.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1767797611"
+          },
+          "name": {
+            "label": "Zennnyyyyyyyy"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T20:27:17-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838986610"
+        },
+        "title": {
+          "label": "I need help"
+        },
+        "content": {
+          "label": "It\u2019s good but I can\u2019t update it. It keeps asking for a stupid payment method and I don\u2019t know why. But I add one and it keeps asking for my identity over and over again and I don\u2019t know why. It won\u2019t let me in even if I provide one",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1494577096"
+          },
+          "name": {
+            "label": "Juan0787"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T20:21:19-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838974476"
+        },
+        "title": {
+          "label": "The best"
+        },
+        "content": {
+          "label": "All things in one place\ud83e\udef6",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id312924600"
+          },
+          "name": {
+            "label": "DEATHSTROKE:-@"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T19:55:47-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838921314"
+        },
+        "title": {
+          "label": "Great customer service"
+        },
+        "content": {
+          "label": "Thank you Alma for your help with my case! I appreciate your empathy and understanding.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1714730109"
+          },
+          "name": {
+            "label": "Bugs Sur 13"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T19:39:26-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838886030"
+        },
+        "title": {
+          "label": "W-2 2025"
+        },
+        "content": {
+          "label": "The people are very helpful they walked me through the whole process thank you god bless \ud83d\ude4f Andrew Gallegos.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1813241399"
+          },
+          "name": {
+            "label": "Google BG"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T19:27:36-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838859953"
+        },
+        "title": {
+          "label": "Awesome"
+        },
+        "content": {
+          "label": "Beat ever",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1416761038"
+          },
+          "name": {
+            "label": "Roses$ForDays"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T18:52:14-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838779542"
+        },
+        "title": {
+          "label": "I keep on seeing B\u2019s in the apps I use"
+        },
+        "content": {
+          "label": "This keeps on advertising b\u2019s people on apps, it\u2019s getting annoying as there\u2019s other people with different skin tones, it\u2019s forcing people of their color onto us which is uncool. I don\u2019t hate b\u2019s but please show better people\u2026 btw I\u2019m brown\u2026",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id38049074"
+          },
+          "name": {
+            "label": "Alli Gator"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T18:51:47-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838778508"
+        },
+        "title": {
+          "label": "I love Google"
+        },
+        "content": {
+          "label": "It helps me anytime. I need something or to figure out something.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1866450795"
+          },
+          "name": {
+            "label": "\u1230\u1265\u120d"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T18:12:18-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838686098"
+        },
+        "title": {
+          "label": "i love google"
+        },
+        "content": {
+          "label": "google is evrything",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id285457921"
+          },
+          "name": {
+            "label": "TG797879074"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T18:03:22-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838664860"
+        },
+        "title": {
+          "label": "Pure garbage"
+        },
+        "content": {
+          "label": "This app is no longer useful in any way to search. It almost takes over the keyboard with suggestions that are as ludicrous as they are frustrating and mind boggling stupid.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1431697002"
+          },
+          "name": {
+            "label": "Jimenez 2"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T17:58:00-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838652250"
+        },
+        "title": {
+          "label": "Amazing"
+        },
+        "content": {
+          "label": "Very helpful and super useful",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1322471791"
+          },
+          "name": {
+            "label": "TikTok es lo mejor que tengo"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T17:23:19-07:00"
+        },
+        "im:rating": {
+          "label": "3"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838571606"
+        },
+        "title": {
+          "label": "ai"
+        },
+        "content": {
+          "label": "Good other than ai \ud83d\udc97\ud83d\udc97",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1608505239"
+          },
+          "name": {
+            "label": "KarG\u00eda"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T17:09:43-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838539455"
+        },
+        "title": {
+          "label": "I love"
+        },
+        "content": {
+          "label": "I love google",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1783471149"
+          },
+          "name": {
+            "label": "Lexmartly"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T17:08:15-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838536056"
+        },
+        "title": {
+          "label": "It\u2019s not great"
+        },
+        "content": {
+          "label": "All the questions on my homework, When I ask it for the answer, it ALWAYS gives me the WRONG answer\u2026.im done!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1586751666"
+          },
+          "name": {
+            "label": "One more thing to add"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T17:01:19-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838519628"
+        },
+        "title": {
+          "label": "So good"
+        },
+        "content": {
+          "label": "Google a perfect web browser with its apps like Google Docs and Google slides. But one app that I want Google to create is Google Sites to edit websites on my iOS and Android phones",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1610758410"
+          },
+          "name": {
+            "label": "Ronnie Dennis"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T16:46:38-07:00"
+        },
+        "im:rating": {
+          "label": "4"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838486358"
+        },
+        "title": {
+          "label": "Goggle lies"
+        },
+        "content": {
+          "label": "I said can I watch all of Zootopia 2 by 6:30pm it said yes",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id112201785"
+          },
+          "name": {
+            "label": "megaellen"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T14:09:49-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838112835"
+        },
+        "title": {
+          "label": "RN"
+        },
+        "content": {
+          "label": "Marie  Viray",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1161712266"
+          },
+          "name": {
+            "label": "Gharaei mohsen"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T13:44:16-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838047583"
+        },
+        "title": {
+          "label": "GOONING"
+        },
+        "content": {
+          "label": "BEST THING EVER",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id405704708"
+          },
+          "name": {
+            "label": "Sue Larsen"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T13:33:28-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13838019885"
+        },
+        "title": {
+          "label": "Dr John Castanaro"
+        },
+        "content": {
+          "label": "I have been going to Dr John for several years now years and I have never been disappointed. He answers any questions I have and is fair. I highly recommend him and am very satisfied with the work he does on my teeth\nThankyou Dr John",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1596197189"
+          },
+          "name": {
+            "label": "Jkkdkdkdne"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T12:33:37-07:00"
+        },
+        "im:rating": {
+          "label": "4"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837865240"
+        },
+        "title": {
+          "label": "Desayuno"
+        },
+        "content": {
+          "label": "Muy buen servicio nos toc\u00f3 Manuel que nos atendiera! Muy buen sabor y precio !",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id280842466"
+          },
+          "name": {
+            "label": "SMW57"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T12:09:10-07:00"
+        },
+        "im:rating": {
+          "label": "3"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837801100"
+        },
+        "title": {
+          "label": "Headline Feed"
+        },
+        "content": {
+          "label": "Stories are out of date.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1899698096"
+          },
+          "name": {
+            "label": "Veehhejdj"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T12:07:07-07:00"
+        },
+        "im:rating": {
+          "label": "4"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837795741"
+        },
+        "title": {
+          "label": "I love it but one problem"
+        },
+        "content": {
+          "label": "So it\u2019s been glitching on the ai mode not letting me text I will refuse to use the app until fixed. Thanks!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1232574162"
+          },
+          "name": {
+            "label": "HEYYY PEOPLES"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T11:23:46-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837681410"
+        },
+        "title": {
+          "label": "It\u2019s cool ,I\u2019m gay"
+        },
+        "content": {
+          "label": "Yep pretty good app",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1899669781"
+          },
+          "name": {
+            "label": "IC3 Investigator"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T10:15:11-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837496935"
+        },
+        "title": {
+          "label": "LLC"
+        },
+        "content": {
+          "label": "Do not use this app, it tracks you and steals your information!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1860581954"
+          },
+          "name": {
+            "label": "Catman Carl!"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T10:02:16-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837461677"
+        },
+        "title": {
+          "label": "I love Google"
+        },
+        "content": {
+          "label": "I think Google is the best in the western hemisphere!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1017032627"
+          },
+          "name": {
+            "label": "Rolfi R"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T09:45:41-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837415367"
+        },
+        "title": {
+          "label": "Very good \ud83d\udc4d"
+        },
+        "content": {
+          "label": "Excellent \ud83d\udc4c",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id834189058"
+          },
+          "name": {
+            "label": "pabsaz2011"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T08:56:14-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837275664"
+        },
+        "title": {
+          "label": "Using X to report news"
+        },
+        "content": {
+          "label": "Frequently when I click on a News article it opens an X response. That\u2019s not News, that conspiracies!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1632556720"
+          },
+          "name": {
+            "label": "Jeffry epsiten"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T07:55:41-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13837099844"
+        },
+        "title": {
+          "label": "Tuff"
+        },
+        "content": {
+          "label": "I can jerk off in porn hub gang so tuff",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id87509598"
+          },
+          "name": {
+            "label": "Pistol Pete 22"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T06:36:08-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13836863995"
+        },
+        "title": {
+          "label": "Absolute Gasolina!! \ud83d\udd25\ud83d\udd25"
+        },
+        "content": {
+          "label": "Amazing breakfast! Got the Benedict and added smoked salmon. Best I ever had. Thank you, Amber\u2026 you were right!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1167866187"
+          },
+          "name": {
+            "label": "I dont care..."
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T06:32:44-07:00"
+        },
+        "im:rating": {
+          "label": "4"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13836854096"
+        },
+        "title": {
+          "label": "Wow, Janet at Plex?"
+        },
+        "content": {
+          "label": "So why does it take two days to five days to Update here? I\u2019m on Wi-Fi. I pay for it for T-Mobile.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1457607549"
+          },
+          "name": {
+            "label": "f srk"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T05:24:30-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13836661384"
+        },
+        "title": {
+          "label": "Zionists"
+        },
+        "content": {
+          "label": "Mass sensorship",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1366473251"
+          },
+          "name": {
+            "label": "Cu\u00e1l es bueno"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T05:18:23-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13836644823"
+        },
+        "title": {
+          "label": "Muchos comerciales in\u00fatiles"
+        },
+        "content": {
+          "label": "No se pueden leer los art\u00edculos sin que se interpongan comerciales in\u00fatiles que dol\u00f3 quitan el tiempo \nNuremberg",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id556082000"
+          },
+          "name": {
+            "label": "Kiaria_R91"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T02:40:56-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13836276646"
+        },
+        "title": {
+          "label": "Google"
+        },
+        "content": {
+          "label": "I love everything GOOGLE!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1306753171"
+          },
+          "name": {
+            "label": "Roxxyyway"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-11T00:55:11-07:00"
+        },
+        "im:rating": {
+          "label": "2"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13836078255"
+        },
+        "title": {
+          "label": "Updates"
+        },
+        "content": {
+          "label": "Overall a good app. I just really dislike the fact that any time I try to use google photo search it requires an update. It\u2019s starting to get annoying and it\u2019s taking up space in my phone",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1538735606"
+          },
+          "name": {
+            "label": "Gamerbot1234dyy"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T19:09:07-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13835429789"
+        },
+        "title": {
+          "label": "It always lags"
+        },
+        "content": {
+          "label": "It always lags and I never find what I want",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1513507649"
+          },
+          "name": {
+            "label": "Hook\u2019d Up Sportfishing"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T18:14:11-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13835303632"
+        },
+        "title": {
+          "label": "The Best Search Engine"
+        },
+        "content": {
+          "label": "You can\u2019t go wrong using Google! It\u2019s always on point and learning everyday. Google is my go too when I\u2019m looking or wanting to know something. Serves my business well as well ! Google Rocks ! Use it  and make it your first choice as a search engine.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1739391750"
+          },
+          "name": {
+            "label": "Thi$ u$3rn@m3 i$ t@k3n"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T17:52:05-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13835251648"
+        },
+        "title": {
+          "label": "READ"
+        },
+        "content": {
+          "label": "every time im confused on a question i ask google it answers perfectly also it gibe good advice",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1613915811"
+          },
+          "name": {
+            "label": "\ud835\udcda\ud835\udcea\ud835\udcfd\ud835\udcee123"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T17:17:40-07:00"
+        },
+        "im:rating": {
+          "label": "1"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13835171491"
+        },
+        "title": {
+          "label": "your microphone phone is broken"
+        },
+        "content": {
+          "label": "your microphone is picking up random words",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1844463047"
+          },
+          "name": {
+            "label": "Yaska qashxi"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T16:57:06-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13835123447"
+        },
+        "title": {
+          "label": "Google"
+        },
+        "content": {
+          "label": "is so good",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1870784628"
+          },
+          "name": {
+            "label": "Mutantsloth7"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T13:48:19-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13834678199"
+        },
+        "title": {
+          "label": "Go as hegdgdgdgdh"
+        },
+        "content": {
+          "label": "Goooooooooooooooogllle",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1326707521"
+          },
+          "name": {
+            "label": "Marc CD but"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T13:44:41-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13834668996"
+        },
+        "title": {
+          "label": "Y"
+        },
+        "content": {
+          "label": "Y",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1857641068"
+          },
+          "name": {
+            "label": "Chiplover8881"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T13:21:05-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13834610106"
+        },
+        "title": {
+          "label": "Google Review"
+        },
+        "content": {
+          "label": "Google is really helpful especially google AI and I don\u2019t know what I would do without it as I depend on this amazing appearance in my life! \ud83e\udd29 GO GOOGLE!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1492070181"
+          },
+          "name": {
+            "label": "Xendayah"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T12:17:14-07:00"
+        },
+        "im:rating": {
+          "label": "2"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13834447852"
+        },
+        "title": {
+          "label": "J"
+        },
+        "content": {
+          "label": "When I use it for homework it doesn\u2019t work. I used it for my little brother and he had finding the area and it kept getting it wrong.",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id817141647"
+          },
+          "name": {
+            "label": "Ali Bacy\u00e9"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T11:08:16-07:00"
+        },
+        "im:rating": {
+          "label": "5"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13834269242"
+        },
+        "title": {
+          "label": "Best area for research"
+        },
+        "content": {
+          "label": "Since I\u2019m using google , I\u2019m so satisfied. Thanks!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      },
+      {
+        "author": {
+          "uri": {
+            "label": "https://itunes.apple.com/us/reviews/id1319029954"
+          },
+          "name": {
+            "label": "ohmostnoblelord"
+          },
+          "label": ""
+        },
+        "updated": {
+          "label": "2026-03-10T08:20:49-07:00"
+        },
+        "im:rating": {
+          "label": "3"
+        },
+        "im:version": {
+          "label": "411.0"
+        },
+        "id": {
+          "label": "13833808156"
+        },
+        "title": {
+          "label": "Too much BS"
+        },
+        "content": {
+          "label": "Just the news from many sources including those from the US that only monetize the news. Don\u2019t play don\u2019t get the news! And ads are ok, but need to be limited and not overwhelming. Also more sources, not just the paid ones!",
+          "attributes": {
+            "type": "text"
+          }
+        },
+        "link": {
+          "attributes": {
+            "rel": "related",
+            "href": "https://itunes.apple.com/us/review?id=284815942&type=Purple%20Software"
+          }
+        },
+        "im:voteSum": {
+          "label": "0"
+        },
+        "im:contentType": {
+          "attributes": {
+            "term": "Application",
+            "label": "Application"
+          }
+        },
+        "im:voteCount": {
+          "label": "0"
+        }
+      }
+    ],
+    "updated": {
+      "label": "2026-03-13T08:25:23-07:00"
+    },
+    "rights": {
+      "label": "Copyright 2008 Apple Inc."
+    },
+    "title": {
+      "label": "iTunes Store: Customer Reviews"
+    },
+    "icon": {
+      "label": "http://itunes.apple.com/favicon.ico"
+    },
+    "link": [
+      {
+        "attributes": {
+          "rel": "alternate",
+          "type": "text/html",
+          "href": "https://music.apple.com/WebObjects/MZStore.woa/wa/viewGrouping?cc=us&id=1"
+        }
+      },
+      {
+        "attributes": {
+          "rel": "self",
+          "href": "https://itunes.apple.com/rss/customerreviews/id=284815942/sortBy=mostRecent/page=1/json"
+        }
+      },
+      {
+        "attributes": {
+          "rel": "first",
+          "href": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=284815942/sortby=mostrecent/xml?urlDesc=/customerreviews/id=284815942/sortBy=mostRecent/page=1/json"
+        }
+      },
+      {
+        "attributes": {
+          "rel": "last",
+          "href": "https://itunes.apple.com/us/rss/customerreviews/page=10/id=284815942/sortby=mostrecent/xml?urlDesc=/customerreviews/id=284815942/sortBy=mostRecent/page=1/json"
+        }
+      },
+      {
+        "attributes": {
+          "rel": "previous",
+          "href": "https://itunes.apple.com/us/rss/customerreviews/page=1/id=284815942/sortby=mostrecent/xml?urlDesc=/customerreviews/id=284815942/sortBy=mostRecent/page=1/json"
+        }
+      },
+      {
+        "attributes": {
+          "rel": "next",
+          "href": "https://itunes.apple.com/us/rss/customerreviews/page=2/id=284815942/sortby=mostrecent/xml?urlDesc=/customerreviews/id=284815942/sortBy=mostRecent/page=1/json"
+        }
+      }
+    ],
+    "id": {
+      "label": "https://itunes.apple.com/rss/customerreviews/id=284815942/sortBy=mostRecent/page=1/json"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "meta": {"app_id": "222222222", "app_name": "Competitor Beta", "fetched_at": "2026-03-14T00:00:00Z"},
+  "reviews": [
+    {"id": "cb001", "rating": 4, "title": "Widget support is great", "body": "The widget support is fantastic. Home screen widgets work perfectly.", "author": "buser1", "date": "2026-03-10", "version": "1.5.0"},
+    {"id": "cb002", "rating": 3, "title": "Decent but crashes sometimes", "body": "App crashes occasionally but generally okay. Not as stable as I would like.", "author": "buser2", "date": "2026-03-09", "version": "1.5.0"},
+    {"id": "cb003", "rating": 5, "title": "Best dark mode ever", "body": "The dark mode implementation is the best I have seen. True OLED black mode available.", "author": "buser3", "date": "2026-03-08", "version": "1.5.0"},
+    {"id": "cb004", "rating": 2, "title": "No offline support", "body": "Cannot use without internet. Really needs offline mode. Very disappointing.", "author": "buser4", "date": "2026-03-07", "version": "1.4.0"},
+    {"id": "cb005", "rating": 4, "title": "Good customer service", "body": "Customer support is very responsive and helpful. Resolved my issue quickly.", "author": "buser5", "date": "2026-03-06", "version": "1.5.0"}
+  ]
+}

@@ -39,3 +39,5 @@ temp/
 dist/
 build/
 *.skill
+skills/app-store-review-intelligence/scripts/__pycache__/
+skills/app-store-review-intelligence/tests/__pycache__/

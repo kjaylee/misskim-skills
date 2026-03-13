@@ -1,0 +1,10 @@
+{
+  "meta": {"app_id": "111111111", "app_name": "Competitor Alpha", "fetched_at": "2026-03-14T00:00:00Z"},
+  "reviews": [
+    {"id": "ca001", "rating": 5, "title": "Excellent offline mode", "body": "Love the offline mode feature. Works great without internet. Best offline experience.", "author": "cuser1", "date": "2026-03-10", "version": "3.2.0"},
+    {"id": "ca002", "rating": 4, "title": "Great dark mode", "body": "Dark mode is beautifully implemented. Easy on the eyes at night. Really well done.", "author": "cuser2", "date": "2026-03-09", "version": "3.2.0"},
+    {"id": "ca003", "rating": 5, "title": "No crashes", "body": "Very stable app. Never crashes. Smooth performance all the time.", "author": "cuser3", "date": "2026-03-08", "version": "3.2.0"},
+    {"id": "ca004", "rating": 3, "title": "Okay but expensive", "body": "Good features but the premium price is too high. Needs better value for money.", "author": "cuser4", "date": "2026-03-07", "version": "3.2.0"},
+    {"id": "ca005", "rating": 2, "title": "Missing customization", "body": "Lacks customization options. The interface feels rigid and inflexible.", "author": "cuser5", "date": "2026-03-06", "version": "3.1.0"}
+  ]
+}
