@@ -2349,3 +2349,73 @@ fn compute_units_for_big_mod_exp(base_len: usize, exp_len: usize, mod_len: usize
 
 | D38 AI-Autonomous CI/CD Pipeline Exploitation (hackerbot-claw) | CI/CD 파이프라인 보안 감사가 패키지 등록소(D28)·인프라 접근(B14/D27)에 집중하고, GitHub Actions 워크플로우 자체의 신뢰 경계(`pull_request_target` + fork checkout, 브랜치명 주입, 파일명 주입, 빌드 단계 주입)를 별도 공격면으로 다루지 않음. AI-on-AI 벡터(CLAUDE.md·AGENTS.md 교체로 다운스트림 코딩 에이전트 조종)는 단순 코드 변경이 아닌 에이전트 정책 레이어 영속 오염이라 일반 코드 리뷰 감사로는 탐지 불가. hackerbot-claw: Feb 21–28 2026, RCE in 5/7 targets, 178 releases + 32K stars deleted from Trivy. |
 | B61 Solana big_mod_exp Syscall CU Underestimation Validator DoS | Solana 시스콜 CU 추정치를 사전 계산(pre-calculated estimate) 방식으로 책정할 때, 입력 단위가 바이트인지 비트인지를 명시적으로 검증하지 않음. 최대 입력 크기(4,096비트)에서 실제 실행 비용이 청구 CU 대비 63배 초과 → 소수 계정으로 검증자 CPU 포화 → 정상 TX 2분+ 지연. B20(일반 DoS)과 달리 스팸 없이 단일 구조적 가격 오류로 실행 가능. Keeper TX 확인 지연 → oracle staleness 창 확대. 패치됨(현재 Solana) — 신규 시스콜 추가 시 재발 가능 패턴. (CertiK, 2026-02-27) |
+
+### A63. Business Logic Economic Bounds Non-Enforcement — User Consent ≠ Safety Control
+**Historical**: Aave $50M Slippage Incident (March 2026); YO Protocol $3.71M (January 2026)
+**Mechanism**: Protocol exposes operations with potentially catastrophic economic parameters (slippage, price impact, trade size). UI/UX layer shows warnings but the contract accepts any user-specified value without enforcing minimum safety bounds. MEV bots / searchers extract value from the user's consented-but-unsafe transaction.
+**Aave $50M detail**: A trader swapped $50.4M USDT for AAVE through a SushiSwap pool with insufficient liquidity. Both Aave UI and CoW Swap showed slippage warnings. The transaction executed anyway — MEV bots extracted ~$44M in sandwich attacks. The protocol received zero bounty; this was a design-level failure, not a bug.
+**YO Protocol $3.71M detail**: `slippage` parameter accepted any value including 0 (0% expected output). Deployment used permissive default. Attacker set slippage=0 and drained via arbitrage.
+**OWASP 2026 significance**: SC02 (Business Logic) rose from #4 to #2 across 122 DeFi incidents. Design-level economic logic flaws now outpace most code-level bugs.
+**Why audits miss this**: Auditors verify "does the code execute the user's intent correctly?" — not "does the protocol enforce economically sane limits even when users explicitly consent to dangerous parameters?" User-consented harm at protocol scale is not in a typical audit's threat model. Static analysis tools cannot detect this class.
+**Defense**:
+1. Enforce **protocol-level minimum output** / slippage caps regardless of user input (`require(amountOut >= minSafeOutput)`)
+2. Implement circuit breakers: reject transactions exceeding a maximum price impact threshold
+3. Invariant tests must include adversarial economic parameter fuzzing (Foundry: `uint256 slippage = bound(slippage, 0, 10000)` — test at extremes)
+4. Audit checklist: **"What happens when every numeric parameter is set to min/max?"** — if the answer is "loss of user or protocol funds," add a hard bound
+**Microstable relevance**: HIGH
+- Mint/Redeem parameters: if Microstable accepts user-controlled slippage/amount inputs, are hard bounds enforced at contract level?
+- Oracle-priced minting: does the contract enforce a maximum price deviation cap even if user "consents" to a stale/manipulated price?
+- SC02 rising to #2 means this is the current most underrated risk class
+**Source**: OWASP Smart Contract Top 10: 2026 (122 incidents, $905.4M) — https://dev.to/ohmygod/the-owasp-smart-contract-top-10-2026-every-vulnerability-explained-with-real-exploits-i30
+
+---
+
+### A64. Deployment Configuration Audit Blindspot — Correct Code, Wrong Parameters
+**Historical**: YO Protocol $3.71M (January 2026, permissive slippage default); Euler Finance (incorrect reserve factor in deployment); multiple bridge exploits from incorrect initializer parameters
+**Mechanism**: Smart contract code logic is correct as written. The vulnerability is in the **deployment configuration**: constructor arguments, proxy initializer parameters, admin role assignment, or default parameter values that are set incorrectly at deploy time. The audit reviewed the code; the deployment was never re-audited.
+**Why audits miss this**: Standard audit scope = "review the Solidity/Rust source code." Deployment scripts, constructor call parameters, initializer configurations, and post-deployment admin operations are typically marked "out of scope." Yet the exploit leverages these configuration-layer decisions, not the code itself.
+**Pattern taxonomy**:
+- Type 1: Permissive default (YO Protocol: slippage=0 default → immediate exploit)
+- Type 2: Wrong admin key at initialization (unauthorized upgrade access from day 1)
+- Type 3: Oracle address misconfigured (wrong feed address → stale/wrong price from genesis)
+- Type 4: Proxy implementation address not locked → anyone can re-initialize
+**Defense**:
+1. Deployment checklist: for every configurable parameter, document the security-critical range and the deployed value
+2. Post-deployment invariant verification: run automated tests against **the deployed contract state** (not just code) verifying all safety parameters
+3. Audit scope must explicitly include: deployment scripts, constructor args, initializer params, and first-run admin transactions
+4. Governance process: any parameter change post-deployment requires the same security review as a code change
+**Microstable relevance**: HIGH
+- Pyth oracle staleness threshold, confidence interval, and price deviation cap are deployment/initialization parameters — confirm values are security-reviewed, not just code-reviewed
+- Mint/redeem rate limits: set at initialization? Confirm current deployed values match security specification
+- Upgrade authority: is the current upgrade key holder documented and audited?
+**Source**: OWASP Smart Contract Top 10: 2026 (SC05 Input Validation + SC01 Access Control patterns)
+
+---
+
+### B62. Autonomous Wallet Agent — Prompt Injection & Memory Poisoning for DeFi Key Compromise
+**Historical**: Crypto.com Research "Rise of the Autonomous Wallet" (Feb 2026); NIST prompt injection formal request (Jan 2026); Northeastern "Agents of Chaos" (Mar 2026, AI agents leaked data, erased email servers); D38 AI-on-AI (Feb 2026)
+**Mechanism**: DeFi AI agents with signing keys become targets for:
+1. **Prompt injection**: Malicious instructions embedded in on-chain data, governance proposals, DEX trade metadata, or NFT descriptions that the agent processes → agent executes attacker-controlled transactions
+2. **Memory poisoning**: Long-running agent with persistent memory has false data implanted (e.g., "The admin address is now X") → future decisions based on poisoned state
+3. **Identity hijacking**: Agent impersonation or session key theft → attacker acts as the trusted agent
+4. **Multi-agent cascade**: Agent A poisons Agent B's context via shared messaging → chain of trust broken
+**Key distinction from D38 (AI-on-AI CI/CD)**: D38 attacks the *development pipeline* (GitHub Actions, build system). B62 attacks the *runtime DeFi agent* that holds signing keys and executes on-chain transactions in production.
+**OWASP 2026 note**: 48% of cybersecurity professionals cite agentic AI as top attack vector for 2026 (Dark Reading poll). NIST published formal RFI on AI agent security Jan 2026.
+**Why audits miss this**: Smart contract audits review on-chain code. The AI agent layer (LLM + memory + tool call pipeline) is entirely off-chain, not in contract audit scope. Yet an agent with a hot signing key can execute any transaction the multisig allows.
+**Defense**:
+1. **Strict action boundary**: AI agents should never hold permanent private keys — use time-limited session keys with narrow scope, or require human co-signature for above-threshold amounts
+2. **Input sanitization**: Treat all on-chain data read by AI agents as untrusted external input — sanitize before injecting into agent prompts
+3. **Memory integrity**: Agent long-term memory stores require integrity verification (hash/signature of stored facts); unexpected modification triggers human review
+4. **Audit scope extension**: Any protocol using AI keepers or governance agents must include the AI pipeline in the security review, not just the on-chain contracts
+5. **Human gate for high-value operations**: Autonomous agents should pause and require human confirmation for any operation above a risk threshold
+**Microstable relevance**: HIGH
+- If Microstable keeper is AI-assisted or uses any LLM-based decision layer, B62 applies directly
+- AGENTS.md / SOUL.md already identified as AI-on-AI vector (D38) — B62 is the production-runtime extension of the same attack class
+- Governance parameter changes made via AI agent with signing authority are the highest-risk path
+**Source**: https://crypto.com/au/research/rise-of-autonomous-wallet-feb-2026 | https://news.northeastern.edu/2026/03/09/autonomous-ai-agents-of-chaos/ | https://www.spiceworks.com/security/when-ai-agents-become-your-newest-attack-surface/
+
+---
+
+| META-04 Business Logic UX-Security Boundary ("Warning ≠ Security Control") (퍼플팀 메타, 2026-03-15) | 감사 방법론이 "코드가 사용자 의도를 올바르게 실행하는가?"를 검증하지, "프로토콜이 사용자가 동의해도 경제적으로 파괴적인 파라미터를 허용하지 않는가?"를 검증하지 않음. Aave $50M 슬리피지 사건(2026-03): UI 경고 표시 → 사용자 동의 → 계약 실행 → MEV 봇이 $44M 추출. 계약 코드 버그 없음; 설계 수준 경제 경계 부재. OWASP 2026 SC02(Business Logic)이 #4→#2로 상승: 이 클래스가 가장 빠르게 성장하는 감사 사각지대. 대응: 감사 체크리스트에 "모든 수치 파라미터를 최솟값/최댓값으로 설정 시 프로토콜 또는 사용자가 손실을 입는가?" 항목 필수. 결과 Yes → 계약 레벨 하드 바운드 강제. (A63 참조) |
+| META-05 Autonomous Wallet Agent AI 공격면 — 계약 감사가 에이전트 레이어를 커버하지 않음 (퍼플팀 메타, 2026-03-15) | 스마트컨트랙트 감사는 온체인 코드만 검토. AI 에이전트(LLM + 메모리 + 도구 호출 파이프라인)는 오프체인이지만 핫 서명 키를 보유하고 온체인 TX를 실행. 프롬프트 인젝션(온체인 데이터·거버넌스 제안에 악성 지시 삽입 → 에이전트가 공격자 TX 실행), 메모리 포이즈닝(에이전트 장기 기억에 허위 데이터 주입 → 미래 결정 오염), 세션키 탈취(에이전트 서명 권한 전체 위임 시 단일 실패점)가 주요 메커니즘. D38이 개발 파이프라인 AI-on-AI를 커버한다면, META-05/B62는 프로덕션 런타임 에이전트를 커버. 48%의 보안 전문가가 agentic AI를 2026 최상위 공격 벡터로 지목(Dark Reading 2026-03). (B62 참조) |
+| META-06 Deployment Configuration Audit Blindspot — 올바른 코드, 잘못된 파라미터 (퍼플팀 메타, 2026-03-15) | 표준 감사 범위 = 소스코드. 배포 스크립트·생성자 인수·프록시 이니셜라이저 파라미터·기본값은 일반적으로 "범위 외". YO Protocol $3.71M(2026-01): 코드는 올바름; 슬리피지=0 기본값이 배포 시 설정됨 → 즉시 취약. CrossCurve $3M(2026-02): expressExecute 가드가 코드에 존재했으나 배포 설정에서 누락. 패턴: 이니셜라이저 파라미터 → 접근제어 역할 → 오라클 주소 → 업그레이드 권한이 모두 배포 시 결정되지만 재감사되지 않음. "코드 감사 통과 = 배포 안전"의 오류. 대응: 배포 후 불변 검증(deployed contract state에 대한 자동 테스트), 감사 계약서에 배포 스크립트 및 이니셜라이저 파라미터 명시적 포함. (A64 참조) |
