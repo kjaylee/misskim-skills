@@ -2153,3 +2153,104 @@ fn cache_key(&self, session: &Session, ctx: &mut CTX) -> CacheKey {
 | META-01 Known-Class Fresh-Deployment Blindness (퍼플팀 메타, 2026-03-13) | 감사 방법론이 "현재 코드가 올바른가?"(전향적) 위주로 설계되어, 2년+ 전 공개된 알려진 취약점 클래스가 신규 배포에 그대로 재현되는 "역방향 패턴 매칭" 검증이 없음. ERC-2771 sender mismatch (OZ 2023-12 공개) → DBXen 2026-03-12 반복 착취가 전형적 사례. 취약점 클래스 지식(OZ advisory, Immunefi bounty report)이 개별 감사사 체크리스트로 전파되는 표준 메커니즘 부재. 구조적 해결책: 감사 체크리스트에 "과거 2년 공개 취약점 클래스 전수 조회(known-bad pattern database)" 단계를 필수 포함. |
 | META-02 Full Attack Surface ≠ Deployed Contract (퍼플팀 메타, 2026-03-13) | 스마트컨트랙트 감사 범위가 배포된 바이트코드/소스에만 한정됨. 실제 프로토콜 공격면은 도메인 등록자 계정(bonk.fun 2026-03-12), 개발자 장치(Bybit $1.5B 2025-02, B57), CDN/프론트엔드 공급망(BadgerDAO $120M, D26)까지 포함. 세 사건 공통점: 스마트컨트랙트 감사 통과 + 계약 외부 진입. "가장 큰 손실"이 지속적으로 "감사 범위 외부"에서 발생하는 구조. 해결: "Human-Operated Upstream Checklist"(도메인 등록자 MFA, 개발자 장치 격리, CDN 서명 무결성)를 독립 감사 산출물로 표준화 필요. |
 | META-03 Rust Memory Safety Halo Effect (퍼플팀 메타, 2026-03-13) | Rust 코드베이스 감사 시 "메모리 안전 = 전반적 안전"이라는 인지 후광효과로 설정 레이어·기본값 보안·비즈니스 로직 취약점에 대한 주의가 구조적으로 감소. pingora-cache "insecure by default"(D37, CVSS 8.4) + pingora-core smuggling(D35 CVSS 9.3)이 고성능 Rust OSS 인프라에서 발생. DeFi 인프라 Rust 전환(keeper bot, bridge backend, RPC relay) 가속 시 이 인지 편향이 keeper 운영 스택 감사에 직접 적용. 대응: Rust crate 감사 시 메모리 안전성과 독립된 "설정 취약점 체크리스트"(기본값 보안, Host 포함 캐시키, 허용목록 강제) 별도 실행 필수. |
+
+---
+
+### A62. Automated Risk Parameter Rate-Cap Oracle Misconfiguration (Agentic Execution, No Human Gate)
+**Historical**: Aave wstETH CAPO Incident (2026-03-10, $27.78M in user losses) — 10,938 wstETH across 34 healthy E-Mode positions liquidated by Aave's own anti-manipulation system, not by any attacker.
+**Mechanism**: Aave deploys a CAPO (Capped Asset Price Oracle) designed to cap the reported price appreciation rate of yield-bearing assets (like wstETH) to prevent artificial price manipulation. The CAPO uses a `snapshotRatio` — the maximum allowed exchange rate, updated periodically — to determine the reported price ceiling.
+
+Attack chain (no attacker — self-inflicted):
+1. Chaos Labs' off-chain **Edge Risk engine** computed and submitted a new `snapshotRatio` parameter update for wstETH CAPO at 11:46 UTC on March 10
+2. **AgentHub** (automated on-chain parameter executor by BGD Labs, using Chainlink Automation) executed the update **one block later** — with zero human review, zero delay
+3. The submitted `snapshotRatio` was too low: it capped wstETH at ~2.85% below the actual market rate (oracle reported ~1.19 ETH; actual market rate ~1.228849 ETH)
+4. Aave's liquidation engine immediately treated 34 E-Mode wstETH positions as undercollateralized at the capped price
+5. Liquidation bots responded within seconds — 10,938 wstETH ($27.78M) liquidated before any human or monitoring system could intervene
+6. Edge Risk had previously processed 1,200+ payloads across 3,000+ parameters without incident — confirming this is a rare-but-catastrophic failure mode of automated risk management pipelines
+
+**Why distinct from existing entries**:
+- **B35 (Keeper Parameter Misconfiguration)**: B35 covers human operators manually submitting wrong parameters (YO Protocol, zeroed slippage). A62 is a fully automated agentic pipeline (off-chain risk AI → on-chain executor) with NO human review step; human oversight was structurally excluded from the execution path.
+- **B46 (Agentic AI Overprivilege)**: B46 covers autonomous agents acquiring unintended resources or pursuing side-effects. A62 is a risk parameter automation pipeline that had LEGITIMATE authority — the misconfiguration was in the computed value, not the permission model.
+- **B59 (AI Co-Author Review Gap)**: B59 = AI WRITES code with formula error, human rubber-stamps review. A62 = automated system COMPUTES a valid-format parameter update containing a wrong value, and automated executor fires it without any human or sanity-check gate.
+- **A3 (Oracle Price Manipulation)**: A3 = attacker actively manipulates price inputs. A62 = the oracle PROTECTION SYSTEM itself becomes the damage source by applying an incorrect cap with no adversarial involvement.
+
+**The systemic pattern**:
+1. Protocol adopts an automated risk management pipeline (off-chain analytics engine → automated on-chain executor)
+2. Speed advantage of full automation justifies removal of human review gate
+3. The pipeline has processed thousands of updates without incident → operational confidence builds → no alert for value anomalies is added
+4. A single out-of-range parameter value enters the pipeline → executes in ONE BLOCK → damage is immediate and irreversible at protocol scale
+5. Monitoring detects the anomaly 8 minutes after first liquidation; by then 90%+ of damage is complete
+
+**Code pattern to find** (automated parameter executor risk indicators):
+```solidity
+// DANGEROUS: Parameter update executed in same block as computation
+// (Aave pattern): Edge Risk compute → AgentHub execute → 1 block latency
+// No minimum delay, no sanity check, no human gate
+
+// SAFER: Time-delayed parameter updates with pre-execution validation
+function scheduleParameterUpdate(bytes32 key, uint256 value) external onlyRiskEngine {
+    // Require value within bounds BEFORE scheduling
+    require(value >= MIN_SNAPSHOT_RATIO && value <= MAX_SNAPSHOT_RATIO, "Out of range");
+    
+    // Require minimum human-review delay
+    uint256 executableAt = block.timestamp + PARAM_UPDATE_DELAY; // e.g., 10 minutes
+    pendingUpdates[key] = PendingUpdate(value, executableAt);
+    emit ParameterUpdateScheduled(key, value, executableAt);
+}
+
+function executeParameterUpdate(bytes32 key) external {
+    PendingUpdate storage pending = pendingUpdates[key];
+    require(block.timestamp >= pending.executableAt, "Delay not elapsed");
+    
+    // Cross-validation: compare against independent oracle
+    uint256 marketRate = independentOracle.getRate(key);
+    require(
+        abs(int256(pending.value) - int256(marketRate)) <= marketRate * MAX_DEVIATION_BPS / 10_000,
+        "Proposed value deviates too far from market"
+    );
+    
+    // Execute
+    _applyParameter(key, pending.value);
+}
+```
+
+**Pre-execution sanity check (oracle-specific)**:
+```python
+# DEFENSE: Rate-cap sanity check BEFORE on-chain submission
+# Check: does the proposed snapshotRatio cap the price >1% below current market?
+
+proposed_ratio = edge_risk_output["wsteth_snapshot_ratio"]
+market_ratio   = chainlink_wsteth_eth_feed.latest_answer()
+
+deviation_pct = (market_ratio - proposed_ratio) / market_ratio * 100
+
+if deviation_pct > 0.5:  # Proposed cap is >0.5% below market — halt and alert
+    raise ValueError(
+        f"snapshotRatio {proposed_ratio} is {deviation_pct:.2f}% below market {market_ratio}. "
+        "BLOCKING automated execution — human review required."
+    )
+```
+
+**Microstable relevance**: **MEDIUM** (current architecture) → **HIGH** (if automated keeper parameter updates are introduced without human gate).
+
+*Current state (✅ defended)*:
+- Microstable's oracle parameter updates (`update_oracle` instruction) require **2-of-3 keeper quorum** AND the manual oracle mode must be explicitly activated (`enable_manual_oracle_mode`) — which is time-boxed to 120 slots max
+- The Pyth oracle path (`update_oracle_pyth`) reads directly from Pyth price accounts — no computed rate-cap or snapshotRatio mechanism
+- The TWAP system applies a 2.5% max deviation guard (TWAP_MAX_DEVIATION_PPM = 25,000) that would catch a 2.85% rate-cap error
+- **No automated parameter executor exists in current architecture** — no AgentHub equivalent
+
+*Future risk trigger*:
+If any future automation is introduced (e.g., automated collateral weight adjustment, automated circuit breaker parameter tuning, automated fee rate updates) with a single-authority execution path and no human review gate — A62 becomes directly applicable.
+
+**Defense**:
+1. **Human-gate mandate**: ALL oracle parameter and rate-cap updates must require explicit human approval before execution. "Automation executes, human approves" — not "automation computes AND executes"
+2. **Pre-execution sanity check**: verify proposed value is within ±1% of independently observed market rate before queuing any oracle parameter update
+3. **Time-delay between computation and execution**: minimum 5-minute delay between parameter proposal and execution; allows monitoring to catch anomalous values
+4. **Rate-cap circuit breaker**: if proposed oracle cap would trigger liquidations on >$100K of healthy positions at current market prices, HALT and require human override
+5. **Multi-source cross-validation**: parameter update from any risk engine must be cross-validated against at least one independent oracle source before queuing
+6. **Alert on rapid large-scale liquidations**: monitoring must alert within 30 seconds of unusual liquidation volume — not just on oracle anomalies (by then it may be too late)
+7. **Aave post-mortem action**: wstETH CAPO oracle now requires governance approval (not just AgentHub automated execution) for snapshotRatio updates
+
+**Source**: https://rekt.news/aave-rekt | https://governance.aave.com/t/post-mortem-exchange-rate-misallignment-on-wsteth-core-and-prime-instances/24269 | https://x.com/yieldsandmore/status/2031468808012210538 | https://www.coindesk.com/business/2026/03/10/defi-lending-platform-aave-sees-a-rare-usd27-million-liquidations-after-a-price-glitch
+
+| A62 Automated Risk Parameter Rate-Cap Oracle Misconfiguration (Agentic Execution, No Human Gate) | Chaos Labs Edge Risk 엔진이 wstETH CAPO snapshotRatio를 시장가 대비 2.85% 낮게 계산 → AgentHub가 인간 검토 없이 1블록 후 자동 실행 → Aave 청산 엔진이 34개 정상 포지션(10,938 wstETH, $27.78M)을 즉시 청산. 공격자 없음 — 보호 시스템 자체가 피해 원인. B35(수동 파라미터 오류)·B46(에이전트 권한 남용)·B59(AI 코드 수식 오류)와 구별: 이 벡터는 자동화된 위험 관리 파이프라인이 정당한 권한을 보유하되 잘못된 값을 검토 없이 실행하는 구조적 패턴. 방어: 모든 오라클 파라미터 업데이트에 인간 게이트 + 사전 건전성 검사(시장가 ±1% 범위) 의무화. Microstable 현재: ✅ 방어됨(2-of-3 quorum + 수동 오라클 모드 시간 제한). 미래 자동화 도입 시 HIGH 위험. (Aave 2026-03-10, $27.78M) |
