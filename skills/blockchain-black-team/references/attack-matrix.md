@@ -199,9 +199,11 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Multi-collateral diversification, real-time CR monitoring, auto-rebalance, liquidation mechanisms.
 
 ### C23. Governance Attack
-**Historical**: Beanstalk ($182M — flash loan governance)
+**Historical**: Beanstalk ($182M — flash loan governance), Compound Finance (hijacked again, 2026-03-03 — see 2026 reinforcement)
 **Mechanism**: Acquire voting power (via flash loan or sybil) → pass malicious proposal → drain treasury.
-**Defense**: Timelock, quorum requirements, voting escrow, stake-weighted with lockup.
+**2026 reinforcement (Compound Finance re-hijack, March 3, 2026)**: Compound Finance governance was hijacked a second time despite a previous patch. The re-exploit confirms the "patch-and-forget" anti-pattern in governance security: fixing the surface-level mechanism (e.g., adding quorum requirements, timelocks) without addressing the underlying power distribution allows novel attack paths to achieve the same outcome. DeFi governance "defenses" are often parameterized (quorum thresholds, timelock durations) — attackers probe parameter sensitivity across voting epochs to find the cheapest path to majority control. Patching a governance mechanism should trigger a full re-audit of all parameters under adversarial quorum-accumulation scenarios.
+**Purple meta (defense bypass evolution)**: When governance is re-exploited after a "fix," the fix addressed the symptom but not the structural power imbalance. Governance security must be modeled as an economic game, not a code-level check. Every parameter change (timelock duration, quorum %) creates a new exploitability landscape.
+**Defense**: Timelock, quorum requirements, voting escrow, stake-weighted with lockup. **Post-patch mandatory**: re-run adversarial quorum simulation on ALL governance parameters after any fix; "we patched it" requires economic re-modeling, not just code re-audit.
 
 ### C24. Sybil Attack
 **Mechanism**: Create many identities to gain disproportionate influence.
@@ -2419,6 +2421,8 @@ fn compute_units_for_big_mod_exp(base_len: usize, exp_len: usize, mod_len: usize
 | META-04 Business Logic UX-Security Boundary ("Warning ≠ Security Control") (퍼플팀 메타, 2026-03-15) | 감사 방법론이 "코드가 사용자 의도를 올바르게 실행하는가?"를 검증하지, "프로토콜이 사용자가 동의해도 경제적으로 파괴적인 파라미터를 허용하지 않는가?"를 검증하지 않음. Aave $50M 슬리피지 사건(2026-03): UI 경고 표시 → 사용자 동의 → 계약 실행 → MEV 봇이 $44M 추출. 계약 코드 버그 없음; 설계 수준 경제 경계 부재. OWASP 2026 SC02(Business Logic)이 #4→#2로 상승: 이 클래스가 가장 빠르게 성장하는 감사 사각지대. 대응: 감사 체크리스트에 "모든 수치 파라미터를 최솟값/최댓값으로 설정 시 프로토콜 또는 사용자가 손실을 입는가?" 항목 필수. 결과 Yes → 계약 레벨 하드 바운드 강제. (A63 참조) |
 | META-05 Autonomous Wallet Agent AI 공격면 — 계약 감사가 에이전트 레이어를 커버하지 않음 (퍼플팀 메타, 2026-03-15) | 스마트컨트랙트 감사는 온체인 코드만 검토. AI 에이전트(LLM + 메모리 + 도구 호출 파이프라인)는 오프체인이지만 핫 서명 키를 보유하고 온체인 TX를 실행. 프롬프트 인젝션(온체인 데이터·거버넌스 제안에 악성 지시 삽입 → 에이전트가 공격자 TX 실행), 메모리 포이즈닝(에이전트 장기 기억에 허위 데이터 주입 → 미래 결정 오염), 세션키 탈취(에이전트 서명 권한 전체 위임 시 단일 실패점)가 주요 메커니즘. D38이 개발 파이프라인 AI-on-AI를 커버한다면, META-05/B62는 프로덕션 런타임 에이전트를 커버. 48%의 보안 전문가가 agentic AI를 2026 최상위 공격 벡터로 지목(Dark Reading 2026-03). (B62 참조) |
 | META-06 Deployment Configuration Audit Blindspot — 올바른 코드, 잘못된 파라미터 (퍼플팀 메타, 2026-03-15) | 표준 감사 범위 = 소스코드. 배포 스크립트·생성자 인수·프록시 이니셜라이저 파라미터·기본값은 일반적으로 "범위 외". YO Protocol $3.71M(2026-01): 코드는 올바름; 슬리피지=0 기본값이 배포 시 설정됨 → 즉시 취약. CrossCurve $3M(2026-02): expressExecute 가드가 코드에 존재했으나 배포 설정에서 누락. 패턴: 이니셜라이저 파라미터 → 접근제어 역할 → 오라클 주소 → 업그레이드 권한이 모두 배포 시 결정되지만 재감사되지 않음. "코드 감사 통과 = 배포 안전"의 오류. 대응: 배포 후 불변 검증(deployed contract state에 대한 자동 테스트), 감사 계약서에 배포 스크립트 및 이니셜라이저 파라미터 명시적 포함. (A64 참조) |
+| META-07 AI Security Gatekeeper Adversarial Bypass — LLM 게이트키퍼를 보안 경계로 신뢰하는 오류 (퍼플팀 메타, 2026-03-16) | DeFi 거버넌스·모니터링·트랜잭션 스크리닝에 AI 판단자(AI judge)를 도입할 때, LLM을 "신뢰할 수 있는 보안 경계"로 취급하고 adversarial bypass 가능성을 감사 범위 밖에 두는 오류. Unit42 AdvJudge-Zero(2026-03-10): 무해한 서식 기호(줄 바꿈, 특수 공백, 마크다운 토큰)만으로 AI 판단자의 "차단" 결정을 "허용"으로 반전시킬 수 있음을 실증. 기존 adversarial 공격과 달리 출력이 정상처럼 보여 탐지 불가. 패턴: AI judge → "block" → 공격자가 서식 기호 삽입 → "allow" → 악성 거버넌스 제안/파라미터 변경 통과. "AI가 차단했으니 안전"의 오류. 감사 대상: AI 판단자가 결정을 내리는 모든 경로에 대해 adversarial fuzzing 및 인간 2차 검증 필수. (B66 참조) |
+| META-08 Governance Patch-and-Forget — 수정 후 경제적 재모델링 부재 (퍼플팀 메타, 2026-03-16) | 거버넌스 취약점 패치 후 "코드가 올바르게 수정되었는가?"만 검증하고, 수정된 파라미터 조합이 새로운 경제적 공격 경로를 만들지 않는지 재모델링하지 않음. Compound Finance(2026-03-03): 이전 패치 후 재차 거버넌스 탈취. 패턴: quorum 임계값↑ → 공격자가 장기 token 누적 전략으로 적응; timelock 연장 → 공격자가 다중 에포크 분산 투표로 우회. 거버넌스 보안은 코드 정확성 문제가 아니라 경제 게임 이론 문제. 패치 = 파라미터 공간 재조정 → 적대적 quorum 시뮬레이션 필수. "수정했으니 끝"의 오류. (C23 참조) |
 
 ---
 
@@ -2474,3 +2478,154 @@ Full extraction demonstrated in **under 45 seconds** (Nothing CMF Phone 1, Ledge
 **Source**: https://www.theblock.co/post/393154/ledger-researchers-expose-android-flaw-enabling-theft | https://dev.to/ohmygod/cve-2026-20435-how-a-mediatek-boot-chain-flaw-exposes-crypto-wallets-on-25-of-android-phones-34i0 | CVE-2026-20435
 
 | B63 Physical-Access Hardware TEE Bypass — Android MediaTek Boot Chain (CVE-2026-20435) (2026-03-16) | 감사 방법론이 "소프트웨어 레이어 키 탈취(B15)"에 집중하고, 부트체인 수준 하드웨어 TEE 우회를 별도 공격면으로 다루지 않음. CVE-2026-20435: MediaTek Dimensity 7300 및 Trustonic TEE(kinibi)에서 전원 꺼진 기기 → USB → 부트로더 익스플로잇 → TEE 암호화 키 추출 → 오프라인 복호화 → 시드 구문/PIN 45초 내 탈취. Android 전체의 25%(MediaTek 기기) 영향. Phantom 월렛(Solana) 확인됨. B15와 달리 OS·EDR·프로세스 없이 순수 하드웨어 공격. B36과 달리 실행 중인 세션 불필요; 꺼진 기기에서도 동작. 키퍼 운영자 기기 감사 및 하드웨어 월렛 전환 필수. (Ledger Donjon, 2026-03-12) |
+| B64 Firedancer Write-Lock LDoS — 단일 글로벌 PDA 프로토콜 작업 차단 (2026-03-16) | Solana 쓰기 잠금은 슬롯당 계정 배타적 독점. Firedancer 고처리량 시대에 공격자는 프로토콜의 단일 글로벌 상태 PDA를 대상으로 높은 우선 수수료가 붙은 대량 쓰기 잠금 TXs를 범람시켜 합법적 청산·오라클 업데이트·리밸런스를 차단. 비용 ~$50-200/분, 피해 수백만 달러 불량 부채. Firedancer가 더 많은 TXs를 블록에 담기 때문에 경쟁 쓰기 잠금 밀도가 Agave보다 높음. B58(QUIC DoS)과 달리 프로토콜 레이어에서 정상 유효 TXs로 수행. Microstable ProtocolState PDA가 mint/redeem/oracle/rebalance 모두에서 필수 → HIGH 위험. (dev.to/ohmygod Firedancer Era 2026-03-13) |
+| B65 Firedancer 고밀도 블록 슬롯 내 오라클 스테일 익스플로잇 (2026-03-16) | Firedancer 리더는 정상보다 훨씬 많은 TXs를 단일 슬롯에 패킹. 오라클 업데이트 빈도가 TXs 처리 속도를 따라가지 못해, 슬롯 초반 오라클 가격이 슬롯 후반 TXs에 여전히 사용됨. 공격자는 동일 슬롯 내 고밀도 환경에서 가격 변동이 크게 일어날 때 슬롯 초반 스테일 가격으로 민트/리딤 실행. A3(오라클 조작)와 달리 외부 피드 조작 불필요; Firedancer 블록 구조 자체가 스테일 창을 만듦. B50(skip-vote 최종성 지연)과 달리 최종성이 아닌 동일 슬롯 내 순서 기반 가격 스테일니스 문제. Microstable의 슬롯 기반 스테일니스 검사(MINT_ORACLE_STALENESS_MAX=20, HIGH_VOL=8)는 슬롯 내 스테일을 감지하지 못함 — 슬롯 번호가 동일하면 검사 통과. (dev.to/ohmygod Firedancer Era 2026-03-13) |
+
+---
+
+### B64. Firedancer Write-Lock LDoS — Single Global PDA Protocol Operation Block
+**Signal**: DreamWork Security / dev.to "Hidden Security Risks of Solana's Firedancer Era" (2026-03-13). Confirmed Firedancer mainnet deployment context.
+**Mechanism**: Solana's write-lock model enforces per-slot exclusive access to accounts. Only one transaction can write to an account per slot. An attacker floods high-priority-fee transactions targeting a protocol's single global state PDA:
+1. Identify the protocol's critical PDA (e.g., single global ProtocolState account required by all operations)
+2. Craft minimal-compute transactions that write-lock this PDA with high priority fees
+3. Flood 10,000+ such TXs per slot (inexpensive due to Firedancer's higher block capacity)
+4. Legitimate operations (liquidations, oracle updates, rebalances) cannot acquire the write lock
+5. Oracle updates fail → staleness builds → circuit breakers trigger or collateral mispriced
+6. Liquidations fail → undercollateralized positions accumulate → bad debt
+
+**Cost to attacker**: ~$50–200 in priority fees per minute  
+**Potential protocol damage**: millions in bad debt or frozen protocol state
+
+**Why worse in Firedancer era**: Firedancer's higher block throughput means more competing write-lock TXs per block slot. Write-lock contention doesn't scale with throughput — still bounded by unique accounts. Attacker can leverage Firedancer capacity to achieve higher flooding density.
+
+**Why distinct from B20 (DoS)**: B20 covers general network/compute DoS. B64 is a targeted economic attack using legitimate transactions against a *specific account's write-lock queue* — no protocol malfunction, just write-lock starvation.
+
+**Why distinct from B58 (QUIC Transport Panic)**: B58 targets the QUIC network transport layer (crashes RPC connection). B64 targets the Solana runtime write-lock scheduler using valid, properly formatted transactions.
+
+**Why distinct from B47 (Leader-Schedule Isolation)**: B47 requires adversarial network-level targeting of specific validators. B64 is a pure economic layer attack — any node with SOL for priority fees can execute.
+
+**Code/architecture pattern to find**:
+```rust
+// VULNERABLE: single ProtocolState PDA required in every instruction
+pub protocol_state: Account<'info, ProtocolState>,  // in Mint, Redeem, OracleUpdate, Rebalance
+
+// Attacker writes minimal-compute TX:
+// - accounts: [protocol_state (writable), attacker_wallet]
+// - instruction: no-op or failing computation
+// - priority_fee: high (to win scheduling queue)
+// → protocol_state write-locked for this TX → legitimate TXs queue behind it
+```
+
+**Microstable relevance**: **HIGH**
+- `ProtocolState` PDA (`seeds = [b"protocol_state"]`) is required as a writable account in: `mint`, `redeem`, `update_oracle`, `update_oracle_pyth`, `commit_rebalance`, `rebalance`, `update_protocol_params`, all agent operations
+- An attacker can flood write-lock transactions targeting `ProtocolState` → keeper `update_oracle_pyth` fails → `MINT_ORACLE_STALENESS_MAX=20` slots breached → minting halted or TWAP haircut activates
+- Worst case: oracle staleness exceeds `ORACLE_STALENESS_MAX=120` → emergency mode can be triggered at $50-200/min attack cost
+
+**Defense**:
+1. **PDA sharding**: Split monolithic global state across multiple PDAs (per-market, per-user, per-collateral). Reduces the single point of contention
+2. **Keeper priority escalation**: Oracle update TXs should use priority fee oracle that dynamically tracks and outbids contention in the write-lock queue
+3. **Write-lock-aware retry logic**: Keeper detects write-lock contention (signature → blockhash timeout) and immediately resubmits with escalated priority fee
+4. **Graceful staleness degradation**: If oracle updates are blocked, use TWAP-only mode with wider confidence bounds rather than hard halt
+5. **State separation**: Read-only operations (parameter reads) should use separate read-only PDAs to reduce write-lock surface
+**Source**: https://dev.to/ohmygod/the-hidden-security-risks-of-solanas-firedancer-era-what-protocol-developers-must-know-4b8g (2026-03-13)
+
+---
+
+### B65. Firedancer Dense-Block Intra-Slot Oracle Staleness Exploit
+**Signal**: DreamWork Security / dev.to "Hidden Security Risks of Solana's Firedancer Era" (2026-03-13). Extends A3 (Oracle Manipulation) and B50 (Skip-Vote Finality Lag) to intra-slot dense-block scenarios.
+**Mechanism**: Firedancer leaders pack significantly more transactions into a single slot (SIMD-0370 dynamic block sizing). Oracle price feeds updated once per slot (or less frequently) create a stale price window that grows with block density:
+1. Firedancer leader begins a dense slot — many hundreds of TXs packed
+2. An oracle update TX lands early in the slot at price P₀
+3. Market price moves to P₁ (significant deviation) during the dense slot's processing
+4. Attacker's mint/redeem TX lands late in the same slot, still using P₀
+5. Attacker exploits the P₀ → P₁ spread without any oracle manipulation
+
+**Key distinction from A3 (Oracle Manipulation)**: A3 requires active manipulation of the oracle feed (Pyth publisher corruption, flash-loan price distortion). B65 exploits the *structural* temporal mismatch between oracle update frequency and Firedancer block density — no oracle feed manipulation needed.
+
+**Key distinction from B50 (Firedancer Skip-Vote Finality Lag)**: B50 creates finality delays across slots (multi-slot window where transaction is included but not finalized). B65 operates within a *single slot* — the oracle update slot number matches, so slot-based staleness checks pass, but real-world time has elapsed with price movement.
+
+**Why slot-based staleness checks don't catch it**:
+```rust
+// VULNERABLE: slot-based check passes even in dense Firedancer slot
+let slots_since_oracle = current_slot - oracle.last_update_slot;
+require!(slots_since_oracle <= MINT_ORACLE_STALENESS_MAX, OracleStale);
+// If oracle was updated slot N, attacker's TX is also in slot N → slots_since_oracle = 0 → PASSES
+// But price moved 2% within slot N's many transactions
+```
+
+**Realistic attack window**: In extremely volatile conditions during Firedancer leader slots, 0.5–3% intra-slot price deviation is plausible. Combined with Microstable's `MINT_ORACLE_CONFIDENCE_MAX = 2%`, the confidence check becomes the last (and possibly inadequate) guard.
+
+**Microstable relevance**: **MEDIUM**
+- `MINT_ORACLE_STALENESS_MAX=20` slots and `HIGH_VOL_MINT_ORACLE_STALENESS_MAX=8` slots check cross-slot staleness only
+- Within a single Firedancer dense slot, `slots_since_oracle = 0` → staleness check trivially passes
+- Confidence interval check (`MINT_ORACLE_CONFIDENCE_MAX=20_000 = 2%`) is the primary intra-slot guard; if market volatility pushes Pyth's published confidence interval wider than 2%, that instruction reverts — which is the *correct* behavior
+- **Partial mitigation**: Pyth Confidence Interval check + TWAP deviation check (`TWAP_MAX_DEVIATION_PPM=25_000`) together provide meaningful (not perfect) intra-slot protection
+- **Residual risk**: During high-volatility Firedancer dense slots, the confidence/TWAP window between oracle update and attacker TX could be exploitable if confidence stays narrow despite price movement
+
+**Defense**:
+1. **Sub-slot timestamp tracking**: Use Pyth `publish_time` (Unix timestamp) alongside slot number for staleness. If `now() - oracle.publish_time > N seconds`, reject (regardless of slot match)
+2. **Confidence + TWAP double gate**: Both checks must pass; neither alone is sufficient for dense-block scenarios
+3. **Per-slot operation count limit**: Microstable's `SLOT_FLOW_LIMIT_MIN_UNITS` and per-slot volume caps already limit aggregate damage from any single dense slot
+4. **Intra-slot TWAP anchoring**: Cache the TWAP value at the first oracle read per slot; subsequent reads in the same slot use the cached TWAP as fallback if deviation exceeds threshold
+**Source**: https://dev.to/ohmygod/the-hidden-security-risks-of-solanas-firedancer-era-what-protocol-developers-must-know-4b8g (2026-03-13)
+
+---
+
+### B66. AI Judge/Guardrail Adversarial Bypass — 포맷 기호로 LLM 보안 게이트키퍼 우회
+**Signal**: Unit42 Palo Alto Networks, "Auditing the Gatekeepers: Fuzzing 'AI Judges' to Bypass Security Controls" (AdvJudge-Zero, 2026-03-10). Internal red-team fuzzer demonstrates systematic bypass of LLM-based security gatekeepers.
+**Mechanism**: Organizations deploying LLMs as automated security gatekeepers (AI judges) to enforce safety policies, approve governance proposals, screen transactions, or evaluate anomaly alerts are vulnerable to stealthy adversarial formatting attacks:
+1. Attacker identifies that a DeFi protocol uses an LLM-based judge to screen governance proposals or parameter change requests
+2. Attacker crafts a malicious governance proposal (e.g., "set mint cap to MAX_U64," "add attacker address as admin") that would normally be blocked
+3. Attacker inserts benign formatting symbols (specific whitespace sequences, Unicode characters, markdown tokens, or escape sequences) invisible to human readers but significant to the LLM's decision logic
+4. The AI judge receives the formatted input → its "block" decision is reversed to "allow"
+5. The malicious proposal passes the gatekeeper → executed on-chain
+
+**Key characteristic**: Unlike previous adversarial attacks that produce detectable gibberish or obvious prompt injection, AdvJudge-Zero attacks use fully human-readable, benign-appearing text. The malicious payload is the *formatting*, not the content.
+
+**Why auditors miss this**: Smart contract audits don't scope AI components. Security reviews of AI pipelines focus on prompt injection (obvious malicious content in prompts) and data poisoning — not on formatting-level adversarial perturbations. "The AI will block bad requests" is treated as a security property, not an assumption that requires adversarial validation.
+
+**Why distinct from B29 (AI Agent Confused-Deputy)**: B29 attacks the agent's *authorization scope* via ambiguous prompt instructions. B66 attacks the *decision output* of a security judge model via imperceptible formatting. B29 requires crafting plausible-sounding instructions; B66 requires no natural-language manipulation — only formatting.
+
+**Why distinct from B43 (AI Agent Memory Injection)**: B43 injects false data into persistent memory to corrupt future decisions. B66 manipulates a single synchronous judge call via formatting in the current input — no memory state modification.
+
+**Why distinct from B52 (Slow-Drip AI Memory Poisoning)**: B52 operates over multiple sessions to gradually shift model behavior. B66 is a single-call, stateless attack.
+
+**DeFi attack surface**:
+- **Governance AI judges**: "AI reviews proposals for safety before on-chain execution"
+- **Transaction screening**: "AI flags suspicious transactions before keeper executes"
+- **Anomaly detection gates**: "AI decides if an alert requires immediate pause"
+- **Parameter change approval**: "AI validates proposed protocol parameter changes"
+- **Audit automation**: "AI judge reviews contract diff before deployment"
+
+**Code/architecture pattern to find**:
+```python
+# VULNERABLE: AI judge as sole security gate
+def approve_governance_proposal(proposal_text: str) -> bool:
+    response = llm.judge(f"Is this proposal safe? {proposal_text}")
+    return response == "ALLOW"  # attacker formats proposal_text to flip this
+
+# VULNERABLE: no secondary validation after AI judge
+if ai_judge.approve(tx_metadata):
+    execute_on_chain(tx)  # no human review, no rule-based backup
+
+# SAFE: AI judge as advisory layer only
+if ai_judge.approve(tx_metadata) AND rule_engine.passes(tx_metadata):
+    if severity > THRESHOLD:
+        require_human_confirmation(tx)
+    execute_on_chain(tx)
+```
+
+**Defense**:
+1. **Never use AI judge as sole security boundary**: AI judge decisions must be confirmed by deterministic rule-based checks. "AI said allow" is advisory, not authoritative
+2. **Adversarial fuzzing of AI judges**: Before deploying any LLM-based security gatekeeper, run formatting-based adversarial fuzzing (similar to AdvJudge-Zero methodology) to characterize bypass surface
+3. **Human gate for high-impact decisions**: Governance proposals and parameter changes above risk threshold require human confirmation regardless of AI judge verdict
+4. **Input normalization**: Normalize all inputs to AI judges before evaluation — strip formatting symbols, normalize Unicode, canonicalize whitespace
+5. **Dual-model consensus**: Use two independently trained models; require both to agree on "ALLOW" before proceeding
+6. **Audit logging**: Log all AI judge inputs (including raw formatting) and outputs for retrospective analysis; flag decision reversals on re-submission attempts
+
+**Microstable relevance**: LOW (current)
+- Microstable currently has no AI-based governance gating or AI transaction judge deployed
+- If AI-assisted parameter change approval or keeper decision augmentation is added, B66 applies immediately
+- **Pre-adoption checklist**: Before any AI judge deployment, mandate AdvJudge-style adversarial fuzzing as a prerequisite; document attack surface in security review
+
+**Source**: https://unit42.paloaltonetworks.com/fuzzing-ai-judges-security-bypass/ | Unit42 Research (2026-03-10)

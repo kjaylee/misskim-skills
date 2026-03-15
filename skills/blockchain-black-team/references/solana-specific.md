@@ -548,3 +548,50 @@ let deadline = current_slot + 3;  // +2–3 slot buffer for heterogeneous valida
 29. ☐ Token-2022 hooks: all ExtraAccountMetaList accounts verified via seed derivation (not caller-supplied)
 30. ☐ Token-2022 hooks: acyclicity proven (no same-mint CPI transfer within hook); hook upgrade authority frozen
 31. ☐ Firedancer skip-vote buffer: irrevocable operations use `Finalized` commitment; deadline calculations include +2–3 slot slack
+
+---
+
+## Firedancer Write-Lock LDoS — Single Global PDA Starvation (B64, 2026-03-16)
+
+**Signal**: DreamWork Security (dev.to, 2026-03-13). New attack class specific to Firedancer era throughput.
+
+**Pattern**: Protocols with a single monolithic global state PDA required for all writes are vulnerable to targeted write-lock flooding. An attacker submits high-priority-fee minimal-compute TXs write-locking the PDA. Firedancer's higher block density means more competing lock TXs per slot. Legitimate operations (oracle updates, liquidations) are starved.
+
+```rust
+// VULNERABLE ARCHITECTURE: single PDA for all writes
+pub protocol_state: Account<'info, ProtocolState>,  // appears in every instruction context
+
+// ATTACK: 10,000 TXs/slot each requesting write lock on protocol_state
+// → oracle update keeper TX queued behind attacker flood
+// → staleness accumulates → circuit breaker or hard halt
+```
+
+**Solana-specific checklist additions**:
+32. ☐ Identify all global-state PDAs required as `writable` in critical paths (oracle update, liquidation)
+33. ☐ For each global-state PDA: assess write-lock LDoS cost/impact ratio (if one account blocks all operations, HIGH risk)
+34. ☐ Keeper priority fee strategy: dynamic fee escalation on write-lock contention (not fixed priority fee)
+35. ☐ Graceful degradation: if oracle update blocked N consecutive slots, switch to TWAP-only mode (not hard halt)
+
+---
+
+## Firedancer Dense-Block Intra-Slot Oracle Staleness (B65, 2026-03-16)
+
+**Signal**: DreamWork Security (dev.to, 2026-03-13). Extends oracle staleness analysis to intra-slot dense-block scenarios.
+
+**Pattern**: Slot-number-based staleness checks pass when oracle was updated in the same slot as the attacker TX (`slots_since_oracle = 0`). In a Firedancer dense block, price may move significantly between oracle update and attacker TX within the same slot.
+
+```rust
+// CHECK THAT MAY BE INSUFFICIENT in dense Firedancer slots:
+let slots_since_oracle = current_slot - oracle.last_update_slot;
+require!(slots_since_oracle <= MAX, OracleStale);
+// → passes even if oracle.publish_time is 200ms ago and price moved 1%
+
+// IMPROVED: add publish_time check
+let time_since_oracle = Clock::get()?.unix_timestamp - oracle.publish_time;
+require!(time_since_oracle <= MAX_SECONDS, OracleStale);
+```
+
+**Solana-specific checklist additions**:
+36. ☐ Oracle staleness: verify both `slot` check AND `publish_time` (Unix timestamp) check are in place
+37. ☐ Dense-slot scenario: confirm Pyth confidence interval check rejects when confidence > threshold regardless of slot match
+38. ☐ TWAP deviation guard covers intra-slot divergence (not only cross-slot TWAP smoothing)
