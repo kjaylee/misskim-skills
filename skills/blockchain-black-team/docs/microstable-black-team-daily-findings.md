@@ -1,6 +1,103 @@
 
 ---
 
+## 2026-03-16 Daily Check
+
+### Source Sweep (72h window: 2026-03-13 to 2026-03-16)
+- Sources checked: rekt.news (web_fetch), SlowMist hacked.slowmist.io, NOMINIS February 2026 report (web_fetch), Brave web_search, OWASP Smart Contract Top 10: 2026 (web_fetch), dev.to/ohmygod CVE-2026-20435 (web_fetch), TheBlock/CryptoNews (web_fetch)
+- **1 new hardware vulnerability with on-chain key implications**: CVE-2026-20435 — MediaTek Android boot chain TEE bypass (Ledger Donjon, 2026-03-12; ~25% of Android phones)
+- **0 new DeFi protocol exploits** in March 13–16 window (no new hacks above $100K found in 3-day period)
+- **Matrix status**: 79 vectors (pre-today) → **80 vectors** after B63 addition
+
+### New Vector Added Today
+
+| Vector | CVE/Incident | Date | Category |
+|--------|-------------|------|----------|
+| **B63 (NEW): Physical-Access Hardware TEE Bypass — MediaTek Boot Chain** | CVE-2026-20435 | 2026-03-12 (disclosed) | Hardware / Physical Access |
+
+**B63 Technical Summary**: MediaTek Dimensity 7300 + Trustonic TEE (kinibi/t-base) boot chain flaw. Attacker with physical access → USB connection to powered-off device → bootloader exploit before OS loads → TEE encryption key extraction → offline device storage decryption → full seed phrase + PIN in <45 seconds. Phantom Wallet (Solana) confirmed extractable. Affects ~25% of Android devices globally. B15 distinction: no OS, no malware, no running process — pure hardware TEE bypass. Patch issued to OEMs 2026-01-05 but budget/mid-range device lag is 3+ months.
+Source: https://www.theblock.co/post/393154/ledger-researchers-expose-android-flaw-enabling-theft | CVE-2026-20435
+
+### Full 80-Vector Microstable Security Check
+
+#### ❌ HIGH — B45 Post-Audit Deployment Delta (CARRY-FORWARD, DAY 11 OPEN)
+- `security/audit-attestation.json`: **CONFIRMED ABSENT** (ls security/ output verified: green-team-report.md, red-team-report.md, red-team-v2-report.md, yellow-team-report.md, invariant_monitor.py — no attestation JSON)
+- Production code delta from last audited commit remains untracked and ungated
+- **Blue-team directive (re-escalated)**: Create `security/audit-attestation.json` with `last_audited_commit`, `auditor`, `date`, `scope`; add CI gate blocking critical-path PRs without attestation sign-off
+
+#### ⚠️ MEDIUM — B63 Physical TEE Bypass — Operator Device Risk (NEW TODAY)
+- **CVE-2026-20435 (MediaTek, Ledger Donjon, 2026-03-12)**: Phantom Wallet (Solana) confirmed extractable from unpatched Android MediaTek devices in <45 seconds with physical access
+- Keeper code is a Rust server binary (no direct Android dependency in `keeper/src/`), but operator devices used for key setup/management may be Android
+- If any keeper keypair was ever set up on or imported to a Phantom/mobile wallet on a MediaTek Android device with firmware pre-2026-03 security patch → treat key as potentially compromised
+- **Blue-team directive**: (1) Audit all operator devices for MediaTek SoC; (2) Rotate any keeper/treasury key accessible via Phantom mobile on unpatched MediaTek device; (3) Enforce hardware wallet (Ledger/Trezor) for all keeper signing — no mobile hot wallet for keeper keys going forward
+
+#### ⚠️ MEDIUM — A43 Commit/Reveal Threshold Circumvention (CARRY-FORWARD, STILL OPEN)
+- `lib.rs:1574` — per-call commit/reveal check at turnover >= 4% (`LARGE_REBALANCE_THRESHOLD = 40_000`)
+- `grep "cumulative_drift\|epoch_drift\|epoch_weight_start"` → 0 results
+- Attack path: 5× sub-threshold rebalances at 3.9% each over 160 slots achieves 19.5% equivalent without commit/reveal ceremony
+- **Blue-team directive**: Add `epoch_weight_start[4]` snapshot and `cumulative_drift: u64` to `ProtocolState`; accumulate drift per rebalance; trigger commit/reveal when cumulative sum exceeds threshold
+
+#### ⚠️ MEDIUM — B44 SPL Token Account Persistent Delegate Drain (CARRY-FORWARD, STILL OPEN)
+- `mint()` instruction: `user_collateral_ata` at line 2310 — no `delegate.is_none()` check
+- `grep "delegate" lib.rs` → 0 results (only key name references, no authority check)
+- Protocol funds: ✅ safe (PDA vault ATAs); user-side: attacker with stale Approve-granted delegation on victim's USDC ATA can force victim's collateral into protocol while attacker receives MSTB
+- **Blue-team directive**: `require!(ctx.accounts.user_collateral_ata.delegate.is_none(), ErrorCode::DelegateNotAllowed)` in Mint accounts validation
+
+#### ⚠️ LOW — A63 Business Logic: Redeem min_out_amount Has No Protocol Floor (NEW TODAY)
+- `redeem(ctx, musd_amount, min_out_amount)`: user can set `min_out_amount = 0`
+- Contract enforces `total_payout >= min_out_amount` — if min = 0, any oracle-priced payout accepted
+- **Not an AMM MEV attack path**: redemption is oracle-priced (not pool-priced), so classic Aave-style sandwich does not apply
+- **Residual risk**: during oracle degradation + penalty haircuts, user with min_out_amount=0 silently accepts reduced payout; no on-chain protection signals the user of actual haircut applied
+- **Severity**: LOW (oracle defenses limit manipulation; not a protocol fund drain path)
+- **Blue-team directive (optional hardening)**: add `require!(min_out_amount >= expected_floor, ...)` or emit event with applied haircut multiplier so users can off-chain validate
+
+#### ⚠️ LOW — A64 Deployment Config Audit Blindspot: Oracle Constants (CARRY-FORWARD, RELATED TO B45)
+- Oracle staleness/confidence constants are code-level (not deployment params), but values set at initialization are not in audit attestation scope
+- `MINT_ORACLE_STALENESS_MAX = 20`, `REDEEM_ORACLE_STALENESS_MAX = 45`, `MINT_ORACLE_CONFIDENCE_MAX = 2%` — these are correct/reasonable values but unattested
+- Covered by B45 (attestation gap); A64 adds specific concern about oracle parameter documentation
+- **Status**: OPEN but Low, absorbed into B45 remediation scope
+
+#### ⚠️ LOW — D26 Self-Hosted Vendor Script Without SRI Hash (CARRY-FORWARD)
+- `docs/index.html:994`: `<script src="./vendor/solana-web3-1.95.3.iife.min.js"></script>` — no `integrity=` attribute
+- CSP `script-src 'self'` limits external risk; SRI adds tamper-detection for self-hosted files
+- **Blue-team directive**: Add `integrity="sha384-..."` to vendor script tag; compute with `openssl dgst -sha384 -binary <file> | base64`
+
+#### All Other Vectors (carry-forward from 2026-03-12 check)
+- A1–A13: ✅ ALL DEFENDED
+- A32 (Bridge Message Forgery): ✅ N/A (Solana-native, no IBC/bridge layer)
+- A33–A35: ✅ DEFENDED (oracle unit invariants, AI commit tagging in place)
+- A36 (Thin-Liquidity Collateral Cascade): ✅ DEFENDED (collateral limited to USDC/USDT/DAI/USDS with known deep liquidity; allowlist constrained)
+- A38 (ZK Verifier): ✅ N/A (no ZK layer)
+- A39–A52: ✅ DEFENDED or N/A
+- A61–A62: ✅ DEFENDED
+- A63: ⚠️ LOW (redeem min_out floor, see above)
+- A64: ⚠️ LOW (oracle constant attestation, absorbed into B45)
+- A46 (ERC721 Dual-Mint): ✅ N/A (classic SPL Token, no NFT transfer hooks)
+- B14–B20: ✅ (B17 HMAC ✅, B19 log masking ✅)
+- B29 (AI Confused-Deputy): ✅ No AI oracle write path in production
+- B35 (Keeper Slippage Misconfiguration): ✅ `MAX_REBALANCE_SLIPPAGE_BPS = 1500` enforced at code level (lib.rs:1556)
+- B36 (Social-Engineering Stake Authority): ⚠️ Operational. Step Finance shutdown confirmed. Keeper hot keys remain on workstation. B63 adds new physical access dimension.
+- B37–B43: ✅/N/A
+- B44: ⚠️ MEDIUM (open, see above)
+- B45: ❌ HIGH (open, see above)
+- B46–B62: ✅ (operational recommendations, no code gap)
+- B63: ⚠️ MEDIUM (new, see above)
+- C21–C30: ✅ ALL DEFENDED (overcollateralization, TWAP, progressive redemption fees, circuit breakers)
+- D26: ⚠️ LOW (SRI missing, see above)
+- D27–D38: ✅ (D37 HTTP cache poisoning: keeper uses direct Solana RPC, not HTTP proxy layer)
+
+### Today's Verdict
+- **New vectors added**: 1 (B63 — CVE-2026-20435 MediaTek TEE bypass; matrix: 79 → **80 vectors**)
+- **New CRITICAL findings**: 0
+- **New HIGH findings**: 0
+- **New MEDIUM findings**: 1 (B63 operator device risk)
+- **New LOW findings**: 1 (A63 redeem min_out_amount floor)
+- **Carry-forward open items**: B45 HIGH (day 11), A43 MEDIUM, B44 MEDIUM, B63 MEDIUM (new), D26 LOW, A63 LOW (new)
+- **No CRITICAL/HIGH new code-level findings** — no immediate Discord protocol-breach alert required
+- **B63 operator device action recommended**: Discord channel 1468813323662524500 alert (operational advisory, not protocol code breach)
+
+---
+
 ## 2026-03-12 Daily Check
 
 ### Source Sweep (24h window)

@@ -2419,3 +2419,58 @@ fn compute_units_for_big_mod_exp(base_len: usize, exp_len: usize, mod_len: usize
 | META-04 Business Logic UX-Security Boundary ("Warning ≠ Security Control") (퍼플팀 메타, 2026-03-15) | 감사 방법론이 "코드가 사용자 의도를 올바르게 실행하는가?"를 검증하지, "프로토콜이 사용자가 동의해도 경제적으로 파괴적인 파라미터를 허용하지 않는가?"를 검증하지 않음. Aave $50M 슬리피지 사건(2026-03): UI 경고 표시 → 사용자 동의 → 계약 실행 → MEV 봇이 $44M 추출. 계약 코드 버그 없음; 설계 수준 경제 경계 부재. OWASP 2026 SC02(Business Logic)이 #4→#2로 상승: 이 클래스가 가장 빠르게 성장하는 감사 사각지대. 대응: 감사 체크리스트에 "모든 수치 파라미터를 최솟값/최댓값으로 설정 시 프로토콜 또는 사용자가 손실을 입는가?" 항목 필수. 결과 Yes → 계약 레벨 하드 바운드 강제. (A63 참조) |
 | META-05 Autonomous Wallet Agent AI 공격면 — 계약 감사가 에이전트 레이어를 커버하지 않음 (퍼플팀 메타, 2026-03-15) | 스마트컨트랙트 감사는 온체인 코드만 검토. AI 에이전트(LLM + 메모리 + 도구 호출 파이프라인)는 오프체인이지만 핫 서명 키를 보유하고 온체인 TX를 실행. 프롬프트 인젝션(온체인 데이터·거버넌스 제안에 악성 지시 삽입 → 에이전트가 공격자 TX 실행), 메모리 포이즈닝(에이전트 장기 기억에 허위 데이터 주입 → 미래 결정 오염), 세션키 탈취(에이전트 서명 권한 전체 위임 시 단일 실패점)가 주요 메커니즘. D38이 개발 파이프라인 AI-on-AI를 커버한다면, META-05/B62는 프로덕션 런타임 에이전트를 커버. 48%의 보안 전문가가 agentic AI를 2026 최상위 공격 벡터로 지목(Dark Reading 2026-03). (B62 참조) |
 | META-06 Deployment Configuration Audit Blindspot — 올바른 코드, 잘못된 파라미터 (퍼플팀 메타, 2026-03-15) | 표준 감사 범위 = 소스코드. 배포 스크립트·생성자 인수·프록시 이니셜라이저 파라미터·기본값은 일반적으로 "범위 외". YO Protocol $3.71M(2026-01): 코드는 올바름; 슬리피지=0 기본값이 배포 시 설정됨 → 즉시 취약. CrossCurve $3M(2026-02): expressExecute 가드가 코드에 존재했으나 배포 설정에서 누락. 패턴: 이니셜라이저 파라미터 → 접근제어 역할 → 오라클 주소 → 업그레이드 권한이 모두 배포 시 결정되지만 재감사되지 않음. "코드 감사 통과 = 배포 안전"의 오류. 대응: 배포 후 불변 검증(deployed contract state에 대한 자동 테스트), 감사 계약서에 배포 스크립트 및 이니셜라이저 파라미터 명시적 포함. (A64 참조) |
+
+---
+
+### B63. Physical-Access Hardware TEE Bypass — Android MediaTek Boot Chain (CVE-2026-20435)
+**Historical**: CVE-2026-20435 — Ledger Donjon disclosure (2026-03-12); MediaTek Dimensity 7300 and compatible chipsets with Trustonic TEE (kinibi/t-base).
+**Mechanism**: The vulnerability exploits the boot chain verification sequence before Android loads. Attack flow:
+1. Attacker connects powered-off Android device via USB
+2. Exploits bootloader flaw before OS initialization
+3. Bypasses secure boot verification in Trustonic's TEE (Trusted Execution Environment)
+4. Extracts TEE-protected disk encryption keys from the secure enclave
+5. Decrypts full device storage offline
+6. Harvests seed phrases, PINs, and private keys from wallet application databases
+
+Full extraction demonstrated in **under 45 seconds** (Nothing CMF Phone 1, Ledger Donjon). No Android boot required; no malware or device unlock needed.
+
+**Why distinct from B15 (Key Compromise — software)**: B15 covers software-level key theft (infostealers, phishing, RAT payloads extracting hot keys from memory/files). B63 is a hardware TEE bypass exploiting the boot chain itself — the cryptographic root of trust collapses before the OS ever runs. No runtime process, no EDR, no OS-level security can prevent this.
+
+**Why distinct from B36 (Social-Engineering Stake Authority Hijack)**: B36 requires compromise of a running session (phishing → active signing). B63 works on a powered-off device; the attacker doesn't need the device to boot normally.
+
+**Scale of exposure**:
+- MediaTek processors: ~25% of Android smartphones globally
+- Affected chipset families: Dimensity 7300 and related; budget/mid-range from Xiaomi, OPPO, Vivo, Realme, Nothing
+- Patch issued to OEMs: 2026-01-05 (7 weeks before public disclosure)
+- Patch gap reality: budget/mid-range devices receive quarterly updates or less; EOL devices may never patch
+- Confirmed wallets extractable: Trust Wallet, Phantom (**Solana**), Kraken Wallet, Base/Coinbase, Rabby, Tangem
+
+**Solana / Microstable keeper relevance**:
+- **Phantom Wallet is confirmed affected** — Phantom is the primary Solana browser-extension and mobile wallet used by ecosystem operators and keeper setup
+- Keeper keypairs are hot keys. If any operator's Android device (MediaTek, unpatched) stores or has accessed a keeper key, the key material may be recoverable even from a powered-off device
+- Physical access attack model: border crossing confiscation, hotel room theft ("evil maid"), device seized for "inspection", device stolen (attacker targeting crypto holders)
+- For high-value targets (anyone operating a protocol with treasury access), physical access attacks are a credible threat model
+
+**Code/config pattern to find**:
+```
+# No on-chain code vulnerability — pure physical access + hardware TEE flaw
+# Risk surface in keeper operations:
+# 1. Keeper keypair stored on Android device (mobile Phantom, Solflare, or any wallet)
+# 2. Device uses MediaTek SoC (unpatched < March 2026 security update)
+# 3. Physical access to device ≥ 45 seconds → full key extraction
+#
+# Contrast: Hardware wallet (Ledger, Trezor) uses dedicated secure element
+# with its own boot process, not dependent on OS boot chain
+# → CVE-2026-20435 does not affect hardware wallets
+```
+
+**Defense**:
+1. **Immediate**: Audit all keeper/operator devices for MediaTek processor (Settings → About Phone → SoC). Any unpatched MediaTek device = treat keys as compromised
+2. **Mandatory**: All keeper signing keys must use hardware wallet (Ledger/Trezor) or HSM. Never store signing keys on mobile device as primary key material
+3. **Mobile policy**: Mobile wallets (Phantom, Trust Wallet, etc.) must be limited to dust-amount operations only. Significant keeper/treasury keys must never touch mobile devices
+4. **Patch enforcement**: Apply March 2026 security updates immediately on all operator devices; decommission EOL/unpatched devices from any key-adjacent role
+5. **Physical security**: Enable lockdown mode / disable USB debugging on all operator devices; use full-device encryption with long PIN
+6. **Key rotation**: If any operator has ever stored a keeper-related seed phrase or private key on an Android device with MediaTek chip, rotate that key immediately regardless of patch status
+**Source**: https://www.theblock.co/post/393154/ledger-researchers-expose-android-flaw-enabling-theft | https://dev.to/ohmygod/cve-2026-20435-how-a-mediatek-boot-chain-flaw-exposes-crypto-wallets-on-25-of-android-phones-34i0 | CVE-2026-20435
+
+| B63 Physical-Access Hardware TEE Bypass — Android MediaTek Boot Chain (CVE-2026-20435) (2026-03-16) | 감사 방법론이 "소프트웨어 레이어 키 탈취(B15)"에 집중하고, 부트체인 수준 하드웨어 TEE 우회를 별도 공격면으로 다루지 않음. CVE-2026-20435: MediaTek Dimensity 7300 및 Trustonic TEE(kinibi)에서 전원 꺼진 기기 → USB → 부트로더 익스플로잇 → TEE 암호화 키 추출 → 오프라인 복호화 → 시드 구문/PIN 45초 내 탈취. Android 전체의 25%(MediaTek 기기) 영향. Phantom 월렛(Solana) 확인됨. B15와 달리 OS·EDR·프로세스 없이 순수 하드웨어 공격. B36과 달리 실행 중인 세션 불필요; 꺼진 기기에서도 동작. 키퍼 운영자 기기 감사 및 하드웨어 월렛 전환 필수. (Ledger Donjon, 2026-03-12) |
