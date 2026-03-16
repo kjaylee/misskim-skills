@@ -595,3 +595,34 @@ require!(time_since_oracle <= MAX_SECONDS, OracleStale);
 36. ☐ Oracle staleness: verify both `slot` check AND `publish_time` (Unix timestamp) check are in place
 37. ☐ Dense-slot scenario: confirm Pyth confidence interval check rejects when confidence > threshold regardless of slot match
 38. ☐ TWAP deviation guard covers intra-slot divergence (not only cross-slot TWAP smoothing)
+
+---
+
+## Glassworm C2 via Solana Accounts (D39, 2026-03-17)
+
+**Pattern**: Attackers use Solana accounts as a censorship-resistant, anonymous command-and-control channel for supply-chain payloads. This makes Glassworm-class malware invisible to traditional network security tools.
+
+**Why Solana is an ideal C2**:
+- Accounts are permanent — no takedown mechanism
+- Reads are free and unlimited — no detection via rate-limit triggers
+- IP logs: Solana RPC endpoints do not log per-client request origin
+- Security scanners that flag suspicious HTTP C2 domains are blind to `api.mainnet-beta.solana.com` (legitimate DeFi infrastructure)
+
+**Detection**: Monitor for unusual Solana RPC calls (especially `getAccountInfo`) originating from developer workstation JS processes or CI environments that are NOT the keeper binary. Network-layer: alert on `getAccountInfo` calls to unknown pubkeys from non-keeper processes.
+
+**Solana protocol implication**: Any future Microstable feature that reads arbitrary user-supplied pubkeys via `getAccountInfo` should treat the returned data as untrusted external input — never `eval()` or interpret as code.
+
+## B50 Reinforcement — Cross-Chain Bridge Finality Lag Attack (2026-03-17)
+
+**Operational detail added**: Firedancer skip-vote finality lag creates a concrete **bridge double-spend window**:
+1. Attacker submits deposit transaction in a large Firedancer-produced block (causes Agave skip-votes)
+2. Cross-chain bridge sees *block inclusion* → releases funds on destination chain
+3. Firedancer block finality is delayed → in edge case, block may be skipped entirely
+4. Attacker received destination-chain funds for a deposit that never finalized on Solana
+
+**Key**: No adversarial leader needed (distinct from B47). Normal Firedancer operation under heterogeneous validator hardware is sufficient.
+
+**Solana-specific mitigation for bridge/cross-chain integrations**:
+- Require `Finalized` commitment (not `Confirmed`) before any fund release
+- Add +2–3 slot buffer on all deadline calculations
+- Monitor `confirmed→finalized` delta: alert if >5 slots
