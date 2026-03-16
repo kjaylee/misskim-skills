@@ -2629,3 +2629,68 @@ if ai_judge.approve(tx_metadata) AND rule_engine.passes(tx_metadata):
 - **Pre-adoption checklist**: Before any AI judge deployment, mandate AdvJudge-style adversarial fuzzing as a prerequisite; document attack surface in security review
 
 **Source**: https://unit42.paloaltonetworks.com/fuzzing-ai-judges-security-bypass/ | Unit42 Research (2026-03-10)
+
+### A67. Supply Cap Bypass via Direct Protocol Contract Token Transfer + Slow-Accumulation TWAP Manipulation
+**Historical**: Venus Protocol (BNB Chain, 2026-03-15, $2.15M / $3.7M peak exposure) — 9-month patience attack culminating in supply cap bypass + TWAP oracle manipulation.
+**Mechanism**: A two-phase, patience-based attack exploiting the gap between *deposit-function supply cap enforcement* and *actual on-chain token balance* used for oracle/collateral valuation:
+
+**Phase 1 (9-month accumulation, Jun 2025–Mar 2026)**: Attacker gradually accumulates collateral token (THE) over 9 months, reaching 84% of the supply cap (14.5M THE) through legitimate deposits — staying under automated risk monitoring thresholds.
+
+**Phase 2 (supply cap bypass)**: Instead of calling `deposit()`, attacker directly transfers tokens to the Venus protocol contract address via the BEP-20/ERC-20 `transfer()` function. The supply cap check only exists in the `deposit()` code path. Direct transfers bypass the cap entirely. Result: 53.2M THE position (3.67× the 14.5M supply cap) established without triggering any on-chain cap enforcement.
+
+**Phase 3 (TWAP manipulation + drain)**: With thin on-chain liquidity for THE tokens, the attacker executes coordinated trades to push TWAP price from $0.27 → $0.53 (96% inflation). Protocol reads inflated TWAP as collateral value → approves massive borrowing against 53.2M inflated THE. Peak borrows: 6.67M CAKE, 2,801 BNB, 1,970 WBNB, 1.58M USDC, 20 BTCB → liquidation cascade triggered. Venus paused borrowing/withdrawal for THE and correlated markets.
+
+**Root cause**: Venus tracked `vToken` accounting through deposit events, but the collateral valuation oracle could also be influenced by direct on-chain balance (TWAP feeds read on-chain activity, not just protocol accounting). Supply cap enforcement was deposit-path-only, not balance-level.
+
+**Why distinct from A2 (Flash Loan)**: No flash loan. Attack required 9 months of patient capital accumulation — not single-block capital borrowing.
+**Why distinct from A36 (Thin-Liquidity Collateral Admission)**: A36 covers listing-time failure to evaluate collateral quality. A67 exploits a bypass mechanism that allows circumventing post-listing supply caps through direct transfer paths.
+**Why distinct from A40 (ERC4626 Donation Attack)**: A40 inflates vault share price via direct donation to a vault whose `totalAssets` reads raw balance. A67 is not a share-price inflation — it's a supply cap bypass that then enables TWAP manipulation via inflated on-chain position size.
+
+**Code pattern to find**:
+```solidity
+// VULNERABLE: supply cap enforcement only in deposit() — direct transfer bypasses it
+function deposit(address token, uint256 amount) external {
+    require(totalDepositedByToken[token] + amount <= supplyCap[token], "Cap exceeded");
+    IERC20(token).transferFrom(msg.sender, address(this), amount);
+    totalDepositedByToken[token] += amount;
+    // ... mint vTokens ...
+}
+// BYPASS: attacker calls token.transfer(protocolAddress, amount) directly
+// — supply cap check is skipped; protocol contract balance inflates
+// — TWAP oracle reads inflated balance → oracle price distorted
+
+// SAFE: track protocol accounting independently from raw balance
+// Collateral valuation must use tracked accounting field, NOT raw token.balanceOf(protocol)
+function getCollateralValue(address token) public view returns (uint256) {
+    // WRONG: reads raw balance — inflatable via direct transfer
+    return IERC20(token).balanceOf(address(this)) * oracle.getPrice(token);
+    // RIGHT: reads tracked deposit accounting — unaffected by direct transfers
+    return totalDepositedByToken[token] * oracle.getPrice(token);
+}
+```
+**Rust/Solana pattern to find**:
+```rust
+// VULNERABLE (if it existed): using token account balance for protocol accounting
+let vault_balance = ctx.accounts.vault_ata.amount; // inflatable via direct transfer
+let collateral_value = vault_balance * oracle_price / SCALE;
+
+// SAFE: using tracked accounting field (Microstable pattern)
+let collateral_value = ctx.accounts.vault_usdc.total_deposits * oracle_price / SCALE;
+// total_deposits is only updated through mint()/redeem() instructions
+```
+
+**Microstable relevance**: ✅ **DEFENDED**
+- Microstable tracks `vault_{usdc,usdt,dai,usds}.total_deposits` as explicit accounting fields updated only through `mint()`, `redeem()`, and `rebalance()` instructions.
+- Direct SPL token transfers to vault ATAs do NOT update `total_deposits` → supply cap bypass via direct transfer is impossible in current architecture.
+- Oracle path: uses Pyth price feeds (not on-chain AMM balance-derived TWAP) → direct token transfer cannot distort Microstable's oracle price.
+- **Future risk**: If Microstable ever adds on-chain AMM-derived pricing OR uses raw `vault_ata.amount` as collateral basis, A67 becomes applicable.
+
+**Defense**:
+1. **Never read raw token balance as collateral basis**: always use tracked accounting fields updated exclusively through program instructions
+2. **Balance-level supply cap**: enforce cap at the token balance level (not just deposit function), using an invariant assertion: `assert!(vault_ata.amount <= MAX_PROTOCOL_BALANCE)`
+3. **Direct-transfer monitoring**: emit anomaly alert when protocol token account balance exceeds the tracked accounting field by more than dust tolerance
+4. **TWAP defense**: for any collateral whose on-chain liquidity is <$5M, require secondary oracle confirmation (Pyth + Chainlink) before accepting TWAP valuation
+5. **Per-token position concentration limit**: reject borrows if any single account's collateral exceeds X% of total protocol TVL, regardless of supply cap status
+6. **Gradual accumulation detection**: track rolling 30-day collateral inflows per wallet; alert on positions approaching supply cap from a single counterparty
+**Source**: https://hacked.slowmist.io/ | https://allez.xyz/research/venus-protocol-attack-analysis
+

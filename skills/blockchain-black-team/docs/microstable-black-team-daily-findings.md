@@ -1,6 +1,76 @@
 
 ---
 
+## 2026-03-17 Daily Check
+
+### Source Sweep (72h window: 2026-03-14 to 2026-03-17)
+- Sources checked: rekt.news (web_fetch), SlowMist hacked.slowmist.io (web_fetch), Brave web_search (DeFi/Solana), dev.to/ohmygod Firedancer article (web_fetch)
+- **1 new DeFi exploit with new attack vector**: Venus Protocol (BNB Chain, 2026-03-15, $2.15M) — supply cap bypass via direct token transfer + slow-accumulation TWAP manipulation
+- **Matrix status**: 80 vectors (pre-today) → **81 vectors** after A67 addition
+
+### New Vector Added Today
+
+| Vector | Incident | Date | Category | Loss |
+|--------|---------|------|----------|------|
+| **A67 (NEW): Supply Cap Bypass via Direct Protocol Contract Token Transfer + Slow-Accumulation TWAP Manipulation** | Venus Protocol (BNB Chain) | 2026-03-15 | Smart Contract / Economic | $2.15M |
+
+**A67 Technical Summary**: 9-month patience attack. Phase 1: attacker accumulates 14.5M THE tokens (84% of supply cap) over 9 months via legitimate deposits — staying under risk alert thresholds. Phase 2: bypasses supply cap by directly calling BEP-20 `transfer()` to protocol contract address instead of using `deposit()`. Supply cap check exists only in the deposit code path, not at the balance level. Position inflated to 53.2M THE (3.67× cap). Phase 3: exploits thin on-chain THE liquidity to push TWAP from $0.27→$0.53 (96%). Borrows massive assets against inflated collateral. $2.15M extracted before Venus paused 7 markets.
+Root cause: (1) balance-level supply cap not enforced at contract level, only at deposit function level; (2) TWAP oracle reading on-chain DEX price for thin-liquidity collateral.
+Source: https://hacked.slowmist.io/ | https://allez.xyz/research/venus-protocol-attack-analysis
+
+### Microstable A67 Assessment
+
+**Verdict: ✅ DEFENDED**
+- Microstable tracks `vault_usdc/usdt/dai/usds.total_deposits` as explicit accounting fields updated only through `mint()`, `redeem()`, and `rebalance()` instructions
+- Direct SPL token transfers to vault ATAs do NOT update `total_deposits` → no supply cap bypass possible via direct transfer
+- Oracle path uses Pyth price feeds (not on-chain AMM/DEX TWAP) → direct token position manipulation cannot distort oracle pricing
+- Collateral limited to USDC, USDT, DAI, USDS (major stablecoins with multi-billion liquidity) → thin-liquidity TWAP manipulation not possible
+
+**Future risk to watch**: If Microstable ever adds (a) AMM-derived pricing OR (b) exotic/thin-liquidity collateral OR (c) raw `vault_ata.amount` as collateral basis → A67 applies immediately.
+
+### Full 81-Vector Microstable Security Check
+
+#### ❌ HIGH — B45 Post-Audit Deployment Delta (CARRY-FORWARD, DAY 12 OPEN)
+- `security/audit-attestation.json`: CONFIRMED ABSENT (persistent open from all prior cycles)
+- **Blue-team directive (ESCALATED)**: Create `security/audit-attestation.json` with `last_audited_commit`, `auditor`, `date`, `scope`; add CI gate blocking critical-path PRs without attestation sign-off
+
+#### ⚠️ MEDIUM — A43 Commit/Reveal Threshold Circumvention (CARRY-FORWARD, STILL OPEN)
+- `lib.rs:1579` — per-call commit/reveal check at `turnover >= LARGE_REBALANCE_THRESHOLD (4%)`; no cumulative drift tracking
+- `grep "cumulative_drift\|epoch_drift"` → 0 results (confirmed today)
+- Attack path: 5× sub-threshold rebalances at 3.9% each over 160 slots = 19.5% equivalent without commit/reveal
+- **Blue-team directive**: Add cumulative drift tracking to ProtocolState; trigger commit/reveal when epoch sum exceeds LARGE_REBALANCE_THRESHOLD
+
+#### ⚠️ MEDIUM — B44 SPL Token Account Persistent Delegate Drain (CARRY-FORWARD, STILL OPEN)
+- `mint()` instruction: no `delegate.is_none()` check on user_collateral_ata
+- `grep "delegate" lib.rs` → 0 results (confirmed today)
+- Protocol funds: ✅ safe; user-side: attacker with stale delegate can launder stolen collateral through protocol
+- **Blue-team directive**: `require!(ctx.accounts.user_collateral_ata.delegate.is_none(), ErrorCode::DelegateNotAllowed)` in Mint accounts validation
+
+#### ⚠️ MEDIUM — B63 Physical TEE Bypass — Operator Device Risk (CARRY-FORWARD)
+- CVE-2026-20435 (MediaTek, ~25% of Android phones, Phantom Wallet extractable in <45s)
+- **Blue-team directive**: Audit operator devices; rotate any keeper key accessible via Phantom mobile on unpatched MediaTek device; enforce hardware wallet for all keeper signing
+
+#### ⚠️ LOW — A63 Business Logic: Redeem min_out_amount No Protocol Floor (CARRY-FORWARD)
+- `redeem()` accepts min_out_amount=0; oracle-priced so classic MEV sandwich does not apply
+- Risk: user silently accepts oracle-penalty haircut with no on-chain signal
+- **Blue-team directive (optional)**: emit event with applied haircut multiplier
+
+#### ⚠️ LOW — D26 Dashboard Vendor Script: No SRI Hash (CARRY-FORWARD)
+- `docs/index.html:994`: `<script src="./vendor/solana-web3-1.95.3.iife.min.js">` — no `integrity=` attribute
+- CSP `script-src 'self'` in place; SRI adds tamper-detection layer
+- **Blue-team directive**: Add `integrity="sha384-..."` via `openssl dgst -sha384 -binary vendor.js | base64`
+
+#### ✅ All Other Vectors
+- A1–A13: ✅ ALL DEFENDED
+- A32, A38, A39, A46, A48–A52: ✅ N/A or DEFENDED (no bridge, no ZK, classic SPL Token)
+- A33–A35, A36, A40–A42: ✅ DEFENDED
+- A47, A62–A64: ✅ DEFENDED (CR-01 bindings, 2-of-3 quorum, hard slippage cap at code level)
+- **A67 (NEW today)**: ✅ DEFENDED (total_deposits accounting + Pyth oracle, see above)
+- B14–B20, B29, B35–B36: ✅ / ⚠️ Operational (B36 open by design: hot keys)
+- B37–B43, B50–B66: ✅ N/A for current architecture / LOW
+
+---
+
 ## 2026-03-16 Daily Check
 
 ### Source Sweep (72h window: 2026-03-13 to 2026-03-16)
