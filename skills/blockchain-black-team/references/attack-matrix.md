@@ -2355,7 +2355,7 @@ fn compute_units_for_big_mod_exp(base_len: usize, exp_len: usize, mod_len: usize
 ### A63. Business Logic Economic Bounds Non-Enforcement — User Consent ≠ Safety Control
 **Historical**: Aave $50M Slippage Incident (March 2026); YO Protocol $3.71M (January 2026)
 **Mechanism**: Protocol exposes operations with potentially catastrophic economic parameters (slippage, price impact, trade size). UI/UX layer shows warnings but the contract accepts any user-specified value without enforcing minimum safety bounds. MEV bots / searchers extract value from the user's consented-but-unsafe transaction.
-**Aave $50M detail**: A trader swapped $50.4M USDT for AAVE through a SushiSwap pool with insufficient liquidity. Both Aave UI and CoW Swap showed slippage warnings. The transaction executed anyway — MEV bots extracted ~$44M in sandwich attacks. The protocol received zero bounty; this was a design-level failure, not a bug.
+**Aave $50M detail (full post-mortem, 2026-03-16)**: A trader swapped $50.4M USDT for AAVE. Both Aave UI and CoW Swap showed 99.9% price impact warnings; user confirmed. CoW Swap's off-chain solver had a legacy hardcoded gas ceiling that rejected all efficient routing quotes → fallback to SushiSwap AAVE/WETH pool with only $73K liquidity. The private order was exposed to the public Ethereum mempool; MEV bot executed a sandwich attack. Titan Builder (block builder) actively coordinated TX sequencing — $34M went to Titan Builder, $9.9M to the MEV bot, $36K received by the user from $50.4M. Aave Shield deployed post-incident (hard block on swaps >25% price impact).
 **YO Protocol $3.71M detail**: `slippage` parameter accepted any value including 0 (0% expected output). Deployment used permissive default. Attacker set slippage=0 and drained via arbitrage.
 **OWASP 2026 significance**: SC02 (Business Logic) rose from #4 to #2 across 122 DeFi incidents. Design-level economic logic flaws now outpace most code-level bugs.
 **Why audits miss this**: Auditors verify "does the code execute the user's intent correctly?" — not "does the protocol enforce economically sane limits even when users explicitly consent to dangerous parameters?" User-consented harm at protocol scale is not in a typical audit's threat model. Static analysis tools cannot detect this class.
@@ -2423,6 +2423,7 @@ fn compute_units_for_big_mod_exp(base_len: usize, exp_len: usize, mod_len: usize
 | META-06 Deployment Configuration Audit Blindspot — 올바른 코드, 잘못된 파라미터 (퍼플팀 메타, 2026-03-15) | 표준 감사 범위 = 소스코드. 배포 스크립트·생성자 인수·프록시 이니셜라이저 파라미터·기본값은 일반적으로 "범위 외". YO Protocol $3.71M(2026-01): 코드는 올바름; 슬리피지=0 기본값이 배포 시 설정됨 → 즉시 취약. CrossCurve $3M(2026-02): expressExecute 가드가 코드에 존재했으나 배포 설정에서 누락. 패턴: 이니셜라이저 파라미터 → 접근제어 역할 → 오라클 주소 → 업그레이드 권한이 모두 배포 시 결정되지만 재감사되지 않음. "코드 감사 통과 = 배포 안전"의 오류. 대응: 배포 후 불변 검증(deployed contract state에 대한 자동 테스트), 감사 계약서에 배포 스크립트 및 이니셜라이저 파라미터 명시적 포함. (A64 참조) |
 | META-07 AI Security Gatekeeper Adversarial Bypass — LLM 게이트키퍼를 보안 경계로 신뢰하는 오류 (퍼플팀 메타, 2026-03-16) | DeFi 거버넌스·모니터링·트랜잭션 스크리닝에 AI 판단자(AI judge)를 도입할 때, LLM을 "신뢰할 수 있는 보안 경계"로 취급하고 adversarial bypass 가능성을 감사 범위 밖에 두는 오류. Unit42 AdvJudge-Zero(2026-03-10): 무해한 서식 기호(줄 바꿈, 특수 공백, 마크다운 토큰)만으로 AI 판단자의 "차단" 결정을 "허용"으로 반전시킬 수 있음을 실증. 기존 adversarial 공격과 달리 출력이 정상처럼 보여 탐지 불가. 패턴: AI judge → "block" → 공격자가 서식 기호 삽입 → "allow" → 악성 거버넌스 제안/파라미터 변경 통과. "AI가 차단했으니 안전"의 오류. 감사 대상: AI 판단자가 결정을 내리는 모든 경로에 대해 adversarial fuzzing 및 인간 2차 검증 필수. (B66 참조) |
 | META-08 Governance Patch-and-Forget — 수정 후 경제적 재모델링 부재 (퍼플팀 메타, 2026-03-16) | 거버넌스 취약점 패치 후 "코드가 올바르게 수정되었는가?"만 검증하고, 수정된 파라미터 조합이 새로운 경제적 공격 경로를 만들지 않는지 재모델링하지 않음. Compound Finance(2026-03-03): 이전 패치 후 재차 거버넌스 탈취. 패턴: quorum 임계값↑ → 공격자가 장기 token 누적 전략으로 적응; timelock 연장 → 공격자가 다중 에포크 분산 투표로 우회. 거버넌스 보안은 코드 정확성 문제가 아니라 경제 게임 이론 문제. 패치 = 파라미터 공간 재조정 → 적대적 quorum 시뮬레이션 필수. "수정했으니 끝"의 오류. (C23 참조) |
+| META-09 Block Builder MEV Complicity — 오프체인 인프라 감사 사각지대 (퍼플팀 메타, 2026-03-17) | Aave/CoW Swap $50M 포스트모템(2026-03-16) 전체 분석: MEV 샌드위치 $44M 추출 중 $34M(77%)가 MEV 봇이 아닌 **블록 빌더(Titan Builder)**에게 귀속. 패턴: (1) CoW Swap 오프체인 솔버의 레거시 하드코딩 가스 상한선이 최적 경로 거부 → SushiSwap $73K 유동성 풀 낙찰. (2) 개인 스왑이 공개 멤풀에 노출 → MEV 봇이 관찰. (3) Titan Builder가 MEV 봇과 TX 시퀀싱 조율 → 샌드위치 공격 완성. **왜 감사가 놓치는가**: ① 솔버 경쟁 코드(오프체인 JS 로직)는 스마트컨트랙트 감사 범위 밖. ② 블록 빌더 협력 여부는 프로토콜이 제어 불가 — 인프라 레이어 리스크. ③ "개인 라우팅 = 안전"의 오류: 솔버 실패 시 폴백 경로의 유동성 충분성을 검증하는 감사 방법론 없음. 구조적 교훈: 오프체인 라우터(솔버, keeper, 릴레이어)의 실패 모드 = 새로운 감사 클래스. 대응: ① 모든 라우팅 코드(오프체인 포함)를 감사 범위에 명시적 포함. ② 최저 유동성 폴백 풀 기준치 설정 + 컨트랙트 레벨 가격 충격 상한 강제(Aave Shield: 25%). ③ "블록 빌더 중립성 없음"을 위협 모델에 포함. (A63, C25, B67 참조) |
 
 ---
 
@@ -2748,3 +2749,66 @@ grep -rP '\xF3\xA0\x84[\x80-\xAF]' . && echo "PUA SUPPLEMENT FOUND"
 **Microstable impact**: MEDIUM — core Rust program and keeper are not directly vulnerable; JS/TS test/simulation tooling on developer workstation is the attack surface → keeper hot key + `.openclaw/` secrets exfil risk.
 
 **Source**: https://dev.to/ohmygod/glassworm-how-invisible-unicode-characters-and-solana-are-powering-the-biggest-supply-chain-attack-4a4j
+
+---
+
+### B67. Off-Chain Aggregator Solver Failure → Illiquid Pool Routing Exploitation (2026-03-17)
+
+**Historical**: CoW Swap / Aave $50M Incident Post-Mortem (2026-03-15/16); DEX aggregator routing failures (1inch, Paraswap legacy versions)
+**Mechanism**: DEX aggregators (CoW Swap, 1inch, Paraswap, etc.) use **off-chain solver/routing engines** to find optimal execution paths. These solvers are off-chain software — not audited as smart contracts. When the off-chain solver fails (bug, gas ceiling, timeouts, competitive edge case), the aggregator falls back to a suboptimal on-chain path:
+
+1. **Solver failure trigger**: Legacy hardcoded gas ceiling in CoW Swap's solver rejected all quotes from solvers with efficient routes (higher gas estimates = refused even if net better for user).
+2. **Illiquid pool fallback**: System defaulted to SushiSwap AAVE/WETH pool — $73K total liquidity for a $50.4M swap.
+3. **Mempool privacy leak**: CoW Swap's intent-based privacy routing (normally protects from front-running) failed — order became visible in public Ethereum mempool.
+4. **MEV extraction cascade**: Once in public mempool, sandwich attack executed. Titan Builder coordinated TX sequencing → $34M to builder, $9.9M to MEV bot.
+
+**Attack surface taxonomy**:
+- **Type 1: Legacy Code Debt** — hardcoded parameters (gas caps, version-specific limits) that were "safe" at time of writing become failure modes when token economics or market conditions change
+- **Type 2: Solver Competition Edge Case** — the winning solver fails to execute on-chain; fallback logic routes to worst available path
+- **Type 3: Privacy Mechanism Failure** — intent-based or commit-reveal schemes that fail to protect orders from mempool exposure in edge cases
+- **Type 4: Builder Cooperation** — even if MEV extraction is a known risk, current threat models don't account for block builders actively cooperating with sandwich bots (not just passively ordering TXs)
+
+**Why audits miss this**:
+- Smart contract audits review on-chain Solidity/Rust code. Off-chain solver/routing code (often JavaScript/TypeScript) is not in scope.
+- "CoW Swap prevents sandwich attacks" — audit verified the on-chain contracts; the protection came from the off-chain solver mechanism, which had a silent failure mode.
+- Fallback path liquidity requirements are not verified at audit time ("fallback is acceptable but not optimal" assumption).
+- Block builder cooperation with sandwich bots is not modeled as a threat in any current DeFi audit framework.
+
+**Distinct from C25 (MEV Extraction)**:
+- C25 covers general MEV (front-running, back-running, sandwich) at protocol level.
+- B67 is specifically about **off-chain infrastructure failure** enabling MEV that the protocol's own defenses were designed to prevent — the attack succeeds because the off-chain layer fails, not because the on-chain contracts are vulnerable.
+
+**Distinct from A63 (Economic Bounds Non-Enforcement)**:
+- A63 covers the on-chain contract accepting dangerous parameters (slippage = 0).
+- B67 covers the off-chain routing engine routing to an illiquid pool, bypassing the protocol's own MEV protection.
+
+**Code/infrastructure pattern to find**:
+```javascript
+// VULNERABLE: hardcoded gas ceiling in solver (off-chain JS)
+const MAX_GAS = 500000; // set in 2022, never updated for 2026 token economics
+const eligible_solvers = all_quotes.filter(q => q.gas_estimate < MAX_GAS);
+// ↑ if all efficient solvers exceed MAX_GAS, fallback to on-chain route
+const final_route = eligible_solvers[0] ?? fallback_onchain_route;
+
+// VULNERABLE: no minimum liquidity check on fallback
+async function get_fallback_route(token_in, token_out, amount) {
+  const pool = uniswap_pools.find(p => matches(p, token_in, token_out));
+  // Missing: require(pool.tvl >= amount * SAFETY_FACTOR)
+  return pool;
+}
+```
+
+**Defense**:
+1. **Off-chain solver audits**: All routing/solver code must be included in security audits — not just on-chain contracts.
+2. **Fallback path liquidity gate**: Before executing a fallback route, verify `pool_tvl >= min_safety_ratio * trade_size`; reject if insufficient.
+3. **On-chain price impact circuit breaker** (Aave Shield pattern): Contract-level hard rejection of swaps exceeding a maximum price impact, regardless of user consent or off-chain routing decisions.
+4. **Gas parameter review cadence**: Off-chain routing parameters (gas ceilings, slippage defaults, solver competition parameters) must be reviewed quarterly or on major token market cap changes.
+5. **Mempool privacy defense-in-depth**: Do not rely solely on intent-based routing for MEV protection; add contract-level slippage enforcement as a second layer.
+6. **Block builder threat model**: Document explicitly that "block builder neutral" is not a guaranteed assumption — any critical privacy mechanism must assume a builder + searcher cooperation scenario.
+
+**Microstable relevance**: MEDIUM-LOW
+- Microstable does not use an off-chain DEX aggregator for mint/redeem — uses Pyth price feeds and on-chain AMMs directly.
+- **Keeper TX exposure**: Keeper transactions submitted publicly to Solana RPC are visible to MEV bots; on Solana the sequencing is different (no private mempools or block builder market), but Jito bundles create an analogous structure.
+- **Future risk**: If Microstable integrates a DEX aggregator or swap widget for collateral rebalancing, B67 applies directly.
+
+**Source**: https://www.theblock.co/post/393621/aave-and-cow-swap-publish-dueling-post-mortems-after-50-million-defi-swap-disaster | https://en.coin-turk.com/how-a-50-million-defi-swap-went-wrong-and-sparked-a-chain-reaction/ | https://www.hokanews.com/2026/03/aave-unveils-aave-shield-after-50m-swap.html
