@@ -2424,6 +2424,8 @@ fn compute_units_for_big_mod_exp(base_len: usize, exp_len: usize, mod_len: usize
 | META-07 AI Security Gatekeeper Adversarial Bypass — LLM 게이트키퍼를 보안 경계로 신뢰하는 오류 (퍼플팀 메타, 2026-03-16) | DeFi 거버넌스·모니터링·트랜잭션 스크리닝에 AI 판단자(AI judge)를 도입할 때, LLM을 "신뢰할 수 있는 보안 경계"로 취급하고 adversarial bypass 가능성을 감사 범위 밖에 두는 오류. Unit42 AdvJudge-Zero(2026-03-10): 무해한 서식 기호(줄 바꿈, 특수 공백, 마크다운 토큰)만으로 AI 판단자의 "차단" 결정을 "허용"으로 반전시킬 수 있음을 실증. 기존 adversarial 공격과 달리 출력이 정상처럼 보여 탐지 불가. 패턴: AI judge → "block" → 공격자가 서식 기호 삽입 → "allow" → 악성 거버넌스 제안/파라미터 변경 통과. "AI가 차단했으니 안전"의 오류. 감사 대상: AI 판단자가 결정을 내리는 모든 경로에 대해 adversarial fuzzing 및 인간 2차 검증 필수. (B66 참조) |
 | META-08 Governance Patch-and-Forget — 수정 후 경제적 재모델링 부재 (퍼플팀 메타, 2026-03-16) | 거버넌스 취약점 패치 후 "코드가 올바르게 수정되었는가?"만 검증하고, 수정된 파라미터 조합이 새로운 경제적 공격 경로를 만들지 않는지 재모델링하지 않음. Compound Finance(2026-03-03): 이전 패치 후 재차 거버넌스 탈취. 패턴: quorum 임계값↑ → 공격자가 장기 token 누적 전략으로 적응; timelock 연장 → 공격자가 다중 에포크 분산 투표로 우회. 거버넌스 보안은 코드 정확성 문제가 아니라 경제 게임 이론 문제. 패치 = 파라미터 공간 재조정 → 적대적 quorum 시뮬레이션 필수. "수정했으니 끝"의 오류. (C23 참조) |
 | META-09 Block Builder MEV Complicity — 오프체인 인프라 감사 사각지대 (퍼플팀 메타, 2026-03-17) | Aave/CoW Swap $50M 포스트모템(2026-03-16) 전체 분석: MEV 샌드위치 $44M 추출 중 $34M(77%)가 MEV 봇이 아닌 **블록 빌더(Titan Builder)**에게 귀속. 패턴: (1) CoW Swap 오프체인 솔버의 레거시 하드코딩 가스 상한선이 최적 경로 거부 → SushiSwap $73K 유동성 풀 낙찰. (2) 개인 스왑이 공개 멤풀에 노출 → MEV 봇이 관찰. (3) Titan Builder가 MEV 봇과 TX 시퀀싱 조율 → 샌드위치 공격 완성. **왜 감사가 놓치는가**: ① 솔버 경쟁 코드(오프체인 JS 로직)는 스마트컨트랙트 감사 범위 밖. ② 블록 빌더 협력 여부는 프로토콜이 제어 불가 — 인프라 레이어 리스크. ③ "개인 라우팅 = 안전"의 오류: 솔버 실패 시 폴백 경로의 유동성 충분성을 검증하는 감사 방법론 없음. 구조적 교훈: 오프체인 라우터(솔버, keeper, 릴레이어)의 실패 모드 = 새로운 감사 클래스. 대응: ① 모든 라우팅 코드(오프체인 포함)를 감사 범위에 명시적 포함. ② 최저 유동성 폴백 풀 기준치 설정 + 컨트랙트 레벨 가격 충격 상한 강제(Aave Shield: 25%). ③ "블록 빌더 중립성 없음"을 위협 모델에 포함. (A63, C25, B67 참조) |
+| META-10 Multi-Protocol Integration Boundary Accountability Diffusion ("Dueling Post-Mortems" Pattern) (퍼플팀 메타, 2026-03-18) | Protocol A가 Protocol B를 서브모듈로 통합할 때, 통합 경계(integration boundary)에서 보안 실패가 발생하면 **각 프로토콜의 감사는 자신의 코드만 검토하고 공유 경계는 아무도 소유하지 않는 구조**. Aave/CoW Swap $50M 사건: Aave 측 포스트모템 "UI 경고를 표시했으며 사용자가 명시적으로 동의했다", CoW Swap 측 "솔버가 설계대로 동작했다" — 양쪽 모두 정확. 그러나 **통합된 UX 플로우 전체를 감사한 주체가 없었음**. 감사가 놓치는 이유: ① 감사 계약 범위 = 개별 프로토콜 바이트코드. ② 파트너 통합 경계("Protocol A가 Protocol B의 라우터를 사용할 때 Protocol B 라우터의 최악 케이스는 Protocol A 사용자에게 무엇인가?")는 두 팀 어디의 감사 범위에도 포함되지 않음. ③ UX 통합 레이어(React widget, SDK wrapper)는 스마트컨트랙트 감사자가 검토하지 않음. 구조적 교훈: 프로토콜 통합 = 새로운 공격 표면 클래스. 대응: ① 통합 파트너십 구축 시 **Joint Security Review** 계약 요구. ② "최악의 파트너 실패 시나리오"(라우터가 모든 유동성을 비유동 풀로 라우팅, 솔버가 100% 슬리피지 경로를 선택)를 통합 수준 위협 모델에 명시. ③ Aave Shield: 프로토콜 레벨에서 25% 가격 충격 상한을 강제 — 이것이 올바른 대응 방향. (A63, B67, META-09 참조) |
+| A69 Compliance Oracle Blocklist Manipulation — AML/KYC 오라클 새 공격면 (퍼플팀 메타, 2026-03-18) | DeFi 프로토콜이 AML/KYC 준수를 위해 **컴플라이언스 오라클**(Chainalysis oracle, TRM Labs feed, OFAC blocklist provider 등)을 통합할 때, 이 오라클은 가격 오라클과 동일한 조작 가능성을 가짐. 단, 조작 대상이 "가격"이 아닌 "접근 허가/거부 결정". 공격 벡터: ① **허위 차단(False Positive 삽입)**: 공격자가 오라클 제공자 또는 그 상류 체인분석 데이터에 영향력을 행사해 정상 지갑을 OFAC 제재 목록에 포함 → 해당 사용자의 유동성 동결. ② **선택적 차단 우회(False Negative 이용)**: 공격자 지갑을 "클린"으로 분류 → 프로토콜 제한 우회. ③ **오라클 업데이트 지연 공격**: 멈춤 → 차단 목록 만료 → 제재 지갑 접근. **왜 감사가 놓치는가**: 가격 오라클 조작은 잘 알려진 공격면(A3). 컴플라이언스 오라클은 2025-2026 신규 등장으로 동일한 오라클 신뢰 분석이 적용되지 않음; 규제 준수 항목으로 분류되어 보안 점검 대상 외로 취급. **2026 컨텍스트**: BlockSec DeFi Compliance 2026 보고서 — FATF/MiCA 규정 이행으로 DeFi 프로토콜의 온체인 컴플라이언스 오라클 채택 증가. Microstable 현재: ✅ 미해당(Solana native, 현재 컴플라이언스 오라클 미사용). **미래 규제 리스크**: Microstable이 기관 자본 유치를 위해 컴플라이언스 레이어를 추가할 경우, 해당 오라클 제공자를 A3 수준의 위협 모델로 평가해야 함. |
 
 ---
 
@@ -2866,3 +2868,79 @@ solana stake-account <PROTOCOL_STAKE_ACCOUNT> --output json | jq '.activationEpo
 - **Audit point**: Confirm `protocol_state.admin` / `vault_authority` PDAs require multisig for any reserve-extraction-equivalent instruction (not just keeper set 2-of-3).
 
 **Source**: https://defi-planet.com/2026/02/step-finance-and-solanafloor-shuts-down-following-27-million-hack/ | https://www.coindesk.com/business/2026/02/24/step-finance-shuts-operations-after-usd27-million-january-hack | https://invezz.com/news/2026/02/24/solana-defi-platform-step-finance-shuts-down-after-hack/
+
+### A69. Compliance Oracle Blocklist Manipulation — AML/KYC Oracle as New Attack Surface
+**Emergence**: 2026 (MiCA enforcement + FATF VASP classification for DeFi governance entities)
+**Mechanism**: DeFi protocols integrating compliance oracles (Chainalysis API, TRM Labs feed, OFAC blocklist) introduce a new oracle class that controls *access decisions* rather than price data. Same trust assumptions as price oracles apply — but auditors don't apply price-oracle threat models to compliance oracles.
+
+Attack variants:
+1. **False Positive Injection**: Pollute upstream chain analysis data → legitimate wallet flagged as sanctioned → user's collateral frozen, locked out of redeem path → forced liquidation or protocol-level DoS on a specific user
+2. **False Negative Exploitation**: Own wallet labeled "clean" via mixer/privacy tool obfuscation that beats chain analysis → bypass protocol geographic/sanction restrictions
+3. **Staleness Window Attack**: Block oracle update (B20-class DoS on oracle updater) → blocklist expires → sanctioned address gains access during stale window
+4. **Compliance Oracle Manipulation via Data Poisoning**: Submit on-chain interactions that heuristically associate victim wallet with sanctioned cluster → third-party chain analysis tool flags victim
+
+**Why distinct from A3 (Oracle Price Manipulation)**: A3 manipulates *numeric price values* to create mispricings. A69 manipulates *boolean access control values* to freeze/allow users — attack surface is compliance infrastructure upstream of the protocol.
+**Why distinct from A4 (Access Control)**: A4 = missing permission checks in smart contract code. A69 = correct permission check, wrong oracle answer — the contract is functioning as designed.
+
+**Code pattern to find**:
+```solidity
+// VULNERABLE: compliance oracle with no fallback on staleness
+function mint(uint256 amount) external {
+    require(!complianceOracle.isBlocked(msg.sender), "BLOCKED");
+    // No staleness check on complianceOracle.lastUpdated
+    // No fallback if oracle provider goes offline
+    _mint(msg.sender, amount);
+}
+
+// SAFER: staleness guard + fail-open policy option
+function mint(uint256 amount) external {
+    uint256 lastUpdated = complianceOracle.lastUpdated();
+    require(block.timestamp - lastUpdated < MAX_COMPLIANCE_STALENESS, "ORACLE_STALE");
+    require(!complianceOracle.isBlocked(msg.sender), "BLOCKED");
+    _mint(msg.sender, amount);
+}
+```
+
+**Defense**:
+1. Treat compliance oracle providers as security-critical dependencies — apply A3-level threat modeling
+2. Multi-source compliance check: require consensus from ≥2 independent oracle providers before blocking
+3. Staleness guard with explicit policy: fail-open (allow) vs fail-closed (block) on oracle timeout — document and audit both paths
+4. Dispute resolution path: protocol governance can override individual blocklist entries with timelock
+5. Include compliance oracle provider in audit scope — review their SLA, security practices, and data sourcing
+
+**Microstable relevance**: ✅ Currently unaffected (no compliance oracle integration)
+**Future risk**: HIGH if institutional capital requires AML compliance layer. Compliance oracle must be treated identically to price oracle in threat model.
+
+**Source**: https://blocksec.com/blog/defi-compliance-in-2026-a-technical-framework-for-protocol-resilience | FATF 2021 VASP guidance | MiCA 2024
+
+---
+
+### B69. Multi-Protocol Integration Boundary Accountability Gap ("Dueling Post-Mortems")
+**Historical**: Aave + CoW Swap $50M swap incident (2026-03-12) — dueling post-mortems published 2026-03-16: Aave said "UI warned user, user explicitly accepted 99.9% price impact"; CoW Swap said "solvers functioned as intended per standard industry practices". Both correct. Neither owned the combined failure.
+**Mechanism**: Protocol A integrates Protocol B as an external service (DEX router, solver network, price feed, bridge). When a security/economic failure occurs at the integration boundary:
+1. Protocol A's audit reviewed Protocol A's code — correct
+2. Protocol B's audit reviewed Protocol B's code — correct
+3. The integration boundary ("What happens to Protocol A users when Protocol B's failure mode materializes?") was reviewed by neither auditor
+4. Post-incident: each protocol publishes a post-mortem attributing responsibility to the other — both technically accurate, structurally useless
+
+**Attack / Failure patterns**:
+- **Solver/Router Fallback Cascade**: CoW Swap solver's legacy gas cap forced routing to SushiSwap ($73K liquidity) → $50.4M swap → MEV sandwich
+- **UX Integration Layer Bug**: Protocol A's SDK wrapper uses Protocol B's API incorrectly → wrong slippage parameters passed
+- **Oracle Integration Assumption Mismatch**: Protocol A assumes Protocol B's oracle is TWAP; Protocol B returns spot price in edge cases
+- **Upgrade Asynchrony**: Protocol B upgrades its interface; Protocol A's integration still uses deprecated behavior that is now exploitable
+
+**Why distinct from A34 (Fragmented Security Stack Failure)**: A34 covers different security tools leaving gaps in vulnerability coverage. B69 is specifically about **protocol partnership integrations** creating accountability-free boundaries.
+**Why distinct from META-09 (Block Builder MEV Complicity)**: META-09 focuses on MEV infrastructure complicity. B69 focuses on the structural accountability gap created when two protocols co-own a user journey but neither owns the integration boundary.
+
+**Defense**:
+1. **Joint Security Review requirement**: Before integrating Protocol B as a service, contractually require a joint security review of the integration boundary (not just each protocol's individual audit)
+2. **Worst-case partner failure scenario modeling**: Explicitly document and test "What happens to our users if Protocol B's component returns maximally adversarial output?" (e.g., router directs to $0-liquidity pool, oracle returns max int, bridge returns empty receipt)
+3. **Protocol-level integration guards**: Implement contract-level assertions about partner behavior — e.g., Aave Shield (25% price impact cap) is the correct pattern: enforce limits *regardless* of what the integrated partner claims
+4. **Integration boundary ownership assignment**: In post-deployment, explicitly assign ownership of each integration point to a named team/role responsible for monitoring that boundary
+5. **Incident response SLA across protocols**: Define joint incident response protocol before integration goes live — who calls whom, in what order, within what timeframe
+
+**Microstable relevance**: LOW (current)
+- Microstable uses Pyth directly (well-defined integration); no external solver/router integration
+- **Future risk**: Any future DEX aggregator, collateral swap router, or cross-protocol yield integration must include B69 threat model review before deployment
+
+**Source**: https://www.theblock.co/post/393621/aave-and-cow-swap-publish-dueling-post-mortems-after-50-million-defi-swap-disaster | https://www.coindesk.com/markets/2026/03/12/crypto-investor-turns-usd50-million-into-usd36-000-in-one-botched-move | https://www.fintechweekly.com/news/aave-swap-defi-slippage-50-million-usdt-cow-protocol-sushiswap-mev-bots-march-2026
