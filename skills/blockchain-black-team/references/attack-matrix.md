@@ -2812,3 +2812,57 @@ async function get_fallback_route(token_in, token_out, amount) {
 - **Future risk**: If Microstable integrates a DEX aggregator or swap widget for collateral rebalancing, B67 applies directly.
 
 **Source**: https://www.theblock.co/post/393621/aave-and-cow-swap-publish-dueling-post-mortems-after-50-million-defi-swap-disaster | https://en.coin-turk.com/how-a-50-million-defi-swap-went-wrong-and-sparked-a-chain-reaction/ | https://www.hokanews.com/2026/03/aave-unveils-aave-shield-after-50m-swap.html
+
+### B68. Protocol Treasury Staked-SOL Key Exfil via Executive Device Compromise
+**Historical**: Step Finance ($27M, January 2026) — executive devices compromised → 261,854 SOL unstaked + treasury/fee wallets drained; protocol forced to shut down.
+**Mechanism**: Protocol-owned staked SOL positions are secured only by the hot wallet key of the signer (e.g., CEO/lead dev device). When the endpoint is compromised (malware, phishing, supply chain e.g. D39 Glassworm):
+1. Attacker silently exfiltrates the private key or seed phrase from the executive device
+2. Unstakes all protocol-owned SOL positions (unstaking is permissioned only by the signing key, no second factor)
+3. Waits through the unstaking delay window (2-3 day cooldown on Solana) — planning phase is invisible
+4. After cooldown: sweeps unstaked SOL + all treasury/fee wallet balances in one coordinated sweep
+5. Protocol's reserves are gutted; operational continuity impossible
+
+**Why distinct from B56 (DPRK Fake Developer)**: B56 = adversary infiltrates team as fake employee → insider access over weeks/months. B68 = external device compromise (malware/phishing) → one-time key exfil, no insider relationship needed.
+**Why distinct from B53 (Address Poisoning + Physical Coercion)**: B53 = clipboard poisoning + physical threat to force one signing event. B68 = silent key exfil → attacker controls the key autonomously, no coercion needed at signing time.
+**Why distinct from B62 (Autonomous Wallet Agent Prompt Injection)**: B62 = AI agent holding keys is manipulated via crafted inputs. B68 = human executive holds keys on a compromised device; no AI agent involved.
+
+**Critical structural risk**: Protocol-owned staked positions represent a **time-delayed treasury** — the unstaking cooldown means an attacker who has the key can extract value even if the key is rotated _after_ the unstake instruction is submitted. The 2-3 day window is too late to stop after unstaking begins.
+
+**Attack surface taxonomy**:
+- **Type 1: Single-Executive Key Risk** — protocol treasury hot wallet controlled by one person's device
+- **Type 2: Staked Position as Unprotected Reserve** — native SOL staking controlled by a hot key (not multisig) creates a large, unstakeable treasury attack surface
+- **Type 3: Endpoint as Key Store** — private keys or seed phrases stored on developer laptops/phones rather than HSMs/hardware wallets
+- **Type 4: No Cooldown Detection** — unstaking triggers are not monitored in real time; 2-3 day window passes before protocol team notices
+
+**Code/infrastructure pattern to find**:
+```rust
+// VULNERABLE: protocol-owned staking account authority = single hot wallet
+// On-chain: StakeAccount.authorized.staker == protocol_hot_key
+// No multisig, no timelock, no monitoring on unstake instruction
+
+// VULNERABLE: treasury wallet is a standard keypair on the CEO's laptop
+// ~/.config/solana/id.json → controls millions in protocol reserves
+```
+
+**Detection of unstake initiation**:
+```bash
+# Monitor protocol-owned stake accounts for Deactivate instruction
+# Alert within <10 minutes of any unstake TX from protocol stake addresses
+solana stake-account <PROTOCOL_STAKE_ACCOUNT> --output json | jq '.activationEpoch'
+```
+
+**Defense**:
+1. **Multisig all protocol treasuries** — use Squads Protocol or similar; require M-of-N (minimum 3-of-5) for unstake, withdraw, transfer above threshold
+2. **HSM/hardware wallet for staking keys** — never store protocol stake authority on a hot device
+3. **Unstake monitoring with sub-minute alert** — any Deactivate instruction from protocol stake accounts → immediate PagerDuty/Discord CRITICAL alert
+4. **Staking cooldown as defense layer** — document: if unstake detected, rotate multisig signers + contact validators within the 2-day cooldown window to attempt on-chain recovery
+5. **Separate operational hot key** — protocol operational hot key (for keeper operations) must be distinct from treasury/stake authority; compromise of keeper key must not expose reserves
+6. **Regular endpoint security audits** — executive devices with any on-chain signing capability must have: full-disk encryption, hardware security key auth, no plaintext seed storage, endpoint EDR monitoring
+
+**Microstable relevance**: **HIGH**
+- If Microstable's collateral reserves (SOL, USDC, USDT) are held in protocol-owned wallets controlled by a single signer: B68 applies directly.
+- Keeper authority key: if the same key used for oracle updates + keeper operations also has treasury/staking authority → single-key failure risk.
+- **Current code**: `FIX HI-04` implements 2-of-3 keeper set for protocol operations. Verify that collateral vault withdraw authority is also multisig, not the single keeper key.
+- **Audit point**: Confirm `protocol_state.admin` / `vault_authority` PDAs require multisig for any reserve-extraction-equivalent instruction (not just keeper set 2-of-3).
+
+**Source**: https://defi-planet.com/2026/02/step-finance-and-solanafloor-shuts-down-following-27-million-hack/ | https://www.coindesk.com/business/2026/02/24/step-finance-shuts-operations-after-usd27-million-january-hack | https://invezz.com/news/2026/02/24/solana-defi-platform-step-finance-shuts-down-after-hack/
