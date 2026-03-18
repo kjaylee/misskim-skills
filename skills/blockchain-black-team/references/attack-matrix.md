@@ -3012,3 +3012,83 @@ snap list  # if any snap is installed on a server hosting keeper keys, patch imm
 4. **Isolate**: Run keeper binary in a minimal container (Docker/systemd-nspawn) with no snap exposure; bind-mount only the required keypair files with read-only mounts for unused credentials
 5. **Monitor**: Alert on any process attempting privilege escalation (e.g., via auditd or Falco rules) on keeper hosts
 **Source**: https://thehackernews.com/2026/03/ubuntu-cve-2026-3888-bug-lets-attackers.html | CVE-2026-3888
+
+---
+
+### D40. LLM Speculative Decoding Side-Channel — Keeper AI Strategy Inference via Encrypted Traffic
+**Signal**: "Whisper Leak" (Schneier on Security, 2026-03-15); arXiv "When Speculation Spills Secrets: Side Channels via Speculative Decoding in LLMs"
+**Historical**: Black-box LLM side-channel research (2026-02 — published; March 15 widely circulated). Demonstrated: 90%+ topic inference from encrypted ChatGPT/Claude traffic; PII recovery (phone numbers, credit card numbers) from streaming token size + timing.
+**Mechanism**: When an LLM API streams tokens, the packet size distribution and inter-token timing is NOT uniform — it leaks information about the token sequence being generated. An attacker on a shared network segment or ISP (man-in-the-middle, CDN provider, VPS host provider) can:
+1. Observe encrypted HTTPS traffic between keeper process and LLM API (packet sizes + timing only — no decryption needed)
+2. Apply Whisper Leak timing classifier → infer **topic class** of keeper AI agent's prompts (e.g., "rebalance in progress", "emergency liquidation threshold crossed", "manual oracle mode activated")
+3. In advanced boosting attack: recover specific numeric tokens (balances, price thresholds) from open-source LLM deployments
+4. Use inferred strategy state to front-run keeper actions (MEV extraction) or coordinate LDoS attack (B64) at the worst moment
+
+**Why distinct from RT-2026-0225-01 (AI Agent Prompt-Injection)**:
+- RT-2026-0225-01: attacker injects content TO the agent
+- D40: attacker PASSIVELY READS agent's operational state from encrypted network traffic without injecting anything
+
+**Why distinct from C25 (MEV Extraction)**:
+- C25: front-running via visible public mempool transactions
+- D40: front-running via side-channel inference of keeper INTENT before any TX is submitted
+
+**Exploitation scenario for Microstable**:
+```
+Attacker co-located at VPS/cloud level:
+1. Monitor keeper → OpenAI/Anthropic API encrypted packets
+2. Infer: "keeper is evaluating rebalance from USDT to DAI (large)"
+3. Front-run: submit USDT→DAI swap before keeper's rebalance TX
+4. Keeper's rebalance executes at worse price → collateral ratio erodes
+5. Trigger early circuit breaker → DoS of protocol's stability mechanism
+```
+
+**Speculative decoding variant**: When keeper uses local LLM (llama.cpp, Ollama) with speculative decoding enabled, speculative draft tokens are generated at predictable rates — even on localhost, any process with CPU timing access can infer token predictions.
+
+**Microstable relevance**: MEDIUM — Microstable keeper currently uses Rust logic (no LLM inference). If future agentic keeper extensions call external LLM APIs, this applies immediately. Current relevance: keeper comms over public VPS should use VPN or encrypted tunnel that masks packet sizes (TLS record padding, Tor, or fixed-chunk HTTP/2 framing).
+
+**Defense**:
+1. **Traffic shaping**: Send all LLM API calls with fixed-size request/response chunks (HTTP/2 padding, constant-rate streaming) to defeat packet-size timing analysis
+2. **Local LLM with noise**: If using local LLM, add random timing noise to token generation delays
+3. **Decoy traffic**: Periodically send dummy LLM queries of similar size to mask real operational signals
+4. **Separation of concerns**: Never include sensitive vault state data (actual balances, threshold values) directly in LLM prompt — use abstracted categorical labels ("low CR", "high CR") to limit inference value
+5. **Audit LLM API usage scope**: No signing keys, seed phrases, or wallet addresses in LLM context window
+
+**Source**: https://www.schneier.com/blog/archives/2026/02/side-channel-attacks-against-llms.html | https://www.schneier.com/crypto-gram/archives/2026/0315.html
+
+---
+
+### B70. Alpenglow Consensus Transition — Protocol Slot-Time Assumption Reset Attack Surface
+**Signal**: Solana Alpenglow upgrade (Rotor + Votor consensus, targeting 150ms finality to replace Tower BFT + SIMD-0370 dynamic block sizing). Widely reported March 12-18, 2026.
+**Historical**: No prior exploit — forward-looking vector. Precedent: Ethereum Merge (PoW→PoS) caused several protocols to break due to BLOCKHASH opcode behavior changes; block time changed from ~13s to ~12s, breaking some protocol timing assumptions.
+**Mechanism**: Alpenglow fundamentally replaces Tower BFT with a two-phase consensus (Rotor = leader scheduling, Votor = fast voting). Target: 150ms transaction finality. When deployed on mainnet, the consensus change will:
+
+1. **Change the relationship between slot count and wall clock time**: If 150ms finality = ~1 slot, slot rate increases from ~2.5 slots/sec → up to ~6.7 slots/sec. Protocols that express time limits in SLOTS (not seconds) will have their safety windows halved or quartered.
+2. **Oracle staleness thresholds in slot units become unsafe**: A `max_staleness = 120 slots` limit at current ~400ms/slot = ~48 second freshness window. At 150ms/slot, same 120-slot limit = ~18 second freshness window. For protocols that set staleness conservatively in seconds-equivalent, this may be TOO STRICT (more circuit breakers). For protocols that set them loosely, it may become TOO LOOSE if they recalibrate to higher slot numbers.
+3. **Keeper TX submission timing assumptions reset**: Current keeper loops calibrated to ~400ms slot time. With 150ms finality, a keeper that submits one TX per slot will need 2.7× more compute capacity or face TX queue backlog.
+4. **Jump attack on transition block**: During the consensus switchover slot, validators briefly operate in a mixed state. Any protocol that uses `Clock::get().slot` to measure time may receive a discontinuous slot counter jump at transition.
+
+**Microstable-specific risk**:
+```rust
+// Current constants (lib.rs):
+const ORACLE_STALENESS_MAX: u64 = 120;       // ~48s at current slot rate
+const MINT_ORACLE_STALENESS_MAX: u64 = 20;   // ~8s at current slot rate
+const REDEEM_ORACLE_STALENESS_MAX: u64 = 45; // ~18s at current slot rate
+
+// Post-Alpenglow @ 150ms/slot:
+// ORACLE_STALENESS_MAX = 120 → ~18s  ← potential excessive strictness if keeper can't keep up
+// MINT_ORACLE_STALENESS_MAX = 20 → ~3s ← HIGH RISK of spurious mint rejections
+// HIGH_VOL_MINT_ORACLE_STALENESS_MAX = 8 → ~1.2s ← CRITICAL risk of mint total paralysis
+```
+**Severity**: MEDIUM now (Alpenglow not yet mainnet) → **HIGH** immediately pre/post deployment.
+
+**Distinct from B50 (Skip-Vote Verification Lag)**: B50 is about Firedancer block processing lag within current consensus. B70 is about the full consensus protocol replacement and its effect on all slot-based timing assumptions.
+
+**Distinct from B65 (Dense-Block Oracle Staleness)**: B65 is about intra-slot oracle lag from large blocks. B70 is about the systemic staleness threshold re-calibration required after consensus change.
+
+**Defense**:
+1. **Pre-Alpenglow audit**: Review ALL `const X: u64 = N_SLOTS` in Microstable lib.rs and document the wall-clock equivalent at both current (~400ms/slot) and target (~150ms/slot) rates
+2. **Convert slot-based limits to time-based**: Where possible, use `Clock::get().unix_timestamp` instead of `Clock::get().slot` for time-sensitive bounds; compute slot equivalents dynamically from `slot_duration` SYSVAR when available
+3. **Transition monitoring**: Deploy canary metrics that alert when average slot time drops below 300ms — trigger immediate review of all slot-based constants before Alpenglow mainnet
+4. **Emergency param update path**: Ensure admin can hot-update staleness constants without a full program upgrade (via config account) to allow rapid recalibration at transition
+
+**Source**: https://news.bitcoin.com/what-is-solanas-alpenglow-upgrade-new-consensus-could-deliver-150ms-transaction-finality/ | https://wazirx.com/blog/solana-sol-price-outlook-and-analysis/ (SIMD-0370 + Alpenglow roadmap, March 2026)
