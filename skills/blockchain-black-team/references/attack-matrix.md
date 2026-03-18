@@ -1,4 +1,4 @@
-# Attack Matrix — 54+ Vectors with Historical Mechanisms & Defense Patterns
+# Attack Matrix — 83 Vectors with Historical Mechanisms & Defense Patterns
 
 ## A. Smart Contract Vectors
 
@@ -2944,3 +2944,71 @@ function mint(uint256 amount) external {
 - **Future risk**: Any future DEX aggregator, collateral swap router, or cross-protocol yield integration must include B69 threat model review before deployment
 
 **Source**: https://www.theblock.co/post/393621/aave-and-cow-swap-publish-dueling-post-mortems-after-50-million-defi-swap-disaster | https://www.coindesk.com/markets/2026/03/12/crypto-investor-turns-usd50-million-into-usd36-000-in-one-botched-move | https://www.fintechweekly.com/news/aave-swap-defi-slippage-50-million-usdt-cow-protocol-sushiswap-mev-bots-march-2026
+
+---
+
+### A68. Lending Pool aToken/Index Inflation Phantom Collateral Attack
+**Historical**: dTRINITY dLEND (Ethereum, 2026-03-17, $257,061)
+**Mechanism**: Lending pools based on Aave/Compound architecture track user deposits via an internal liquidity index (or exchange rate between underlying tokens and aTokens). If this index can be artificially inflated — either through a direct donation, a flash loan + deposit/withdrawal sequence, or an accounting initialization bug — any deposit made against the inflated index yields phantom collateral recognized by the protocol at orders-of-magnitude above actual deposited value.
+Attack chain (dTRINITY):
+1. Flash-loan USDC from Morpho (temporary liquidity)
+2. Deposit $772 USDC into dLEND-dUSD pool
+3. Due to inflated internal index/accounting error, protocol values deposit as ~$4.8M (6,215× inflation)
+4. Borrow 257,000 dUSD against phantom collateral
+5. Execute 127 repeated deposit/withdrawal cycles to drain remaining USDC from aToken accounting layer
+6. Repay flash loan — net extraction ~$257K
+**Root cause**: The internal liquidity index was not bounded or validated against expected physical token balances. The first depositor (or an attacker exploiting initialization state) can inflate the index such that all subsequent accounting references a wildly incorrect exchange rate.
+**Key insight vs A40 (ERC4626 Donation Attack)**: A40 inflates `totalAssets` by direct token donation. A68 inflates the *internal index* that maps underlying tokens to aToken units. The inflation mechanism is different (accounting state vs. external token balance), but the downstream effect — phantom collateral allowing over-borrowing — is the same. A68 also adds the 127-cycle amplification loop as a distinct draining mechanism.
+**Relationship to A1 (Reentrancy)**: The 127-cycle loop is not classical reentrancy (no external call before state update). It exploits the fact that each deposit/withdrawal cycle within the same transaction correctly updates the accounting state, but each cycle starts from an already-inflated base, creating a compound-drain. This is an "amplified accounting loop" distinct from reentrancy.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: liquidity index can be set without validation against physical balance
+function initializeLiquidityIndex(uint256 newIndex) external onlyInitializer {
+    liquidityIndex = newIndex;  // no guard: if newIndex is wrong, all collateral math is wrong
+}
+
+// VULNERABLE: collateral calculated from index without sanity check
+function getCollateralValue(address user) view returns (uint256) {
+    return (userShares[user] * liquidityIndex) / 1e27;
+    // if liquidityIndex is 6215× inflated, collateralValue is 6215× of actual
+}
+```
+**Solana/Microstable relevance**: ✅ **N/A** — Microstable is not a lending pool protocol and does not implement aTokens, liquidity indexes, or deposit-rate accounting. No analog attack surface exists in current architecture.
+**Risk surface if composability changes**: If Microstable MSTB is ever wrapped into a lending pool-style vault, the upstream pool's index integrity becomes a dependency. The wrapping protocol must enforce index sanity bounds and first-depositor initialization protections.
+**Defense**:
+1. **Index initialization guard**: Prevent the liquidity index from being set below 1e27 (ray) or above any physically-attainable exchange rate based on token balances at initialization
+2. **Post-deposit invariant check**: After any deposit, assert `virtual_collateral_value <= actual_token_balance * (1 + MAX_ALLOWED_INDEX_DRIFT)` — halt and revert if violated
+3. **First-depositor protection**: If `total_shares == 0` and a deposit triggers index recalculation, treat the first deposit as a special privileged initialization event with extra validation
+4. **Per-transaction deposit cap**: Even if the index is inflated, a per-TX deposit cap limits the maximum phantom collateral obtainable in a single transaction
+5. **127-cycle detection (flash loan mitigation)**: Track cumulative deposit/withdraw count within a single tx and revert if exceeds a reasonable threshold (e.g., 5 cycles)
+**Source**: https://hacked.slowmist.io/ (2026-03-18) | https://cryip.co/dtrinitys-dlend-protocol-exploit-drains-around-257k-on-ethereum/ | https://x.com/DefimonAlerts/status/2033868831504965995
+
+---
+
+### D35. Linux Keeper Infrastructure Local Privilege Escalation (CVE-2026-3888, systemd snap-confine)
+**Historical**: Ubuntu CVE-2026-3888 (2026-03-18 patch disclosure), systemd snap-confine cleanup timing exploit
+**Mechanism**: A race condition in snap-confine's cleanup sequence (the process that sets up the sandboxed execution environment for Ubuntu snap packages) allows a local attacker to gain root access without user interaction. Attack path: exploit cleanup timing window → insert malicious payload before security namespace teardown completes → elevate to root. Attack complexity is high (requires precise timing), but once achieved, delivers full system compromise.
+**DeFi keeper relevance**: Keeper servers running Ubuntu with snap-installed packages are directly at risk. If the keeper host is compromised via:
+  (a) A network-exploitable precursor vulnerability (initial foothold), OR
+  (b) A multi-tenant environment (shared VPS, containerized deployment with host snap exposure), OR
+  (c) A supply chain attack in a snap-packaged dependency
+Then CVE-2026-3888 elevates from user-level foothold to full root — giving the attacker access to keeper signing keys, wallet files, and RPC credentials.
+**Exploitation prerequisites**: (1) Local code execution on the keeper host, (2) Ubuntu distro with snap-confine installed and unpatched, (3) High timing precision (exploitability rating: Complex but demonstrated)
+**Code/config pattern to find**:
+```bash
+# CHECK: is the keeper host Ubuntu with snap installed?
+snap version  # if present, assess CVE exposure
+uname -a      # Ubuntu 22.04 / 24.04 + snap-confine = HIGH RISK if unpatched
+
+# CHECK: installed snap packages that could be entry vectors
+snap list  # if any snap is installed on a server hosting keeper keys, patch immediately
+```
+**Solana keeper specific context**: Keeper binary (`/Users/kjaylee/.openclaw/workspace/microstable/solana/keeper/src/`) is compiled Rust, not a snap. However, if the keeper runs on Ubuntu and any co-located service or developer tool is installed as a snap, the host OS privilege escalation surface exists.
+**Microstable relevance**: ⚠️ MEDIUM — keeper binary itself is not a snap, but keeper host may run Ubuntu with snaps for monitoring/tooling packages. Root on the keeper host = full keeper key exposure.
+**Defense**:
+1. **Immediate**: Apply Ubuntu security patch for CVE-2026-3888 (`sudo apt update && sudo apt upgrade snapd`)
+2. **Audit**: Run `snap list` on all keeper servers — if snaps are present on a server that holds private keys, treat as HIGH priority patching
+3. **Harden**: Remove unnecessary snap packages from keeper production servers; prefer apt for system packages
+4. **Isolate**: Run keeper binary in a minimal container (Docker/systemd-nspawn) with no snap exposure; bind-mount only the required keypair files with read-only mounts for unused credentials
+5. **Monitor**: Alert on any process attempting privilege escalation (e.g., via auditd or Falco rules) on keeper hosts
+**Source**: https://thehackernews.com/2026/03/ubuntu-cve-2026-3888-bug-lets-attackers.html | CVE-2026-3888

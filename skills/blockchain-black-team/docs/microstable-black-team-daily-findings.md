@@ -1,6 +1,106 @@
 
 ---
 
+## 2026-03-18 Daily Check
+
+### Source Sweep (48h window: 2026-03-17 to 2026-03-18)
+- Sources checked: SlowMist hacked.slowmist.io (web_fetch), rekt.news (web_fetch), Brave web_search (DeFi/Solana/Immunefi), web_fetch: cryip.co (dTRINITY mechanism analysis)
+- **1 new DeFi exploit with new attack vector**: dTRINITY dLEND (Ethereum, 2026-03-17, $257K) — aToken/index inflation phantom collateral attack
+- **1 new infrastructure CVE**: Ubuntu CVE-2026-3888 (systemd snap-confine LPE, 2026-03-18) — keeper server privilege escalation risk
+- **1 notable research item**: Injective Immunefi dispute (March 2026) — $500M-risk permissionless state erasure bug in Cosmos SDK; N/A for Solana/Microstable but logged for awareness
+- **Matrix status**: 81 vectors (pre-today) → **83 vectors** after A68 + D35 additions
+
+### New Vectors Added Today
+
+| Vector | Incident | Date | Category | Loss |
+|--------|---------|------|----------|------|
+| **A68 (NEW): Lending Pool aToken/Index Inflation Phantom Collateral Attack** | dTRINITY dLEND (Ethereum) | 2026-03-17 | Smart Contract / Lending Pool Accounting | $257K |
+| **D35 (NEW): Linux Keeper Infrastructure LPE via systemd snap-confine** | CVE-2026-3888 (Ubuntu) | 2026-03-18 | Infrastructure / Privilege Escalation | N/A |
+
+**A68 Technical Summary**: Flash loan USDC from Morpho → deposit $772 USDC into dLEND-dUSD pool → internal liquidity index inflated (accounting error/initialization bug) → protocol values $772 deposit as $4.8M phantom collateral (6,215× inflation) → borrow 257K dUSD → execute 127 deposit/withdrawal cycles draining aToken accounting layer → $257K extracted. Mechanism differs from A40 (ERC4626 donation inflates `totalAssets`); here the *internal index* is inflated, not the token balance. 127-cycle amplification loop is a distinct draining pattern, not reentrancy.
+Source: https://hacked.slowmist.io/ | https://cryip.co/dtrinitys-dlend-protocol-exploit-drains-around-257k-on-ethereum/
+
+**D35 Technical Summary**: CVE-2026-3888 (Ubuntu, snap-confine cleanup race). Local attacker with initial code execution on an Ubuntu host running snap packages → exploit cleanup timing window → elevate to root. Requires local foothold but no user interaction once achieved. Attack complexity: high. Keeper servers running Ubuntu + any snap package = elevated risk if unpatched.
+Source: https://thehackernews.com/2026/03/ubuntu-cve-2026-3888-bug-lets-attackers.html | CVE-2026-3888
+
+### Microstable A68 Assessment
+
+**Verdict: ✅ N/A — Architecture Mismatch**
+- Microstable is a mint/redeem stablecoin protocol, NOT a lending pool. No aToken/liquidity index mechanism exists in current architecture.
+- `lib.rs` tracks `vault.total_deposits` as explicit accounting — updated only by `mint()`, `redeem()`, `rebalance()` instructions. No index multiplication layer.
+- No `liquidityIndex`, no `exchangeRate`, no `cToken`/`aToken` abstraction in any vault or position struct.
+- A68 becomes relevant ONLY if Microstable is integrated into or forks from an Aave/Compound-style lending pool in the future.
+
+### Microstable D35 Assessment
+
+**Verdict: ⚠️ MEDIUM — Keeper Host Ubuntu Snap Exposure**
+- Keeper binary (`microstable/solana/keeper/src/`) is compiled Rust (not a snap package itself), so the keeper binary does not directly contain the vulnerability.
+- However: if keeper server runs Ubuntu AND any snap package is installed for tooling/monitoring (e.g., `snapd` default snap, or monitoring tools installed as snaps), the host OS privilege escalation surface is live.
+- **Risk path**: Any initial foothold on the keeper host (e.g., via D28 supply chain, B19 log leak, or remote exploit in a co-located service) + unpatched CVE-2026-3888 = root on keeper host = full keeper key exposure.
+- `run: snap list` on keeper server was not executed in this cycle (requires direct host access), but patch status should be verified within 24h.
+- **Blue-team directive**: (1) Run `sudo apt update && sudo apt upgrade snapd` on all keeper servers; (2) Run `snap list` — remove unnecessary snaps from production key-holding servers; (3) If snaps cannot be removed, isolate keeper binary in a container with no snap host namespace exposure.
+
+### Full 83-Vector Microstable Security Check
+
+#### ❌ HIGH — B45 Post-Audit Deployment Delta (CARRY-FORWARD, DAY 13 OPEN)
+- `security/audit-attestation.json`: **CONFIRMED ABSENT** (persistent open from all prior cycles)
+- Production code delta from last audited commit remains untracked and ungated
+- **Blue-team directive (re-escalated — DAY 13)**: Create `security/audit-attestation.json` with fields: `last_audited_commit`, `auditor`, `date`, `scope`; add CI gate blocking critical-path PRs without attestation sign-off. This has been open 13 days — escalate to Master.
+
+#### ⚠️ MEDIUM — D35 Keeper Host Linux LPE CVE-2026-3888 (NEW TODAY)
+- Ubuntu CVE-2026-3888 (snap-confine cleanup race, 2026-03-18 disclosure) — privilege escalation to root on unpatched Ubuntu servers running snap packages
+- Keeper binary is compiled Rust, not a snap, but any snap on the keeper host = root escalation surface
+- **Blue-team directive**: `sudo apt update && sudo apt upgrade snapd` on keeper server; `snap list` audit; isolate keeper in container if snaps cannot be removed
+
+#### ⚠️ MEDIUM — A43 Commit/Reveal Threshold Circumvention (CARRY-FORWARD, STILL OPEN)
+- `lib.rs:1579` — per-call commit/reveal check at `turnover >= LARGE_REBALANCE_THRESHOLD (4%)`; no cumulative drift tracking
+- Attack path: 5× sub-threshold rebalances at 3.9% over 160 slots = 19.5% equivalent without commit/reveal
+- **Blue-team directive**: Add cumulative drift tracking to ProtocolState; trigger commit/reveal when epoch sum exceeds threshold
+
+#### ⚠️ MEDIUM — B44 SPL Token Account Persistent Delegate Drain (CARRY-FORWARD, STILL OPEN)
+- `mint()` instruction: no `delegate.is_none()` check on `user_collateral_ata`
+- Protocol funds: ✅ safe (PDA vault ATAs); user-side: attacker with stale Approve-granted delegation can force victim collateral into protocol while attacker receives MSTB
+- **Blue-team directive**: `require!(ctx.accounts.user_collateral_ata.delegate.is_none(), ErrorCode::DelegateNotAllowed)` in Mint accounts validation
+
+#### ⚠️ MEDIUM — B63 Physical TEE Bypass — Operator Device Risk (CARRY-FORWARD)
+- CVE-2026-20435 (MediaTek Android boot chain, ~25% of Android phones, Phantom Wallet extractable in <45s)
+- **Blue-team directive**: Audit operator devices for MediaTek SoC; rotate any keeper key accessible via unpatched Android device; enforce hardware wallet for all keeper signing
+
+#### ⚠️ LOW — A63 Business Logic: Redeem min_out_amount No Protocol Floor (CARRY-FORWARD)
+- Redeem accepts `min_out_amount=0`; oracle-priced so classic MEV sandwich does not apply
+- Residual risk: oracle degradation + haircut applied silently when min=0
+- **Blue-team directive (optional)**: emit event with applied haircut multiplier
+
+#### ⚠️ LOW — D26 Dashboard Vendor Script: No SRI Hash (CARRY-FORWARD)
+- `docs/index.html`: self-hosted `solana-web3-1.95.3.iife.min.js` without `integrity=` attribute
+- CSP `script-src 'self'` in place; SRI adds tamper-detection layer
+- **Blue-team directive**: Add `integrity="sha384-..."` computed via `openssl dgst -sha384 -binary <file> | base64`
+
+#### ✅ All Other Vectors
+- A1–A13: ✅ ALL DEFENDED (CEI pattern, checked arithmetic, Anchor constraints, PDA seed validation, Solana token program checks)
+- A32 (Bridge Message Forgery): ✅ N/A — Solana-native, no IBC/bridge layer
+- A33–A35: ✅ DEFENDED (oracle unit invariants, AI commit tagging policy, audit scope tracking)
+- A36 (Thin-Liquidity Collateral Cascade): ✅ DEFENDED — collateral limited to USDC/USDT/DAI/USDS (deep liquidity, allowlist constrained)
+- A38 (ZK Verifier): ✅ N/A — no ZK layer
+- A39–A52: ✅ DEFENDED or N/A
+- A61 (ERC-2771): ✅ N/A — Solana, no ERC-2771 meta-tx layer
+- A62 (Automated Risk Param Oracle): ✅ DEFENDED — oracle updates require 2-of-3 keeper quorum, no fully-automated AgentHub-style executor
+- A67 (Supply Cap Bypass): ✅ DEFENDED — `total_deposits` accounting not bypassable via direct SPL transfer
+- **A68 (NEW today)**: ✅ N/A — not a lending pool, no aToken/index mechanism
+- B14–B20: ✅ (multi-RPC, HMAC, log masking, rate limiting in place)
+- B29 (AI Confused-Deputy): ✅ No AI oracle write path in production
+- B35 (Keeper Slippage Misconfiguration): ✅ `MAX_REBALANCE_SLIPPAGE_BPS` enforced at code level
+- B36 (Social-Engineering Stake Authority): ⚠️ Operational risk — keeper hot keys remain on workstation
+- B37–B43 (AI agent meta-vectors): ✅ N/A — no autonomous AI agent with signing authority
+- B45 (Post-Audit Delta): ❌ HIGH — carry-forward (Day 13)
+- B53 (Address Poisoning): ✅ Keeper uses deterministic PDA addresses, not user-input addresses
+- B63 (MediaTek TEE): ⚠️ MEDIUM carry-forward
+- B64 (Injective Permissionless Erasure): ✅ N/A — Solana, different state machine model
+- **D35 (NEW today)**: ⚠️ MEDIUM — keeper host snap-confine LPE (see above)
+- C21–C30: ✅ DEFENDED (redemption throttle, dynamic fees, circuit breakers, timelocked governance, Pyth oracle)
+
+---
+
 ## 2026-03-17 Daily Check
 
 ### Source Sweep (72h window: 2026-03-14 to 2026-03-17)
