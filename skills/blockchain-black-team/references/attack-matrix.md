@@ -1,4 +1,4 @@
-# Attack Matrix — 83 Vectors with Historical Mechanisms & Defense Patterns
+# Attack Matrix — 83 Vectors with Historical Mechanisms & Defense Patterns (+ 3 reinforced 2026-03-20)
 
 ## A. Smart Contract Vectors
 
@@ -54,10 +54,11 @@ let usd_price = cbeth_eth_ratio; // missing * eth_usd
 **META-12 Fuzzer Note (2026-03-19)**: Oracle price manipulation requires specific timing sequences that Foundry fuzz cannot model (timeout at 10M+ runs). Use Echidna with time-advancing mock oracle and property: `echidna_oracle_price_bounded()` with sequence length ≥ 3 and block-time stepping. Solana variant: test across slot transitions with simulated staleness boundary crossings.
 
 ### A4. Access Control
-**Historical**: Ronin ($624M — 5/9 validator keys), Wormhole ($320M — guardian signature bypass), Poly Network ($611M — role verification bypass), Gondi NFT platform (2026-03-10, $230K — Purchase Bundler missing asset owner/borrower verification)
+**Historical**: Ronin ($624M — 5/9 validator keys), Wormhole ($320M — guardian signature bypass), Poly Network ($611M — role verification bypass), Gondi NFT platform (2026-03-10, $230K — Purchase Bundler missing asset owner/borrower verification), Injective Protocol (2026-03-16, $500M at risk — permissionless chain-level account drain)
 **Mechanism**: Missing or bypassable authorization checks allow unauthorized callers to execute privileged operations.
 **Solana specific**: Missing `has_one`, `constraint`, signer checks on authority accounts.
 **2026 reinforcement (Gondi)**: The `Purchase Bundler` function in Gondi's `Sell & Repay` contract (deployed Feb 20, 2026) verified that the caller was authorized to invoke the bundler, but failed to separately verify that the caller was the actual owner or borrower of the specific NFT being operated on. Attacker exploited this to drain 78 NFTs ($230K: 44 Art Blocks, 10 Doodles, 2 Beeple works). Key sub-pattern: function-level authorization ≠ asset-level ownership verification — both checks are required.
+**2026 reinforcement (Injective — chain-level, disclosed 2026-03-16)**: White-hat f4lc0n reported via Immunefi a critical vulnerability in Injective Protocol that allowed any user to drain any on-chain account without any special permissions. Attack surface: Cosmos SDK / Injective exchange module authorization logic (full mechanism pending public post-mortem). $500M at risk. Team executed mainnet upgrade vote within 24h of disclosure; no funds lost. Bounty dispute: team offered $50K vs. stated $500K cap — underscoring B42 (severity miscalibration) as an organizational failure concurrent with the technical fix. **Key pattern**: chain-level authorization bypass (not just contract-level) — when a Cosmos SDK module or chain runtime mistakenly allows cross-account operations without owner verification, the blast radius is ALL accounts, not just one contract's TVL.
 **Code pattern to find**:
 ```rust
 // VULNERABLE: checks caller can invoke the bundler, but not that caller owns THIS asset
@@ -224,9 +225,10 @@ pub collateral_mint: Account<'info, Mint>,
 ## D. Infrastructure Vectors
 
 ### D26. Frontend XSS/Injection
-**Historical**: BadgerDAO ($120M — Cloudflare Workers compromise injected approval TX), bonk.fun (2026-03-12 — domain hijacking + wallet-draining script injection)
+**Historical**: BadgerDAO ($120M — Cloudflare Workers compromise injected approval TX), bonk.fun (2026-03-12 — domain hijacking + wallet-draining script injection), Neutrl (2026-03-19 — DNS provider social engineering → domain redirected → Permit2 approval revocation urgent warning)
 **Mechanism**: Compromise frontend → inject malicious transaction approvals.
 **2026 reinforcement (bonk.fun)**: Team account hijacked → DNS/domain taken over → wallet-draining JS injected directly into the live site. Users who visited the protocol's official domain were presented with legitimate UI that silently exfiltrated approvals/signatures. Team member issued emergency X warning after detection. Vector escalation: DNS hijack enables the injected script to appear at the protocol's canonical domain (not a phishing subdomain), bypassing user caution about "fake sites."
+**2026 reinforcement (Neutrl, 2026-03-19)**: Neutrl DeFi's DNS provider was targeted via social engineering → attacker redirected the protocol's domain. Team issued emergency advisory: (a) avoid interacting with website, (b) immediately revoke Permit2 approvals for relevant addresses via Revoke.cash, (c) check and revoke approvals to other suspicious addresses. **Permit2 force-multiplier**: Standard ERC20 approvals are protocol-specific and expire when the protocol no longer uses them. Uniswap's Permit2 contract (used by many DeFi protocols for batched approvals) creates persistent, protocol-agnostic spending permissions that survive the original dApp session. If a frontend is compromised, any Permit2 approval previously granted — even to a different protocol — can potentially be exploited via the malicious interface. Users must EXPLICITLY revoke Permit2 approvals; unlike ERC20 approvals, they are not automatically scoped to a single dApp. This dramatically expands the blast radius of any frontend compromise.
 **Code/config pattern to find**:
 ```html
 <!-- VULNERABLE: no CSP or CSP allows 'unsafe-inline' or external script sources -->
@@ -236,7 +238,8 @@ pub collateral_mint: Account<'info, Mint>,
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; object-src 'none';" />
 <!-- + domain registrar account with MFA + no team account sharing -->
 ```
-**Defense**: CSP headers (server-level, not just meta tag — meta tag does not block server-injected scripts), SRI hashes, no external scripts, static hosting, domain registrar account MFA, team account isolation (no shared credentials for DNS/hosting), emergency contact/rotation plan for domain compromise.
+**Defense**: CSP headers (server-level, not just meta tag — meta tag does not block server-injected scripts), SRI hashes, no external scripts, static hosting, domain registrar account MFA, team account isolation (no shared credentials for DNS/hosting), emergency contact/rotation plan for domain compromise. **Permit2 user guidance**: always revoke Permit2 approvals via Revoke.cash after any frontend incident; treat Permit2 revocation as mandatory step in incident response runbooks.
+**Source**: https://www.cryptonewsz.com/neutrl-front-end-attack-update-urgent-security/ | https://x.com/Neutrl/status/2034445580840370211
 
 ### D27. RPC Endpoint Takeover
 **Mechanism**: DNS hijack or BGP hijack redirects RPC traffic → false chain state.
@@ -616,7 +619,7 @@ fn get_share_price(vault: &Vault) -> u64 {
 **Source**: https://www.cryptotimes.io/2026/03/02/inversefinance-faces-240k-loss-in-dola-manipulation-alert/ | https://hacked.slowmist.io/
 
 ### A41. Burn-Path Fee-Exempt Flash Loan Amplification
-**Historical**: SOF token (BNB Chain, 2026-02-14, ~$248K) + LAXO token (2026-02-22, ~$190K) — Burn logic with fee-exempt transfer path allowed flash-loan amplification, draining pool BSC-USD. Copycat attackers struck within 13 minutes of the LAXO breach.
+**Historical**: SOF token (BNB Chain, 2026-02-14, ~$248K) + LAXO token (2026-02-22, ~$190K) — Burn logic with fee-exempt transfer path allowed flash-loan amplification, draining pool BSC-USD. Copycat attackers struck within 13 minutes of the LAXO breach. **AM/USDT pool** (BSC, 2026-03-12, ~$131K): attacker manipulated `toBurnAmount` in the burn mechanism, triggered burn logic after manually adjusting AM balance in the pool → drove AM reserves to unnaturally low level → sold AM back at inflated price for profit. Same class as SOF/LAXO but without the fee-exempt path: reserve manipulation via burn sequencing alone. Source: https://x.com/Phalcon_xyz/status/2031957703451688970
 **Mechanism**: The vulnerable contracts had a "mining reward" path that exempted tokens from transfer fees when sent to the mining contract. The attack chain:
 1. Flash borrow ~$590M in assets
 2. Swap large BSC-USD for pool token (SOF/LAXO) — pool is now token-heavy, USD-light
