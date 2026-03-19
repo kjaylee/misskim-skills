@@ -3099,3 +3099,102 @@ const REDEEM_ORACLE_STALENESS_MAX: u64 = 45; // ~18s at current slot rate
 4. **Emergency param update path**: Ensure admin can hot-update staleness constants without a full program upgrade (via config account) to allow rapid recalibration at transition
 
 **Source**: https://news.bitcoin.com/what-is-solanas-alpenglow-upgrade-new-consensus-could-deliver-150ms-transaction-finality/ | https://wazirx.com/blog/solana-sol-price-outlook-and-analysis/ (SIMD-0370 + Alpenglow roadmap, March 2026)
+
+---
+
+### D41. lz4_flex Uninitialized Memory Leak via Crafted Compressed Data — Rust Keeper Info Disclosure (RUSTSEC-2026-0041, CVE-2026-32829)
+**Signal**: RustSec Advisory Database — RUSTSEC-2026-0041, March 17, 2026. CVSS 8.2 HIGH.
+**Package**: `lz4_flex` (all versions < 0.11.6 and < 0.12.1)
+**Mechanism**: `lz4_flex::block::decompress()` and `lz4_flex::block::decompress_into()` fail to fully initialize the output buffer before writing. When processing adversarially crafted compressed data:
+1. Decompression function allocates output buffer
+2. Buffer is partially initialized, retaining prior heap content
+3. Crafted input causes "out-of-range copy" referencing unwritten regions
+4. Leaked bytes include whatever was previously at that heap address
+
+**Attack scenario for Microstable keeper**:
+```
+1. Attacker controls a Solana account with data that appears LZ4-compressed
+2. Keeper's solana-client dependency (2.3.0) fetches and decompresses account data
+3. lz4_flex (transitive dep) leaks keeper heap memory into output
+4. Leaked bytes may include: private key material, recent oracle values, 
+   or other PDAs fetched earlier in the process
+5. Attacker reads leaked data via subsequent getAccountInfo calls
+```
+**Affected functions**:
+- `lz4_flex::block::decompress` / `decompress_into`
+- `lz4_flex::frame::decompress` (via block layer)
+
+**Microstable relevance**: MEDIUM — `lz4_flex` is a transitive dependency of `solana-client 2.3.0` via `solana-storage-proto` / snapshot tooling. Direct RPC calls use JSON, but keeper binary may link lz4_flex and expose heap if account data is decompressed locally. **Run `cargo tree -i lz4_flex` in keeper/ immediately.**
+
+**Fix**: Upgrade `lz4_flex` to >= 0.11.6 or >= 0.12.1. If transitive, add to Cargo.toml `[patch.crates-io]` or upgrade the upstream dep that pulls it in.
+
+**Distinct from D28 (Supply Chain)**: D41 is a legitimate crate with a memory safety bug (not malicious intent). Attack surface is adversarial *input data*, not package installation.
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0041.html | CVE-2026-32829
+
+---
+
+### D42. tracing-ethers Blockchain-Dev SSH Key Exfil — Escalating tracing-* Namespace Squatting Campaign
+**Signal**: RUSTSEC-2026-0040, March 14, 2026. Malicious crate removed from crates.io.
+**Package**: `tracing-ethers` (all versions, 9 versions published March 9–14, 2026)
+**Mechanism**: Attacker registered `tracing-ethers` — a plausible-sounding crate in the `tracing-*` ecosystem targeting Ethereum/EVM developers. On install, silently exfiltrated SSH private keys to an attacker-controlled Vercel app endpoint.
+
+**Attack progression context** (escalation timeline):
+- 2026-02-24: `rpc-check` / `tracing-check` (underscore namespace, RT-2026-0225-03)
+- 2026-02-26: `tracings` / `tracing_checks` (underscore variants)
+- 2026-03-09~14: `tracing-ethers` (hyphen namespace, EVM-targeted)
+- **Pattern**: Attacker is systematically probing `tracing-*` and `tracing_*` namespace variants, targeting Web3 developer toolchains specifically.
+
+**Why this is HIGH severity for Microstable**:
+- Keeper directly uses `tracing = "0.1"` and `tracing-subscriber = "0.3"`
+- Developer who accidentally adds `tracing-solana`, `tracing-anchor`, or any `tracing-*` variant via copy-paste or autocomplete loses SSH key to keeper production nodes
+- SSH key exfil → attacker accesses keeper server → can modify keeper binary or steal signing keys → B68-class treasury drain without device compromise
+
+**Key distinction from D39 (Glassworm)**: D39 uses invisible Unicode injection for code modification. D42 is blunt credential theft — no obfuscation, high volume publishing, short TTL before detection. Optimized for developer install speed vs. long dwell time.
+
+**Defense**:
+1. `cargo audit` in CI blocks any package matching known RUSTSEC IDs
+2. Audit `Cargo.toml` after every dependency add — specifically review all `tracing-*` entries
+3. Diff `Cargo.lock` in PR reviews to detect new transitive `tracing-*` additions
+4. Run `cargo tree | grep tracing` before deploying keeper to confirm only expected packages present
+5. Rotate SSH keys on any machine that ran `cargo build` without prior `cargo audit`
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0040.html
+
+---
+
+### B71. Firedancer/Agave Consensus Divergence — C vs Rust Edge-Case Split Attack
+**Signal**: dev.to/ohmygod — "The Hidden Security Risks of Solana's Firedancer Era" (Attack Surface #4), published March 13, 2026. Not previously indexed in attack-matrix (B64/B65 covered Attack Surfaces #2/#3 from the same article).
+**Mechanism**: Firedancer (C/C++) and Agave (Rust) are independent implementations of the Solana validator. When processing the same transactions, subtle differences in language-level behavior can produce consensus forks:
+
+**Divergence triggers**:
+1. **Integer overflow**: Rust panics in debug / wraps in release; C has undefined behavior for signed overflow. Fee calculations or CU accounting at boundary values may produce different results.
+2. **Floating-point rounding**: Stake-weighted vote aggregation uses floats. IEEE 754 corner cases (NaN propagation, denormals, FMA instruction differences) between C and Rust may produce different supermajority results.
+3. **BPF/SBF execution edge cases**: BPF programs run in the validator's execution engine. Instruction encoding edge cases (e.g., 64-bit division by zero, pointer arithmetic at boundary) may be handled differently between Firedancer's C runtime and Agave's Rust runtime.
+4. **Transaction ordering within slot**: If Firedancer and Agave order transactions differently within a slot (at throughput limits), the resulting state hash diverges.
+
+**Attack scenario**:
+```
+1. Attacker crafts a transaction with an arithmetic value at integer boundary 
+   (e.g., CU cost exactly at 2^64 - 1 boundary, or fee = max_u64/price)
+2. Submits during a Firedancer-leader slot at high throughput
+3. Firedancer accepts (C wrapping behavior)
+4. Agave validators reject or compute different state hash (Rust behavior)
+5. Consensus fork: ~20% Firedancer stake vs ~80% Agave stake disagree
+6. Fork resolution window: Microstable oracle prices on the "winning" vs "losing"
+   fork may diverge → phantom liquidations or missed liquidations
+```
+**Microstable relevance**: LOW-MEDIUM — Microstable is a program, not a validator. However, during a consensus fork window:
+- Keeper may see different oracle/account states depending on which validator RPC it queries
+- A malicious keeper pointing to a Firedancer RPC endpoint vs Agave endpoint during a fork could execute incorrect liquidations
+- **Mitigation**: Keeper should use `commitment: finalized` (not `confirmed`) for all critical reads; validate RPC responses against multiple endpoints
+
+**Severity**: Theoretical HIGH (network-wide if triggered), LOW probability (requires precise boundary-value crafting + timing).
+
+**Distinct from**:
+- B50 = Firedancer skip-vote lag (timing-based, same state)
+- B64 = Write-lock LDoS (resource exhaustion)
+- B65 = Dense-block oracle staleness (within-slot timing)
+- B71 = Implementation divergence producing different consensus outcomes (correctness, not timing)
+
+**Source**: https://dev.to/ohmygod/the-hidden-security-risks-of-solanas-firedancer-era-what-protocol-developers-must-know-4b8g (Attack Surface #4)
