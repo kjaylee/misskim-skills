@@ -3278,3 +3278,158 @@ Stage 3 — Exfiltration:
 
 **CVE**: CVE-2026-28353 (Trivy v0.69.4 supply chain compromise)
 **Source**: https://www.wiz.io/blog/trivy-compromised-teampcp-supply-chain-attack | https://thehackernews.com/2026/03/trivy-security-scanner-github-actions.html | https://socket.dev/blog/trivy-under-attack-again-github-actions-compromise | https://github.com/aquasecurity/trivy/discussions/10425
+
+### A53. Multi-Month Collateral Supply Cap Infiltration → Bad Debt Attack
+**Historical**: Venus Protocol (BNB Chain, 2026-03-18, $2.1M protocol bad debt + attacker $4.7M net loss). BlockSec analysis. Attack vector flagged in 2023 audit as "no negative side effects."
+**Mechanism**: Attacker accumulates a low-liquidity token (THE/Thena) over **9 months** via Tornado Cash, slowly building a position large enough to exceed the protocol's supply cap. Once the cap is breached, the attacker uses the inflated-value holding as collateral to borrow ~$15M. Liquidations ultimately destroy the attacker economically (net -$4.7M) but leave the protocol with $2.1M in bad debt that cannot be recovered.
+**Why distinct from A2 (Flash Loan)**: No single-block borrowed capital. The attacker's own slowly-accumulated position is the attack capital. Time scale: months, not milliseconds.
+**Why distinct from A36 (Thin-Liquidity Collateral Admission Cascade)**: A36 is about oracle quality at listing time. A53 is about an attacker systematically building a market position over time to exceed a hard supply cap threshold, then executing an orchestrated borrow.
+**Key insight**: Slow-accumulation attacks bypass standard anti-manipulation controls (flash loan caps, per-block volume limits, TWAP) because each individual buy is small and legitimate. The exploit only becomes possible after months of accumulated state.
+**Code pattern to find**:
+```rust
+// VULNERABLE: supply cap enforced per-instruction but not adversarially modeled over epochs
+if vault.total_supply + deposit_amount > SUPPLY_CAP {
+    return Err(ErrorCode::SupplyCapExceeded);
+}
+// → Attacker sends 1,000 small deposits over 9 months, each below cap trigger
+
+// RISK: supply cap is a threshold, not a defense — once reached, attacker controls a concentrated position
+// Supply cap + oracle price inflation = unbounded borrow capacity if no additional concentration limits
+```
+**Defense**:
+1. Treat supply caps as concentration limits, not just capacity limits: when any single entity approaches N% of cap, apply collateral haircut
+2. Multi-epoch adversarial simulation: test whether a rational attacker can accumulate a profitable position given historical market depth and price volatility
+3. Oracle + collateral value circuit breaker: if collateral token TVL increases by >X% in a short window, flag for governance review
+4. Cap breach → automatic haircut: once any collateral nears supply cap, apply increasing LTV haircut as position concentration grows
+**Microstable relevance**: Any collateral with low liquidity, small float, or thin market depth that reaches near-cap positions should be re-evaluated for LTV adjustment. Current per-slot volume caps protect against flash loan amplification but not slow accumulation.
+**Source**: https://blocksec.com/blog/venus-thena-donation-attack | https://bitnewsbot.com/venus-protocols-nine-month-hack-leaves/
+
+### D43. Core Ecosystem Rust Crate Bulk Typosquat Wave
+**Historical**: RUSTSEC-2023-0097 through 0103 (all issued/backdated 2026-03-19) — `lazystatic`, `if-cfg`, `envlogger`, `xrvrv`, `oncecell`, `serd`, `postgress` — all removed for malicious code.
+**Mechanism**: Unlike prior waves (A44 = fresh-named, A45 = clone rotation, D33 = transitive relay), this wave targets the **absolute foundations** of the Rust ecosystem: `lazy_static` → `lazystatic`, `once_cell` → `oncecell`, `serde` → `serd`, `env_logger` → `envlogger`, `postgres` → `postgress`. These are crates that appear in virtually every Rust project. The attack surface per-crate is much larger than themed or fresh-named packages.
+**Why distinct from A44/A45**:
+- A44: developer deliberately adds a new utility crate → smaller blast radius (only affects projects that need that utility)
+- A45: clone rotation post-takedown to evade name-based blocklists
+- D43: bulk simultaneous attack on core ecosystem anchors → any developer who mistype-installs any one of 6 fundamental packages is exposed; IDE autocomplete is a primary attack vector
+**Code/config pattern to find**:
+```toml
+# DANGEROUS: typosquat of core Rust crates in Cargo.toml
+[dependencies]
+lazystatic = "1"     # should be lazy_static
+oncecell = "1"       # should be once_cell
+serd = "1"           # should be serde
+envlogger = "0.10"   # should be env_logger
+postgress = "0.19"   # should be postgres
+if-cfg = "1"         # should be cfg-if
+```
+**Microstable relevance**: HIGH — keeper Cargo.toml should be audited for any of these variants. `cargo deny check bans` should include explicit Levenshtein-distance rules against these core crates.
+**Defense**:
+1. Add semantic-similarity deny rules for all core ecosystem crates: any dependency within edit-distance 2 of `serde`, `once_cell`, `lazy_static`, `env_logger`, `postgres`, `cfg-if` requires explicit security approval
+2. Enable `cargo deny` with `bans.deny` entries listing known typosquat variants
+3. CI gate: fail on any new dependency in these namespaces that has <6 months publish history or <10K downloads
+4. Developer policy: never `cargo add <crate>` without verifying exact spelling against crates.io top-1000 list
+**Source**: https://rustsec.org/advisories/RUSTSEC-2023-0097.html through RUSTSEC-2023-0103.html
+
+### A54. aws-lc-sys Cryptographic Validation Bypass Chain
+**Historical**: RUSTSEC-2026-0042/0043/0044/0045/0046/0047/0048 — all issued 2026-03-20. Affects `aws-lc-sys` and `aws-lc-fips-sys` < 0.38.0.
+**Mechanism**: Five concurrent cryptographic vulnerabilities in AWS-LC (Rust bindings to Amazon's BoringSSL fork):
+1. **PKCS7_verify Certificate Chain Validation Bypass** (CVE-2026-3336, CVSS 7.5 HIGH): Improper cert validation in PKCS7_verify() when processing objects with multiple signers — attacker with any valid PKCS7 signer can bypass chain verification for an otherwise invalid cert
+2. **PKCS7_verify Signature Validation Bypass** (HIGH): Separate bypass path for signature verification
+3. **X.509 Name Constraints Bypass via Wildcard/Unicode CN** (HIGH): Attacker cert with wildcard or Unicode Common Name bypasses name constraint enforcement
+4. **CRL Distribution Point Scope Check Logic Error** (HIGH): Incorrect scope check allows untrusted CRLs to pass validation
+5. **AES-CCM Timing Side-Channel** (MEDIUM): Timing oracle on tag verification leakable to network attacker
+**DeFi attack chain**: Any keeper or DeFi infrastructure using `rustls` with `aws-lc-rs` backend for HTTPS RPC connections → attacker can present a certificate that bypasses all chain + name + revocation checks → MITM on keeper↔RPC TLS session → inject false RPC responses (oracle price, account state, transaction confirmations)
+**Why distinct from B14 (RPC Manipulation)/D27 (RPC Endpoint Takeover)**: B14/D27 require DNS/BGP hijacking to redirect traffic. A54 only requires the attacker to be in a network position where they can inject a TLS certificate — far lower barrier (coffee shop WiFi, VPN provider, co-located server). Once MITM via forged cert succeeds, attacker controls all keeper ↔ RPC data.
+**Code/config pattern to find**:
+```toml
+# CHECK: any aws-lc-rs or aws-lc-sys dependency
+[dependencies]
+aws-lc-rs = "1"          # check version < 0.38.0 (aws-lc-sys underlying)
+rustls = { version = "0.23", features = ["aws-lc-rs"] }  # pulls aws-lc-sys
+```
+```bash
+# Detection
+cargo tree | grep -E "aws-lc"
+# If present at version < 0.38.0: URGENT upgrade required
+```
+**Microstable relevance**: MEDIUM-HIGH (unknown until cargo tree verification). Keeper TLS connections to Solana RPC endpoints may transitively pull aws-lc-rs via rustls. Action: run `cargo tree | grep aws-lc` in keeper directory.
+**Defense**:
+1. Upgrade `aws-lc-sys` to >=0.38.0 (all five CVEs patched in this version)
+2. Add `cargo audit --deny warnings` to CI for keeper builds
+3. If aws-lc-rs is pulled transitively via rustls: add explicit version constraint in Cargo.toml
+4. Prefer aws-lc-rs over ring for new TLS dependencies (more actively maintained, AWS-backed)
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0046.html | https://rustsec.org/advisories/RUSTSEC-2026-0047.html | https://aws.amazon.com/security/security-bulletins/2026-005-AWS
+
+### D44. pingora-cache Cache Poisoning + pingora-core HTTP/1.0 Smuggling (Extension of D35)
+**Historical**: RUSTSEC-2026-0034 (CVE-2026-2835, CVSS 9.3 CRITICAL) + RUSTSEC-2026-0035 (pingora-cache cache poisoning, HIGH). Both March 5, 2026. Previously missed in D35 which only captured RUSTSEC-2026-0033.
+**Mechanism**:
+1. **RUSTSEC-2026-0034 (HTTP/1.0 Misparsing)**: Pingora-core misparses HTTP/1.0 requests with `Transfer-Encoding` headers. Unlike the Upgrade-based vector (D35/RUSTSEC-2026-0033), this bypasses security controls using HTTP version downgrade + TE header combination — a different bypass path requiring different mitigations
+2. **RUSTSEC-2026-0035 (Cache Poisoning)**: If the proxy uses pingora-cache, the HTTP/1.0 misparsing (or Upgrade smuggling) can poison cached responses. Subsequent legitimate requests for the same cache key receive the attacker's poisoned response — including cached RPC responses for oracle price queries
+**Cache poisoning DeFi attack chain**:
+1. Attacker sends crafted HTTP/1.0 request with TE header → smuggles malicious payload as "second request" to backend
+2. Backend generates and caches an oracle price response under a known cache key (e.g., `GET /price/SOL-USD`)
+3. Keeper's subsequent legitimate oracle fetch hits the cache → receives attacker's poisoned price
+4. Keeper writes attacker's price to chain for N slots (until cache expires or TTL resets)
+5. Protocol mints/redeems at wrong price throughout poisoning window
+**Why distinct from D35**: D35 covers only RUSTSEC-2026-0033 (Upgrade header vector). D44 introduces: (a) a second distinct bypass via HTTP/1.0 TE, and (b) the cache poisoning second-order attack that converts smuggling into persistent multi-request price manipulation (not just one-shot request injection)
+**Code/config pattern to find**:
+```yaml
+# VULNERABLE: proxy serves oracle/RPC traffic AND uses cache with pingora-cache <0.8.0
+# GCP proxy on 34.19.69.41 + Cloudflare potential exposure
+# Check if any oracle relay, RPC gateway, or API is fronted by pingora-cache
+```
+**Microstable relevance**: HIGH if GCP proxy (34.19.69.41) uses pingora-cache for any oracle feed relay or RPC caching. All three Pingora CVEs (0033, 0034, 0035) share the same patched version (>=0.8.0) — single upgrade resolves all three.
+**Defense**:
+1. Upgrade ALL pingora-core and pingora-cache dependencies to >=0.8.0 (covers RUSTSEC-2026-0033/0034/0035 simultaneously)
+2. Disable HTTP/1.0 support at proxy edge for all RPC/oracle routes (strict HTTP/1.1+ enforcement)
+3. Strip `Transfer-Encoding` headers on ingress for all JSON-RPC traffic (no valid use case)
+4. If cache is in use for oracle/RPC traffic: add cache-key poisoning detection (monitor for sudden price swings in cached responses vs. direct Pyth feeds)
+5. RPC traffic should NOT be cached at proxy level — oracle prices change per-slot; cached responses introduce mandatory staleness
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0034.html | https://rustsec.org/advisories/RUSTSEC-2026-0035.html | https://blog.cloudflare.com/pingora-oss-smuggling-vulnerabilities/
+
+### A55. CPI Depth Budget Griefing via Token-2022 Hook Chaining
+**Signal**: "The Solana CPI Security Playbook: 7 CPI Patterns" (dev.to, 2026-03-20). Pattern 4 extracted and developed.
+**Mechanism**: Solana enforces a hard maximum CPI depth of 4. Token-2022 transfer hooks consume one CPI depth level when invoked (hook program is called as a CPI from the Token-2022 program). A protocol that already chains CPIs to depth 2-3 in critical paths (oracle update → DEX → token transfer) can be forced over the limit by any Token-2022 collateral with a hook:
+```
+Level 0: Keeper → Microstable program instruction
+Level 1: Microstable → SPL Token (or DEX)
+Level 2: DEX → Token-2022 transfer
+Level 3: Token-2022 invokes transfer hook
+Level 4: Hook → [any CPI]  ❌ DEPTH LIMIT HIT → revert
+```
+**Attack**: Attacker proposes/enables a Token-2022 collateral with a legitimate-looking hook (whitelist, compliance check) that itself makes a CPI call. Any keeper transaction touching this collateral will fail with compute/depth exceeded error.
+**Why distinct from A52 (Recursive Hook DoS)**: A52 = the hook *itself* recursively calls the same mint → same hook again (loop). A55 = no recursion; the hook is called once but that single call pushes the total call stack over depth 4, freezing *all* transactions that traverse this code path — not just the hook's specific mint.
+**Why distinct from B20 (General DoS)**: B20 is network/resource-level. A55 is a deterministic on-chain program structure failure — a single legitimate transaction fails every time it traverses the depth-exceeding path.
+**Code pattern to find**:
+```rust
+// Audit your CPI depth before adding any Token-2022 collateral:
+// Level 0: User → your program
+// Level 1: Your program → DEX
+// Level 2: DEX → Token-2022 transfer_checked
+// Level 3: Token-2022 invokes hook CPI
+// Level 4: Hook → any CPI  ← FATAL if hook makes any CPI call
+
+// SAFE design: protocol CPI depth ≤ 2; leave depth 3-4 for Token-2022 runtime
+pub fn process_collateral(ctx: Context<ProcessCollateral>) -> Result<()> {
+    // FLATTEN: do all internal state updates first (no CPI)
+    update_vault_state(&mut ctx.accounts.vault, amount)?;
+    // Then single CPI to token program
+    token::transfer_checked(cpi_ctx, amount, decimals)?;  // depth 1 only
+    Ok(())
+}
+```
+**Microstable relevance**: LOW currently (SPL Token classic). MEDIUM risk at Token-2022 adoption planning: any future Token-2022 collateral must have its hook audited for (a) acyclicity (A52) AND (b) that the hook makes NO outbound CPI calls (A55). If hook must CPI, protocol internal call depth must be audited to stay ≤ 2.
+**Defense**:
+1. Before accepting any Token-2022 collateral: audit its hook program for all CPI calls it makes
+2. Protocol design rule: maximum protocol-owned CPI depth of 2 — leave depth 3 and 4 for Token-2022 runtime use
+3. Add explicit CPI depth comment/annotation to critical instruction paths showing current depth usage
+4. Integration test: simulate full keeper transaction with candidate Token-2022 collateral hook active; verify no depth exceeded errors
+5. Governance gate for collateral admission: must include hook depth analysis as explicit approval criterion
+**Source**: https://dev.to/ohmygod/the-solana-cpi-security-playbook-7-cross-program-invocation-patterns-that-prevent-nine-figure-7j6
+
+| A53 Multi-Month Supply Cap Infiltration → Bad Debt Attack | 단기 플래시론 방어(슬롯 당 캡, TWAP)가 수개월에 걸친 점진적 포지션 축적을 막지 못함. 공급 상한이 '용량 한계'가 아닌 '농도 한계'로 설계되지 않으면, 상한에 도달한 후 LTV haircut 없이 고농도 담보 차용이 허용됨. 2023 감사에서 "부정적 부작용 없음"으로 기각된 벡터가 9개월 후 실제 익스플로잇으로 실현 (Venus/THE 2026-03-18, $2.1M 프로토콜 손실). |
+| D43 Core Ecosystem Rust Crate Bulk Typosquat Wave | 단일 신규 유틸리티 크레이트 추가(A44)나 단일 클론 재게시(A45)와 달리, `lazy_static`·`once_cell`·`serde`·`env_logger` 등 사실상 모든 Rust 프로젝트 기반 크레이트를 한꺼번에 동시 타겟. IDE 자동완성이 주 공격 벡터 — 개발자가 의도적으로 새 크레이트를 추가할 필요 없음. 단일 오타로 핵심 의존성이 악성 버전으로 대체. (RUSTSEC-2023-0097~0103, 2026-03-19) |
+| A54 aws-lc-sys Cryptographic Validation Bypass Chain | TLS 기반 RPC 연결을 안전하다고 가정하고 keeper↔RPC 경계의 인증서 검증을 보안 레이어로 의존. aws-lc-rs/aws-lc-sys의 PKCS7 체인·서명 검증 우회 + X.509 이름 제약 우회가 결합되면 TLS MITM이 인증서 오류 없이 가능. 감사가 온체인 로직에 집중하고 keeper TLS 의존성 취약점을 운영 외부 이슈로 분리할 때 놓침. (RUSTSEC-2026-0042~0048, aws-lc-sys <0.38.0, 2026-03-20) |
+| D44 pingora-cache Cache Poisoning + HTTP/1.0 Smuggling | D35(Upgrade 헤더 밀수)가 이미 문서화됐지만 동일 릴리즈의 두 추가 취약점(HTTP/1.0 Transfer-Encoding 오파싱, 캐시 오염)이 추적에서 누락됨. 캐시 오염은 단발성 밀수와 달리 이후 모든 캐시 적중 요청에 악성 오라클 가격을 주입 — 여러 슬롯에 걸친 지속적 가격 조작 가능. (RUSTSEC-2026-0034/0035, pingora-core/cache <0.8.0) |
+| A55 CPI Depth Budget Griefing via Token-2022 Hook Chaining | Solana CPI depth 제한(4)을 감사가 온체인 로직 내부에서만 점검하고, Token-2022 hook이 소비하는 depth 레벨을 구성(composition) 시 계산에 포함하지 않음. 프로토콜 CPI depth ≤ 2 설계 규칙 없이 Token-2022 담보를 허용하면, 합법적 hook이 CPI depth를 초과시켜 모든 관련 TX를 확정적으로 revert시킬 수 있음. (dev.to CPI Playbook, 2026-03) |
+
