@@ -1,4 +1,4 @@
-# Attack Matrix — 83 Vectors with Historical Mechanisms & Defense Patterns (+ 3 reinforced 2026-03-20) | META-01~14
+# Attack Matrix — 83 Vectors with Historical Mechanisms & Defense Patterns (+ 2 reinforced 2026-03-21) | META-01~15
 
 ## A. Smart Contract Vectors
 
@@ -206,7 +206,29 @@ pub collateral_mint: Account<'info, Mint>,
 **Mechanism**: Acquire voting power (via flash loan or sybil) → pass malicious proposal → drain treasury.
 **2026 reinforcement (Compound Finance re-hijack, March 3, 2026)**: Compound Finance governance was hijacked a second time despite a previous patch. The re-exploit confirms the "patch-and-forget" anti-pattern in governance security: fixing the surface-level mechanism (e.g., adding quorum requirements, timelocks) without addressing the underlying power distribution allows novel attack paths to achieve the same outcome. DeFi governance "defenses" are often parameterized (quorum thresholds, timelock durations) — attackers probe parameter sensitivity across voting epochs to find the cheapest path to majority control. Patching a governance mechanism should trigger a full re-audit of all parameters under adversarial quorum-accumulation scenarios.
 **Purple meta (defense bypass evolution)**: When governance is re-exploited after a "fix," the fix addressed the symptom but not the structural power imbalance. Governance security must be modeled as an economic game, not a code-level check. Every parameter change (timelock duration, quorum %) creates a new exploitability landscape.
-**Defense**: Timelock, quorum requirements, voting escrow, stake-weighted with lockup. **Post-patch mandatory**: re-run adversarial quorum simulation on ALL governance parameters after any fix; "we patched it" requires economic re-modeling, not just code re-audit.
+**2026-03-21 reinforcement — Cross-chain governance temporal desynchronization flash loan attack**: The single-chain Beanstalk flash loan attack ($182M, 2022) has an evolved cross-chain variant that the industry has not yet priced in. In multi-chain DAO architectures (Governor.sol on Chain A + VoteAggregator on Chain B connected via LayerZero/Wormhole/Axelar/Hyperlane), three critical assumptions break simultaneously: (1) balance consistency — token balances on Chain B accurately reflect locked tokens on Chain A; (2) message integrity — cross-chain vote messages can be delayed, replayed, or dropped; (3) temporal synchronization — snapshot blocks on both chains do NOT capture the same economic reality.
+
+**Cross-chain flash governance attack flow**:
+```
+// Simplified attack contract on Chain B
+function execute() external {
+    // 1. Flash loan 1,000,000 GOV tokens on Chain B
+    flashLender.flashLoan(1_000_000e18, GOV_TOKEN);
+    // 2. Deposit into voting escrow (minimal lock if required)
+    veGOV.deposit(1_000_000e18, block.timestamp + 1);
+    // 3. Cast cross-chain vote on pre-submitted malicious proposal
+    voteAggregator.castVote(proposalId, VOTE_FOR);
+    // 4. Cross-chain message QUEUED but not yet settled on Chain A
+    //    → vote is counted before finality verification on Chain A
+    // 5. Withdraw and repay flash loan
+    veGOV.withdraw(); flashLender.repay();
+    // → Attacker holds 0 tokens after this TX, but vote is ALREADY COUNTED on Chain A
+}
+```
+**Why auditors miss the cross-chain variant**: (a) Single-chain flash governance is in every auditor's playbook; cross-chain governance contracts are typically audited separately — Governor.sol on Chain A and VoteAggregator on Chain B — with neither audit owning the temporal synchronization guarantee across the messaging layer. (b) The exploitable gap is the **integration boundary** between two separately-audited components. (c) Industry post-Ronin/Wormhole focused on asset bridge security; governance bridge security (voting power, delegation, proposal rights flowing cross-chain) has not received equivalent scrutiny. (d) "Cross-chain governance" looks like solved architecture — it passed separate audits for each component.
+**Why it escalates to nine-figure territory**: Cross-chain governance controls treasury parameters, upgrade authority, and collateral admission rules — far higher value than a single liquidity drain.
+**Defense (cross-chain variant)**: (1) Flash-loan-resistant voting: only tokens locked for ≥ N blocks BEFORE the proposal snapshot count (prevents same-block-deposit + vote); (2) Cross-chain vote finality requirement: do not accept governance votes from cross-chain messages until source chain has finalized the voting period (block-height proof or ZK state proof required); (3) Proposal execution timelock must exceed the maximum cross-chain message latency + finality window; (4) VoteAggregator must verify token lock duration at Chain A snapshot time, not accept Chain B's self-reported balance at message-send time.
+**Defense**: Timelock, quorum requirements, voting escrow, stake-weighted with lockup. **Post-patch mandatory**: re-run adversarial quorum simulation on ALL governance parameters after any fix; "we patched it" requires economic re-modeling, not just code re-audit. **Cross-chain DAOs additionally**: mandate independent audit of the temporal synchronization guarantee between Governor.sol and all VoteAggregator contracts.
 
 ### C24. Sybil Attack
 **Mechanism**: Create many identities to gain disproportionate influence.
@@ -1890,6 +1912,7 @@ solana-client = "2.3.x"
 
 ### B59. AI-Assisted Code Co-Author Review Accountability Gap
 **Historical**: Moonwell MIP-X43 (February 15, 2026, $1.78M bad debt). Governance proposal MIP-X43 enabled Chainlink OEV wrapper contracts across Moonwell's core markets. The cbETH oracle configuration commit was co-authored by Claude Opus 4.6. The compound formula should be: `cbETH_price_USD = cbETH_ETH_ratio × ETH_USD_price`. The commit implemented only the first factor — cbETH/ETH ratio ≈ 1.12 — without multiplying by ETH/USD (~$2,200). Result: cbETH priced at $1.12 instead of ~$2,470. Liquidation bots responded within 4 minutes; 1,096 cbETH seized at artificially suppressed prices. Protocol left with $1.78M bad debt. "The commit was co-authored by Claude Opus 4.6" — cited in post-mortem as the first confirmed major DeFi exploit attributable to vibe-coded (AI-assisted, human-rubber-stamped) smart contract changes.
+**2026-03-21 reinforcement**: Post-mortem (CoinTelegraph, 2026-03-20) confirmed that Moonwell had BOTH unit tests AND integration tests (in a separate PR) AND a commissioned audit from Halborn — all passed. Pashov (security auditor) confirmed: "could have been caught with an integration test, a proper one, integrating with the blockchain." Key distinction: the integration tests that existed did NOT test oracle formula output against live blockchain/market data; they tested structural correctness with mocked values. This confirms the META-15 pattern (see Why-Audits-Miss table): test coverage quantity (unit + integration + audit) does not imply semantic correctness validation against real chain state. The "AI trust bias" compounded this: human reviewers and governance voters saw AI co-authorship + test pass + audit = approvals escalated without independent formula derivation.
 
 **Mechanism**: The new threat model is not "AI auditor misses existing bugs" (B51) — it is "AI code generator introduces plausible-looking but mathematically incorrect formulas that human reviewers don't independently verify."
 
@@ -3432,4 +3455,6 @@ pub fn process_collateral(ctx: Context<ProcessCollateral>) -> Result<()> {
 | A54 aws-lc-sys Cryptographic Validation Bypass Chain | TLS 기반 RPC 연결을 안전하다고 가정하고 keeper↔RPC 경계의 인증서 검증을 보안 레이어로 의존. aws-lc-rs/aws-lc-sys의 PKCS7 체인·서명 검증 우회 + X.509 이름 제약 우회가 결합되면 TLS MITM이 인증서 오류 없이 가능. 감사가 온체인 로직에 집중하고 keeper TLS 의존성 취약점을 운영 외부 이슈로 분리할 때 놓침. (RUSTSEC-2026-0042~0048, aws-lc-sys <0.38.0, 2026-03-20) |
 | D44 pingora-cache Cache Poisoning + HTTP/1.0 Smuggling | D35(Upgrade 헤더 밀수)가 이미 문서화됐지만 동일 릴리즈의 두 추가 취약점(HTTP/1.0 Transfer-Encoding 오파싱, 캐시 오염)이 추적에서 누락됨. 캐시 오염은 단발성 밀수와 달리 이후 모든 캐시 적중 요청에 악성 오라클 가격을 주입 — 여러 슬롯에 걸친 지속적 가격 조작 가능. (RUSTSEC-2026-0034/0035, pingora-core/cache <0.8.0) |
 | A55 CPI Depth Budget Griefing via Token-2022 Hook Chaining | Solana CPI depth 제한(4)을 감사가 온체인 로직 내부에서만 점검하고, Token-2022 hook이 소비하는 depth 레벨을 구성(composition) 시 계산에 포함하지 않음. 프로토콜 CPI depth ≤ 2 설계 규칙 없이 Token-2022 담보를 허용하면, 합법적 hook이 CPI depth를 초과시켜 모든 관련 TX를 확정적으로 revert시킬 수 있음. (dev.to CPI Playbook, 2026-03) |
+| META-15 Live-Blockchain Integration Test Gap — "Tests Pass, Production Fails" (퍼플팀 메타, 2026-03-21) | Moonwell $1.78M(2026-02-15) 포스트모템 최종 확인(CoinTelegraph 2026-03-20): **단위 테스트 존재 + 통합 테스트 존재(별도 PR) + Halborn 감사 완료 → 전부 통과 → cbETH 오라클 공식 오류 미탐지**. Pashov 확인: "could have been caught with an integration test, a proper one, integrating with the blockchain." 핵심 구분: (a) **단위 테스트** = 모킹된 값으로 수식이 타입 호환 출력을 내는지만 검증. (b) **통합 테스트(샌드박스/모킹 기반)** = 로컬 포크나 목 데이터에서 실행 — 실제 시장 가격과의 의미론적 일치 보장 없음. (c) **통합 테스트(라이브 블록체인 기반)** = 실제 체인 상태에서 오라클 공식 출력을 외부 가격 기준(CoinGecko/CoinMarketCap ±2%)과 비교 — (c)만이 cbETH 패턴 탐지 가능. **왜 감사가 놓치는가**: ① "통합 테스트 있음" → "통합 테스트가 올바른 것을 테스트함"을 감사가 암묵적으로 가정. ② 감사 체크리스트가 "테스트 존재 여부"를 확인하고 "테스트가 실 체인 상태에서 의미론적으로 올바른 값을 검증하는지"를 확인하지 않음. ③ AI 공동 저자 코드: "AI가 의미론적 오류를 낼 리 없다"는 신뢰 편향이 검토 강도를 낮춤(B59). **구조적 해결책**: 모든 오라클 공식 변경에 대해 라이브 블록체인 데이터 기반 가격 검증 CI 스텝 필수화; Halborn 수준 감사도 "통합 테스트가 라이브 체인 기반인지"를 별도 확인해야 함. META-12(퍼저 단일문화)와 구별: META-12 = 퍼징 도구 다양성 부재; META-15 = 테스트가 존재하나 실 블록체인 상태 대비 의미론적 검증이 없는 "커버리지의 질" 문제. (B59, A35, A3 참조) |
+| C23 Cross-Chain Governance Temporal Desynchronization Flash Loan | 멀티체인 DAO 거버넌스에서 Chain A(Governor.sol)와 Chain B(VoteAggregator)를 연결하는 크로스체인 메시징 레이어의 시간적 비동기성을 감사가 독립 구성 요소(Governor 감사 + VoteAggregator 감사)로 분리 검토하여 통합 경계의 "temporal synchronization 보장 부재"를 미식별. 단일체인 플래시론 거버넌스(Beanstalk $182M)는 감사 표준 체크리스트에 포함됨; 크로스체인 변형(Chain B에서 플래시론 → Chain A 메시지 미확정 상태에서 투표 계산 → 플래시론 상환 후 투표 유효)은 어느 팀의 감사 범위에도 명시적으로 포함되지 않음. 거버넌스 컨트랙트가 treasury/upgrade/collateral-admission 권한을 제어하면 블라인드스팟 = 잠재적 nine-figure 손실. (C23, META-10 참조) |
 
