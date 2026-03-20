@@ -3200,3 +3200,81 @@ const REDEEM_ORACLE_STALENESS_MAX: u64 = 45; // ~18s at current slot rate
 - B71 = Implementation divergence producing different consensus outcomes (correctness, not timing)
 
 **Source**: https://dev.to/ohmygod/the-hidden-security-risks-of-solanas-firedancer-era-what-protocol-developers-must-know-4b8g (Attack Surface #4)
+
+---
+
+### D43. Security-Tooling Inversion — Trusted CI/CD Scanner Compromised via Force-Push Tag Hijack (Trivy / TeamPCP, 2026-03-19)
+**Signal**: Trivy v0.69.4 supply chain attack by TeamPCP (2026-03-19), CVE-2026-28353. Disclosed by Wiz Research, Socket, StepSecurity. 75/76 `trivy-action` tags force-pushed to malicious commits; backdoored binaries published to Docker Hub, GHCR, and ECR.
+**Distinct from**:
+- D28 (Supply Chain — typosquat waves): D28 covers package name spoofing. D43 is **legitimate repository takeover** of an established, widely-trusted tool.
+- D33 (Transitive Payload Relay Typosquat): D33 is about nested name-squatting. D43 is authenticated-channel compromise (retained GitHub credentials from an incomplete prior incident).
+- D38 (AI-Autonomous CI/CD Exploitation via hackerbot-claw, Feb 2026): D38 is the *first* Trivy compromise via `pull_request_target` PWN. D43 is **second attack using retained access** 3 weeks after incomplete containment.
+
+**Mechanism — three compound failures**:
+
+1. **Incomplete containment**: The Feb 28 hackerbot-claw incident was partially remediated. TeamPCP retained credentials (compromised aqua-bot service account) that were not fully rotated. Three weeks later, re-entry using retained credentials.
+2. **Force-push tag attack**: Attacker force-pushed 75 out of 76 version tags in `aquasecurity/trivy-action` to point to malicious commits. Unlike branch protection, tag immutability is not enforced by default on GitHub. Workflows that reference `uses: aquasecurity/trivy-action@v0.28.0` (a tag, not a SHA) silently received the malicious payload on next run — no new release was published, no branch was modified. Detection required manual diff of tag SHAs.
+3. **Security tooling inversion**: The compromised binary executed the legitimate Trivy service *and* malicious code in parallel — users received correct scan results while their credentials were being stolen. The security tooling appearance was maintained to avoid detection. This is the inversion: the tool designed to detect vulnerabilities became the vulnerability delivery mechanism.
+
+**Payload behavior** (three-stage — targeting crypto wallet credentials explicitly):
+```
+Stage 1 — Collection:
+  - Scrape Runner.Worker process memory via /proc/<pid>/mem
+  - Pattern match {"value":"","isSecret":true} to harvest GitHub secrets
+  - Sweep filesystem for:
+    * SSH keys (~/.ssh/*, id_rsa, id_ed25519)
+    * Cloud credentials (AWS ~/.aws/credentials, GCP application_default_credentials.json, Azure)
+    * Kubernetes tokens (~/.kube/config, service account tokens)
+    * CRYPTOCURRENCY WALLET FILES (explicitly targeted: 50+ sensitive file paths)
+
+Stage 2 — Encryption:
+  - AES-256-CBC + RSA-4096 hybrid encryption
+  - Bundle as tpcp.tar.gz
+
+Stage 3 — Exfiltration:
+  - Primary: HTTP POST to typosquatted domain scan.aquasecurtiy[.]org (resolving to 45.148.10.212)
+  - Fallback: Create tpcp-docs repo in victim's GitHub account; upload as release asset
+  - Persistence on developer machines: ~/.config/systemd/user/sysmon.py polling ICP-hosted C2
+```
+
+**DeFi/Blockchain-specific threat amplification**:
+- Keeper operators who run `trivy scan` in CI for container security scanning during deployment are the primary target population. A keeper's host machine that ran malicious v0.69.4 could have had its wallet keypair (e.g., `~/.config/solana/id.json`, keeper hot key) exfiltrated — enabling B15-class treasury drain without any on-chain exploit.
+- The TypeScript/Rust ecosystem's CI/CD security relies on `cargo audit`, `npm audit`, and scanners like Trivy. When the scanner IS the attacker, the entire first-pass security review layer is blind to its own compromise.
+- The "double run" pattern (legitimate + malicious in parallel) means `scan results looked correct` — operators receive false-clean signals while being actively compromised.
+
+**GitHub Actions tag pinning failure** (sub-pattern applicable to ALL Actions users):
+```yaml
+# VULNERABLE: tag reference without SHA pin
+- uses: aquasecurity/trivy-action@v0.28.0  # silently hijackable via force-push
+
+# SAFE: SHA-pinned reference (cannot be modified retroactively)
+- uses: aquasecurity/trivy-action@9f1d44fe7ab3a2b8d0e6e91a5af5948bad4efcdf  # exact commit
+
+# Also verify SHA against public audit:
+# $ gh api repos/aquasecurity/trivy-action/git/ref/tags/v0.28.0
+```
+
+**Microstable CI/CD audit** (pages.yml):
+```yaml
+# CURRENT STATE — all references use TAG (not SHA):
+- uses: actions/checkout@v4           # ⚠️ tag-pinned
+- uses: actions/configure-pages@v5    # ⚠️ tag-pinned
+- uses: actions/upload-pages-artifact@v3  # ⚠️ tag-pinned
+- uses: actions/deploy-pages@v4       # ⚠️ tag-pinned
+
+# VERDICT: ⚠️ PARTIAL RISK — no trivy-action used (D43 blast radius limited)
+# but tag-pinned official GitHub actions are lower priority than third-party.
+# Keeper has NO CI/CD pipeline observed (builds done locally). Risk: LOW.
+# If keeper CI is ever added to GitHub Actions: require SHA pinning for ALL actions.
+```
+
+**Defense**:
+1. **SHA-pin ALL GitHub Actions** — replace `@vX.Y.Z` with `@<full-sha>` in every `uses:` declaration. Run `pinact` or StepSecurity Harden-Runner to auto-generate pins.
+2. **Monitor tag SHA drift** — daily job that re-resolves all pinned action tags and alerts on SHA change.
+3. **Full credential rotation after any CI/CD security incident** — incomplete containment (rotating some but not all credentials) is the direct cause of D43. Post-incident rotation checklist must be exhaustive: all PATs, SSH keys, GPG keys, service account tokens, Docker credentials.
+4. **Never use security scanner output as the sole security signal** — treat scanner results as advisory; require code review for security-critical paths regardless of scanner pass/fail.
+5. **Audit developer machines that ran trivy binary** between March 14–20, 2026 — check for: tpcp.tar.gz in temp, sysmon.py in ~/.config/systemd/, outbound connections to scan.aquasecurtiy[.]org or trycloudflare.com tunnels.
+6. **Rotate all secrets on any host that ran trivy v0.69.4**: SSH keys, Solana wallet keypairs, cloud credentials, Kubernetes tokens.
+
+**CVE**: CVE-2026-28353 (Trivy v0.69.4 supply chain compromise)
+**Source**: https://www.wiz.io/blog/trivy-compromised-teampcp-supply-chain-attack | https://thehackernews.com/2026/03/trivy-security-scanner-github-actions.html | https://socket.dev/blog/trivy-under-attack-again-github-actions-compromise | https://github.com/aquasecurity/trivy/discussions/10425

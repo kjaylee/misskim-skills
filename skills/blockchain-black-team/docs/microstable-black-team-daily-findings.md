@@ -1,6 +1,75 @@
 
 ---
 
+## 2026-03-21 Daily Check
+
+### Source Sweep (24h window: 2026-03-20 to 2026-03-21 KST)
+- Sources checked: SlowMist hacked.slowmist.io (web_fetch), rekt.news (web_fetch), Brave web_search (DeFi/Solana/Immunefi/supply-chain), Wiz blog (Trivy TeamPCP), The Hacker News, CryptoTimes (Neutrl), Socket Security
+- **0 new DeFi smart contract exploits** with on-chain fund loss in 24h window (last confirmed: Neutrl DNS hijack 2026-03-19, loss TBD/unknown)
+- **1 new CI/CD infrastructure supply chain attack**: Trivy v0.69.4 / TeamPCP (2026-03-19, CVE-2026-28353) — security-tooling inversion, force-push tag hijack, crypto wallet credentials targeted
+- **Matrix status**: 83 vectors (pre-today) → **84 vectors** after D43 addition
+
+### New Vectors Added Today
+
+| Vector | Incident | Date | Category | Loss |
+|--------|---------|------|----------|------|
+| **D43 (NEW): Security-Tooling Inversion — Trusted CI/CD Scanner Compromised via Force-Push Tag Hijack** | Trivy v0.69.4 / TeamPCP / CVE-2026-28353 | 2026-03-19 | Infrastructure / Supply Chain / CI-CD | N/A (credential theft; potential B15 cascades) |
+
+**D43 Technical Summary**: TeamPCP (threat actor) retained GitHub credentials from incomplete containment of Feb 28 hackerbot-claw incident. Used retained aqua-bot service account to:
+1. Spoof commits to `aquasecurity/trivy` (impersonating user DmitriyLewen) → push v0.69.4 tag triggering release
+2. Publish backdoored binaries to GitHub Releases, Docker Hub, GHCR, ECR
+3. Force-push 75/76 `trivy-action` tags to malicious commits (no new release, no branch push — bypasses standard review triggers)
+4. Force-push 7 `setup-trivy` tags
+5. Steal additional Aqua credentials: GPG keys, Docker Hub, Twitter, Slack
+Malicious binary runs legitimate Trivy + credential stealer in parallel. 3-stage payload: memory scrape (Runner.Worker process, SSH keys, cloud creds, **crypto wallet files**) → AES-256+RSA-4096 encrypt → exfil to `scan.aquasecurtiy[.]org` (typosquat). Developer machine persistence via systemd `sysmon.py` polling ICP C2. CVE: CVE-2026-28353.
+Source: https://www.wiz.io/blog/trivy-compromised-teampcp-supply-chain-attack | https://thehackernews.com/2026/03/trivy-security-scanner-github-actions.html
+
+### Microstable D43 Assessment
+
+**Verdict: ⚠️ LOW RISK (Partial)**
+
+**Evidence chain** (actual code read):
+- `microstable/.github/workflows/pages.yml` EXAMINED ✅ — no `aquasecurity/trivy-action` or `aquasecurity/setup-trivy` in use. D43 blast radius **does not apply directly**.
+- Pipeline only deploys static `docs/` to GitHub Pages via official GitHub-maintained actions (`actions/checkout@v4`, `actions/configure-pages@v5`, `actions/upload-pages-artifact@v3`, `actions/deploy-pages@v4`)
+- Keeper builds not observed in any CI pipeline (appear to be local builds)
+
+**Residual risk (structural, not D43-specific)**:
+- All 4 GitHub Actions references use TAG pinning (`@v4`, `@v5`, etc.) WITHOUT SHA pinning
+- If any of these officially-maintained actions are ever compromised via the same force-push tag pattern, the build pipeline will silently receive malicious payloads
+- GitHub official actions are significantly lower risk than third-party (Aqua Security) actions, but not zero-risk
+
+**Finding classification**: ⚠️ LOW — no current D43 exposure, but structural GitHub Actions SHA-pinning gap present. **No CRITICAL/HIGH escalation required.**
+
+**Recommended fix (non-urgent)**:
+```yaml
+# pages.yml — replace tag references with SHA pins:
+- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+- uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b  # v5
+- uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa  # v3
+- uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e  # v4
+```
+
+### Full Vector Sweep (New D43 + Previous Carry-Forwards)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| D43 Security-Tooling Inversion | pages.yml | ⚠️ LOW | No Trivy in pipeline; tag-pinning structural gap; SHA fix recommended |
+| B45 Audit Attestation Gap | All on-chain | ❌ HIGH CARRY-FORWARD (DAY 16) | audit-attestation.json still absent; unattested delta persists |
+| A43 Commit/Reveal Threshold Circumvention | lib.rs rebalance() | ⚠️ MEDIUM CARRY-FORWARD | No cumulative drift tracking; per-call threshold only |
+| B44 SPL Token Delegate Drain | lib.rs mint() | ⚠️ MEDIUM CARRY-FORWARD | No delegate.is_none() check in mint() path |
+| D28 Supply Chain | keeper/Cargo.toml | ✅ LOW-DEFENDED | tracing = "0.1" (correct); no lz4_flex in deps; no trivy-action |
+| D41 lz4_flex Uninitialized Memory | keeper/ | ✅ NOT PRESENT | cargo tree shows no lz4_flex dependency |
+| D42 tracing-ethers SSH Exfil | keeper/Cargo.toml | ✅ DEFENDED | Only `tracing` + `tracing-subscriber` (correct packages) present |
+| D26 Frontend XSS/Injection | docs/index.html | ✅ DEFENDED | CSP meta tag present; self-hosted vendor JS (no CDN); no external script src |
+| A40 ERC4626 Share-Price Donation | lib.rs | ✅ DEFENDED | total_deposits tracked field; not raw balance |
+| A2 Flash Loan + Price Manipulation | lib.rs mint/redeem | ✅ DEFENDED | Pyth TWAP + staleness + confidence + per-slot flow caps |
+| A3 Oracle Manipulation | lib.rs | ✅ DEFENDED | Feed ID pinning + staleness + confidence + manual oracle timelock |
+
+**Net new CRITICAL/HIGH findings today: 0**
+**Carry-forwards unchanged**: B45 HIGH (audit-attestation.json absent — DAY 16), A43 MEDIUM, B44 MEDIUM
+
+---
+
 ## 2026-03-18 Daily Check
 
 ### Source Sweep (48h window: 2026-03-17 to 2026-03-18)

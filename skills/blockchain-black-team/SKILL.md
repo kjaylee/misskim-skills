@@ -11,7 +11,7 @@ description: Execute real-world blockchain attack scenarios against smart contra
 - **Use `blockchain-purple-team`** for meta-level coverage gaps, audit failure causes, and architecture/ops blind spots.
 
 
-Execute battle-tested attack vectors from 70+ historical blockchain incidents ($10B+ total losses) against target protocol code.
+Execute battle-tested attack vectors from 83+ historical blockchain incidents ($10B+ total losses) against target protocol code.
 
 ## When to Use
 
@@ -28,7 +28,7 @@ Execute battle-tested attack vectors from 70+ historical blockchain incidents ($
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (62+ Vectors, continuously extended)
+## Attack Matrix (84+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -80,11 +80,13 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 27 | RPC Endpoint Takeover | Multiple | HIGH |
 | 28 | Supply Chain | event-stream, ua-parser-js | HIGH |
 | 31 | Protocol-Metadata Confusion (IDL/Schema Trust) | Anchor IDL external-account patch (2026) | HIGH |
+| 43 | Security-Tooling Inversion — Force-Push Tag Hijack | Trivy v0.69.4 / TeamPCP (2026-03-19, CVE-2026-28353) | HIGH |
 
 ## Daily Evolution Log (Recent)
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-21 | **Trivy supply chain attack by TeamPCP** (2026-03-19, CVE-2026-28353): Retained credentials from incomplete Feb 28 containment → force-pushed 75/76 trivy-action tags → backdoored v0.69.4 steals SSH keys + crypto wallet files from CI/CD runners. **Security-tooling inversion pattern**: legit scan results presented alongside credential theft. | **D43 NEW** | 1 NEW VECTOR (D43: Security-Tooling Inversion — Trusted CI/CD Scanner Compromised via Force-Push Tag Hijack). Matrix now **84 named vectors**. Microstable CI/CD audit: pages.yml uses `actions/checkout@v4` (tag-pinned, no SHA) ⚠️ LOW risk (GitHub-maintained action; no trivy-action in pipeline; keeper builds done locally). D43 verdict: ⚠️ LOW — no Trivy in pipeline, but tag-pinning without SHA is structural risk if any third-party actions are added. **Carry-forwards unchanged**: B45 HIGH (audit-attestation.json absent — DAY 16), A43 MEDIUM, B44 MEDIUM. No new CRITICAL/HIGH findings today. |
 | 2026-03-20 | **Neutrl DNS hijack** (2026-03-19, loss TBD): DNS provider social-engineered → domain redirected; users urged to revoke Permit2 approvals immediately via Revoke.cash. **AM/USDT pool burn reserve manipulation** (2026-03-12, $131K): `toBurnAmount` manipulated to artificially lower reserves → sold at inflated price. **Injective $500M access control bypass** (2026-03-16, disclosed; $0 lost, $500M at risk): any user could drain any account; patched via upgrade vote; bounty dispute ($50K offered vs. $500K cap). | D26 + Permit2 note, A41 reinforcement, A4 reinforcement | **0 NEW VECTORS** (all reinforce existing). D26 updated: Neutrl case + **Permit2 persistence as DNS-hijack force-multiplier** documented. A41 updated: AM/USDT burn-reserve case added. A4 updated: Injective chain-level auth bypass case added. Matrix holds at **83 named vectors**. Full Microstable sweep: D26 Neutrl ✅ N/A (Solana, no Permit2); A41 ✅ DEFENDED; A4 ✅ DEFENDED. **Carry-forwards unchanged**: B45 HIGH (audit-attestation.json absent — DAY 15), A43 MEDIUM, B44 MEDIUM. No new CRITICAL/HIGH findings. |
 | 2026-03-17 | **Venus Protocol supply cap bypass + slow-accumulation TWAP manipulation** (2026-03-15, $2.15M / $3.7M exposure): Attacker accumulated 84% of supply cap over 9 months, bypassed cap via direct token transfer to protocol contract (not through deposit function), then pushed TWAP 96% on thin-liquidity THE collateral. Drained $2.15M in CAKE/BNB/USDC/BTCB. | **A67 NEW** | 1 NEW VECTOR (A67). Total matrix: **81 named vectors**. Microstable: A67 ✅ DEFENDED (total_deposits tracked field + Pyth oracle not DEX TWAP + stablecoin collateral only). Full 81-vector sweep — 0 new CRITICAL/HIGH. Carry-forwards unchanged: B45 HIGH (audit-attestation.json still absent — DAY 12), A43 MEDIUM (no cumulative drift tracking), B44 MEDIUM (no delegate.is_none() check in mint()), B63 MEDIUM (MediaTek TEE, operator devices). |
 | 2026-03-15 | **Aave wstETH CAPO oracle misconfiguration** (2026-03-10, $27.78M): Chaos Labs Edge Risk engine computed snapshotRatio 2.85% below market → AgentHub auto-executed 1 block later with no human gate → 34 healthy E-Mode positions liquidated. No attacker. First confirmed large-scale loss from fully automated risk parameter pipeline. | **A62 NEW** | 1 NEW VECTOR (A62). Total matrix: 62 named vectors. Microstable: A62 ✅ DEFENDED (2-of-3 keeper quorum + manual oracle mode time-box; no automated rate-cap executor exists). Full sweep below — 0 new CRITICAL/HIGH. Carry-forwards: B45 HIGH (audit-attestation.json unattested delta persists), A43 MEDIUM, B44 MEDIUM. |
