@@ -3531,3 +3531,73 @@ solana config set --keypair /dev/ledger  # hardware wallet path
 | C23 Cross-Chain Governance Temporal Desynchronization Flash Loan | 멀티체인 DAO 거버넌스에서 Chain A(Governor.sol)와 Chain B(VoteAggregator)를 연결하는 크로스체인 메시징 레이어의 시간적 비동기성을 감사가 독립 구성 요소(Governor 감사 + VoteAggregator 감사)로 분리 검토하여 통합 경계의 "temporal synchronization 보장 부재"를 미식별. 단일체인 플래시론 거버넌스(Beanstalk $182M)는 감사 표준 체크리스트에 포함됨; 크로스체인 변형(Chain B에서 플래시론 → Chain A 메시지 미확정 상태에서 투표 계산 → 플래시론 상환 후 투표 유효)은 어느 팀의 감사 범위에도 명시적으로 포함되지 않음. 거버넌스 컨트랙트가 treasury/upgrade/collateral-admission 권한을 제어하면 블라인드스팟 = 잠재적 nine-figure 손실. (C23, META-10 참조) |
 | D45 Blockchain-as-C2 Channel via Malicious Developer Toolchain Extension | 감사가 온체인 프로그램 로직과 keeper 바이너리를 검토하지만, keeper 운영자 개발 환경(IDE 확장, 빌드 도구)의 보안을 별도 운영 관심사로 분리. Solana RPC 호출이 DeFi 개발 환경에서 정상 트래픽이므로 블록체인-as-C2 채널(온체인 tx 메타데이터에 암호화 페이로드 저장)이 방화벽을 통과. 결과: 온체인 코드는 무결하나 operator keypair, RPC API key, keeper config가 악성 IDE 확장을 통해 탈취 → B36(stake authority hijack)과 동일 결과. 타이포스쿼팅 IDE 확장(`reditorsupporter.r-vscode-2.8.8-universal` vs `REditorSupport.r`)이 감사 체크리스트에 없는 공격 표면. (Bitdefender/Windsurf IDE, 2026-03-20) |
 
+
+---
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-22 -->
+
+## A56 — Token-2022 ExtraAccountMeta Injection (Transfer Hook Fund Redirection)
+**Historical**: No major exploit yet (vector is emerging — Neodyme research 2026-03-15)
+**Mechanism**: Token-2022 transfer hooks receive extra accounts via `ExtraAccountMetaList` PDA. If the hook program doesn't re-verify the PDA derivation of these extra accounts (expected seeds + bump), an attacker controlling the mint authority at initialization pre-seeds the PDA with malicious account entries. Every transfer silently redirects funds to the attacker's account — no revert, no error signal.
+**Distinct from**:
+- A52 (Recursive Hook DoS): A52 causes a revert loop; A56 causes a _successful_ silent fund redirect.
+- A55 (CPI Depth Griefing): A55 exhausts CPI depth budget; A56 bypasses authority checks with no depth impact.
+**Solana variant**: Exclusive to Token-2022 transfer hook extension.
+**Code pattern to find**:
+```rust
+// VULNERABLE: blindly trusting extra account as fee destination
+pub fn process_transfer_hook(accounts: &[AccountInfo], amount: u64) -> ProgramResult {
+    let extra_account = &accounts[5]; // From ExtraAccountMetaList
+    **extra_account.try_borrow_mut_lamports()? += fee; // Attacker-controlled address
+    Ok(())
+}
+// SAFE: verify PDA derivation
+let (expected_pda, _bump) = Pubkey::find_program_address(
+    &[b"fee_vault", mint_info.key.as_ref()],
+    program_id,
+);
+require!(extra_account.key == &expected_pda, ErrorCode::InvalidFeeVault);
+```
+**Defense**: Re-derive and verify every `ExtraAccountMetaList` entry PDA; never use extra accounts without checking derivation seeds. Audit hook program + ExtraAccountMetaList initialization before accepting any Token-2022 vault deposit.
+**Microstable relevance**: LOW now (SPL Token only). LATENT HIGH if Token-2022 collateral added.
+**Source**: Neodyme Token-2022 research synthesis (dev.to, 2026-03-15)
+
+## A57 — Anchor v1.0.0 "Shadow IDL Migration" Discriminator Gap
+**Historical**: No recorded major exploit (emerging risk — Anchor v1.0.0-rc.5 released 2026-03-20)
+**Mechanism**: Anchor v1.0.0 introduces breaking changes to discriminator computation and IDL format. When the on-chain program stays at Anchor v0.31.x while off-chain components (keeper, client SDK, tooling) migrate to v1.0.0 — or vice versa — a "shadow migration" window opens. During this window:
+1. Keeper submits transactions with Anchor v1.x discriminators against a v0.31.x program → silent `InvalidInstructionData` rejections → oracle updates and rebalances silently stop.
+2. More critically: if an attacker observes the mismatch window and crafts a transaction with the correct on-chain discriminator format (v0.31.x) while the keeper's off-chain validator has already switched to v1.x format, the attacker may bypass client-side validation checks enforced only in the off-chain layer.
+**Current Microstable exposure**: MEDIUM — Anchor 0.31.1 on-chain; Anchor v1.0.0 GA imminent (rc.5 released 2026-03-20).
+**Code pattern to find**:
+```bash
+# Vulnerable: version drift between on-chain and off-chain
+# Anchor.toml: anchor_version = "0.31.1"
+# keeper/Cargo.lock: anchor-client = "1.0.0-rc.5"   ← MISMATCH = MEDIUM risk
+# Safe: pin keeper Cargo.lock to match on-chain version
+grep "anchor-client" keeper/Cargo.lock | grep "0.31"  # must match
+```
+**Defense**: (1) Pin keeper Cargo.lock to `anchor-client 0.31.x` until on-chain program is verified compatible with v1.x. (2) CI gate: verify Anchor.toml toolchain version matches keeper Cargo.lock anchor-client version. (3) Coordinate on-chain program + off-chain tool migration as a single atomic release.
+**Microstable relevance**: MEDIUM — action required: verify `keeper/Cargo.lock` anchor-client pins.
+**Source**: solana-foundation/anchor releases.atom (v1.0.0-rc.3~rc.5, 2026-03-18~20)
+
+## A58 — Token-2022 Transfer Fee Invisible Tax Accounting Bypass
+**Historical**: No recorded major exploit (emerging design-flaw class — Neodyme research 2026-03-15)
+**Mechanism**: Token-2022 transfer fee extension deducts a fee at the token-program level from every transfer. If a protocol's deposit instruction credits the user based on the `amount` parameter (what was _sent_) rather than the actual post-transfer balance delta (what was _received_), the depositor is over-credited by the fee percentage. Attack form: deposit 100 tokens with 1% fee → vault receives 99 → protocol records 100 → borrow against 100 with 99 real collateral → 1% undercollateralization per deposit cycle → compound over many deposits → protocol insolvency.
+**Distinct from A2** (Flash Loan): A2 is same-TX manipulation. A58 is a persistent accumulated accounting error: no flash loan, no oracle, no time pressure. Exploitable over many blocks at low cost.
+**Code pattern to find**:
+```rust
+// VULNERABLE: credits instruction amount, not actual received amount
+pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+    token::transfer(cpi_ctx, amount)?;
+    state.collateral_balance += amount; // BUG: vault actually received (amount - fee)
+}
+// SAFE: read vault balance pre/post transfer
+let pre_balance = ctx.accounts.vault.amount;
+token::transfer(cpi_ctx, amount)?;
+ctx.accounts.vault.reload()?;
+let post_balance = ctx.accounts.vault.amount;
+let received = post_balance.checked_sub(pre_balance).ok_or(ErrorCode::Overflow)?;
+state.collateral_balance += received; // SAFE: uses actual received amount
+```
+**Defense**: For any Token-2022 collateral with fee extension, always use pre/post vault balance delta — never trust the instruction `amount` parameter as the received amount. Add integration test: deposit with fee-enabled Token-2022 mint and assert `vault.balance == credited_collateral`.
+**Microstable relevance**: LOW now. LATENT HIGH if Token-2022 stablecoin collateral is added.
+**Source**: Neodyme Token-2022 research synthesis (dev.to, 2026-03-15)

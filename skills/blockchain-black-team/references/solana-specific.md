@@ -646,3 +646,17 @@ The Windsurf IDE malware (Bitdefender, March 20, 2026) established a critical pr
 - Non-keeper processes (e.g., `node`, extension workers, `.vsix` processes) making bulk `getTransaction` calls to mainnet
 - `getTransaction` calls targeting old/unknown transaction signatures (not recent keeper TXs)
 - High-frequency `getTransaction` to signatures that are not in the keeper's own TX log
+
+---
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-22 -->
+
+## Token-2022 Extension Attack Patterns (2026-03-22)
+
+### ExtraAccountMeta Injection (A56)
+Transfer hooks receive extra accounts via `ExtraAccountMetaList` PDA at `seeds = [b"extra-account-metas", mint_pubkey]`. Protocol or hook program must re-derive and verify these PDAs — never trust them without seed validation.
+
+### Transfer Fee Invisible Tax (A58)
+Token-2022 fee extension deducts fee at protocol level. Protocols crediting `amount` (sent) instead of `post_balance - pre_balance` (received) are undercollateralized by the fee rate on every deposit.
+
+### Anchor v1.0.0 Shadow Migration (A57 — current Solana Anchor ecosystem)
+Anchor v1.0.0-rc.5 released 2026-03-20. Programs on Anchor 0.31.x face silent discriminator mismatch if off-chain tools migrate to v1.x before on-chain program compatibility is verified. Pin keeper Cargo.lock and add CI version-parity gate.
