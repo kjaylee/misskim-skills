@@ -626,3 +626,23 @@ require!(time_since_oracle <= MAX_SECONDS, OracleStale);
 - Require `Finalized` commitment (not `Confirmed`) before any fund release
 - Add +2–3 slot buffer on all deadline calculations
 - Monitor `confirmed→finalized` delta: alert if >5 slots
+
+## D45 — Solana Blockchain-as-C2 Channel (2026-03-20)
+
+**Operational specifics for Solana DeFi environments:**
+
+The Windsurf IDE malware (Bitdefender, March 20, 2026) established a critical precedent: Solana's **public read API is weaponizable as a censorship-resistant C2 channel** because:
+1. `getTransaction(sig)` is unauthenticated and free on mainnet
+2. Transaction `memo` and instruction data fields can store arbitrary bytes
+3. Encrypted payload fragments survive indefinitely (blockchain immutability)
+4. Attacker deploys C2 payload once; any infected client retrieves it forever
+
+**Solana-specific attack surface for keeper infrastructure:**
+- Default keypair location `~/.config/solana/*.json` is world-readable by default on many Unix systems
+- `solana config get` reveals keypair path; if process inspector runs on same machine, path is trivially found
+- Keeper `config.toml` RPC keys (Helius, QuickNode, Triton) are stored in plaintext in typical deployments
+
+**Detection heuristics for Solana C2:**
+- Non-keeper processes (e.g., `node`, extension workers, `.vsix` processes) making bulk `getTransaction` calls to mainnet
+- `getTransaction` calls targeting old/unknown transaction signatures (not recent keeper TXs)
+- High-frequency `getTransaction` to signatures that are not in the keeper's own TX log

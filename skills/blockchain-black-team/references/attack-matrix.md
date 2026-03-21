@@ -1,4 +1,4 @@
-# Attack Matrix — 83 Vectors with Historical Mechanisms & Defense Patterns (+ 2 reinforced 2026-03-21) | META-01~15
+# Attack Matrix — 84 Vectors with Historical Mechanisms & Defense Patterns (+ 1 new 2026-03-22) | META-01~15
 
 ## A. Smart Contract Vectors
 
@@ -3450,6 +3450,78 @@ pub fn process_collateral(ctx: Context<ProcessCollateral>) -> Result<()> {
 5. Governance gate for collateral admission: must include hook depth analysis as explicit approval criterion
 **Source**: https://dev.to/ohmygod/the-solana-cpi-security-playbook-7-cross-program-invocation-patterns-that-prevent-nine-figure-7j6
 
+### D45. Blockchain-as-C2 Channel via Malicious Developer Toolchain Extension
+**Historical**: Bitdefender research disclosure (2026-03-20) — Fake Windsurf IDE extension `reditorsupporter.r-vscode-2.8.8-universal` typosquatting the legitimate `REditorSupport.r` extension
+**Mechanism**: Malware embedded in an IDE extension avoids traditional C2 infrastructure detection by reading encrypted JavaScript payload fragments from **Solana blockchain transaction metadata** (memo/data fields). Because the infected developer's machine already makes legitimate Solana RPC calls (keeper dev, testing, monitoring), the C2 traffic is indistinguishable from normal DeFi development network activity — it blends into authorized outbound traffic.
+
+**Attack chain (Windsurf IDE, 2026-03-20)**:
+1. Attacker publishes typosquatted IDE extension mimicking a popular legitimate tool (Levenshtein distance 1 from `REditorSupport.r`)
+2. Developer installs extension in their coding environment (auto-suggested by IDE or package manager)
+3. Extension runs a system profiling check on first execution; if host matches exclusion criteria (e.g., Russian time zones), it exits silently
+4. Otherwise: extension fetches encrypted JavaScript payload fragments embedded in Solana on-chain transaction `memo` or instruction data fields via normal `getTransaction` RPC calls — functionally identical to keeper oracle reads
+5. Fragments are reassembled and executed in-process, dropping native persistence files (`w.node`, `c_x64.node`)
+6. Malware establishes persistent `UpdateApp` PowerShell task; harvests session cookies, passwords, API keys, and signing credentials from browser profiles and developer config files
+7. Exfiltrates developer's Solana keypairs, keeper configs, RPC API keys, and deployment credentials
+
+**Why blockchain-as-C2 is harder to block in DeFi developer environments**:
+```
+# Standard DeFi developer outbound traffic includes:
+# - Pyth RPC queries (oracle reads)
+# - Anchor program deployments
+# - Keeper test runs (mainnet-beta/devnet)
+# - On-chain transaction simulation
+# All of these use: https://api.mainnet-beta.solana.com (same endpoint as C2 fetch)
+# Firewall rule: "block Solana RPC" = blocks all development work
+# Firewall rule: "allow Solana RPC" = allows C2 channel
+# Detection requires transaction-content inspection (encrypted + fragmented)
+```
+
+**Why distinct from D28 (Supply Chain Attack on NPM/Cargo)**:
+- D28: malicious dependency injected into build artifacts → compromises deployed code
+- D45: malicious IDE plugin injected into developer runtime environment → compromises the **developer's machine and credentials**, not the compiled artifact. The on-chain program code may be completely clean while the operator's keypair is already exfiltrated.
+
+**Why distinct from D32 (AI Agent Skill/Identity Poisoning)**:
+- D32: attacker modifies the agent's skill/tool library → persistent behavioral configuration attack
+- D45: attacker compromises the human operator's workstation → credential theft → attacker gains the ability to perform any action the operator could (deploy programs, drain treasury hot wallet, modify keeper config)
+
+**Microstable / keeper relevance**: HIGH for operator workstation security.
+- Keeper keypairs stored at `~/.config/solana/id.json` (default) are immediately extractable if this malware runs on the keeper operator's machine
+- RPC API keys (Helius, QuickNode, Triton) stored in keeper `config.toml` or `.env` are extractable
+- Treasury multisig signers who use IDEs on their primary workstations are fully exposed
+- Attack surface amplified in DeFi because Solana RPC calls are the legitimate cover traffic
+
+**Microstable current defense assessment**: ⚠️ PARTIAL
+- ✅ On-chain: program logic unaffected (attack targets operator machine, not deployed code)
+- ✅ Treasury: 2-of-3 multisig means single keypair compromise does not drain treasury
+- ⚠️ Keeper hot key: single-key keeper keypair — if operator workstation is compromised, keeper's signing authority is fully exposed (see B36 for downstream attack from keeper compromise)
+- ⚠️ RPC credentials: if compromised, attacker can monitor all keeper behavior and potentially DoS oracle writes
+- ❌ No documented IDE extension allowlist or workstation security policy for keeper operators
+
+**Code/config pattern to find**:
+```bash
+# VULNERABLE: keeper keypair accessible on developer workstation with no isolation
+~/.config/solana/id.json          # default Solana keypair — direct read access
+./keeper/.env                      # RPC API keys, seed phrases
+./keeper/config.toml               # endpoint credentials
+
+# VULNERABLE: developer IDE loads all installed extensions without integrity verification
+# No extension allowlist, no hash pinning, no behavioral sandboxing
+
+# SAFER: keeper signing keys on hardware wallet or separate air-gapped machine
+# never on primary development workstation
+solana config set --keypair /dev/ledger  # hardware wallet path
+```
+
+**Defense**:
+1. **Keypair isolation**: keeper hot key must NEVER reside on the same machine used for general development (IDE, browser, communication tools) — hardware wallet or dedicated signing machine only
+2. **IDE extension allowlist**: maintain an explicit allowlist of permitted IDE extensions by name + publisher ID + version hash; block all others at corporate policy or local config
+3. **Outbound RPC monitoring**: in production keeper environments, monitor outbound Solana RPC calls for unusual `getTransaction` patterns (non-keeper transaction IDs, unexpected account targets)
+4. **Secret scanning in CI**: ensure keypairs/API keys are never committed to repo; use vault/secrets manager, not flat config files
+5. **Extension source verification**: before installing any IDE extension, verify publisher identity + download count + community reputation + open source availability; treat near-name extensions as suspicious by default (D43 same principle applied to IDE extensions)
+6. **Separate workstation policy**: developer machines that run keeper operations must follow server-grade security (EDR, no consumer apps, no IDE extensions except audited set)
+7. **API key rotation**: rotate RPC API keys after any workstation compromise suspicion; RPC key compromise alone enables traffic monitoring + rate exhaustion
+**Source**: https://www.bitdefender.com/en-us/blog/labs/windsurf-extension-malware-solana | https://hackread.com/windsurf-ide-extension-solana-blockchain-developer-data/ | https://www.scworld.com/brief/malicious-ide-extension-targets-developers-uses-solana-blockchain-for-cc
+
 | A53 Multi-Month Supply Cap Infiltration → Bad Debt Attack | 단기 플래시론 방어(슬롯 당 캡, TWAP)가 수개월에 걸친 점진적 포지션 축적을 막지 못함. 공급 상한이 '용량 한계'가 아닌 '농도 한계'로 설계되지 않으면, 상한에 도달한 후 LTV haircut 없이 고농도 담보 차용이 허용됨. 2023 감사에서 "부정적 부작용 없음"으로 기각된 벡터가 9개월 후 실제 익스플로잇으로 실현 (Venus/THE 2026-03-18, $2.1M 프로토콜 손실). |
 | D43 Core Ecosystem Rust Crate Bulk Typosquat Wave | 단일 신규 유틸리티 크레이트 추가(A44)나 단일 클론 재게시(A45)와 달리, `lazy_static`·`once_cell`·`serde`·`env_logger` 등 사실상 모든 Rust 프로젝트 기반 크레이트를 한꺼번에 동시 타겟. IDE 자동완성이 주 공격 벡터 — 개발자가 의도적으로 새 크레이트를 추가할 필요 없음. 단일 오타로 핵심 의존성이 악성 버전으로 대체. (RUSTSEC-2023-0097~0103, 2026-03-19) |
 | A54 aws-lc-sys Cryptographic Validation Bypass Chain | TLS 기반 RPC 연결을 안전하다고 가정하고 keeper↔RPC 경계의 인증서 검증을 보안 레이어로 의존. aws-lc-rs/aws-lc-sys의 PKCS7 체인·서명 검증 우회 + X.509 이름 제약 우회가 결합되면 TLS MITM이 인증서 오류 없이 가능. 감사가 온체인 로직에 집중하고 keeper TLS 의존성 취약점을 운영 외부 이슈로 분리할 때 놓침. (RUSTSEC-2026-0042~0048, aws-lc-sys <0.38.0, 2026-03-20) |
@@ -3457,4 +3529,5 @@ pub fn process_collateral(ctx: Context<ProcessCollateral>) -> Result<()> {
 | A55 CPI Depth Budget Griefing via Token-2022 Hook Chaining | Solana CPI depth 제한(4)을 감사가 온체인 로직 내부에서만 점검하고, Token-2022 hook이 소비하는 depth 레벨을 구성(composition) 시 계산에 포함하지 않음. 프로토콜 CPI depth ≤ 2 설계 규칙 없이 Token-2022 담보를 허용하면, 합법적 hook이 CPI depth를 초과시켜 모든 관련 TX를 확정적으로 revert시킬 수 있음. (dev.to CPI Playbook, 2026-03) |
 | META-15 Live-Blockchain Integration Test Gap — "Tests Pass, Production Fails" (퍼플팀 메타, 2026-03-21) | Moonwell $1.78M(2026-02-15) 포스트모템 최종 확인(CoinTelegraph 2026-03-20): **단위 테스트 존재 + 통합 테스트 존재(별도 PR) + Halborn 감사 완료 → 전부 통과 → cbETH 오라클 공식 오류 미탐지**. Pashov 확인: "could have been caught with an integration test, a proper one, integrating with the blockchain." 핵심 구분: (a) **단위 테스트** = 모킹된 값으로 수식이 타입 호환 출력을 내는지만 검증. (b) **통합 테스트(샌드박스/모킹 기반)** = 로컬 포크나 목 데이터에서 실행 — 실제 시장 가격과의 의미론적 일치 보장 없음. (c) **통합 테스트(라이브 블록체인 기반)** = 실제 체인 상태에서 오라클 공식 출력을 외부 가격 기준(CoinGecko/CoinMarketCap ±2%)과 비교 — (c)만이 cbETH 패턴 탐지 가능. **왜 감사가 놓치는가**: ① "통합 테스트 있음" → "통합 테스트가 올바른 것을 테스트함"을 감사가 암묵적으로 가정. ② 감사 체크리스트가 "테스트 존재 여부"를 확인하고 "테스트가 실 체인 상태에서 의미론적으로 올바른 값을 검증하는지"를 확인하지 않음. ③ AI 공동 저자 코드: "AI가 의미론적 오류를 낼 리 없다"는 신뢰 편향이 검토 강도를 낮춤(B59). **구조적 해결책**: 모든 오라클 공식 변경에 대해 라이브 블록체인 데이터 기반 가격 검증 CI 스텝 필수화; Halborn 수준 감사도 "통합 테스트가 라이브 체인 기반인지"를 별도 확인해야 함. META-12(퍼저 단일문화)와 구별: META-12 = 퍼징 도구 다양성 부재; META-15 = 테스트가 존재하나 실 블록체인 상태 대비 의미론적 검증이 없는 "커버리지의 질" 문제. (B59, A35, A3 참조) |
 | C23 Cross-Chain Governance Temporal Desynchronization Flash Loan | 멀티체인 DAO 거버넌스에서 Chain A(Governor.sol)와 Chain B(VoteAggregator)를 연결하는 크로스체인 메시징 레이어의 시간적 비동기성을 감사가 독립 구성 요소(Governor 감사 + VoteAggregator 감사)로 분리 검토하여 통합 경계의 "temporal synchronization 보장 부재"를 미식별. 단일체인 플래시론 거버넌스(Beanstalk $182M)는 감사 표준 체크리스트에 포함됨; 크로스체인 변형(Chain B에서 플래시론 → Chain A 메시지 미확정 상태에서 투표 계산 → 플래시론 상환 후 투표 유효)은 어느 팀의 감사 범위에도 명시적으로 포함되지 않음. 거버넌스 컨트랙트가 treasury/upgrade/collateral-admission 권한을 제어하면 블라인드스팟 = 잠재적 nine-figure 손실. (C23, META-10 참조) |
+| D45 Blockchain-as-C2 Channel via Malicious Developer Toolchain Extension | 감사가 온체인 프로그램 로직과 keeper 바이너리를 검토하지만, keeper 운영자 개발 환경(IDE 확장, 빌드 도구)의 보안을 별도 운영 관심사로 분리. Solana RPC 호출이 DeFi 개발 환경에서 정상 트래픽이므로 블록체인-as-C2 채널(온체인 tx 메타데이터에 암호화 페이로드 저장)이 방화벽을 통과. 결과: 온체인 코드는 무결하나 operator keypair, RPC API key, keeper config가 악성 IDE 확장을 통해 탈취 → B36(stake authority hijack)과 동일 결과. 타이포스쿼팅 IDE 확장(`reditorsupporter.r-vscode-2.8.8-universal` vs `REditorSupport.r`)이 감사 체크리스트에 없는 공격 표면. (Bitdefender/Windsurf IDE, 2026-03-20) |
 
