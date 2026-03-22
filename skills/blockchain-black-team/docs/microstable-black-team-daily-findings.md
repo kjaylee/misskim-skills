@@ -35,7 +35,7 @@
 | **B45 Audit Attestation Gap** | All on-chain code | ❌ HIGH CARRY-FORWARD (DAY 17) | audit-attestation.json still absent; unattested 3,281-line delta persists since DAY 1 |
 | A43 Commit/Reveal Threshold Circumvention | lib.rs rebalance() | ⚠️ MEDIUM CARRY-FORWARD | No cumulative drift tracking; per-call threshold only |
 | B44 SPL Token Delegate Drain | lib.rs mint() | ⚠️ MEDIUM CARRY-FORWARD | No delegate.is_none() check in mint() path |
-| A57 Anchor Shadow IDL Migration | keeper/Cargo.lock | ⚠️ MEDIUM CARRY-FORWARD | Anchor v1.0.0-rc.5 released 2026-03-20; keeper Cargo.lock anchor-client version pin must be verified vs. on-chain 0.31.1 |
+| A57 Anchor Shadow IDL Migration | keeper/Cargo.toml + programs/Cargo.toml | ✅ DEFENDED | Verified: keeper anchor-client = "0.31.1", on-chain anchor-lang = "0.31.1" — both match. Migration window NOT open. Anchor v1.0.0-rc.5 exists but neither side has adopted it yet. |
 | D43 Security-Tooling Inversion | pages.yml | ⚠️ LOW CARRY-FORWARD | No Trivy; tag-pin without SHA structural gap |
 | A56 Token-2022 ExtraAccountMeta Injection | lib.rs collateral | ✅ NOT APPLICABLE NOW | SPL Token only; LATENT HIGH if Token-2022 added |
 | A58 Token-2022 Transfer Fee Accounting | lib.rs deposit | ✅ NOT APPLICABLE NOW | SPL Token only; LATENT HIGH if Token-2022 added |
@@ -47,7 +47,7 @@
 | ❌ HIGH | B45 | DAY 17 | audit-attestation.json absent; 3,281-line unattested delta | Create attestation artifact |
 | ⚠️ MEDIUM | A43 | DAY ~14 | No cumulative drift accumulator in rebalance() | Add drift tracking |
 | ⚠️ MEDIUM | B44 | DAY ~14 | No delegate.is_none() check in mint() | Add check |
-| ⚠️ MEDIUM | A57 | NEW-CARRY | Anchor v1.0.0-rc.5 release; version drift risk | Verify keeper Cargo.lock |
+| ✅ CLOSED | A57 | N/A | Anchor v1.0.0-rc.5 released but both keeper+on-chain on 0.31.1 | No action needed now |
 | ⚠️ LOW | D43 | DAY 2 | GitHub Actions tag vs. SHA pinning | SHA-pin all workflow actions |
 
 **No new CRITICAL or HIGH findings for Microstable today.**
