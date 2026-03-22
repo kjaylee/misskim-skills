@@ -3659,3 +3659,98 @@ if (priceImpactBps > 2500) throw new Error("Price impact exceeds 25% — blocked
 **Compound vulnerability (A2 + A10)**: Flash loan provides the amplification capital; the burn design flaw provides the price manipulation surface. Neither alone is catastrophic; combined = loss.
 **Microstable relevance**: ✅ NOT APPLICABLE — Microstable collateral is 3rd-party stablecoins (USDC/USDT/DAI/USDS). MSTB itself does not have a deflationary burn function that writes to LP reserves. Pyth oracle is used, not AMM-based pricing.
 **Source**: https://www.cryptotimes.io/2026/03/20/movie-token-hack-smart-contract-flaw-drains-242k-in-liquidity/ | CertiK incident analysis (March 10, 2026)
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-23 (03:30 KST) -->
+
+## A70 — CPI User-Signer Authority Forwarding via Multi-Hop Aggregator
+**Historical**: No single nine-figure exploit attributed solely to this pattern; it is the latent mechanism underlying Wormhole (A4) and is emerging in Solana DeFi aggregators (2026-03-19, CPI Playbook synthesis).
+**Mechanism**: A Solana DeFi aggregator/router receives a user-signed transaction and constructs a CPI that passes the user's `AccountInfo` (including signer privilege) directly to an external DEX or bridge program. Solana's runtime propagates `is_signer = true` through CPI calls without explicit permission checks. Attack paths:
+1. **External program substitution**: User specifies a `token_program` / `dex_program` account. Without explicit `Program<'info, T>` type enforcement (which verifies program ID), attacker substitutes a malicious program. The malicious program receives the user's signer authority and can drain any account where the user has signing rights.
+2. **Supply-chain compromised DEX**: A legitimate DEX program that previously received user signer authority gets upgraded to a malicious version. All prior-approved integrations now forward user authority to the attacker.
+3. **Cross-program authority inheritance**: Chained CPIs. Router → DEX → Bridge. Each hop propagates signer; the deepest hop (bridge) can abuse the inherited authority.
+**Distinct from A4 (Access Control)**: A4 covers admin/governance authorization bypass. A70 is user signing authority leaked through legitimate-looking CPI call chains in aggregators.
+**Distinct from A55 (CPI Depth Griefing)**: A55 is a DoS attack via depth exhaustion. A70 is authority theft via signer forwarding — an active fund-drain vector.
+**Code pattern to find**:
+```rust
+// VULNERABLE: user signer forwarded to external DEX — attacker-controlled `external_dex`
+pub fn aggregate_swap(ctx: Context<AggSwap>) -> Result<()> {
+    let cpi_ctx = CpiContext::new(
+        ctx.accounts.external_dex.to_account_info(),  // ← attacker substitutes here
+        ExternalSwap {
+            user: ctx.accounts.user.to_account_info(),  // ← user signer forwarded
+        },
+    );
+    external_dex::swap(cpi_ctx, amount)
+}
+
+// SAFE: PDA intermediary — user signer never leaves your trust boundary
+pub fn aggregate_swap(ctx: Context<AggSwap>) -> Result<()> {
+    // Step 1: transfer user funds to protocol PDA vault (user signs here, controlled)
+    token::transfer(
+        CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer { ... }),
+        amount,
+    )?;
+    // Step 2: CPI to DEX using PDA authority only — user signing authority never forwarded
+    let seeds = &[b"vault", &[ctx.bumps.vault]];
+    let cpi_ctx = CpiContext::new_with_signer(
+        ctx.accounts.dex_program.to_account_info(),
+        ExternalSwap { authority: ctx.accounts.vault.to_account_info() },
+        &[&seeds[..]],
+    );
+    dex::swap(cpi_ctx, amount)
+}
+```
+**Defense**:
+1. Never forward user `AccountInfo` with `is_signer = true` to any external program in a CPI.
+2. Use PDA-based authority as the sole CPI signer for all outbound calls.
+3. Enforce external program IDs with Anchor's `Program<'info, T>` type — not raw `AccountInfo`.
+4. For aggregators: accept user funds first (user-signs to your vault), then CPI with PDA only.
+**Microstable relevance**: ✅ NOT APPLICABLE — All Microstable token CPIs use PDA authority (`seeds = [b"protocol_state", ...]`). No external DEX CPIs with user signer forwarding. Confirmed in `lib.rs` helper `fn transfer_from_vault_to_user` at line ~3855.
+**Source**: dev.to CPI Security Playbook (Pattern 2, 2026-03-19) | Wormhole post-mortem synthesis
+
+## A71 — Cross-Protocol Multi-Venue Flash-Loan MEV Sandwich
+**Historical**: ETH Mainnet MEV Bot Attack (2026-03-12): ~$9.9M profit. Victim lost $50.4M USDT → received 327 AAVE (~$36K). Flash borrow: 17,957 WETH (~$29M) from Morpho. Buy target asset on Bancor ahead of victim's large pending order on SushiSwap. Victim executes; MEV bot sells Bancor position back; returns flash loan. Net: $9.9M extracted, 0 attacker capital at risk.
+**Mechanism** (3-protocol, 3-step):
+1. **Flash borrow from Protocol A** (Morpho, lending): zero-cost capital acquisition for the duration of one block
+2. **Buy target asset on Protocol B** (Bancor): drive up price before victim's order executes; Protocol B is not the victim's chosen DEX
+3. **Victim executes large order on Protocol C** (SushiSwap): at inflated price caused by Protocol B's purchase; AMM invariant x*y=k means victim absorbs the full price impact
+4. **Sell on Protocol B** (Bancor): arbitrage back the pre-purchased position; pocket profit
+5. **Repay flash loan on Protocol A**: cycle completes atomically in one block
+**Why distinct from C25 (MEV Extraction - generic)**:
+- C25 covers same-DEX sandwich; A71 is multi-venue: buy and sell happen on a **different protocol** from the victim's execution venue
+- Flash-loan-funded: attacker needs zero capital; borrow size can be any amount available in lending pools
+- Cross-protocol: harder to detect with per-DEX monitoring; requires cross-DEX state correlation
+- Exploits AMM constant-product math: profit is guaranteed mathematically (not probabilistic) once position is established if victim order size exceeds pool liquidity
+**Key insight — Keeper Bot Exposure Surface**:
+On Solana, keeper-executed rebalances with known timing windows (e.g., slot-bounded) are predictable targets. An MEV operator watching Microstable's keeper mempool could:
+- Observe rebalance transaction from keeper with large collateral swap intent
+- Front-run via Jito tip auction: pay higher fee to execute before keeper
+- Keeper's rebalance then executes at degraded price
+Current Microstable design does NOT route keeper rebalances through DEX — so this is a **latent risk only**.
+**Code/design pattern to find**:
+```typescript
+// VULNERABLE DEX-INTEGRATED KEEPER: predictable large rebalance order
+async function rebalance(targetCollateralRatio: number) {
+    const swapAmount = computeRequiredSwap(targetCollateralRatio);
+    // Single large order to DEX → MEV target
+    await dex.swap({ tokenIn: USDC, tokenOut: SOL, amount: swapAmount });
+}
+
+// SAFER: Split + jitter + use private mempool channel
+async function rebalance(targetCollateralRatio: number) {
+    const swapAmount = computeRequiredSwap(targetCollateralRatio);
+    const chunkSize = swapAmount / NUM_CHUNKS;
+    for (const chunk of chunks(swapAmount, chunkSize)) {
+        await jito.sendBundle([buildSwapIx(chunk)]); // private channel
+        await sleep(randomJitter());
+    }
+}
+```
+**Defense**:
+1. **Private mempool (Jito bundles on Solana)**: submit keeper transactions via Jito bundle endpoint, not public mempool.
+2. **Order splitting**: break large rebalances into sub-chunks; reduces per-chunk MEV profitability below the cost of monitoring.
+3. **Timing randomization**: introduce slot jitter in keeper schedule; predictable keeper timing is the first enabler.
+4. **Price-impact gate**: if expected price impact > threshold (e.g., 0.5%), pause rebalance and alert rather than executing at loss.
+5. **Cross-DEX routing**: use aggregators that route across multiple venues to reduce impact on any single pool (reduces MEV profitability from Protocol B/C arbitrage).
+**Microstable relevance**: ⚠️ LATENT MEDIUM — Current keeper does NOT route through DEX. Direct vault state transitions. If DEX integration is ever added (liquidation engine, collateral swap), implement private mempool + split orders before first production use.
+**Source**: https://www.abcmoney.co.uk/2026/03/mev-bot-sandwich-attack-drains-50m-swap-to-36k/ | Chainstack Solana MEV 2026 blog (Application-Controlled Execution analysis) | https://mpost.io/leading-mev-bots-dominating-defi-trading-in-2026/

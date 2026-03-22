@@ -660,3 +660,23 @@ Token-2022 fee extension deducts fee at protocol level. Protocols crediting `amo
 
 ### Anchor v1.0.0 Shadow Migration (A57 — current Solana Anchor ecosystem)
 Anchor v1.0.0-rc.5 released 2026-03-20. Programs on Anchor 0.31.x face silent discriminator mismatch if off-chain tools migrate to v1.x before on-chain program compatibility is verified. Pin keeper Cargo.lock and add CI version-parity gate.
+
+## 2026-03-23 New Patterns
+
+### CPI Signer Authority Forwarding (Extended — see A70)
+The brief entry under "Signer Privilege Escalation" is reinforced with a full attack vector.
+Key addition: **DeFi aggregators/routers** are the primary risk surface. When a protocol acts as a router between user and external DEX:
+- If the external DEX program account is passed as `AccountInfo` (not `Program<T>`), an attacker can substitute a malicious program.
+- The malicious program receives `is_signer = true` for the user's account.
+- It can use this to drain any account the user has authority over.
+**Safe pattern**: user transfers to protocol vault first (user signs → your program), then protocol CPIs to DEX using PDA only. User signing authority never crosses into external program.
+
+### Solana ACE (Application-Controlled Execution) Bypass Surface
+**Status**: Emerging (2026-03-19, Chainstack Solana MEV 2026 analysis).
+Solana's evolving ACE (Application-Controlled Execution) system lets dApps define execution constraints: ordering, slippage bounds, actor whitelists. Jito BAM (Blockspace Auction Mechanism) is the complementary infrastructure.
+**Risk pattern**:
+1. If ACE constraints are enforced at the application layer only (not runtime-enforced), an attacker can submit transactions that bypass the application's constraint-checking path (e.g., calling the program directly rather than through the ACE-gated interface).
+2. BAM priority fee griefing: if an attacker pays enough priority in Jito BAM, they can reorder transactions relative to ACE-gated operations, potentially front-running within a bundle.
+3. ACE constraint specification bugs: if the constraint language allows ambiguous expressions, edge cases may evaluate to "unconstrained" — effectively disabling the protection.
+**Mitigation**: ACE constraints should be enforced on-chain (program-level checks), not merely off-chain (interface-level checks). Never rely on ACE as the sole protection against reordering or sandwiching.
+**Microstable relevance**: LOW — does not currently use ACE. Monitor if implementing Jito bundles for keeper.
