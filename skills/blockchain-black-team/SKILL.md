@@ -28,7 +28,7 @@ Execute battle-tested attack vectors from 83+ historical blockchain incidents ($
 3. For each vector: map historical pattern → target code → attack scenario → severity
 4. Output structured report with PoC sketches for CRITICAL/HIGH findings
 
-## Attack Matrix (84+ Vectors, continuously extended)
+## Attack Matrix (88+ Vectors, continuously extended)
 
 The full matrix with historical references, code-level mechanisms, and defense patterns is in `references/attack-matrix.md`. Summary:
 
@@ -73,6 +73,11 @@ The full matrix with historical references, code-level mechanisms, and defense p
 | 25 | MEV Extraction | MEV ecosystem | MEDIUM |
 | 30 | Liquidity-Exhaustion Griefing | Intent bridge study (2026) | MEDIUM |
 
+### C. Economic (6 vectors + A59)
+| # | Vector | Historical Example | Typical Severity |
+|---|---|---|---|
+| 59 | DEX Aggregator Solver Race-to-Minimum / Thin-Pool Routing | Aave/CoWSwap ($50M loss, 2026-03-12) | HIGH (if DEX integration) |
+
 ### D. Infrastructure (core 4 + extended D32/D33/D34)
 | # | Vector | Historical Example | Typical Severity |
 |---|---|---|---|
@@ -86,6 +91,8 @@ The full matrix with historical references, code-level mechanisms, and defense p
 
 | Date (KST) | Incident | Vector Mapping | Delta Applied |
 |---|---|---|---|
+| 2026-03-23 | **Aave/CoWSwap $50M Thin-Pool Routing Loss** (2026-03-12): User rotated $50M aEthUSDT→aEthAAVE via Aave interface → CoW solver routed final WETH leg through SushiSwap pool with $73K liquidity (1,017× pool reserve) → user received 327 AAVE (~$36K). No attacker; loss from AMM price impact + solver race-to-minimum objective. "Aave Shield" announced (>25% price impact block). **Movie Token Burn-to-LP double-count** (2026-03-10, $242K BSC): flash loan + burn function writes directly to LP reserve, double-counting in swap+burn tracker → inflated AMM price → sold for profit. | **A59 NEW** + A2/A10 reinforcement | 1 NEW VECTOR (A59: DEX Aggregator Solver Race-to-Minimum / Interface-Mediated Thin-Pool Routing Loss). A2+A10 reinforced with "Deflationary-Token Burn-to-LP Direct Write" sub-pattern. Matrix now **88 named vectors** (A56+A57+A58 from 3/22 run + A59 today). Microstable A59 verdict: ✅ NOT APPLICABLE (no DEX aggregator, keeper-direct rebalance, no user collateral swap interface). A2/A10 Movie Token verdict: ✅ NOT APPLICABLE (no deflationary burn function, Pyth oracle not AMM). **Carry-forwards**: B45 HIGH (audit-attestation.json absent — DAY 17), A43 MEDIUM, B44 MEDIUM. No new CRITICAL/HIGH for Microstable. |
+| 2026-03-22 | **Neodyme Token-2022 research** (dev.to 2026-03-15) + **Anchor v1.0.0-rc.5 release** (2026-03-20) + **Windsurf IDE extension malware targeting Solana developers** (Bitdefender 2026-03-20, D45 reinforcement) | **A56 NEW + A57 NEW + A58 NEW** | 3 NEW VECTORS (A56: Token-2022 ExtraAccountMeta Injection; A57: Anchor Shadow IDL Migration Discriminator Gap; A58: Token-2022 Transfer Fee Invisible Tax Accounting Bypass). Matrix: 84→87 vectors (pre-3/23 count). |
 | 2026-03-21 | **Trivy supply chain attack by TeamPCP** (2026-03-19, CVE-2026-28353): Retained credentials from incomplete Feb 28 containment → force-pushed 75/76 trivy-action tags → backdoored v0.69.4 steals SSH keys + crypto wallet files from CI/CD runners. **Security-tooling inversion pattern**: legit scan results presented alongside credential theft. | **D43 NEW** | 1 NEW VECTOR (D43: Security-Tooling Inversion — Trusted CI/CD Scanner Compromised via Force-Push Tag Hijack). Matrix now **84 named vectors**. Microstable CI/CD audit: pages.yml uses `actions/checkout@v4` (tag-pinned, no SHA) ⚠️ LOW risk (GitHub-maintained action; no trivy-action in pipeline; keeper builds done locally). D43 verdict: ⚠️ LOW — no Trivy in pipeline, but tag-pinning without SHA is structural risk if any third-party actions are added. **Carry-forwards unchanged**: B45 HIGH (audit-attestation.json absent — DAY 16), A43 MEDIUM, B44 MEDIUM. No new CRITICAL/HIGH findings today. |
 | 2026-03-20 | **Neutrl DNS hijack** (2026-03-19, loss TBD): DNS provider social-engineered → domain redirected; users urged to revoke Permit2 approvals immediately via Revoke.cash. **AM/USDT pool burn reserve manipulation** (2026-03-12, $131K): `toBurnAmount` manipulated to artificially lower reserves → sold at inflated price. **Injective $500M access control bypass** (2026-03-16, disclosed; $0 lost, $500M at risk): any user could drain any account; patched via upgrade vote; bounty dispute ($50K offered vs. $500K cap). | D26 + Permit2 note, A41 reinforcement, A4 reinforcement | **0 NEW VECTORS** (all reinforce existing). D26 updated: Neutrl case + **Permit2 persistence as DNS-hijack force-multiplier** documented. A41 updated: AM/USDT burn-reserve case added. A4 updated: Injective chain-level auth bypass case added. Matrix holds at **83 named vectors**. Full Microstable sweep: D26 Neutrl ✅ N/A (Solana, no Permit2); A41 ✅ DEFENDED; A4 ✅ DEFENDED. **Carry-forwards unchanged**: B45 HIGH (audit-attestation.json absent — DAY 15), A43 MEDIUM, B44 MEDIUM. No new CRITICAL/HIGH findings. |
 | 2026-03-17 | **Venus Protocol supply cap bypass + slow-accumulation TWAP manipulation** (2026-03-15, $2.15M / $3.7M exposure): Attacker accumulated 84% of supply cap over 9 months, bypassed cap via direct token transfer to protocol contract (not through deposit function), then pushed TWAP 96% on thin-liquidity THE collateral. Drained $2.15M in CAKE/BNB/USDC/BTCB. | **A67 NEW** | 1 NEW VECTOR (A67). Total matrix: **81 named vectors**. Microstable: A67 ✅ DEFENDED (total_deposits tracked field + Pyth oracle not DEX TWAP + stablecoin collateral only). Full 81-vector sweep — 0 new CRITICAL/HIGH. Carry-forwards unchanged: B45 HIGH (audit-attestation.json still absent — DAY 12), A43 MEDIUM (no cumulative drift tracking), B44 MEDIUM (no delegate.is_none() check in mint()), B63 MEDIUM (MediaTek TEE, operator devices). |

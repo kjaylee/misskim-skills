@@ -3603,3 +3603,59 @@ state.collateral_balance += received; // SAFE: uses actual received amount
 **Defense**: For any Token-2022 collateral with fee extension, always use pre/post vault balance delta — never trust the instruction `amount` parameter as the received amount. Add integration test: deposit with fee-enabled Token-2022 mint and assert `vault.balance == credited_collateral`.
 **Microstable relevance**: LOW now. LATENT HIGH if Token-2022 stablecoin collateral is added.
 **Source**: Neodyme Token-2022 research synthesis (dev.to, 2026-03-15)
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-23 -->
+
+## A59 — DEX Aggregator Solver Race-to-Minimum / Interface-Mediated Thin-Pool Routing Loss
+**Historical**: Aave/CoWSwap (2026-03-12, $50M user loss): User rotated $50.4M aEthUSDT → aEthAAVE via Aave's interface, which routed through CoW Protocol's solver network. Solver constructed a 4-leg path; the final leg pushed 17,957 WETH (≈$50M) into a SushiSwap AAVE/WETH pool holding only $73K total liquidity (17.65 WETH reserve). User received 327 AAVE (~$36K). Every contract executed correctly. Aave refunded $110K in collected fees; CoW DAO refunded solver fees. No attacker — loss was pure price impact absorbed by the AMM invariant; subsequent arbitrageurs captured the delta.
+**Mechanism**:
+1. User signs a CoW Protocol intent with minimum buy amount pre-computed from CoW explorer quote (which shows pre-impact rate, not expected execution rate)
+2. Solver's objective: find any execution path that delivers ≥ signed minimum output
+3. Minimum (324.94 AAVE) was already baked with 99.9%+ price impact before signing — slippage tolerance (1.21%) is mathematically irrelevant on top of this
+4. Solver selects the minimum-viable thin pool because its objective function doesn't penalize catastrophic price impact if minimum is satisfiable
+5. AMM invariant (x*y=k): pushing 17,957 WETH into a 17.65 WETH pool surrenders all AAVE inventory for effectively zero WETH in return
+6. Result: 327.24 AAVE delivered (above the 324.94 minimum) — fully valid, no protocol failure
+7. Next-block arbitrageurs rebalance the depleted AAVE/WETH pool, capturing the ~$50M delta
+**Price Impact vs. Slippage Conflation (new sub-pattern)**:
+- **Price impact** = expected output vs. current spot rate BEFORE the trade, embedded in the route at signing time
+- **Slippage** = expected output vs. actual execution (protection against mempool manipulation AFTER signing)
+- When price impact is already 99.9%, slippage tolerance = decimal point on a dumpster fire
+- UI confirmation checkboxes ("I understand the price impact") do not constitute informed consent for $50M losses — the design conflates acknowledgement with comprehension
+**Distinct from existing vectors**:
+- **C25 (MEV Extraction)**: C25 is mempool frontrunning/sandwich — an adversary extracts value in the same block. A59 has no attacker; loss is natural AMM math + post-trade arbitrage
+- **D26 (Frontend XSS/Injection)**: No malicious code; every UI and contract component functioned as designed
+- **A8 (Front-running/Sandwich)**: No adversary; no mempool manipulation
+- **A3 (Oracle Manipulation)**: No oracle in the path; this is spot AMM execution
+**Aftermath**: Aave announced "Aave Shield" — automatic blocking of collateral swaps with price impact above 25%. Protocol/interface liability debate: CoW DAO post-mortem blamed legacy solver code + solver failures; Aave post-mortem blamed "illiquid market" and user confirmation.
+**Code/interface pattern to find**:
+```typescript
+// VULNERABLE: DEX aggregator integration quotes pre-impact price; minimum baked at signing
+const quote = await cowProtocol.getQuote({ from: aEthUSDT, to: aEthAAVE, amount: 50_000_000 });
+// quote.buyAmountBeforeFee reflects pre-slippage, post-impact price — ALREADY 99% degraded
+const minBuyAmount = quote.buyAmountBeforeFee * (1 - SLIPPAGE_TOLERANCE);
+// slippage protection is now irrelevant; minimum is already catastrophic
+const order = { sellAmount: 50_000_000, buyAmount: minBuyAmount, ... };
+user.signAndSubmit(order); // User must click confirmation checkbox
+
+// SAFER: enforce maximum price-impact gate at interface layer
+const priceImpactBps = computePriceImpact(route);
+if (priceImpactBps > 2500) throw new Error("Price impact exceeds 25% — blocked by Aave Shield");
+```
+**Defense**:
+1. **Maximum price-impact gate**: block or require explicit out-of-band confirmation for trades exceeding configurable impact threshold (≥10% = mandatory delay; ≥25% = blocked)
+2. **Minimum output from market depth**: compute minimum acceptable output from current AMM liquidity depth analysis, not from pre-impact spot price
+3. **Solver objective function**: require solvers to maximize expected output relative to a fair mid-market price, not merely satisfy a signed minimum
+4. **Separate price-impact UI**: display price impact prominently and distinctly from slippage tolerance; never conflate the two in a single confirmation checkbox
+5. **Large-order splitting**: automatically split trades exceeding configurable size threshold across multiple paths/blocks to avoid single-pool catastrophic impact
+**Microstable relevance**: ✅ NOT APPLICABLE — Microstable uses keeper-managed rebalancing with Pyth oracle pricing, direct vault state transitions, and no DEX aggregator integration. No user-initiated collateral swap interface. Keeper rebalance does not route through CoW Protocol or any solver network.
+**Latent risk (HIGH if DEX integration added)**: If a future liquidation engine routes through a DEX aggregator, implement maximum-price-impact gate and market-depth-based minimum output before the first production trade.
+**Source**: https://rekt.news/price-impact-kills | https://etherscan.io/tx/0x9fa9feab3c1989a33424728c23e6de07a40a26a98ff7ff5139f3492ce430801f | https://theblock.co/post/382369/aave-community-probes-cow-swap | https://decrypt.co/360961/crypto-trader-loses-nearly-50m-aave-trade-600k-fee-refund
+
+---
+
+## A2 + A10 Reinforcement — Deflationary-Token Burn-to-LP Double-Count (Movie Token, 2026-03-10)
+**Historical Reinforcement (added 2026-03-23)**: Movie Token (MT, 2026-03-10, BNB Smart Chain, $242K loss): Flash-loan amplified exploitation of a burn-function design flaw. Attacker borrowed 358,681 WBNB, bought a small MT position, added to LP, then executed a series of swaps that bypassed transaction limits (sell function did not track individual transaction amounts). The burn function, when invoked, **directly removed tokens from the LP pool reserve** rather than only reducing total supply. This created a double-count: tokens were counted once in the swap output AND again in the burn tracker removing them from the LP. Net effect: LP price inflated (AMM invariant: same WBNB against fewer MT = higher MT price). Attacker sold inflated MT for 381.7 WBNB profit.
+**New sub-pattern for A10 (Logic Bug)**: "Deflationary-Token Burn-to-LP Direct Write" — burn function writes to LP balance directly, not to a separate supply counter. In a constant-product AMM (x·y=k), removing tokens from the LP reserve without adding the paired token artificially inflates price. This is functionally equivalent to oracle manipulation of the token's own AMM pool — but executed via a legitimate contract call, bypassing oracle-staleness defenses.
+**Compound vulnerability (A2 + A10)**: Flash loan provides the amplification capital; the burn design flaw provides the price manipulation surface. Neither alone is catastrophic; combined = loss.
+**Microstable relevance**: ✅ NOT APPLICABLE — Microstable collateral is 3rd-party stablecoins (USDC/USDT/DAI/USDS). MSTB itself does not have a deflationary burn function that writes to LP reserves. Pyth oracle is used, not AMM-based pricing.
+**Source**: https://www.cryptotimes.io/2026/03/20/movie-token-hack-smart-contract-flaw-drains-242k-in-liquidity/ | CertiK incident analysis (March 10, 2026)

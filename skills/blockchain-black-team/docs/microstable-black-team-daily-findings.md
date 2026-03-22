@@ -1,6 +1,59 @@
 
 ---
 
+## 2026-03-23 Daily Check
+
+### Source Sweep (72h window: 2026-03-20 to 2026-03-23 KST)
+- Sources checked: rekt.news (frontpage + leaderboard web_fetch), cryptotimes.io (Movie Token CertiK analysis), theblock.co/thedefiant (CoWSwap/Aave post-mortems), ainvest.com, SearXNG fallback
+- **2 new incidents** confirmed in sweep window with code-level mechanisms:
+  1. **Aave/CoWSwap Thin-Pool Routing** (2026-03-12, $50M user loss) — mapped to A59 (NEW)
+  2. **Movie Token Burn-to-LP Double-Count** (2026-03-10, $242K, BSC) — reinforces A2+A10
+- **3 vectors already added** by 3/22 run (A56, A57, A58 — Token-2022 + Anchor v1.0 from Neodyme research)
+- No new Solana-specific on-chain exploits with fund loss in this 72h window
+
+### New Vectors Added Today (2026-03-23)
+
+| Vector | Incident | Date | Category | Loss |
+|--------|---------|------|----------|------|
+| **A59 (NEW): DEX Aggregator Solver Race-to-Minimum / Interface-Mediated Thin-Pool Routing Loss** | Aave/CoWSwap $50M Thin-Pool Routing | 2026-03-12 | Economic / Interface Layer | $50M user loss (no attacker; AMM price impact + post-trade arb) |
+| A2+A10 reinforcement: Deflationary-Token Burn-to-LP Direct Write | Movie Token (MT) BSC exploit | 2026-03-10 | Logic Bug + Flash Loan | $242K |
+
+**A59 Technical Summary (Aave/CoWSwap, 2026-03-12)**:
+- User signed CoW intent: sell $50.4M aEthUSDT, min buy = 324.94 AAVE (already priced at 99.9% price impact from CoW explorer quote)
+- CoW solver selected path: aEthUSDT burn → $50.4M USDT → 17,957 WETH (Uniswap V3, clean) → 327.24 AAVE via SushiSwap AAVE/WETH pool ($73K liquidity, 17.65 WETH reserve)
+- 17,957 WETH pushed into 17.65 WETH reserve = 1,017× pool capacity → AMM surrendered all AAVE inventory
+- Every contract executed correctly; 327.24 AAVE > signed 324.94 minimum
+- Root cause: solver optimizes to meet minimum constraint, not to maximize expected value; price-impact vs. slippage conflation in UI
+- Aftermath: Aave Shield (>25% price impact block announced); Aave + CoW DAO pledged fee refunds
+
+### Full Vector Sweep (A59 + carry-forwards)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A59 DEX Aggregator Thin-Pool Routing** | All Microstable code | ✅ NOT APPLICABLE | No DEX aggregator integration; keeper-direct rebalance via vault state; no user collateral swap interface; no CoW/solver integration |
+| A2+A10 Movie Token Burn-to-LP | lib.rs mint/redeem | ✅ NOT APPLICABLE | MSTB has no deflationary burn-to-LP function; Pyth oracle (not AMM-based pricing); collateral is 3rd-party stablecoins |
+| **B45 Audit Attestation Gap** | All on-chain code | ❌ HIGH CARRY-FORWARD (DAY 17) | audit-attestation.json still absent; unattested 3,281-line delta persists since DAY 1 |
+| A43 Commit/Reveal Threshold Circumvention | lib.rs rebalance() | ⚠️ MEDIUM CARRY-FORWARD | No cumulative drift tracking; per-call threshold only |
+| B44 SPL Token Delegate Drain | lib.rs mint() | ⚠️ MEDIUM CARRY-FORWARD | No delegate.is_none() check in mint() path |
+| A57 Anchor Shadow IDL Migration | keeper/Cargo.lock | ⚠️ MEDIUM CARRY-FORWARD | Anchor v1.0.0-rc.5 released 2026-03-20; keeper Cargo.lock anchor-client version pin must be verified vs. on-chain 0.31.1 |
+| D43 Security-Tooling Inversion | pages.yml | ⚠️ LOW CARRY-FORWARD | No Trivy; tag-pin without SHA structural gap |
+| A56 Token-2022 ExtraAccountMeta Injection | lib.rs collateral | ✅ NOT APPLICABLE NOW | SPL Token only; LATENT HIGH if Token-2022 added |
+| A58 Token-2022 Transfer Fee Accounting | lib.rs deposit | ✅ NOT APPLICABLE NOW | SPL Token only; LATENT HIGH if Token-2022 added |
+
+### Open Carry-Forwards (Priority Order)
+
+| Priority | ID | Days Open | Description | Fix |
+|----------|-----|-----------|-------------|-----|
+| ❌ HIGH | B45 | DAY 17 | audit-attestation.json absent; 3,281-line unattested delta | Create attestation artifact |
+| ⚠️ MEDIUM | A43 | DAY ~14 | No cumulative drift accumulator in rebalance() | Add drift tracking |
+| ⚠️ MEDIUM | B44 | DAY ~14 | No delegate.is_none() check in mint() | Add check |
+| ⚠️ MEDIUM | A57 | NEW-CARRY | Anchor v1.0.0-rc.5 release; version drift risk | Verify keeper Cargo.lock |
+| ⚠️ LOW | D43 | DAY 2 | GitHub Actions tag vs. SHA pinning | SHA-pin all workflow actions |
+
+**No new CRITICAL or HIGH findings for Microstable today.**
+
+---
+
 ## 2026-03-21 Daily Check
 
 ### Source Sweep (24h window: 2026-03-20 to 2026-03-21 KST)
