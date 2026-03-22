@@ -1,4 +1,4 @@
-# Attack Matrix — 84 Vectors with Historical Mechanisms & Defense Patterns (+ 1 new 2026-03-22) | META-01~17
+# Attack Matrix — 84 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23) | META-01~18
 
 ## A. Smart Contract Vectors
 
@@ -1191,7 +1191,9 @@ require_keys_eq!(ctx.accounts.bridge_program.key(), WORMHOLE_PROGRAM_ID, ErrorCo
 3. **Defense-in-depth**: even with `onlyGateway`, validate message payload against expected schema/version (A32 defense)
 4. **Test**: write an explicit test: `assert_reverts: non_gateway_calls_expressExecute()` — must be in CI before any bridge integration deploy
 5. **Invariant monitoring**: alert on any unlock/mint triggered without a corresponding source-chain event confirmed by the relay
-**Source**: https://www.scworld.com/brief/crosscurve-bridge-loses-3-million-in-smart-contract-exploit | https://thecyberexpress.com/crosscurve-bridge-3m-cyberattack/ | https://quillaudits.medium.com/crosscurve-1-4m-exploit-c2ef752c4e84
+6. **Confirmation threshold hardening**: `confirmationThreshold` MUST be ≥ quorum-of-guardians (typically N/2+1); threshold = 1 means a single point of failure — any single compromised or spoofed relay = full bypass
+**2026-03-23 reinforcement (dev.to pattern analysis)**: CrossCurve's second failure layer: `confirmationThreshold = 1` — even if gateway signature check were present, a single corrupted relay node suffices. Multi-guardian quorum (e.g., 7/10 Axelar validators) is the complementary defense. Both are required: `onlyGateway` (who can call) + sufficient threshold (how many independent attestations confirm the message).
+**Source**: https://www.scworld.com/brief/crosscurve-bridge-loses-3-million-in-smart-contract-exploit | https://thecyberexpress.com/crosscurve-bridge-3m-cyberattack/ | https://quillaudits.medium.com/crosscurve-1-4m-exploit-c2ef752c4e84 | https://dev.to/ohmygod/cross-chain-bridge-message-validation-7-defensive-patterns (2026-03-21)
 
 ### A47. Per-Element Aggregate Invariant Bypass
 **Signal**: Bug bounty report "Breaking Immutability: How I Bypassed a Core Security Invariant in a Major DeFi Protocol" (Block Magnates, 2026-02-25 / confirmed 2026-03-06).
@@ -3529,6 +3531,7 @@ solana config set --keypair /dev/ledger  # hardware wallet path
 | A55 CPI Depth Budget Griefing via Token-2022 Hook Chaining | Solana CPI depth 제한(4)을 감사가 온체인 로직 내부에서만 점검하고, Token-2022 hook이 소비하는 depth 레벨을 구성(composition) 시 계산에 포함하지 않음. 프로토콜 CPI depth ≤ 2 설계 규칙 없이 Token-2022 담보를 허용하면, 합법적 hook이 CPI depth를 초과시켜 모든 관련 TX를 확정적으로 revert시킬 수 있음. (dev.to CPI Playbook, 2026-03) |
 | META-15 Live-Blockchain Integration Test Gap — "Tests Pass, Production Fails" (퍼플팀 메타, 2026-03-21) | Moonwell $1.78M(2026-02-15) 포스트모템 최종 확인(CoinTelegraph 2026-03-20): **단위 테스트 존재 + 통합 테스트 존재(별도 PR) + Halborn 감사 완료 → 전부 통과 → cbETH 오라클 공식 오류 미탐지**. Pashov 확인: "could have been caught with an integration test, a proper one, integrating with the blockchain." 핵심 구분: (a) **단위 테스트** = 모킹된 값으로 수식이 타입 호환 출력을 내는지만 검증. (b) **통합 테스트(샌드박스/모킹 기반)** = 로컬 포크나 목 데이터에서 실행 — 실제 시장 가격과의 의미론적 일치 보장 없음. (c) **통합 테스트(라이브 블록체인 기반)** = 실제 체인 상태에서 오라클 공식 출력을 외부 가격 기준(CoinGecko/CoinMarketCap ±2%)과 비교 — (c)만이 cbETH 패턴 탐지 가능. **왜 감사가 놓치는가**: ① "통합 테스트 있음" → "통합 테스트가 올바른 것을 테스트함"을 감사가 암묵적으로 가정. ② 감사 체크리스트가 "테스트 존재 여부"를 확인하고 "테스트가 실 체인 상태에서 의미론적으로 올바른 값을 검증하는지"를 확인하지 않음. ③ AI 공동 저자 코드: "AI가 의미론적 오류를 낼 리 없다"는 신뢰 편향이 검토 강도를 낮춤(B59). **구조적 해결책**: 모든 오라클 공식 변경에 대해 라이브 블록체인 데이터 기반 가격 검증 CI 스텝 필수화; Halborn 수준 감사도 "통합 테스트가 라이브 체인 기반인지"를 별도 확인해야 함. META-12(퍼저 단일문화)와 구별: META-12 = 퍼징 도구 다양성 부재; META-15 = 테스트가 존재하나 실 블록체인 상태 대비 의미론적 검증이 없는 "커버리지의 질" 문제. (B59, A35, A3 참조) |
 | META-16 Multi-Path Attack Asymmetry — 공격자는 어떤 경로도 사용, 감사자는 선언된 경로만 검증 (퍼플팀 메타, 2026-03-22) | **Cork Protocol $12M exploit (2025-05-28, 포스트모템 분쟁 2026-03-20)**: Sherlock/Spearbit/Cantina/Dedaub/Three Sigma/Halborn/Blocksec 7개 감사사 전원이 각자 이 취약점을 커버했거나 커버하지 않았다고 주장. 공격자 on-chain 메시지: **"There are many ways to take DS, not just the Uniswap hook."** 공격에 다수 유효 경로가 존재했으나 각 감사사는 자신이 명시적으로 검증한 경로만 "안전함"으로 확인. **근본 비대칭**: 방어자(감사자)는 "테스트한 경로는 안전하다"를 증명 → 테스트하지 않은 경로는 미정; 공격자는 전체 경로 공간에서 작동하는 경로 하나만 발견하면 족. 코드가 7개 감사사 전원의 범위 내에 있어도 "7개 감사사가 서로 다른 경로를 검증"이면 전체 경로 공간 커버 = 0. **B41(Multi-Auditor Disjoint Scope)과 구별**: B41 = 감사사들이 각자 서로 다른 코드 모듈을 커버해 인터페이스가 아무도 안 본 사각지대 생성. META-16 = 동일 코드가 모든 감사사 범위 내에 있어도, 코드를 통과하는 공격 경로 전체가 어떤 감사사도 명시적으로 검증하지 않은 구조적 맹점. **감사 방법론의 구조적 결함**: 현재 감사 보고서는 "이 함수를 검토했다" + "이 취약점 클래스를 테스트했다"를 기록; "이 코드에 도달하는 모든 실행 경로를 열거하고 각각의 불변성을 검증했다"를 요구하지 않음. **해결책**: 감사 체크리스트에 "Path Coverage Matrix" 필수화 — 모든 외부 진입점(external/public 함수)에서 주요 자산 이동(mint/redeem/transfer)까지의 실행 경로 전수 열거 + 각 경로의 독립 불변성 검증 기록. 7개 감사사 → 1개 Path Coverage Matrix 공동 서명이 구조적 해결. **Source**: protos.com "Sherlock missed it" (2026-03-20); Cork Protocol post-mortem (cork.tech, 2025-06) |
+| META-18 SIEM/EDR Behavioral Blind Spot for AI Agent Compromise — 감시 아키텍처가 에이전트 목표 수준 침해를 탐지하지 못하는 구조적 공백 (퍼플팀 메타, 2026-03-23) | **HiddenLayer "2026 AI Threat Landscape Report" (2026-03-18)**: "1 in 8 reported AI breaches linked to agentic systems." "An agent that runs code perfectly 10,000 times looks normal to SIEM/EDR tools — but that agent might be executing an attacker's will." **핵심 비대칭**: 기존 SIEM/EDR 탐지 = 인간 행동 기준선 대비 이상 감지. AI 에이전트 행동 기준선 = 고주파 일정 실행 (타이밍 변동 없음, 세션 중단 없음, 오류 없음). 공격자가 B29(프롬프트 인젝션)/B43(메모리 포이즈닝)/B52(slow-drip 포이즈닝)로 에이전트를 침해한 후에도: 인증 = 유효, API 호출률 = 정상, 오류율 = 0, 실행 패턴 = 정상 → SIEM 알림 없음. **B46과 구별**: B46 = 적대자 없이 에이전트가 정상 권한으로 의도치 않은 피해 발생. META-18 = 적대자가 에이전트 목표를 침해한 상태이나 모든 모니터링 레이어가 정상으로 판정 — 사고 대응이 작동하지 않는 이유. **B62와 구별**: B62 = 침해 수행 방법(공격 벡터). META-18 = 침해가 발생한 후 탐지되지 않는 이유(모니터링 아키텍처 실패). **왜 감사가 놓치는가**: ① 스마트컨트랙트 감사는 온체인 로직 검토; 오프체인 에이전트 실행 환경의 관측성(observability) 레이어는 감사 범위 밖. ② 운영 보안 검토는 에이전트 권한이 올바른지 확인(B46 방어); SIEM 규칙이 AI 에이전트 목표 수준 침해를 탐지할 수 있는지 검증하지 않음. ③ "에이전트가 오류 없이 동작한다 = 정상"이라는 모니터링 가정이 침해 후 에이전트 행동 패턴과 동일함을 인식하지 못함. **해결책**: (1) DeFi 에이전트용 콘텐츠 인식 SIEM 규칙 (TX 의미론 파싱, TVL 이동 임계값 알림); (2) 의사결정 근거 로깅 (프롬프트 스냅샷 + 행동 동시 기록); (3) 행동 카나리아 (합성 무해 프로브로 목표 부패 조기 탐지); (4) 위험 임계값 이상 행동에 대한 대역 외 승인 게이트. **Microstable**: ⚠️ MEDIUM (미래) — keeper에 LLM 결정 레이어 추가 시 B72 + META-18 = 완전한 에이전트 위협 모델. 현재: 비-에이전트 keeper → 직접 해당 없음. (B72, B62, B29, B43 참조) |
 | META-17 Cross-Chain Trust Assumption Cascade — 확률적 보장을 절대 보장으로 취급하는 레이어 의존 설계 실패 (퍼플팀 메타, 2026-03-22) | **Sherlock "Cross-Chain Security in 2026" (2026-03-21)**: "Most incidents trace to **one violated assumption cascading because other layers assumed the first layer was guaranteed**." 크로스체인 시스템 구조: 브릿지/메시징 레이어는 "체인 A에서 사건이 발생했다는 주장"을 목적지 체인에 전달하고 목적지 체인은 이를 사실로 취급. 4가지 신뢰 패밀리(light-client, committee attestation, optimistic, ZK-proof) 각각이 **확률적 보장**이지 절대적 보장이 아님. 그러나 각 레이어를 개별 감사할 때 "Layer X는 안전하다"는 결론이 다음 레이어 설계로 전파되어 **"Layer X는 절대 실패하지 않는다"는 가정으로 굳어짐**. **폭포 실패 메커니즘**: Layer N 가정 위반 → Layer N+1~N+k가 이 가정에 의존해 자신의 안전성을 설계했으므로 연쇄 실패. 단일 가정 위반이 N개 레이어의 안전성을 동시에 무력화. **왜 감사가 놓치는가**: ① 감사는 각 레이어를 독립적으로 검토 — "Layer X가 실패한다면?"을 다음 레이어 감사에서 명시적으로 테스트하지 않음. ② "우리 브릿지는 Chainsafe/Trail of Bits 감사를 받았다" = 해당 브릿지의 trust assumption이 절대적 보장인 것처럼 상위 레이어에 전달. ③ "Fast bridging + composability" 시대: 브릿지된 자산이 DeFi 프리미티브로 사용 → 브릿지 trust assumption 실패 시 파급 범위 = 모든 DeFi 통합 레이어. **C23(Cross-Chain Governance Temporal Desync)과 구별**: C23 = 크로스체인 거버넌스에서 플래시론 타이밍 악용(특정 공격 벡터). META-17 = 크로스체인 스택 설계 전반에서 "확률적 보장 → 절대 보장"으로 상승하는 추상화 오류(구조적 설계 원칙). **해결책**: 크로스체인 감사 계약서에 "What-if assumption failure analysis" 필수화 — 각 trust assumption이 실패할 확률 × 다음 레이어 영향 범위를 명시. "Monitoring, incident response, explicit trust modeling are now core security requirements, not operational add-ons"(Sherlock 2026). **Microstable**: ✅ 현재 단일체인 Solana — META-17 직접 해당 없음. ⚠️ 크로스체인 거버넌스/브릿지 확장 시 각 브릿지 trust assumption을 확률적으로 명시하고 assumption 실패 시나리오를 통합 위협 모델에 포함 필수. **Source**: sherlock.xyz "Cross-Chain Security in 2026" (2026-03-21) |
 | C23 Cross-Chain Governance Temporal Desynchronization Flash Loan | 멀티체인 DAO 거버넌스에서 Chain A(Governor.sol)와 Chain B(VoteAggregator)를 연결하는 크로스체인 메시징 레이어의 시간적 비동기성을 감사가 독립 구성 요소(Governor 감사 + VoteAggregator 감사)로 분리 검토하여 통합 경계의 "temporal synchronization 보장 부재"를 미식별. 단일체인 플래시론 거버넌스(Beanstalk $182M)는 감사 표준 체크리스트에 포함됨; 크로스체인 변형(Chain B에서 플래시론 → Chain A 메시지 미확정 상태에서 투표 계산 → 플래시론 상환 후 투표 유효)은 어느 팀의 감사 범위에도 명시적으로 포함되지 않음. 거버넌스 컨트랙트가 treasury/upgrade/collateral-admission 권한을 제어하면 블라인드스팟 = 잠재적 nine-figure 손실. (C23, META-10 참조) |
 | D45 Blockchain-as-C2 Channel via Malicious Developer Toolchain Extension | 감사가 온체인 프로그램 로직과 keeper 바이너리를 검토하지만, keeper 운영자 개발 환경(IDE 확장, 빌드 도구)의 보안을 별도 운영 관심사로 분리. Solana RPC 호출이 DeFi 개발 환경에서 정상 트래픽이므로 블록체인-as-C2 채널(온체인 tx 메타데이터에 암호화 페이로드 저장)이 방화벽을 통과. 결과: 온체인 코드는 무결하나 operator keypair, RPC API key, keeper config가 악성 IDE 확장을 통해 탈취 → B36(stake authority hijack)과 동일 결과. 타이포스쿼팅 IDE 확장(`reditorsupporter.r-vscode-2.8.8-universal` vs `REditorSupport.r`)이 감사 체크리스트에 없는 공격 표면. (Bitdefender/Windsurf IDE, 2026-03-20) |
@@ -3754,3 +3757,69 @@ async function rebalance(targetCollateralRatio: number) {
 5. **Cross-DEX routing**: use aggregators that route across multiple venues to reduce impact on any single pool (reduces MEV profitability from Protocol B/C arbitrage).
 **Microstable relevance**: ⚠️ LATENT MEDIUM — Current keeper does NOT route through DEX. Direct vault state transitions. If DEX integration is ever added (liquidation engine, collateral swap), implement private mempool + split orders before first production use.
 **Source**: https://www.abcmoney.co.uk/2026/03/mev-bot-sandwich-attack-drains-50m-swap-to-36k/ | Chainstack Solana MEV 2026 blog (Application-Controlled Execution analysis) | https://mpost.io/leading-mev-bots-dominating-defi-trading-in-2026/
+
+### A70. DelegateCall Multi-Sig Admin Takeover — Token Mint Authority Seizure
+**Signal**: UXLINK exploit (2026-03-21, ~$11.8M) — `delegateCall` vulnerability in multi-signature smart contract allowed attacker to seize full admin control, mint billions of UXLINK tokens, drain stablecoins and ETH.
+**Historical**: Parity Wallet (2017, $31M — delegatecall to library killed), Wormhole guardian key compromise (2022, $320M), Ronin Network (2022, $624M — validator key compromise).
+**Mechanism**: Multi-sig contracts delegate call execution to an implementation/library contract for extensibility. If the implementation address is not immutably fixed, OR if the multi-sig logic can be bypassed via a specially crafted `delegateCall` payload:
+1. Attacker constructs a `delegateCall` payload that executes an upgrade or state-mutation in the context of the multi-sig
+2. Multi-sig storage layout is now controlled by attacker
+3. Attacker appoints themselves as sole admin / owner
+4. Attacker calls mint function with unbounded cap → billions of new tokens created
+5. Attacker swaps tokens for stable assets → drains liquidity → exits
+**Sub-pattern (UXLINK-specific)**: The multi-sig's `delegateCall` dispatch logic failed to validate that the target function was within the authorized function selector allowlist. Any calldata that passed selector routing could invoke privileged state-write operations in the caller (multi-sig) context.
+**Why distinct from A4 (Access Control)**: A4 covers missing `onlyOwner` checks on individual functions. A70 is the delegateCall context confusion where the CORRECT access control on the library is irrelevant — execution context is the CALLER (multi-sig), so the library's permission checks are bypassed by design.
+**Why distinct from A37 (Proxy Upgrade Unprotected)**: A37 covers unprotected `upgradeTo()` allowing arbitrary implementation replacement. A70 is not an upgrade — the implementation isn't changed; instead `delegateCall` is used to mutate the multi-sig's OWN storage in a way that grants attacker admin privileges without going through the upgrade path.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: multi-sig execute() dispatches delegateCall without function selector allowlist
+function execute(address target, bytes calldata data) external onlySigners {
+    // MISSING: require(isAllowedSelector(bytes4(data[:4])), "disallowed");
+    (bool success,) = target.delegatecall(data);  // executes in this contract's storage context
+    require(success);
+}
+
+// Attacker submits data = abi.encodeWithSelector(setOwner.selector, attacker)
+// → sets multi-sig's owner slot = attacker (delegateCall: no context boundary)
+// → attacker now calls mint() with MAX uint256 cap
+
+// SAFE: explicit selector allowlist
+function execute(address target, bytes calldata data) external onlySigners {
+    bytes4 selector = bytes4(data[:4]);
+    require(allowedSelectors[selector], "MultiSig: disallowed function");
+    (bool success,) = target.delegatecall(data);
+    require(success);
+}
+```
+**Defense**:
+1. **Selector allowlist**: every `delegateCall` dispatch must validate `bytes4(calldata[:4])` against a hardcoded allowlist; never allow open-ended delegateCall
+2. **Storage layout guard**: define explicit storage slots for all admin roles; add invariant assertions that admin slot never changes via delegateCall path
+3. **Audit checklist**: any `delegateCall` in a contract with token-minting authority → mandatory path-coverage audit of all possible calldata combinations that reach the delegateCall
+4. **Immutable implementation**: if multi-sig uses library delegation, make the library address `immutable`; prevent runtime address substitution
+5. **Post-action mint invariant**: monitor-chain alert: any single TX minting >X% of total supply from a multi-sig address triggers circuit breaker
+**Why audits miss**: `delegateCall` is a standard pattern for extensible multi-sigs. Auditors check that the `execute()` function itself requires multi-sig quorum — they often miss that the PAYLOAD passed to `delegateCall` can mutate the caller's own admin state. The authorization check (quorum satisfied) is distinct from the payload safety check (selector restriction).
+**Microstable relevance**: ⚠️ LOW-MEDIUM — If any treasury multi-sig or governance contract uses `delegateCall` dispatch for extensibility, apply selector allowlist before first token-minting authority is granted. Current program is Solana/Anchor — Solana CPI doesn't have EVM-style `delegateCall`; closest analog is instruction sysvar manipulation or upgrade authority abuse (A4 + B68 coverage applies).
+**Source**: https://blog.amlbot.com/uxlink-hack-analysis/ | https://theccpress.com/uxlink-hacker-sells-11-8m-eth-zero-gains/ (2026-03-21)
+
+### B72. SIEM/EDR Behavioral Blind Spot for AI Agent Compromise
+**Signal**: HiddenLayer "2026 AI Threat Landscape Report" (2026-03-18, PR Newswire) — "1 in 8 reported AI breaches is now linked to agentic systems. An agent that runs code perfectly 10,000 times in sequence looks normal to SIEM/EDR. But that agent might be executing an attacker's will." Stellar Cyber "Top Agentic AI Security Threats in Late 2026" (2026-03-18) — "security frameworks and governance controls are struggling to keep pace with AI's rapid evolution."
+**Mechanism**: Traditional SIEM/EDR detection works by identifying behavioral anomalies against human-baseline behavior patterns:
+- Humans exhibit timing variability, session breaks, fatigue patterns
+- AI agents execute at consistent high frequency without breaks — indistinguishable from "healthy" agent behavior even when compromised
+- Attack path: adversary injects malicious goal via prompt injection (B29), memory poisoning (B43/B52), or indirect data injection → agent executes attacker's sequence consistently and correctly → SIEM sees: "authenticated agent, normal API call rates, no error spikes, no lateral movement" → no alert
+**Detection gap taxonomy**:
+1. **Volume-based rules**: threshold = 10,000 calls/hour; compromised agent at 8,000 calls/hour = below threshold → invisible
+2. **Sequence anomaly**: human ops teams would pause/query; agent never pauses → baseline is continuous execution → no anomaly
+3. **Authentication signals**: agent has valid session key, valid source IP, valid payload schema → no auth alert
+4. **Content-based inspection**: if SIEM doesn't parse DeFi transaction payloads, the difference between "legitimate rebalance" and "drain-all TX" is invisible at the network layer
+**Why distinct from B46 (Agentic AI Overprivilege via Normal Operation)**: B46 = agent causes harm through legitimately authorized operation without any adversary. B72 = adversary has already compromised the agent's goal/instruction and is operating THROUGH the agent; the detection infrastructure cannot see the compromise because agent behavior remains "normal" by all metrics.
+**Why distinct from B62 (Autonomous Wallet Agent Prompt Injection/Memory Poisoning)**: B62 = HOW the agent gets compromised (attack vectors). B72 = WHY the compromise is NOT DETECTED after it occurs (monitoring architecture blind spot). These are sequential in the kill chain: B62 achieves compromise → B72 explains why incident response doesn't catch it.
+**Defensive architecture (Zero Trust for Non-Human Entities)**:
+1. **Content-aware SIEM rules for DeFi agents**: parse TX payload semantics, not just call frequency; alert on TX that moves >X% of vault assets regardless of auth status
+2. **Intent attestation**: for each agent action cycle, log the decision rationale (prompt/context snapshot) alongside the action; enable forensic diffing of "what the agent was told" vs "what it did"
+3. **Behavioral canary**: inject synthetic harmless probe actions into agent workload; monitor for deviations from expected probe response as early-warning of goal corruption
+4. **Out-of-band confirmation gate**: any action above risk threshold (e.g., single TX moving >1% TVL) requires out-of-band approval signal from a second isolated channel (not accessible to the potentially compromised agent)
+5. **Memory integrity checksums**: hash agent's persistent memory state at each cycle; alert on unexpected state deltas not attributable to recorded inputs
+**Why audits miss**: smart contract audits don't cover the monitoring stack. Ops security reviews check that the agent has correct permissions (B46 defense). Neither evaluates whether the observability layer can detect goal-level compromise in a running agent.
+**Microstable relevance**: ⚠️ MEDIUM (future) — If Microstable keeper evolves to include any LLM-based decision layer or multi-step agentic execution: (a) ensure keeper TX logs include decision rationale, not just action taken; (b) add content-aware circuit breaker that fires on anomalous TVL-delta per TX regardless of auth; (c) B72 + B62 together define the full agentic keeper threat model.
+**Source**: https://www.prnewswire.com/news-releases/hiddenlayer-releases-the-2026-ai-threat-landscape-report-302716687.html | https://stellarcyber.ai/learn/agentic-ai-securiry-threats/ (2026-03-18)
