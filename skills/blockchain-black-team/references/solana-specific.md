@@ -680,3 +680,23 @@ Solana's evolving ACE (Application-Controlled Execution) system lets dApps defin
 3. ACE constraint specification bugs: if the constraint language allows ambiguous expressions, edge cases may evaluate to "unconstrained" — effectively disabling the protection.
 **Mitigation**: ACE constraints should be enforced on-chain (program-level checks), not merely off-chain (interface-level checks). Never rely on ACE as the sole protection against reordering or sandwiching.
 **Microstable relevance**: LOW — does not currently use ACE. Monitor if implementing Jito bundles for keeper.
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-24 -->
+
+## 2026-03-24 Patterns
+
+### tar-rs Supply Chain CI/CD Attack (A74)
+Keeper Rust build pipelines using tar-rs ≤ 0.4.44 are vulnerable to:
+1. **RUSTSEC-2026-0067** (CVE-2026-33056): `unpack_in` follows symlinks via `fs::metadata()` → crafted tarball can chmod keeper key directories to 0777.
+2. **RUSTSEC-2026-0068**: PAX size header silently ignored when header size nonzero → crafted entries bypass size-based validation.
+
+**Mitigation**: Pin `tar = ">=0.4.45"` in keeper Cargo.toml; run `cargo audit` in CI.
+
+### Audit-Evading Economic Exploit Architecture (A75)
+Exploitation of the gap between "technically correct code" and "economically safe protocol":
+- All individual instructions are technically correct; no audit finding can be raised
+- Multi-transaction oracle manipulation + deposit + mint + price-restore + withdraw sequence crosses audit scope boundary
+- Detection: for every oracle-price-dependent function, enumerate the profit path when price deviates N%
+- For MANUAL_ORACLE_MODE protocols: on-chain TWAP sanity gate is mandatory (reject writes > ±2% from TWAP)
+
+**Microstable-specific gap**: `write_oracle_price` in MANUAL_ORACLE_MODE has no TWAP deviation cap on-chain. Add `MAX_MANUAL_PRICE_DEVIATION = 200bps` constant + pre-write check.
