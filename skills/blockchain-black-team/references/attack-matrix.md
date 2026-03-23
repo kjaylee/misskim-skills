@@ -1,4 +1,4 @@
-# Attack Matrix — 84 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23) | META-01~18
+# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24) | META-01~18
 
 ## A. Smart Contract Vectors
 
@@ -3823,3 +3823,153 @@ function execute(address target, bytes calldata data) external onlySigners {
 **Why audits miss**: smart contract audits don't cover the monitoring stack. Ops security reviews check that the agent has correct permissions (B46 defense). Neither evaluates whether the observability layer can detect goal-level compromise in a running agent.
 **Microstable relevance**: ⚠️ MEDIUM (future) — If Microstable keeper evolves to include any LLM-based decision layer or multi-step agentic execution: (a) ensure keeper TX logs include decision rationale, not just action taken; (b) add content-aware circuit breaker that fires on anomalous TVL-delta per TX regardless of auth; (c) B72 + B62 together define the full agentic keeper threat model.
 **Source**: https://www.prnewswire.com/news-releases/hiddenlayer-releases-the-2026-ai-threat-landscape-report-302716687.html | https://stellarcyber.ai/learn/agentic-ai-securiry-threats/ (2026-03-18)
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-24 (03:00 KST) -->
+
+### A72. Privileged Minter EOA Key Compromise + Absent On-Chain Mint Cap
+**Historical**: Resolv Labs USR Stablecoin (2026-03-22, ~$25M realized / $80M tokens minted)
+**Mechanism**: An off-chain `SERVICE_ROLE` account — an externally-owned address (EOA), not a multisig — held direct mint authority over the protocol's `requestSwap` / `completeSwap` functions. When the EOA private key was compromised, the attacker had unrestricted ability to call these functions. CRITICAL: there were NO on-chain validations for mint amount caps, no oracle cross-checks for collateral adequacy, no max-supply guards. Attack:
+1. Compromise SERVICE_ROLE EOA private key (exact vector: suspected hot key theft or infra breach)
+2. Call `requestSwap(USDC_deposit_amount=~$150K)` + `completeSwap()` in sequence
+3. Protocol mints USR tokens based on USDC deposit — but amount multiplier not validated on-chain
+4. Repeat / amplify: ~80M USR minted from ~$150K collateral (400–500× inflation)
+5. Dump 80M USR on Curve/Uniswap/KyberSwap → USR depegs from $1.00 to $0.025
+6. Convert to ETH via multiple DEXes; actual realized loss ~$23–25M; underlying $141M collateral intact
+**Why distinct from B15 (Key Compromise — generic)**: B15 covers key theft and its operational defense (HSM, MPC). A72 is an ARCHITECTURAL failure: the design granted a SINGLE EOA unrestricted mint authority WITHOUT any on-chain constraint checking amount validity. Even with a compromised key, a properly designed protocol would reject unbounded minting via on-chain cap invariants. The key theft was the trigger; the missing on-chain guard was the root cause.
+**Why distinct from A10 (Logic Bug — general)**: A10 covers general business logic errors. A72 is the specific class: "off-chain privileged role with on-chain mint authority has no on-chain cap/invariant validation." The protocol trusted off-chain callers entirely for correctness — the `completeSwap` function was effectively an unchecked `mint(address, uint256)` gated only by EOA signature.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: service role with unrestricted mint — no on-chain amount validation
+function completeSwap(address recipient, uint256 mintAmount) external onlyServiceRole {
+    // MISSING: require(mintAmount <= pendingSwap[recipient].collateralValue * MAX_RATIO, "exceeds cap");
+    // MISSING: require(totalSupply() + mintAmount <= MAX_SUPPLY, "supply cap");
+    // MISSING: oracle cross-check: require(mintAmount <= deposit_collateral * oracle_price / SCALE, "oracle mismatch");
+    _mint(recipient, mintAmount);
+}
+
+// SAFE: on-chain invariants enforced regardless of caller authorization
+function completeSwap(address recipient, uint256 mintAmount) external onlyServiceRole {
+    PendingSwap memory swap = pendingSwaps[recipient];
+    uint256 maxAllowed = oracle.getPrice(swap.collateral) * swap.amount / SCALE;
+    require(mintAmount <= maxAllowed, "MintExceedsCollateral");
+    require(totalSupply() + mintAmount <= MAX_SUPPLY, "SupplyCap");
+    require(block.timestamp <= swap.expiry, "SwapExpired");
+    _mint(recipient, mintAmount);
+    delete pendingSwaps[recipient];
+}
+```
+**Solana/Microstable relevance**:
+- Microstable's keeper has authority to write oracle data (if MANUAL_ORACLE_MODE) and call `rebalance()`. But: `mint()` and `redeem()` are USER-signed — no keeper/service role can mint on behalf of users. ✅ A72 direct path not applicable.
+- LATENT RISK: `keeper_authority` has `rebalance()` access. If a future "keeper-initiated liquidation" or "keeper-initiated redemption" instruction is added, ensure on-chain amount validation is enforced REGARDLESS of keeper authority status.
+- **On-chain invariant check audit**: verified Microstable `mint()` enforces: staleness, confidence, CR check, per-slot flow cap, per-TX cap, depeg pause. All caps are enforced on-chain. ✅
+**Defense**:
+1. **On-chain amount invariants are non-negotiable**: any function that can mint tokens must validate mint amount against on-chain collateral state — never trust caller-supplied amounts from privileged roles
+2. **Per-TX and cumulative supply caps**: `MAX_SUPPLY`, per-slot flow caps, per-TX caps enforced at contract level
+3. **Multisig or threshold for privileged minter**: SERVICE_ROLE must be a multisig (≥2-of-N) or MPC key — never a single EOA
+4. **Oracle cross-check at mint time**: mint amount must be validated against a live oracle price for the deposited collateral; reject if `mintAmount > collateralValue * safety_ratio`
+5. **Emergency pause**: circuit breaker that triggers if `mint_volume_last_hour > threshold_ppm_of_supply`
+**Source**: https://www.cryptotimes.io/2026/03/23/kyberswap-blocks-usr-stablecoin-exploiter-wallets-after-80m-breach/ | https://www.cryptotimes.io/2026/03/22/usr-stablecoin-breaks-down-after-critical-80m-exploit/ | PeckShield/Cyvers incident analysis (March 22, 2026)
+
+### A73. Long-Horizon Collateral Dominance + Donation Supply-Cap Bypass
+**Historical**: Venus Protocol Rekt4 (BNB Chain, 2026-03-15, $3.7M extracted, $2.15M bad debt)
+**Mechanism**: A 9-month patient preparation phase enabled an attack that bypassed supply caps through a donation mechanism — no flash loan required:
+1. **9-month dominance accumulation**: Attacker slowly acquired ~84% of Venus Protocol's supply cap for the Thena (THE) token. On-chain: attacker's address 0x1A35bD28EFD46CfC46c2136f878777d69ae16231 built position over months without triggering anomaly detection
+2. **Donation attack to bypass supply cap**: Supply caps limit how much of a collateral token can be deposited into a lending protocol. Attacker donated THE tokens directly to the Venus vTHE market contract (not via the deposit function), inflating the contract's raw token balance without going through the deposit accounting path. This bypassed the supply cap because the cap was checked against the ACCOUNTING balance, not the RAW balance — but the protocol's AMM oracle read from the RAW balance
+3. **Mango-style recursive borrow**: With inflated collateral value (thin liquidity + large donation = inflated spot price), attacker borrowed against the over-valued THE position, then borrowed more, recursively draining thin-liquidity pairs
+4. **Position implosion**: After extraction, the artificially-supported position collapsed into $2.15M bad debt on Venus governance
+**Audit dismissal pattern**: Venus's own Code4rena analysis (2023) flagged "donations bypassing supply cap logic" as a known mechanism and the team responded "supported behavior with no negative side effects." This is the B41 (audit fragmentation) + B42 (severity miscalibration) combination that converts a known finding into an exploitable gap.
+**Why distinct from A2 (Flash Loan + Price Manipulation)**: A2 requires borrowing capital within a single transaction. A73 requires NO flash loan — the attacker accumulated a real position over 9 months and used it as the attack vehicle. The slow buildup is the distinguishing characteristic: 9 months of patient capital deployment below detection thresholds.
+**Why distinct from A40 (ERC4626 Share-Price Donation)**: A40 inflates a vault's `totalAssets/totalSupply` ratio affecting downstream protocols reading that share price. A73 inflates a lending market's collateral token price via donation to the market contract itself, bypassing the lending protocol's own supply cap — two different donation targets and two different exploitation paths.
+**Key insight — "Known, Dismissed" Attack Pattern**: When a protocol team responds to an audit finding with "supported behavior," they are effectively saying "this is intended." Attackers read audit reports. A dismissed finding that remains unpatched for 2+ years (2023 Code4rena → 2026 exploit) is a roadmap, not a closed ticket.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: supply cap checked against accounting balance only; donation inflates price separately
+mapping(address => uint256) public accountedBalance;
+uint256 public supplyCap;
+
+function deposit(uint256 amount) external {
+    require(accountedBalance[address(this)] + amount <= supplyCap, "SupplyCapExceeded");
+    token.transferFrom(msg.sender, address(this), amount);
+    accountedBalance[address(this)] += amount;
+    // ... mint cTokens
+}
+
+// Raw balance readable by oracle: token.balanceOf(address(this))
+// Attacker donates directly: token.transfer(vTokenAddress, donationAmount)
+// Oracle reads raw balance: inflated above supply cap; accountedBalance unchanged
+// Supply cap is bypassed; price is inflated
+
+// SAFE: dual invariant — both accounting AND raw balance checked; oracle uses TWAP not spot
+require(token.balanceOf(address(this)) <= MAX_SAFE_HOLDING, "RawBalanceExceeded");
+require(accountedBalance[address(this)] + amount <= supplyCap, "SupplyCapExceeded");
+// AND: oracle uses TWAP with deviation check, not spot/raw balance
+```
+**Microstable relevance**:
+- Microstable tracks `total_deposits` as an explicit accounting field (not raw balance) — same defense as A40. ✅
+- No lending market collateral admission logic in Microstable on-chain program. ✅
+- LATENT RISK: If Microstable's vault accounts ever serve as collateral in an external lending protocol, that lending protocol's supply cap must check against Microstable's TRACKED accounting field, not raw SPL token balance.
+- **Known-dismissed finding audit**: Microstable has no Code4rena-style dismissed "supported behavior" findings known at this time, but B45 (post-audit deployment delta = 3,281-line unattested gap) means unknown-and-undismissed findings may exist in the delta.
+**Defense**:
+1. **Dual invariant for supply cap**: check BOTH accounting balance AND raw token balance; if raw > accounting (donation detected), pause or reject until governance reconciles
+2. **Oracle must use TWAP, not spot AMM**: any collateral with thin liquidity where a whale can dominate the supply cap is a donation-attack surface if oracle reads spot
+3. **Supply cap dominance monitoring**: alert if any single address holds >50% of a market's collateral supply cap; treat as accumulation-phase signal
+4. **"Known, dismissed" finding review protocol**: quarterly re-scan of all audit findings marked "won't fix" or "supported behavior"; re-evaluate under adversarial economic modeling, not just technical correctness
+5. **Multi-year slow-accumulation detection**: on-chain analytics to flag wallets that have been steadily accumulating toward supply cap dominance over 6+ months
+**Source**: https://rekt.news/venus-protocol-rekt4 | https://community.venus.io/t/the-market-incident-post-mortem/5712 | Code4rena Venus audit 2023 (dismissed finding reference)
+
+### B49. Risk-Oracle Anti-Manipulation Guard Misconfiguration → Unintended Mass Liquidation
+**Historical**: Aave wstETH CAPO Oracle Misconfiguration (2026-03-10, $27.78M in healthy position liquidations, no attacker)
+**Mechanism**: Aave deployed a CAPO (Capped Asset Price Oracle) designed to prevent oracle price manipulation — the defender's anti-manipulation tool. A single parameter update by Chaos Labs' Edge Risk engine set the CAPO cap for wstETH at 2.85% BELOW the live market rate. Because the CAPO oracle is authoritative for Aave's liquidation math, all positions using wstETH as collateral were now priced at market_rate × 0.9715 by the oracle. For leveraged or near-threshold positions, this immediate 2.85% haircut pushed health factors below 1.0 → triggered $27.78M in liquidations of 34 accounts in one block. Total wstETH liquidated: 10,938 (≈ $27.78M). No attacker, no exploit code, no hack. The anti-manipulation system itself misfired on the people it was built to protect.
+**Why distinct from A3 (Oracle Manipulation — external attacker)**: A3 requires an adversary who pushes false data to an oracle feed. B49 has NO adversary. The oracle data was pushed by the protocol's own risk management system following its automated parameter logic. The "manipulation" is the anti-manipulation defense itself miscalibrating.
+**Why distinct from B18 (Config Injection — attacker modifying config)**: B18 requires an adversary to modify configuration. B49: there was no attacker; the misconfiguration was generated by an authorized risk management agent (Chaos Labs Edge Risk) executing its intended automated function — it calculated an incorrect CAPO parameter.
+**Why distinct from A10 (Logic Bug)**: A10 is a code-level logic error in the protocol contracts. B49 is a parameterization error in an auxiliary risk system that feeds into the protocol — the contracts executed correctly on the wrong input.
+**New threat class — "Defender-Induced Oracle Failure"**: As protocols automate risk parameter management (risk oracles, automated market risk engines, on-chain parameter updates), the DEFENDER'S OWN TOOLING becomes a high-impact attack/failure surface. A single automated parameter push can affect $27.78M in 1 block — faster than any governance process can respond. This class of failure will increase as AI-driven risk oracles automate parameter updates at machine speed.
+**Attack-surface taxonomy for automated risk oracles**:
+- Risk oracle calculation error (B49 exact mechanism)
+- Risk oracle malicious actor with write access (B15 key + B49 surface)
+- Risk oracle manipulation via corrupted data inputs (A3 + B49 surface)
+- Risk oracle prompt injection if AI-based (B29 + B49 surface)
+**Code/config pattern to find**:
+```typescript
+// VULNERABLE: risk engine pushes parameter directly to on-chain oracle; no pre-execution validation
+async function updateOracleCap(asset: string, newCap: BN): Promise<void> {
+    const tx = await riskEngine.buildUpdateCapTx(asset, newCap);
+    await agentHub.executeDirectly(tx);  // ← one-block execution; no sanity gate
+}
+
+// SAFER: parameter sanity gate before execution
+async function updateOracleCap(asset: string, newCap: BN): Promise<void> {
+    const currentMarketPrice = await getMarketPrice(asset);
+    const capRatio = newCap / currentMarketPrice;
+    // Reject if proposed cap is more than N% below current market price
+    if (capRatio < (1 - MAX_CAP_DISCOUNT_FROM_MARKET)) {
+        throw new Error(`CAPO_SANITY_FAIL: cap ${capRatio.toFixed(4)} is ${((1-capRatio)*100).toFixed(2)}% below market — would trigger mass liquidation`);
+    }
+    // Optional: simulate impact before execution (how many positions would be liquidated?)
+    const liquidationImpact = await simulateLiquidationImpact(asset, newCap);
+    if (liquidationImpact.total_usd > IMPACT_THRESHOLD_USD) {
+        throw new Error(`LIQUIDATION_IMPACT_GATE: would liquidate $${liquidationImpact.total_usd} — human approval required`);
+    }
+    await agentHub.executeDirectly(tx);
+}
+```
+**Microstable relevance**:
+- Microstable uses Pyth oracle + keeper writes. Keeper has `oracle_write_authority` with `MANUAL_ORACLE_MODE` time-boxing. The keeper does NOT use an automated risk-engine / CAPO-style cap system. ✅ NOT APPLICABLE directly.
+- LATENT RISK (MEDIUM): If an automated risk parameter system is ever added (automated fee rate adjustments, automated CR_TARGET updates, automated collateral weight adjustments), apply the following safeguards:
+  - Pre-execution sanity gate: new parameter must remain within N% of current value
+  - Liquidation-impact simulation before any oracle cap / health factor threshold change
+  - Human approval gate for any parameter change that could affect health factors of existing positions
+  - Post-update monitoring: if liquidation volume spikes >X% within 1 slot after parameter update, auto-revert
+- **Current MANUAL_ORACLE_MODE (HIGH-03 fix)**: already time-boxed to 120 slots; requires keeper authority + cooldown. ✅ Structural prevention of sustained misconfiguration.
+**Defense**:
+1. **Pre-execution parameter sanity gate**: before any risk-oracle parameter update is executed, validate the new value against market reality — reject if proposed cap is N% below current fair value (e.g., >2% discount from market = human approval required)
+2. **Liquidation-impact simulation**: simulate how many positions would be liquidated if the new parameter was applied NOW; gate execution if impact exceeds threshold
+3. **Automated parameter rollback**: if liquidation volume in the slot immediately after parameter update exceeds 5× baseline, auto-revert the parameter and freeze further updates pending governance review
+4. **Separation of concerns**: risk engine writes should NOT be able to execute in 1 block; require a 2-slot finalization window where monitoring can intervene
+5. **Human approval for parameter changes with >$1M potential liquidation impact**
+6. **"Anti-manipulation oracle" itself needs anti-manipulation protection**: CAPO/risk-oracle parameter write paths are HIGH-VALUE targets; apply B15 (key management) + B49-specific sanity gates to all risk parameter write authority
+**Source**: https://rekt.news/aave-rekt | https://governance.aave.com/t/post-mortem-exchange-rate-misallignment-on-wsteth-core-and-prime-instances/24269 | https://www.coindesk.com/business/2026/03/10/defi-lending-platform-aave-sees-a-rare-usd27-million-liquidations-after-a-price-glitch
+
+| A72 Privileged Minter EOA Key + Absent Mint Cap | SERVICE_ROLE(EOA)가 온체인 민트 한도 없이 직접 민팅 권한 보유. 키 탈취 시 무제한 발행 가능. 온체인 caps가 없으면 권한 있는 호출자에 대해서도 민팅량 검증이 불가 — "오프체인 권한 있는 역할이 온체인 불변식 없이 민팅" 아키텍처는 설계상 취약. B15와 달리 단순 키 보안이 아닌 설계 실패 (Resolv Labs USR, 2026-03-22). |
+| A73 Long-Horizon Collateral Dominance + Donation Supply-Cap Bypass | 9개월 공급 캡 지배력 축적 후 도네이션으로 캡 우회 + 가격 조작. 플래시론 없는 느린 포지션 축적이 표준 이상 탐지를 우회. 감사에서 "지원되는 동작"으로 기각된 2023 finding이 2026 익스플로잇 로드맵이 됨 (Venus Protocol Rekt4). |
+| B49 Risk-Oracle Anti-Manipulation Guard Misconfiguration | 공격자 없음. 프로토콜 자체 리스크 엔진이 잘못된 CAPO 파라미터 푸시 → 2.85% 가격 헤어컷 → 건전한 $27.78M 포지션 청산. "방어자의 도구 자체가 공격면"이 되는 새 위협 클래스 등장. AI 기반 리스크 오라클 자동화 증가에 따라 빈도 증가 예상 (Aave wstETH CAPO, 2026-03-10). |

@@ -1,3 +1,94 @@
+---
+
+## 2026-03-24 Daily Check
+
+### Source Sweep (24h window: 2026-03-23 to 2026-03-24 KST)
+- Sources checked: rekt.news (frontpage, /aave-rekt, /venus-protocol-rekt4, /solv-rekt), cryptotimes.io (USR/Resolv Labs exploit), Brave Search (DeFi hacks March 2026), web_fetch fallback for all above
+- **3 new incidents** confirmed with code-level mechanisms in the sweep window:
+  1. **Resolv Labs USR Stablecoin** (2026-03-22, ~$25M realized / $80M minted) — A72 NEW VECTOR
+  2. **Venus Protocol Rekt4** (2026-03-15, $3.7M) — A73 NEW VECTOR
+  3. **Aave wstETH CAPO Misconfiguration** (2026-03-10, $27.78M) — B49 NEW VECTOR
+- 1 additional incident noted (Solv BRO vault 2026-03-05, $2.73M — A46 already in matrix; confirmed rekt.news writeup)
+- No new Solana-native on-chain smart contract exploits with fund loss in this window beyond those already mapped.
+
+### New Vectors Added Today (2026-03-24)
+
+| Vector | Incident | Date | Category | Loss |
+|--------|---------|------|----------|------|
+| **A72 (NEW): Privileged Minter EOA Key Compromise + Absent On-Chain Mint Cap** | Resolv Labs USR Stablecoin | 2026-03-22 | Key Compromise + Logic Bug Architecture | ~$25M realized ($80M minted) |
+| **A73 (NEW): Long-Horizon Collateral Dominance + Donation Supply-Cap Bypass** | Venus Protocol Rekt4 (BNB Chain) | 2026-03-15 | Flash Loan + Price Manipulation + Economic | $3.7M extracted / $2.15M bad debt |
+| **B49 (NEW): Risk-Oracle Anti-Manipulation Guard Misconfiguration → Mass Liquidation** | Aave wstETH CAPO (Ethereum) | 2026-03-10 | Oracle + Config + No Attacker Required | $27.78M healthy positions liquidated |
+
+**A72 Technical Summary (Resolv Labs USR, 2026-03-22, ~$25M)**:
+- SERVICE_ROLE was a single EOA (not multisig) with direct mint authority over `requestSwap`/`completeSwap`
+- No on-chain validation of mint amounts — no max cap, no oracle cross-check, no supply guard
+- Attacker deposited ~$150K USDC and minted ~80M USR (400–500× inflation) via compromised key
+- USR depegged from $1.00 → $0.025; converted to ETH via Curve/Uniswap/KyberSwap
+- Root cause: ARCHITECTURAL — trusted off-chain role with no on-chain invariant enforcement
+- Distinguishes from B15 (key theft): B15 is the trigger; A72 is the design failure that made the trigger lethal
+
+**A73 Technical Summary (Venus Protocol Rekt4, 2026-03-15, $3.7M)**:
+- 9-month patience: attacker accumulated 84% of THE token supply cap on Venus
+- Donation attack bypassed supply cap (token.transfer to vToken contract → raw balance inflated, supply cap accounting unchanged)
+- Mango-style recursive borrow on thin THE/USD liquidity → $3.7M extracted
+- Team dismissed identical finding from 2023 Code4rena audit: "supported behavior, no negative side effects"
+- Flash loan NOT required — attacker used own patient capital accumulation
+
+**B49 Technical Summary (Aave CAPO, 2026-03-10, $27.78M)**:
+- Zero attacker. Chaos Labs Edge Risk engine computed incorrect CAPO parameter for wstETH
+- New cap = 2.85% below live market price → immediate 2.85% collateral haircut for all wstETH positions
+- AgentHub executed in 1 block → 34 accounts, 10,938 wstETH ($27.78M) liquidated
+- First documented large-scale "Defender-Induced Oracle Failure" via automated risk parameter system
+- Distinct from A3 (external oracle manipulation) and B18 (attacker config injection)
+
+### Full 90-Vector Microstable Security Check (2026-03-24)
+
+**A72 — Privileged Minter EOA + Absent Mint Cap**
+- `lib.rs` `mint()` instruction: USER-SIGNED (`authority: ctx.accounts.user`). Keeper has NO ability to initiate mints on behalf of users.
+- On-chain caps enforced in `mint()`: `MAX_COLLATERAL_AMOUNT`, per-TX cap (`MAX_MINT_PER_TX_PPM = 2%`), per-slot cap (`DEFAULT_MAX_MINT_PER_SLOT_PPM = 6%`), CR check, depeg pause, oracle confidence + staleness.
+- No SERVICE_ROLE equivalent with direct mint authority exists. ✅ **DEFENDED — A72 architectural failure class not present**
+
+**A73 — Long-Horizon Collateral Dominance + Donation Supply-Cap Bypass**
+- `lib.rs` tracks `total_deposits` as explicit accounting field (updated only via `mint()`, `redeem()`, `rebalance()`). Direct SPL token transfers to vault ATAs do NOT update `total_deposits`. ✅
+- Microstable is not a lending market with supply cap admission for user-supplied collateral assets — no "collateral listing" with AMM-based spot price. ✅
+- No supply cap governance mechanism with raw-balance oracle read path. ✅
+- **Known-dismissed finding audit**: No Code4rena-style dismissed findings for Microstable in available audit records. B45 (unattested 3,281-line delta) remains the open risk. ✅ **DEFENDED — A73 direct path not applicable; B45 remains**
+
+**B49 — Risk Oracle Anti-Manipulation Guard Misconfiguration**
+- Microstable uses Pyth oracle + keeper `oracle_write_authority`. No CAPO-style automated risk engine.
+- `MANUAL_ORACLE_MODE` is time-boxed to 120 slots max, requires cooldown (HIGH-03 fix). ✅
+- No automated risk parameter update pipeline (no Chaos Labs / Edge Risk equivalent). ✅
+- **Latent risk**: If automated fee rate / CR_TARGET / collateral weight adjustment is ever added → pre-execution sanity gate and liquidation-impact simulation are mandatory before first use.
+- ✅ **NOT APPLICABLE (current architecture) — Latent MEDIUM if automated risk oracle ever added**
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A72 Privileged Minter EOA + Absent Cap** | lib.rs mint() | ✅ DEFENDED | User-signed only; multiple on-chain flow caps; no SERVICE_ROLE mint path |
+| **A73 Donation Supply-Cap Bypass** | lib.rs total_deposits | ✅ DEFENDED | Accounting field (not raw balance); not a lending market; no spot-price oracle for supply cap |
+| **B49 Risk Oracle Misconfiguration** | Keeper / Oracle write path | ✅ NOT APPLICABLE | No automated risk engine; MANUAL_ORACLE_MODE time-boxed 120 slots |
+| A59 DEX Aggregator Thin-Pool (carry-forward) | All | ✅ NOT APPLICABLE | No DEX integration |
+| **B45 Audit Attestation Gap** | All on-chain code | ❌ HIGH CARRY-FORWARD (DAY 18) | audit-attestation.json absent; unattested delta persists |
+| A43 Commit/Reveal Threshold Circumvention | lib.rs rebalance() | ⚠️ MEDIUM CARRY-FORWARD | No cumulative drift tracking |
+| B44 SPL Token Delegate Drain | lib.rs mint() | ⚠️ MEDIUM CARRY-FORWARD | No delegate.is_none() check in mint() |
+| D43 Security-Tooling Inversion | pages.yml | ⚠️ LOW CARRY-FORWARD | No Trivy; SHA-pin gap |
+
+### Open Carry-Forwards (Priority Order)
+
+| Priority | ID | Days Open | Description | Fix |
+|----------|-----|-----------|-------------|-----|
+| ❌ HIGH | B45 | DAY 18 | audit-attestation.json absent; 3,281-line unattested delta | Create attestation + CI gate |
+| ⚠️ MEDIUM | A43 | DAY ~15 | No cumulative drift accumulator in rebalance() | Add drift tracking |
+| ⚠️ MEDIUM | B44 | DAY ~15 | No delegate.is_none() check in mint() | Add check |
+| ⚠️ LOW | D43 | DAY 3 | GitHub Actions tag vs. SHA pinning | SHA-pin |
+
+### Today's Verdict
+- New incidents found: **3 (USR/Resolv 2026-03-22, Venus Rekt4 2026-03-15, Aave CAPO 2026-03-10)**
+- New attack vectors added: **3 (A72, A73, B49)**
+- Microstable findings: **0 CRITICAL / 0 HIGH new** / **0 MEDIUM new** / **0 LOW new**
+- All 3 new vectors: ✅ DEFENDED or ✅ NOT APPLICABLE for current Microstable architecture
+- Carry-forward: B45 HIGH (DAY 18), A43 MEDIUM, B44 MEDIUM, D43 LOW
+- Matrix: **90 vectors** total (87 pre-today + 3 new 2026-03-24)
+
 
 ---
 
