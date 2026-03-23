@@ -1,4 +1,4 @@
-# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24) | META-01~18
+# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24) | META-01~19
 
 ## A. Smart Contract Vectors
 
@@ -3975,3 +3975,80 @@ async function updateOracleCap(asset: string, newCap: BN): Promise<void> {
 | B49 Risk-Oracle Anti-Manipulation Guard Misconfiguration | 공격자 없음. 프로토콜 자체 리스크 엔진이 잘못된 CAPO 파라미터 푸시 → 2.85% 가격 헤어컷 → 건전한 $27.78M 포지션 청산. "방어자의 도구 자체가 공격면"이 되는 새 위협 클래스 등장. AI 기반 리스크 오라클 자동화 증가에 따라 빈도 증가 예상 (Aave wstETH CAPO, 2026-03-10). |
 | A74 Rust tar-rs CI/CD Build Pipeline Symlink Traversal | RUSTSEC-2026-0067 (CVE-2026-33056): `tar::unpack_in` follows symlinks → crafted tarball can chmod arbitrary dirs (keeper key dir, CI artifact dir). RUSTSEC-2026-0068: PAX size header ignored → oversized entry injection bypasses size gates. Supply chain attack on keeper deployment pipeline; not on-chain. Patch: tar ≥ 0.4.45. Combined with A54 (TLS bypass) → full keeper compromise. (RustSec, 2026-03-23) |
 | A75 Audit-Evading Economic Exploit Design (Meta-Technique) | 2025-2026 DeFi 익스플로잇의 70%+가 전문 감사를 통과한 컨트랙트에서 발생. 경제적 공격은 기술적 정확성을 위반하지 않으므로 정적 분석(Sec3 X-ray), 퍼저(Trident), IDL 검사 모두 통과. 오라클 가격이 "올바른" 값을 가질 때 작동하지만 경제적 이득 방향으로 1% 오류 시 채굴 가능한 경로 존재. 감사 방법론 갭: 단일 컨트랙트 정확성 vs 멀티-TX 경제적 시퀀스. 모든 가격 민감 함수에 "오라클이 N% 틀리면?" 쿼리 필수. Microstable: MANUAL_ORACLE_MODE + 키 탈취 → 120슬롯 내 경제적 추출 경로. Gap: 온체인 TWAP 대비 수동 오라클 가격 편차 제한 없음. (Solana Security Toolbox 2026, dev.to, 2026-03-17) |
+| META-19 Off-Chain Privileged Computation Anti-Pattern (OPCA) | **퍼플팀 2026-03-24 합성.** A72(Resolv $25M) + A35(Moonwell $1.78M) + B49(Aave $27.78M) + B35(YO $3.71M) = 누적 $58.27M을 야기한 단일 구조 패턴: "오프체인 권한 있는 컴포넌트가 파라미터 계산 → 온체인 함수가 역할 검증만 하고 값 범위를 독립 검증하지 않음." 각 사건은 단독 감사에서 "역할 체크 충분"으로 평가됨. 공통 방어: 모든 특권 오프체인 호출자로부터 수신하는 파라미터에 온체인 한계값(비율 상한, 가격 편차 대역, 슬리피지 하드캡) 독립 검증 필수. |
+
+<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-24 (04:00 KST) -->
+
+## META-19: Off-Chain Privileged Computation Anti-Pattern (OPCA)
+**Purple Team Synthesis — 2026-03-24**
+
+### 패턴 개요
+2026년 4개의 독립적 DeFi 보안 사고가 단일 구조 패턴을 공유함. 감사팀이 각 사건을 격리 분석하여 패턴을 인식하지 못한 구조적 감사 실패.
+
+**공통 구조 (OPCA 패턴)**:
+```
+[오프체인 컴포넌트] → computes(critical_param) → [온체인 함수]
+온체인 함수: require(caller has role) ✅ | require(param <= safe_bound) ❌
+```
+
+### 4개 사건 매핑
+
+| 사건 | 오프체인 컴포넌트 | 신뢰된 파라미터 | 누락된 온체인 검증 | 손실 |
+|------|----------------|----------------|------------------|------|
+| A72 Resolv Labs USR (2026-03-22) | SERVICE_ROLE EOA (키 탈취 or 오라클 조작) | `_mintAmount` | `mintAmount ≤ collateral × maxRatio` 체크 없음 | ~$25M |
+| A35 Moonwell cbETH (2026, $1.78M) | AI 코딩 어시스턴트 (Claude Opus 4.6 공동 작성) | oracle price formula (`ratio` as USD) | unit-chain sanity `price ∈ [min, max]` 배포 시 검증 없음 | $1.78M |
+| B49 Aave wstETH CAPO (2026-03-10) | Chaos Labs Edge 리스크 엔진 (자동화 파라미터 추출) | CAPO cap value | cap ≥ market_rate × (1 - maxDiscount) 사전 검증 없음 | $27.78M (강제 청산) |
+| B35 YO Protocol (2026-02) | 오퍼레이터 키퍼 (fat-finger) | slippage `min_amount_out` | `minOut ≥ amount × (1 - MAX_BPS)` 하드캡 없음 | $3.71M |
+
+**2026 OPCA 누적 손실**: **$58.27M**
+
+### 왜 감사가 이 패턴을 지속적으로 놓치는가
+
+1. **감사 경계 분리**: 온체인 코드는 감사 범위, 오프체인 컴포넌트(SERVICE_ROLE 운영, AI 어시스턴트, 리스크 엔진)는 "운영 사항"으로 분리
+2. **`onlyRole` 패턴 충분 착오**: 감사자가 `require(hasRole(SERVICE_ROLE, msg.sender))` 체크를 발견하면 "호출자 검증 완료"로 평가하고 파라미터 값 범위를 독립 검증할 필요성을 놓침
+3. **파라미터 정상 범위 = 부재 위험**: 테스트 환경에서 SERVICE_ROLE이 항상 올바른 값을 제공 → CI/fuzz에서 탐지 불가
+4. **단독 사건 분석 한계**: 각 감사사가 1건의 사건만 리뷰 — 4건을 합산해야 보이는 패턴을 단일 감사사가 발견하지 못함
+
+### Microstable 적용 분석
+
+**현재 아키텍처**:
+- `mint()` / `redeem()`: USER-signed — 키퍼/SERVICE_ROLE이 대신 mint 불가 ✅ (A72 직접 경로 차단)
+- 오라클 쓰기 (`MANUAL_ORACLE_MODE`): keeper authority가 가격 서명 → 온체인 Pyth 스테일니스/컨피던스 체크 ✅
+- 리밸런싱 (`rebalance()`): keeper authority 호출 → 가중치 한도/step limit 온체인 제약 ✅
+- 슬리피지 파라미터: `MAX_SLIPPAGE_BPS` 상수로 하드캡 ✅ (B35 방어 완료)
+
+**잠재 OPCA 갭** (MEDIUM, 미래 위험):
+- 오라클 가격 신뢰 체인: keeper가 Pyth 가격을 on-chain state에 커밋할 때, 미래 MANUAL_ORACLE_MODE가 keeper 계산 가격을 온체인에 쓰는 경로가 있다면, **온체인에서 해당 가격을 TWAP 또는 직전 n-슬롯 범위와 대조 검증하는 독립 레이어가 없으면 OPCA 패턴 노출**
+- 권고: keeper MANUAL_ORACLE_MODE 가격 커밋 시 `assert(|new_price - twap_price| / twap_price ≤ MAX_DRIFT_BPS)` 온체인 체크 추가 권고
+
+### 공통 방어 원칙 (META-19)
+
+```rust
+// OPCA 방어 패턴 (Solana/Anchor 예시)
+pub fn privileged_action(
+    ctx: Context<PrivilegedAction>,
+    param: u64,            // off-chain 컴포넌트 제공 파라미터
+) -> Result<()> {
+    // 1. 역할 검증 (기존)
+    require_keys_eq!(ctx.accounts.authority.key(), TRUSTED_AUTHORITY, ErrorCode::Unauthorized);
+    
+    // 2. 파라미터 독립 온체인 검증 (OPCA 방어 — 새로 필수)
+    let max_allowed = compute_max_from_onchain_state(&ctx)?;  // 온체인 상태에서 독립 계산
+    require!(param <= max_allowed, ErrorCode::ParamExceedsSafeRange);
+    
+    // 3. 글로벌 속도 제한 (OPCA 방어)
+    require!(param <= PER_BLOCK_CAP, ErrorCode::RateLimitExceeded);
+    
+    // 4. 이제 실행
+    execute_with_param(ctx, param)
+}
+```
+
+**META-19 체크리스트** — 모든 특권 오프체인 → 온체인 경계에 적용:
+- [ ] 온체인 불변식: 파라미터가 온체인 collateral/oracle/state에서 독립 계산된 상한을 초과하면 revert
+- [ ] 공급 상한: 민팅 함수는 글로벌 totalSupply cap 온체인 체크
+- [ ] 블록/슬롯 속도 제한: 단일 TX에서 추출 가능한 최대량 하드캡
+- [ ] 단위 불변식: 오라클 수식의 경우 배포 시 `result ∈ [minSaneUSD, maxSaneUSD]` 검증
+- [ ] 시뮬레이션 게이트: 리스크 파라미터는 적용 전 청산 영향 시뮬레이션 + 임계 초과 시 인간 승인
+
+**Source**: 퍼플팀 2026-03-24 합성 | A72 Resolv (dev.to, 2026-03-22) | A35 Moonwell (rekt.news) | B49 Aave (governance.aave.com, 2026-03-10) | B35 YO Protocol (rekt.news)
