@@ -1,4 +1,4 @@
-# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24) | META-01~19
+# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25) | META-01~19
 
 ## A. Smart Contract Vectors
 
