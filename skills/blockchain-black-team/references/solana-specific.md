@@ -700,3 +700,30 @@ Exploitation of the gap between "technically correct code" and "economically saf
 - For MANUAL_ORACLE_MODE protocols: on-chain TWAP sanity gate is mandatory (reject writes > ±2% from TWAP)
 
 **Microstable-specific gap**: `write_oracle_price` in MANUAL_ORACLE_MODE has no TWAP deviation cap on-chain. Add `MAX_MANUAL_PRICE_DEVIATION = 200bps` constant + pre-write check.
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-25 -->
+
+## 2026-03-25 Patterns
+
+### rustls-webpki CRL Bypass in Keeper TLS (A77)
+**Confirmed Keeper Exposure**: Cargo.lock has `rustls-webpki = "0.103.9"` (fix is `>=0.103.10`).
+
+Attack scenario:
+1. RPC provider (Helius/QuickNode/Triton) rotates TLS cert; old cert revoked via CRL with multiple distributionPoints
+2. rustls-webpki 0.103.9 only checks first DP → subsequent DPs ignored → revocation status "unknown"
+3. If keeper's rustls uses `UnknownStatusPolicy::Allow` → accepts revoked cert → MITM possible
+4. Attacker intercepts keeper→RPC connection → injects malicious oracle price responses or suppresses circuit breaker TX
+
+**Remediation**:
+```bash
+# In microstable/solana/ workspace:
+cargo update -p rustls-webpki --precise 0.103.10
+cargo update -p reqwest  # may pull in updated webpki transitively
+cargo audit  # verify clean
+```
+
+### HPKE Nonce Reuse Attack Class (A76) — Future Risk
+If any future Microstable component uses hpke-rs for keeper↔oracle or keeper↔relayer secure messaging:
+- hpke-rs ≤ 0.5.x: u32 nonce counter wraps at 2^32 → nonce reuse → full message decryption possible
+- Companion: X25519 non-contributive DH (RUSTSEC-2026-0072) → weak shared secret accepted
+- Preemptive rule: any future HPKE adoption must pin hpke-rs ≥ 0.6.0 from day 1
