@@ -1,4 +1,4 @@
-# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25) | META-01~19
+# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25) | META-01~21
 
 ## A. Smart Contract Vectors
 
@@ -3976,6 +3976,8 @@ async function updateOracleCap(asset: string, newCap: BN): Promise<void> {
 | A74 Rust tar-rs CI/CD Build Pipeline Symlink Traversal | RUSTSEC-2026-0067 (CVE-2026-33056): `tar::unpack_in` follows symlinks → crafted tarball can chmod arbitrary dirs (keeper key dir, CI artifact dir). RUSTSEC-2026-0068: PAX size header ignored → oversized entry injection bypasses size gates. Supply chain attack on keeper deployment pipeline; not on-chain. Patch: tar ≥ 0.4.45. Combined with A54 (TLS bypass) → full keeper compromise. (RustSec, 2026-03-23) |
 | A75 Audit-Evading Economic Exploit Design (Meta-Technique) | 2025-2026 DeFi 익스플로잇의 70%+가 전문 감사를 통과한 컨트랙트에서 발생. 경제적 공격은 기술적 정확성을 위반하지 않으므로 정적 분석(Sec3 X-ray), 퍼저(Trident), IDL 검사 모두 통과. 오라클 가격이 "올바른" 값을 가질 때 작동하지만 경제적 이득 방향으로 1% 오류 시 채굴 가능한 경로 존재. 감사 방법론 갭: 단일 컨트랙트 정확성 vs 멀티-TX 경제적 시퀀스. 모든 가격 민감 함수에 "오라클이 N% 틀리면?" 쿼리 필수. Microstable: MANUAL_ORACLE_MODE + 키 탈취 → 120슬롯 내 경제적 추출 경로. Gap: 온체인 TWAP 대비 수동 오라클 가격 편차 제한 없음. (Solana Security Toolbox 2026, dev.to, 2026-03-17) |
 | META-19 Off-Chain Privileged Computation Anti-Pattern (OPCA) | **퍼플팀 2026-03-24 합성.** A72(Resolv $25M) + A35(Moonwell $1.78M) + B49(Aave $27.78M) + B35(YO $3.71M) = 누적 $58.27M을 야기한 단일 구조 패턴: "오프체인 권한 있는 컴포넌트가 파라미터 계산 → 온체인 함수가 역할 검증만 하고 값 범위를 독립 검증하지 않음." 각 사건은 단독 감사에서 "역할 체크 충분"으로 평가됨. 공통 방어: 모든 특권 오프체인 호출자로부터 수신하는 파라미터에 온체인 한계값(비율 상한, 가격 편차 대역, 슬리피지 하드캡) 독립 검증 필수. |
+| META-20 EIP-1153 Transient Storage Safety Assumption Collapse (TSAC) — 퍼플팀 2026-03-25 | **핵심 비대칭**: 8년간 `transfer()`/`send()` = "reentrancy-safe" 공리. EIP-1153(Cancun, 2024-03)이 이 공리를 파괴했으나 감사 도구 서명과 감사자 패턴 인식이 아직 업데이트되지 않음. TSTORE = 100 gas = 2300 gas stipend 이내 → fallback에서 상태 변경 가능. **왜 감사가 놓치는가**: ① Slither/MythX 등 정적 분석 도구가 `transfer()`/`send()`에 "old reentrancy pattern" 경고 생략 (이미 "safe"로 분류) ② 감사자가 CEI 패턴과 무관하게 `transfer()`/`send()` 발견 시 무조건 저위험으로 평가 ③ EIP-1153 맥락에서 재테스트하는 "EIP 버전 감사" 프로세스 부재. **동반 패턴**: Read-Only Reentrancy — `view` 함수가 의존 프로토콜 가격 피드로 사용될 때, 상위 프로토콜이 removeLiquidity 중 외부 호출하는 시점에 하위 프로토콜이 `getVirtualPrice()`를 읽으면 mid-state 가격 참조. **실제 손실**: SIR.trading $355K (2025-03), 동일 패턴 다수 미신고 사고 존재. **방어**: `nonReentrant`를 `transfer()`/`send()` 포함 모든 ETH 전송에 적용; view 함수에도 reentrancy guard 적용; EIP-1153 맥락의 TSTORE slot 명시적 초기화. **Solana 유사체**: Token-2022 Transfer Hook — hook 콜백에서 낮은 compute cost로 상태 변경 가능. SPL classic에는 없음. **Microstable**: Solana-only → EIP-1153 직접 해당 없음 ✅. Token-2022 통합 시 Transfer Hook 콜백 compute budget 제약 및 재진입 경로 재검토 필수. **Source**: dev.to "2026 DeFi Pre-Launch Security Checklist" (2026-03-24); SIR.trading post-mortem (2025-03). |
+| META-21 AI-Driven Autonomous Exploit Synthesis Asymmetry (ADAES) — 퍼플팀 2026-03-25 | **핵심 비대칭**: 감사 비용 $50K~$500K / 1회 / 배포 사이클. AI 자율 익스플로잇 합성 비용 $1.22/스캔 / 연속 / 24시간. Anthropic Frontier Red Team (2025-12) 실증: GPT-5 + Claude Opus 4.5가 2025-03 이후 발생한 실제 익스플로잇을 사전 지식 없이 자율 재현, 시뮬레이션 환경에서 수백만 달러 추출. 핵심: 에이전트가 스마트컨트랙트 로직을 추론하고 멀티-TX 시퀀스를 구성하며 실패 시도로부터 학습. 익스플로잇 수익 1.3개월마다 2배 성장. **왜 감사가 놓치는가**: ① 감사 방법론은 인간 속도 공격자를 가정 — 공격자가 프로토콜을 이해하는 데 수일/수주 소요. AI는 스캔당 수초. ② 배포 사이클마다 1회 감사 → 매 거버넌스 파라미터 변경, 매 리밸런싱 이벤트, 매 유동성 증가가 새로운 공격 면 창출하지만 재감사 없음. ③ "한 번 감사받은 프로토콜 = 안전"이라는 정적 보안 신뢰가 AI 연속 스캔 위협 모델과 불일치. **방어 방향**: (1) 배포 중 지속 감시 (AI-powered monitoring, 봇 탐지); (2) AI 자율 TX가 성공하기 전 차단하는 속도 제한/쿨다운/민트 한도의 재위치화 (진입 장벽 → 첫 번째 방어선으로 격상); (3) 거버넌스/파라미터 변경 시마다 AI-assisted re-audit 의무화. **Microstable 적용**: keeper rebalance 이벤트, MANUAL_ORACLE_MODE 활성화, 파라미터 거버넌스 변경 = AI 스캐너의 즉각 타겟. `MAX_DRIFT_BPS` 온체인 체크와 120슬롯 타임박스가 AI 자율 익스플로잇에 대한 주요 방어선. 이 제약들이 단순 편의가 아닌 **AI-speed 위협 대응 필수 제약**으로 재분류 필요. **Source**: cryptonium.cloud "Securing Agentic DeFi 2026" (2026-03-24); Anthropic Frontier Red Team Dec 2025 결과; cryptollia.com "Dark Forest Machine MEV 2026" (2026-03-24). |
 
 <!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-24 (04:00 KST) -->
 
@@ -4057,3 +4059,108 @@ pub fn privileged_action(
 | A76 HPKE Context Nonce Exhaustion via u32 Overflow (Cryspen libcrux cluster) | RUSTSEC-2026-0071 (CRITICAL CVSS 9.3, 2026-03-24): hpke-rs ≤ 0.5.x uses u32 sequence counter for AEAD nonce computation. Counter wraps silently at 2^32 seals/opens in release mode → nonce reuse → AEAD catastrophic break (plaintext recovery + tag forgery). Companion: RUSTSEC-2026-0072 (hpke-rs-rust-crypto): X25519 DH shared secret not checked for all-zero → non-contributive key exchange accepted, violates RFC 9180. Attack surface: keeper-to-oracle secure channels, keeper ↔ relayer comms. Keeper Cargo.lock currently does NOT use hpke-rs directly (ed25519-dalek used instead). Future risk if HPKE messaging layer is added. Patch: hpke-rs ≥ 0.6.0, hpke-rs-rust-crypto ≥ 0.6.0. (RustSec 2026-03-24) |
 | A77 rustls-webpki CRL Distribution Point Bypass | RUSTSEC-2026-0049 (2026-03-20, last modified 2026-03-24): rustls-webpki ≤ 0.103.9 — if certificate has >1 distributionPoint, only first is matched against CRL; subsequent DPs ignored. With UnknownStatusPolicy::Allow → revoked cert accepted. With default Deny → false revocation error (connection drop). **Microstable keeper confirmed affected**: Cargo.lock has rustls-webpki = "0.103.9" (fix: ≥ 0.103.10). Attack path: keeper's reqwest/rustls TLS to Helius/QuickNode/Pyth RPC. If RPC operator's cert is revoked mid-session, keeper continues accepting stale connection. Severity for keeper: MEDIUM (mitigated by domain pinning patterns; attacker needs cert issuance capability). Patch: cargo update rustls-webpki to ≥ 0.103.10 via reqwest version bump. (GHSA-pwjx-qhcg-rvj4) |
 | A78 CSPRNG Failure → All-Zero Ed25519 Key Generation (libcrux-ed25519) | RUSTSEC-2026-0075 (HIGH CVSS 8.2, 2026-03-24): libcrux-ed25519 ≤ 0.0.6 — key generation retries CSPRNG up to 100 times, then silently uses all-zero buffer as secret key. Anyone knowing the key is all-zero can forge signatures. Applies only on catastrophic CSPRNG failure (hardware RNG exhaustion, VM entropy depletion at boot). Microstable keeper uses ed25519-dalek (not libcrux-ed25519) → NOT directly affected. Risk class: high value for CI/test environments with predictable entropy. Patch: libcrux-ed25519 ≥ 0.0.7 (errors on CSPRNG failure instead of silent fallback). (RustSec 2026-03-24) |
+
+<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-25 (04:00 KST) -->
+
+## META-20: EIP-1153 Transient Storage Safety Assumption Collapse (TSAC)
+**Purple Team Synthesis — 2026-03-25**
+
+### 패턴 개요
+EIP-1153 (Cancun upgrade, 2024-03)이 `transfer()`/`send()`의 "reentrancy-safe" 공리를 파괴했으나, 감사 도구와 감사자의 패턴 인식이 8년 된 공리에서 벗어나지 못함.
+
+**공리 붕괴 메커니즘**:
+```solidity
+// 8년간 "안전"으로 분류된 패턴
+payable(recipient).transfer(amount);
+// 이유: 2300 gas stipend → SSTORE(5000 gas) 불가 → 재진입 불가
+
+// EIP-1153 이후 (Cancun)
+// TSTORE = 100 gas ← 2300 gas 이내
+// → recipient fallback에서 TSTORE로 상태 쓰기 가능
+// → 재진입 경로 복원
+```
+
+### 감사 실패 패턴 상세
+
+| 실패 레이어 | 내용 |
+|------------|------|
+| 정적 분석 도구 | Slither/MythX 등이 `transfer()`/`send()`를 "EIP-1153 이전 기준"으로 저위험 분류; 새 규칙 미배포 |
+| 감사자 패턴 인식 | "CEI 패턴 준수 + transfer 사용 = reentrancy 안전" 결론 — EIP 버전 컨텍스트 미확인 |
+| CI 테스트 | Mainnet fork 없이 로컬 Foundry 테스트 → EIP-1153 활성 상태 미검증 |
+| Read-Only Reentrancy | `view` 함수가 의존 프로토콜 가격 피드로 사용될 때 mid-state 읽기 경로 미심사 |
+
+### Read-Only Reentrancy 보조 패턴
+```solidity
+// ❌ Protocol A: removeLiquidity가 ETH 전송 도중 Protocol B가 가격 읽기
+function getVirtualPrice() external view returns (uint256) {
+    return totalAssets * PRECISION / totalSupply;
+    // totalAssets 업데이트됨, totalSupply는 아직 burn 전 → 가격 부풀어짐
+}
+
+// ❌ Protocol B: 가격이 "올바르다"고 신뢰하며 결정 실행
+uint256 price = IProtocolA(protocolA).getVirtualPrice();
+mint(user, collateral * price / PRECISION);  // 과다 민팅
+```
+
+### Microstable 적용
+- **현재 상태**: Solana-only → EIP-1153 직접 해당 없음 ✅
+- **Token-2022 통합 시 유사 위험**: Transfer Hook 콜백에서 낮은 compute budget으로 상태 변경 경로 존재 가능
+- **행동 항목**: Token-2022 통합 계획 시 Transfer Hook 재진입 경로 명시적 위협 모델 작성 필수
+
+**Source**: dev.to "2026 DeFi Pre-Launch Security Checklist" (ohmygod, 2026-03-24) | SIR.trading $355K post-mortem (2025-03)
+
+---
+
+## META-21: AI-Driven Autonomous Exploit Synthesis Asymmetry (ADAES)
+**Purple Team Synthesis — 2026-03-25**
+
+### 패턴 개요
+방어자의 감사 비용($50K~$500K/사이클)과 공격자의 AI 자율 스캔 비용($1.22/스캔)의 구조적 비대칭. 이 비대칭이 "한 번 감사받은 프로토콜은 안전하다"는 정적 보안 신뢰 모델을 근본적으로 무력화.
+
+**실증 근거**:
+- Anthropic Frontier Red Team (2025-12): GPT-5 + Claude Opus 4.5가 2025-03 이후 발생한 실제 익스플로잇을 **사전 지식 없이** 자율 재현
+- 에이전트가 스마트컨트랙트 로직 추론 → 멀티-TX 시퀀스 구성 → 실패에서 학습 → 시뮬레이션 수백만 달러 추출
+- 익스플로잇 수익 성장률: **1.3개월마다 2배** (2025~2026)
+- 2025 블록체인 익스플로잇의 **50% 이상**이 이미 운영 중인 AI 에이전트로 자율 실행 가능했던 것으로 평가
+
+### 왜 감사가 이 위협 모델을 놓치는가
+
+```
+전통적 감사 가정                    실제 2026 위협 환경
+─────────────────────────────────   ─────────────────────────────────
+공격자 = 인간 전문가 (수일 소요)    공격자 = AI 에이전트 (수초 스캔)
+1회 감사 = 배포 사이클 커버         매 파라미터 변경 = 새 공격 면 창출
+취약점 = 코드 결함                  취약점 = 경제적 시퀀스 기회
+탐지 = 감사자 직관                  탐지 = 불가능 (연속 자동 스캔)
+```
+
+### Microstable 재분류 — 제약의 재위치화
+
+**기존 분류**: "편의/UX 제약"
+- 120슬롯 MANUAL_ORACLE_MODE 타임박스
+- MAX_DRIFT_BPS 가격 편차 한도
+- rebalance() 쿨다운
+- 슬롯당 민트/리딤 한도
+
+**META-21 이후 분류**: **AI-speed 위협에 대한 첫 번째 방어선 (필수 제약)**
+- AI 에이전트는 위 제약 없이 하나의 TX에서 경제적 추출 완료 가능
+- 위 제약들이 AI 공격자에게 강제하는 시간 창 = 인간/모니터링 시스템이 개입할 수 있는 유일한 기회
+
+### 방어 체계 재설계 방향
+
+```
+현재 (정적 방어):           권장 (동적 방어):
+감사 → 배포 → 끝           감사 → 배포 → AI 연속 감시
+                                          ↓
+                                    이벤트 트리거 재감사
+                                    (거버넌스 변경, 유동성 +50%)
+                                          ↓
+                                    AI-assisted threat hunting
+                                    (공격자 AI와 동일 툴 사용)
+```
+
+### 감사 계약 표준 변경 권고
+기존: "코드 X를 스캔하고 취약점 보고"
+권고: "배포 후 N개월간 AI 자율 공격 시뮬레이션 포함; 거버넌스 변경 시 자동 재스캔"
+
+**Source**: cryptonium.cloud "Quantum Aegis: Securing Agentic DeFi 2026" (2026-03-24) | Anthropic Frontier Red Team Dec 2025 | cryptollia.com "Dark Forest Machine MEV 2026" (2026-03-24)
