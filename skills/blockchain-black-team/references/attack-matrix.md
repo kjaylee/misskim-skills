@@ -1,4 +1,4 @@
-# Attack Matrix — 90 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25) | META-01~21
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26) | META-01~22
 
 ## A. Smart Contract Vectors
 
@@ -3977,6 +3977,7 @@ async function updateOracleCap(asset: string, newCap: BN): Promise<void> {
 | A75 Audit-Evading Economic Exploit Design (Meta-Technique) | 2025-2026 DeFi 익스플로잇의 70%+가 전문 감사를 통과한 컨트랙트에서 발생. 경제적 공격은 기술적 정확성을 위반하지 않으므로 정적 분석(Sec3 X-ray), 퍼저(Trident), IDL 검사 모두 통과. 오라클 가격이 "올바른" 값을 가질 때 작동하지만 경제적 이득 방향으로 1% 오류 시 채굴 가능한 경로 존재. 감사 방법론 갭: 단일 컨트랙트 정확성 vs 멀티-TX 경제적 시퀀스. 모든 가격 민감 함수에 "오라클이 N% 틀리면?" 쿼리 필수. Microstable: MANUAL_ORACLE_MODE + 키 탈취 → 120슬롯 내 경제적 추출 경로. Gap: 온체인 TWAP 대비 수동 오라클 가격 편차 제한 없음. (Solana Security Toolbox 2026, dev.to, 2026-03-17) |
 | META-19 Off-Chain Privileged Computation Anti-Pattern (OPCA) | **퍼플팀 2026-03-24 합성.** A72(Resolv $25M) + A35(Moonwell $1.78M) + B49(Aave $27.78M) + B35(YO $3.71M) = 누적 $58.27M을 야기한 단일 구조 패턴: "오프체인 권한 있는 컴포넌트가 파라미터 계산 → 온체인 함수가 역할 검증만 하고 값 범위를 독립 검증하지 않음." 각 사건은 단독 감사에서 "역할 체크 충분"으로 평가됨. 공통 방어: 모든 특권 오프체인 호출자로부터 수신하는 파라미터에 온체인 한계값(비율 상한, 가격 편차 대역, 슬리피지 하드캡) 독립 검증 필수. |
 | META-20 EIP-1153 Transient Storage Safety Assumption Collapse (TSAC) — 퍼플팀 2026-03-25 | **핵심 비대칭**: 8년간 `transfer()`/`send()` = "reentrancy-safe" 공리. EIP-1153(Cancun, 2024-03)이 이 공리를 파괴했으나 감사 도구 서명과 감사자 패턴 인식이 아직 업데이트되지 않음. TSTORE = 100 gas = 2300 gas stipend 이내 → fallback에서 상태 변경 가능. **왜 감사가 놓치는가**: ① Slither/MythX 등 정적 분석 도구가 `transfer()`/`send()`에 "old reentrancy pattern" 경고 생략 (이미 "safe"로 분류) ② 감사자가 CEI 패턴과 무관하게 `transfer()`/`send()` 발견 시 무조건 저위험으로 평가 ③ EIP-1153 맥락에서 재테스트하는 "EIP 버전 감사" 프로세스 부재. **동반 패턴**: Read-Only Reentrancy — `view` 함수가 의존 프로토콜 가격 피드로 사용될 때, 상위 프로토콜이 removeLiquidity 중 외부 호출하는 시점에 하위 프로토콜이 `getVirtualPrice()`를 읽으면 mid-state 가격 참조. **실제 손실**: SIR.trading $355K (2025-03), 동일 패턴 다수 미신고 사고 존재. **방어**: `nonReentrant`를 `transfer()`/`send()` 포함 모든 ETH 전송에 적용; view 함수에도 reentrancy guard 적용; EIP-1153 맥락의 TSTORE slot 명시적 초기화. **Solana 유사체**: Token-2022 Transfer Hook — hook 콜백에서 낮은 compute cost로 상태 변경 가능. SPL classic에는 없음. **Microstable**: Solana-only → EIP-1153 직접 해당 없음 ✅. Token-2022 통합 시 Transfer Hook 콜백 compute budget 제약 및 재진입 경로 재검토 필수. **Source**: dev.to "2026 DeFi Pre-Launch Security Checklist" (2026-03-24); SIR.trading post-mortem (2025-03). |
+| META-22 Cloud KMS Trust Boundary Collapse — 블랙팀 2026-03-26 | **핵심 비대칭**: "키가 AWS KMS에 있으니 안전하다"는 인식이 구조적으로 틀린 이유. Cloud HSM(KMS)은 온체인 신뢰 경계가 아님 — IAM credential 탈취 = KMS 서명 권한 탈취 = 온체인 auth bypass. Resolv Labs Chainalysis 분석(2026-03-25) 실증: SERVICE_ROLE 키는 KMS에 있었음에도 18회 감사 모두 "충분한 보안"으로 평가. 핵심 방어: 온체인 민트 캡이 클라우드 인프라 탈취의 최후 방어선임. Microstable: 온체인 slot/TX 캡 + 사용자-서명 민트 경로로 이 패턴 방어 ✅. |
 | META-21 AI-Driven Autonomous Exploit Synthesis Asymmetry (ADAES) — 퍼플팀 2026-03-25 | **핵심 비대칭**: 감사 비용 $50K~$500K / 1회 / 배포 사이클. AI 자율 익스플로잇 합성 비용 $1.22/스캔 / 연속 / 24시간. Anthropic Frontier Red Team (2025-12) 실증: GPT-5 + Claude Opus 4.5가 2025-03 이후 발생한 실제 익스플로잇을 사전 지식 없이 자율 재현, 시뮬레이션 환경에서 수백만 달러 추출. 핵심: 에이전트가 스마트컨트랙트 로직을 추론하고 멀티-TX 시퀀스를 구성하며 실패 시도로부터 학습. 익스플로잇 수익 1.3개월마다 2배 성장. **왜 감사가 놓치는가**: ① 감사 방법론은 인간 속도 공격자를 가정 — 공격자가 프로토콜을 이해하는 데 수일/수주 소요. AI는 스캔당 수초. ② 배포 사이클마다 1회 감사 → 매 거버넌스 파라미터 변경, 매 리밸런싱 이벤트, 매 유동성 증가가 새로운 공격 면 창출하지만 재감사 없음. ③ "한 번 감사받은 프로토콜 = 안전"이라는 정적 보안 신뢰가 AI 연속 스캔 위협 모델과 불일치. **방어 방향**: (1) 배포 중 지속 감시 (AI-powered monitoring, 봇 탐지); (2) AI 자율 TX가 성공하기 전 차단하는 속도 제한/쿨다운/민트 한도의 재위치화 (진입 장벽 → 첫 번째 방어선으로 격상); (3) 거버넌스/파라미터 변경 시마다 AI-assisted re-audit 의무화. **Microstable 적용**: keeper rebalance 이벤트, MANUAL_ORACLE_MODE 활성화, 파라미터 거버넌스 변경 = AI 스캐너의 즉각 타겟. `MAX_DRIFT_BPS` 온체인 체크와 120슬롯 타임박스가 AI 자율 익스플로잇에 대한 주요 방어선. 이 제약들이 단순 편의가 아닌 **AI-speed 위협 대응 필수 제약**으로 재분류 필요. **Source**: cryptonium.cloud "Securing Agentic DeFi 2026" (2026-03-24); Anthropic Frontier Red Team Dec 2025 결과; cryptollia.com "Dark Forest Machine MEV 2026" (2026-03-24). |
 
 <!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-24 (04:00 KST) -->
@@ -4164,3 +4165,96 @@ mint(user, collateral * price / PRECISION);  // 과다 민팅
 권고: "배포 후 N개월간 AI 자율 공격 시뮬레이션 포함; 거버넌스 변경 시 자동 재스캔"
 
 **Source**: cryptonium.cloud "Quantum Aegis: Securing Agentic DeFi 2026" (2026-03-24) | Anthropic Frontier Red Team Dec 2025 | cryptollia.com "Dark Forest Machine MEV 2026" (2026-03-24)
+
+<!-- AUTO-ADDED BY BLACKTEAM DAILY EVOLUTION 2026-03-26 (03:00 KST) -->
+
+### A74. Rust tar-rs CI/CD Build Pipeline Symlink Traversal + PAX Size Injection
+**Historical**: RUSTSEC-2026-0067 (CVE-2026-33056) + RUSTSEC-2026-0068 — disclosed 2026-03-23
+**Mechanism**: Two chained vulnerabilities in the `tar` crate affect any Rust binary that unpacks tarballs (CI artifacts, deployment bundles, keeper upgrade packages):
+1. **RUSTSEC-2026-0067**: `tar::unpack_in()` resolves symlinks inside the archive before checking the output path. A crafted tarball containing a symlink pointing outside the target directory followed by a regular file written via that symlink can `chmod` or overwrite arbitrary host-filesystem paths — including keeper key files, credential directories, CI artifact directories, or binary deployment paths.
+2. **RUSTSEC-2026-0068**: PAX-format extended headers allow a `size` field that is ignored by the unpack implementation — an oversized entry whose header claims a small size can bypass pre-allocation size gates, causing out-of-bounds writes or injection of attacker-controlled binary content into the extraction buffer.
+**Combined chain**: Attacker controls a supply-chain artifact (forged upgrade tarball, malicious CI artifact pushed via D39 or D28 attack) → tarball unpacked by keeper deployment script → symlink traversal overwrites keeper signing key directory → signing key exfiltrated on next keeper boot → full keeper compromise. Paired with A54 (TLS validation bypass in aws-lc-sys): attacker can intercept upgrade tarball over TLS without certificate error, then deliver symlink-poisoned tarball.
+**Code pattern to find**:
+```rust
+// VULNERABLE: unpack_in does NOT prevent symlink escape (pre-0.4.45)
+let mut archive = Archive::new(gz_decoder);
+archive.unpack_in("/deploy/keeper/")?;  // tar <= 0.4.44 follows symlinks OUT of /deploy/keeper/
+
+// VULNERABLE: PAX size header not validated
+// Crafted: PAX header says entry size = 100 bytes, actual data = 10MB
+// unpack_in writes 10MB into extraction buffer despite guard check
+```
+**Defense**:
+1. Upgrade `tar` to `>= 0.4.45` (fixes both CVEs) — pin in `Cargo.lock` with hash attestation
+2. After any tarball extraction, run `find <extract_dir> -type l` and reject if any symlink points outside the expected directory tree (defense-in-depth even on patched versions)
+3. Verify SHA-256 of each extracted binary before execution (prevents content injection from RUSTSEC-2026-0068 even if size gate is bypassed)
+4. For keeper deployment pipelines: run extraction in an isolated directory with no symlinks to sensitive paths; use separate user with minimal filesystem permissions for the extraction step
+5. Audit all Rust services that call `tar::unpack_in` or `tar::unpack` — any keeper deployment, CI runner, or upgrade agent is in scope
+**Microstable relevance**: ⚠️ MEDIUM — If Microstable's keeper deployment pipeline (NAS/MiniPC) uses Rust tooling that extracts tarballs for upgrades or CI artifacts, this vulnerability creates a path to keeper key directory overwrite without on-chain interaction.
+**Why distinct from D28 (Supply Chain — typosquat)**: D28 covers malicious crate publication. A74 is a CVE in a LEGITIMATE, widely-used crate that enables arbitrary path write via crafted archives — any keeper that processes upgrade tarballs is vulnerable regardless of crate legitimacy.
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0067.html | https://rustsec.org/advisories/RUSTSEC-2026-0068.html | https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-33056 (2026-03-23)
+
+### A75. Audit-Evading Economic Exploit Design (Meta-Technique)
+**Historical**: Systematic pattern across 70%+ of 2025-2026 DeFi exploits that passed code-level audits (Solana Security Toolbox 2026, dev.to, 2026-03-17)
+**Mechanism**: Economic attack sequences bypass code-level security tooling because:
+- Static analyzers (Sec3 X-ray, Anchor Lint) verify: "does this instruction execute the correct arithmetic?" → PASS
+- Fuzzers (Trident, Echidna) verify: "does random input cause an unexpected state change?" → PASS
+- IDL inspection tools verify: "are account constraints correct?" → PASS
+**None of these verify**: "if the oracle price is 1% wrong in the attacker's favor, does a multi-TX sequence extract value?" This is the gap.
+**Economic exploit anatomy** (verified-as-correct code, extractable-in-sequence):
+```
+TX1: Deposit large collateral → receive protocol tokens at oracle_price_A
+TX2: Wait for oracle drift (or manipulate oracle) → oracle_price_B = A + 1%
+TX3: Redeem at oracle_price_B → receive slightly more collateral than deposited
+TX4: Repeat across 100 TXs → compound 1% × 100 = 100% drain on available collateral
+```
+**Each individual TX passes every audit check. The multi-TX sequence is the exploit.**
+**Key insight**: Audit methodology gap = "single-contract correctness" vs "multi-TX economic sequence adversarial simulation." Traditional auditors verify invariants hold for any single valid transaction — they do not systematically test whether a sequence of valid transactions can extract value when oracle prices drift within tolerated bands.
+**Microstable-specific gap (verified from code)**:
+- `MANUAL_ORACLE_MODE` allows keeper to write arbitrary price within 120 slots
+- If keeper key is compromised + MANUAL_ORACLE_MODE activated: attacker sets oracle price to max allowed, mints MSTB at inflated rate, then restores price
+- **Gap**: there is currently no on-chain hard check that `manual_oracle_price` cannot deviate more than X% from the previous Pyth-verified price within a single oracle write
+- This gap is time-boxed (120 slots) and requires keeper compromise — MEDIUM risk, not CRITICAL
+- **Recommended defense**: add `require!(|manual_price - last_pyth_price| <= MAX_MANUAL_DRIFT_BPS * last_pyth_price / 10_000)` at oracle write path
+**Code pattern to find**:
+```rust
+// VULNERABLE: per-TX audit passes, but multi-TX sequence extracts value
+// Economic test missing: "can 50 sequential mint+redeem TXs with ±1% oracle drift extract value?"
+pub fn mint(...) -> Result<()> {
+    let price = oracle_price;  // assumes oracle_price is accurate
+    let mstb_out = collateral * price / SCALE;  // correct math on potentially-drifted price
+    // No check: has this user's cumulative position grown beyond expected rate?
+    ...
+}
+
+// SAFE addition: cross-TX cumulative position drift detection
+// If total_user_mint_since_last_rebalance > X% of tvl → require keeper re-validation
+```
+**Defense**:
+1. **For every price-sensitive function**: mandatory audit query — "if oracle is N% wrong in attacker's favor, what is the max extractable value via repeated calls?"
+2. **Cumulative drift invariants**: track user's cumulative mint/redeem volume across slots; if cumulative position growth exceeds expected rate (e.g., 5% of TVL in one epoch), require keeper sign-off or auto-throttle
+3. **Economic property fuzzing**: add Echidna/Medusa invariants that test multi-TX sequences with oracle price stepping (not just single-TX random inputs)
+4. **Manual oracle write deviation cap**: `require!(|manual_price - last_pyth_price| <= MAX_MANUAL_DRIFT_BPS)` — on-chain hard limit for MANUAL_ORACLE_MODE writes
+5. **Audit contract scope**: require auditors to document "multi-TX economic sequence analysis" separately from "per-function invariant analysis"
+**Microstable verdict**: ⚠️ MEDIUM — Per-slot and per-TX caps significantly limit damage. MANUAL_ORACLE_MODE 120-slot time-box is primary defense. Gap: no per-write Pyth-deviation cap for manual oracle mode. Action: add `MAX_MANUAL_DRIFT_BPS` constant and check at `write_oracle` instruction.
+**Source**: dev.to "Solana Security Toolbox 2026" (ohmygod, 2026-03-17) | Immunefi "Vulnerability Statistics 2026 Q1"
+
+### A72 — 2026-03-26 Reinforcement: AWS KMS Cloud Infrastructure Angle
+**New detail from Chainalysis post-mortem (2026-03-25)**:
+The Resolv Labs exploit (previously documented under A72) reveals a more specific cloud-infrastructure attack path that warrants reinforcement:
+- **Cloud KMS, not hot wallet**: The SERVICE_ROLE key was protected by AWS Key Management Service (AWS KMS) — a cloud HSM service — not a plaintext wallet file. The attacker did not "steal a private key file"; they compromised AWS IAM credentials that had permission to USE the KMS key for signing operations.
+- **Cloud IAM → Cloud KMS → On-chain signing authority**: The attack chain is: compromise AWS IAM role/credentials → call `kms:Sign` via AWS API → produce valid signatures for `requestSwap`/`completeSwap` → on-chain mint executes.
+- **New threat class — "Cloud HSM Does Not Create an On-Chain Trust Boundary"**: Protocols that believe "our key is in HSM/KMS, therefore it's safe" miss that the HSM is only as secure as the cloud IAM policies that control access to it. If cloud credentials (IAM role ARN, access key, MFA bypass) are compromised, the HSM protection is moot — the attacker calls the KMS API, the KMS signs legitimately, the chain accepts the signature.
+- **18 audits didn't see it**: Despite 18 independent security audits, no auditor flagged the absence of on-chain mint caps. This validates the A33 audit-scope-exclusion pattern: infrastructure security (AWS IAM policy, KMS access policy, cloud monitoring) is almost never in scope for smart contract audits — but it IS the attack surface when the protocol's trust model spans cloud infrastructure.
+**Reinforcement for A72 defense item #3 (multisig)**: Even a KMS-backed single-account SERVICE_ROLE is vulnerable to cloud IAM compromise. The correct architecture is:
+- N-of-M multisig where each key is held by a DIFFERENT legal entity with DIFFERENT cloud provider (not all keys in the same AWS account/region)
+- On-chain: even if all off-chain keys are compromised, on-chain mint caps prevent unbounded minting
+- Real-time circuit breaker: if `minted_this_hour > threshold_ppm_of_supply`, auto-pause regardless of caller authentication
+**Microstable re-verification (2026-03-26)**:
+- Keeper set is 2-of-3 on-chain (Solana account constraint)
+- `mint()` instruction is USER-signed — keeper cannot call it directly ✅
+- Per-slot mint cap: `DEFAULT_MAX_MINT_PER_SLOT_PPM = 60_000` (6% of supply) enforced on-chain ✅
+- Per-TX mint cap: `MAX_MINT_PER_TX_PPM = 20_000` (2%) enforced on-chain ✅
+- MANUAL_ORACLE_MODE time-boxed to 120 slots, cooldown required ✅
+- **Conclusion**: Even if all 3 keeper keys were compromised via cloud IAM breach (equivalent Resolv scenario), Microstable's on-chain invariants prevent unbounded minting. The A72 architectural failure (absent on-chain caps) does NOT apply. ✅
+**Source**: Chainalysis Resolv Labs post-mortem analysis via CrowdFundInsider (2026-03-25) | https://www.crowdfundinsider.com/2026/03/268381-chainalysis-provides-insights-after-resolv-hack-highlights-defi-security-risks/

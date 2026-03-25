@@ -902,3 +902,65 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - Findings: **0 CRITICAL / 0 HIGH new** (B45 HIGH still open since 2026-03-05) / **0 MEDIUM new** / **0 LOW new**
 - Carry-forward: B45 HIGH, B44 MEDIUM, A43 MEDIUM, B53 LOW, D33 LOW
 - Matrix: **54 vectors** (no new vector added today; A4 reinforced with Gondi sub-pattern)
+
+---
+
+## 2026-03-26 — Daily Security Sweep
+
+**Evolution cycle**: BLACK TEAM 03:00 KST | Operator: Miss Kim
+**Matrix state before**: 90 vectors (META-01~21) | **After**: 93 vectors (META-01~22)
+
+### New Patterns Added Today
+
+| Vector | Incident / Source | Date |
+|--------|-------------------|------|
+| **A74 full — Rust tar-rs CI/CD Build Pipeline Symlink Traversal + PAX Size Injection** | RUSTSEC-2026-0067 (CVE-2026-33056) + RUSTSEC-2026-0068 (RustSec, 2026-03-23) | 2026-03-23 |
+| **A75 full — Audit-Evading Economic Exploit Design (Meta-Technique)** | Solana Security Toolbox 2026, dev.to (2026-03-17) + pattern synthesis | 2026-03-17 |
+| **A72 reinforcement — AWS KMS Cloud Infrastructure Angle** | Chainalysis Resolv Labs post-mortem (2026-03-25) | 2026-03-25 |
+| **META-22 — Cloud KMS Trust Boundary Collapse** | Synthesis from Chainalysis Resolv analysis | 2026-03-25 |
+
+### Full Vector Sweep Results (Today's New Vectors)
+
+**A74 — tar-rs CI/CD Symlink Traversal (RUSTSEC-2026-0067/0068)**
+- Checked all Microstable `Cargo.toml` files for `tar` crate dependency → **no `tar` crate found**
+- Microstable keeper deployment does not use Rust tar-based artifact extraction
+- **Verdict: ✅ N/A — structural prevention (no tar crate dependency)**
+
+**A75 — Audit-Evading Economic Exploit via Manual Oracle Deviation**
+- Checked `update_oracle()` in `lib.rs`: accepts any `price` in range `[PRICE_MIN=$0.50, PRICE_MAX=$1.50]`
+- Requires 2-of-3 keeper quorum AND MANUAL_ORACLE_MODE active (120-slot time-box)
+- No on-chain check that `|new_price - last_pyth_price|` stays within tight deviation band
+- Attack path: 2-of-3 keeper compromise → enable MANUAL_ORACLE_MODE → write $0.50 USDC oracle → attacker mints MSTB at 2× rate → oracle restored → redeem MSTB for double collateral
+- Damage bound: per-slot cap (6%), per-TX cap (2%), 120-slot window = max ~72M MSTB from $10M TVL if all caps maximally exploited — significant but bounded
+- **Verdict: ⚠️ MEDIUM — Existing caps limit blast radius. Gap: no per-write Pyth-deviation check**
+- **Blue-team directive**: add `const MAX_MANUAL_ORACLE_DRIFT_BPS: u64 = 500; // 5%` and `require!(price.abs_diff(last_known_pyth_price) <= MAX_MANUAL_ORACLE_DRIFT_BPS * last_known_pyth_price / 10_000)` in `update_oracle()` to cap manual price deviation relative to last Pyth observation.
+
+**A72 + META-22 — Cloud KMS Trust Boundary / Resolv Pattern**
+- Re-verified Microstable: `mint()` is USER-signed (not keeper), per-slot/TX caps enforced on-chain
+- Even 2-of-3 keeper cloud compromise ≡ worst-case keeper compromise → NO uncapped minting possible
+- **Verdict: ✅ DEFENDED — architectural difference from Resolv (user-signed mint + on-chain caps)**
+
+**Dashboard D26 (frontend security)**
+- CSP: `script-src 'self'` confirmed in `<meta>` CSP tag → no external scripts
+- Local vendor scripts: `./vendor/solana-web3-1.95.3.iife.min.js` — SRI hash not present
+- **Sub-finding: ⚠️ LOW — vendored script has no SRI integrity check**
+- **Blue-team directive**: add `integrity="sha384-..."` attribute to `<script src="./vendor/...">` tags
+
+### All Carry-Forward Items (unchanged from prior sweeps)
+
+| Severity | Finding | Open Since |
+|----------|---------|-----------|
+| ❌ HIGH | B45 Post-Audit Deployment Delta (3,281 lines unattested vs audited commit `f327e7c6`) | 2026-03-05 |
+| ⚠️ MEDIUM | A43 Commit/Reveal Threshold Circumvention (no epoch-level cumulative turnover accumulator) | 2026-03-10 |
+| ⚠️ MEDIUM | B44 SPL Delegate Drain Conduit (no `delegate.is_none()` check in `mint()`) | 2026-03-10 |
+| ⚠️ MEDIUM | A75 Manual Oracle Drift (no per-write Pyth-deviation cap in `update_oracle()`) | **NEW 2026-03-26** |
+| ⚠️ LOW | B53 Dashboard residual (wallet address clipboard rendering unconfirmed in app.js) | 2026-03-08 |
+| ⚠️ LOW | D26 vendored script SRI missing | **NEW 2026-03-26** |
+
+### Today's Verdict
+- New incidents collected: **1** (Resolv Labs Chainalysis cloud-KMS detail, 2026-03-25)
+- New attack vectors fully documented: **2** (A74, A75 — previously table-only, now full sections)
+- A72 reinforced with Chainalysis cloud-KMS infrastructure angle
+- META-22 added (Cloud KMS Trust Boundary Collapse synthesis)
+- Findings: **0 CRITICAL / 0 HIGH new** / **1 MEDIUM new (A75)** / **1 LOW new (D26 SRI)**
+- Matrix: **93 vectors** (A74, A75 full + A72 reinforcement + META-22)
