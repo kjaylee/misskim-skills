@@ -727,3 +727,29 @@ If any future Microstable component uses hpke-rs for keeper↔oracle or keeper�
 - hpke-rs ≤ 0.5.x: u32 nonce counter wraps at 2^32 → nonce reuse → full message decryption possible
 - Companion: X25519 non-contributive DH (RUSTSEC-2026-0072) → weak shared secret accepted
 - Preemptive rule: any future HPKE adoption must pin hpke-rs ≥ 0.6.0 from day 1
+
+---
+*(2026-03-26 Red Team Evolution: A81 + A82)*
+
+### Quinn QUIC Validator Infrastructure Attack Class (A81)
+- RustSec advisory in Quinn (Agave's QUIC transport library) — publicly disclosed March 2026 without private coordination.
+- Remote process crash of Agave validators, no authentication required.
+- Attack amplification: crash targeted honest validators → skew stake-weighted block production in attacker's favor during window before community upgrades.
+- Microstable indirect risk: keeper RPC relies on Agave nodes. During validator crash event, all 3 default RPC endpoints may degrade simultaneously.
+- **Defense requirement**: keeper must have ≥ 3 geographically-distributed RPC fallbacks. Retry-on-503 logic must be confirmed in keeper code. Alert if all RPCs fail simultaneously.
+
+### Solana Blockchain as C2 Transport — Developer Targeting (A82)
+- Confirmed attack campaign (Bitdefender, March 2026): malicious IDE extension uses Solana on-chain transaction data as payload delivery channel.
+- Bypasses traditional C2 detection because traffic is indistinguishable from legitimate Solana network traffic.
+- Target profile: Solana developers (Rust/Anchor/TS) — exactly the Microstable developer persona.
+- Highest-value exfiltration from a Microstable developer machine:
+  1. Anchor upgrade authority keypair (wallet.json / id.json)
+  2. Keeper hot wallet seed phrase
+  3. Helius/QuickNode/Pyth API keys
+  4. AWS IAM credentials (CI/CD pipeline)
+- **Mandatory mitigations for Microstable team**:
+  1. IDE extension allowlist policy on all machines with keeper/deploy key access
+  2. Anchor deploy keys in hardware wallet (Ledger) — never flat file on dev machine
+  3. Keeper hot wallet: HSM or at minimum OS keychain, never plaintext .env
+  4. API keys: 1Password / environment injection at runtime, never committed
+  5. Rotate all secrets if any team member's machine shows unexpected Solana RPC traffic
