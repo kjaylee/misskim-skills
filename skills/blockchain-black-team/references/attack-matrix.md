@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26) | META-01~22
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26) | META-01~23
 
 ## A. Smart Contract Vectors
 
@@ -3978,6 +3978,7 @@ async function updateOracleCap(asset: string, newCap: BN): Promise<void> {
 | META-19 Off-Chain Privileged Computation Anti-Pattern (OPCA) | **퍼플팀 2026-03-24 합성.** A72(Resolv $25M) + A35(Moonwell $1.78M) + B49(Aave $27.78M) + B35(YO $3.71M) = 누적 $58.27M을 야기한 단일 구조 패턴: "오프체인 권한 있는 컴포넌트가 파라미터 계산 → 온체인 함수가 역할 검증만 하고 값 범위를 독립 검증하지 않음." 각 사건은 단독 감사에서 "역할 체크 충분"으로 평가됨. 공통 방어: 모든 특권 오프체인 호출자로부터 수신하는 파라미터에 온체인 한계값(비율 상한, 가격 편차 대역, 슬리피지 하드캡) 독립 검증 필수. |
 | META-20 EIP-1153 Transient Storage Safety Assumption Collapse (TSAC) — 퍼플팀 2026-03-25 | **핵심 비대칭**: 8년간 `transfer()`/`send()` = "reentrancy-safe" 공리. EIP-1153(Cancun, 2024-03)이 이 공리를 파괴했으나 감사 도구 서명과 감사자 패턴 인식이 아직 업데이트되지 않음. TSTORE = 100 gas = 2300 gas stipend 이내 → fallback에서 상태 변경 가능. **왜 감사가 놓치는가**: ① Slither/MythX 등 정적 분석 도구가 `transfer()`/`send()`에 "old reentrancy pattern" 경고 생략 (이미 "safe"로 분류) ② 감사자가 CEI 패턴과 무관하게 `transfer()`/`send()` 발견 시 무조건 저위험으로 평가 ③ EIP-1153 맥락에서 재테스트하는 "EIP 버전 감사" 프로세스 부재. **동반 패턴**: Read-Only Reentrancy — `view` 함수가 의존 프로토콜 가격 피드로 사용될 때, 상위 프로토콜이 removeLiquidity 중 외부 호출하는 시점에 하위 프로토콜이 `getVirtualPrice()`를 읽으면 mid-state 가격 참조. **실제 손실**: SIR.trading $355K (2025-03), 동일 패턴 다수 미신고 사고 존재. **방어**: `nonReentrant`를 `transfer()`/`send()` 포함 모든 ETH 전송에 적용; view 함수에도 reentrancy guard 적용; EIP-1153 맥락의 TSTORE slot 명시적 초기화. **Solana 유사체**: Token-2022 Transfer Hook — hook 콜백에서 낮은 compute cost로 상태 변경 가능. SPL classic에는 없음. **Microstable**: Solana-only → EIP-1153 직접 해당 없음 ✅. Token-2022 통합 시 Transfer Hook 콜백 compute budget 제약 및 재진입 경로 재검토 필수. **Source**: dev.to "2026 DeFi Pre-Launch Security Checklist" (2026-03-24); SIR.trading post-mortem (2025-03). |
 | META-22 Cloud KMS Trust Boundary Collapse — 블랙팀 2026-03-26 | **핵심 비대칭**: "키가 AWS KMS에 있으니 안전하다"는 인식이 구조적으로 틀린 이유. Cloud HSM(KMS)은 온체인 신뢰 경계가 아님 — IAM credential 탈취 = KMS 서명 권한 탈취 = 온체인 auth bypass. Resolv Labs Chainalysis 분석(2026-03-25) 실증: SERVICE_ROLE 키는 KMS에 있었음에도 18회 감사 모두 "충분한 보안"으로 평가. 핵심 방어: 온체인 민트 캡이 클라우드 인프라 탈취의 최후 방어선임. Microstable: 온체인 slot/TX 캡 + 사용자-서명 민트 경로로 이 패턴 방어 ✅. |
+| META-23 Cloud AI Agent Infrastructure IAM Attack Surface (CAAI-IAS) — 퍼플팀 2026-03-26 | **핵심 비대칭**: 클라우드 AI 인프라(AWS Bedrock/GCP Vertex/Azure AI)의 IAM 권한 계층은 스마트콘트랙트 감사 범위 밖. bedrock:UpdateAgent 권한 하나 = 에이전트 베이스 프롬프트 전면 재작성 = 에이전트 아이덴티티 탈취 (RSAC 2026 Zenity 0-click 실증, The Register 2026-03-23). XM Cyber(2026-03-24): 8개 Bedrock 공격 벡터, 모두 저수준 IAM 권한에서 시작 → 전체 에이전트 프롬프트 하이재킹/로그 리디렉션/RAG 데이터소스 탈취/포렌식 흔적 삭제. **왜 감사가 놓치는가**: ① 감사 범위 = 콘트랙트 소스코드. 클라우드 IAM 역할/에이전트 구성/베이스 프롬프트는 명시적 "범위 외" ② "클라우드 AI = 관리형 신뢰 인프라" — AWS 가용성처럼 블랙박스 신뢰 ③ 어떤 표준 감사 체크리스트에돈 "bedrock:* 권한 최소화" 항목 없음 ④ 0-click 특성: 런타임에 공격자 행동 없음 — 구성 레이어 변조로 keeper 실행 전 완료. **META-22와 구별**: META-22 = IAM credential → KMS 서명 키 → 온체인 auth bypass (키 관리 레이어). META-23 = IAM 권한 → 에이전트 베이스 프롬프트 재작성 → keeper 의사결정 독점 (에이전트 레이어, 실행 전). Microstable: 현재 Rust 결정론적 keeper = 클라우드 AI 아님 → META-23 현재 미적용 ✅. 미래 LLM 기반 keeper 업그레이드 시 즉각 HIGH 위험. |
 | META-21 AI-Driven Autonomous Exploit Synthesis Asymmetry (ADAES) — 퍼플팀 2026-03-25 | **핵심 비대칭**: 감사 비용 $50K~$500K / 1회 / 배포 사이클. AI 자율 익스플로잇 합성 비용 $1.22/스캔 / 연속 / 24시간. Anthropic Frontier Red Team (2025-12) 실증: GPT-5 + Claude Opus 4.5가 2025-03 이후 발생한 실제 익스플로잇을 사전 지식 없이 자율 재현, 시뮬레이션 환경에서 수백만 달러 추출. 핵심: 에이전트가 스마트컨트랙트 로직을 추론하고 멀티-TX 시퀀스를 구성하며 실패 시도로부터 학습. 익스플로잇 수익 1.3개월마다 2배 성장. **왜 감사가 놓치는가**: ① 감사 방법론은 인간 속도 공격자를 가정 — 공격자가 프로토콜을 이해하는 데 수일/수주 소요. AI는 스캔당 수초. ② 배포 사이클마다 1회 감사 → 매 거버넌스 파라미터 변경, 매 리밸런싱 이벤트, 매 유동성 증가가 새로운 공격 면 창출하지만 재감사 없음. ③ "한 번 감사받은 프로토콜 = 안전"이라는 정적 보안 신뢰가 AI 연속 스캔 위협 모델과 불일치. **방어 방향**: (1) 배포 중 지속 감시 (AI-powered monitoring, 봇 탐지); (2) AI 자율 TX가 성공하기 전 차단하는 속도 제한/쿨다운/민트 한도의 재위치화 (진입 장벽 → 첫 번째 방어선으로 격상); (3) 거버넌스/파라미터 변경 시마다 AI-assisted re-audit 의무화. **Microstable 적용**: keeper rebalance 이벤트, MANUAL_ORACLE_MODE 활성화, 파라미터 거버넌스 변경 = AI 스캐너의 즉각 타겟. `MAX_DRIFT_BPS` 온체인 체크와 120슬롯 타임박스가 AI 자율 익스플로잇에 대한 주요 방어선. 이 제약들이 단순 편의가 아닌 **AI-speed 위협 대응 필수 제약**으로 재분류 필요. **Source**: cryptonium.cloud "Securing Agentic DeFi 2026" (2026-03-24); Anthropic Frontier Red Team Dec 2025 결과; cryptollia.com "Dark Forest Machine MEV 2026" (2026-03-24). |
 
 <!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-24 (04:00 KST) -->
@@ -4268,3 +4269,75 @@ The Resolv Labs exploit (previously documented under A72) reveals a more specifi
 | A80 hpke-rs Export-Only Context Panic + KDF u16 Truncation | RUSTSEC-2026-0070 (HIGH, 2026-03-24) + RUSTSEC-2026-0069 (2026-03-24): Opening/sealing on export-only HPKE context → panic (0070). `Context::export()` with output_length > 65535 silently casts to u16 → truncated, non-RFC-9180 KDF label → interoperability failure or silent incorrect key derivation (0069). Both fixed in hpke-rs ≥ 0.6.0. Extends A76 (nonce reuse) coverage across the full hpke-rs vulnerability surface: all four RUSTSEC-2026-0069/0070/0071/0072 patched at ≥ 0.6.0. Microstable: no hpke-rs dep currently. Pre-emptive: future HPKE adoption must use ≥ 0.6.0. |
 | A81 Quinn QUIC Remote Validator Crash (Real-World Exploited) | RustSec advisory in Quinn (QUIC transport for Agave Solana validator). Publicly disclosed without prior private coordination (March 12, 2026 validator call). Enabled remote crash of Agave validator processes with no authentication. Emergency upgrades to Agave 3.1.10 + Firedancer 0.8.14 issued. Novel red-team angle: publicly disclosed PoC creates window to crash targeted validators before full upgrade → reduce honest-validator stake weighting → influence block production ordering. Microstable impact: MEDIUM SYSTEMIC — keeper RPC depends on validator stability; validator crash wave → RPC degradation → oracle TX misses → staleness window exploitable for price manipulation. Mitigation: ≥ 3 RPC fallbacks, retry on 503/timeout, validator-health monitoring. |
 | A82 Solana Blockchain as C2 Transport — Developer Machine Targeting | Bitdefender 2026-03-18: malicious Windsurf IDE extension (`reditorsupporter.r-vscode-2.8.8-universal`) retrieves encrypted JS payload from Solana blockchain transactions instead of traditional C2 server → bypasses firewalls (traffic looks like legitimate Solana RPC). Drops native binaries (w.node, c_x64.node) → credential/secret exfiltration from developer machine. Selective targeting (skips Russian TZ). **Microstable impact: HIGH DEV-ENV** — keeper developer machines running Solana IDEs (VS Code/Cursor/Windsurf) are exact attack surface. Successful compromise → Anchor deploy keypairs, keeper hot wallet seeds, Helius/QuickNode API keys. Attack path: GitHub contributor recon → spear-target with fake Anchor extension → pivot to keeper authority. Defense: IDE extension allowlist + HSM-backed keypairs + no flat .env secrets on dev machines. |
+
+
+<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-26 (04:00 KST) -->
+
+## META-23: Cloud AI Agent Infrastructure IAM Attack Surface (CAAI-IAS)
+
+**Category**: Purple Team Meta-Security | **Date**: 2026-03-26 | **Severity**: LOW (current) / HIGH (cloud AI integration)
+
+### Signal
+
+**RSAC 2026 Zenity CTO 0-click AI agent exploit demo (The Register, 2026-03-23)**:
+"AI agents are gullible and easy to turn into minions." Zenity CTO demonstrated zero-click AI agent exploitation on stage at RSAC 2026. No user interaction required once IAM is misconfigured.
+
+**XM Cyber 8 AWS Bedrock Attack Vectors (The Hacker News, 2026-03-24)**:
+- Vector 1: `bedrock:UpdateAgent` -> rewrite agent base prompt -> force agent to leak internal instructions + tool schemas
+- Vector 2: `bedrock:PutModelInvocationLoggingConfiguration` -> redirect ALL model invocations to attacker S3 -> harvest every prompt silently
+- Vector 3: `logs:DeleteLogStream` / `s3:DeleteObject` on log bucket -> erase forensic trail post-exploit
+- Vector 4+: Knowledge base RAG data source exfil (s3:GetObject), cross-agent prompt injection via tool responses, flow injection, guardrail degradation, credential theft from secrets manager
+
+All 8 vectors start from a single "low-level" IAM permission and end at full agent compromise or data exfiltration.
+
+**Bessemer Venture Partners (2026-03-25)**:
+"Granting broad access upfront, in the name of flexibility or speed, is precisely how organizations create the privilege accumulation problem attackers will exploit."
+
+### Core Structural Gap
+
+DeFi protocols deploying keeper or monitoring agents on cloud AI infrastructure treat smart contract code as the audit target. Cloud IAM permissions are NEVER included in standard smart contract audits. Yet a single misconfigured policy grants:
+1. Full agent base prompt rewrite (identity takeover - keeper instructed to drain protocol)
+2. All prompt/response exfiltration with zero runtime behavioral trace
+3. Knowledge base (RAG) poisoning via S3 data source access
+4. Forensic trail erasure - cover tracks before/after on-chain exploit
+
+### Why Audits Miss It
+
+1. **Scope boundary**: Smart contract audit scope = contract source code + deployment parameters. Cloud IAM roles, agent configurations, base prompts are explicitly "out of scope" by audit firm contracts.
+2. **Managed service blind trust**: "Cloud AI is managed infrastructure" - treated as a trusted black box like AWS uptime guarantees.
+3. **No standard checklist item**: No DeFi audit methodology includes "enumerate all IAM roles with bedrock:*/vertexai:* permissions and verify least-privilege."
+4. **0-click nature**: Exploit is passive reconfiguration BEFORE the keeper runs. No runtime attacker behavior detectable. SIEM sees a normal keeper run (META-18 amplification).
+5. **Compounding with META-18**: After IAM-based agent reconfiguration, the compromised keeper runs with correct auth tokens, normal call rates, zero errors. SIEM cannot distinguish compromised from legitimate execution.
+
+### Distinction from Existing METAs
+
+- META-22: Cloud KMS = IAM credential -> KMS signing key -> on-chain auth bypass (KEY layer)
+- META-23: Cloud AI IAM = IAM permission -> agent base prompt rewrite -> pre-runtime keeper identity takeover (AGENT CONFIGURATION layer)
+- META-14: Rogue AI Agent = emergent adversarial behavior, no external attacker
+- META-18: SIEM blind spot after compromise (detection failure)
+- META-05: Agent tool surface at runtime
+- B29/B43: Prompt injection / memory poisoning at runtime input
+- D38: CI/CD pipeline build-step injection (AGENTS.md/CLAUDE.md replacement)
+
+META-23 is PRE-RUNTIME: keeper agent's instructions are rewritten before it runs. No prompt injection. No ML input manipulation. Pure cloud IAM misconfiguration.
+
+### Microstable Architecture Analysis
+
+**Current**: Rust deterministic keeper binary - NOT a cloud AI agent. No Bedrock/Vertex/Azure AI integration.
+**META-23 NOT currently applicable. SAFE.**
+
+**Future risk trigger**: If keeper evolution includes LLM-based decision layer via cloud AI -> META-23 becomes HIGH severity immediately, before any smart contract change.
+
+**Pre-emptive design principle**: If cloud AI is ever integrated, IAM policy for AI infrastructure MUST be scoped to the same audit rigor as smart contract code.
+
+### Minimum Defense Checklist (for future cloud AI keeper)
+
+- IAM roles with bedrock/vertexai/azure.cognitiveservices permissions audited quarterly
+- bedrock:UpdateAgent isolated to dedicated deploy role (not keeper runtime role)
+- Model invocation logging to WORM S3 bucket (no DeleteObject on logging bucket)
+- Agent base prompt hash committed to version control + verified at keeper startup
+- Knowledge base data sources: read-only to keeper runtime role
+- Privileged IAM actions (UpdateAgent, PutModelInvocationLoggingConfiguration) require MFA + approval gate
+- Cloud AI IAM audit included as MANDATORY scope in future smart contract audit RFPs
+
+**Source**: The Register "AI agents are gullible" (2026-03-23) | XM Cyber / The Hacker News "8 AWS Bedrock Attack Vectors" (2026-03-24) | Bessemer Venture Partners "Securing AI Agents 2026" (2026-03-25)
