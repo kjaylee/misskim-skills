@@ -969,7 +969,8 @@ location /rpc {
 | B42 Audit Severity Miscalibration | 감사자가 취약점을 올바르게 식별했지만 "코드가 문법적으로 정확하므로" 심각도를 정보성/낮음으로 분류. 어드민 권한 남용 등 경제적 폭발 반경이 큰 운영 신뢰 가정을 코드 수준 심각도 휴리스틱으로 평가해 critical 에스컬레이션 실패 (CertiK-audited Merlin/Swaprum/Arbix, SigIntZero 2026). |
 | B43 AI Agent Memory Injection Attack | 에이전트 권한을 설계 시 과다 부여(B29)나 단기 누적 드리프트(B38)와 달리, 런타임 메모리 스토어 자체에 악의적 데이터를 주입해 에이전트가 존재하지 않는 사전 승인을 "기억"하도록 유도. 블록체인 트랜잭션 불가역성 때문에 단일 성공으로 영구 손실 발생. 에이전트 메모리를 신뢰 경계로 보지 않고 운영 컨텍스트로만 취급해 보안 검토 범위 밖으로 분리 (Princeton/Sentient, 2026). |
 | B44 SPL Token Account Persistent Delegate Drain | 계정 소유권(owner)과 위임 권한(delegate)의 분리를 감사가 "정상 Solana 토큰 모델"로 취급하여 dApp 사용 후 delegate 잔존을 별도 공격 벡터로 분류하지 않음. 프로토콜 감사는 vault ATA 보안에 집중하고, 사용자 측 ATA delegate가 프로토콜 mint 흐름을 통해 세탁 경로로 악용될 수 있음을 수신 측에서 거부해야 한다는 점을 놓침 (Ledger/Canissolana 2026-03-02). |
-
+| A83 libcrux-ml-dsa Signature Verification Faults (RustSec 2026-0076) | A83은 `libcrux` 서명 경계의 malformed 입력에 대한 실패 동작/오류 코드 동작이 핵심인데, 감사가 API 성공경로 테스트에 집중해 크립토 라이브러리 내부 경계와 panic/fault 시의 fail-open/Fail-hard 동작을 누락할 수 있음. |
+| A84 libcrux-sha3 Incremental SHAKE Edge-Case (RustSec 2026-0074) | A84는 바이트 바운더리 상태 머신 결함으로, off-chain 프로세스(keeper/RPC/bridge adaptor)가 같은 크립토 스택을 공유할 경우 운영 경로에서 드문 입력으로 비정상 상태를 만드는 취약점으로 이어짐. 경제적/상태 기계 검토가 없는 감사가 놓치기 쉬움. |
 
 
 ### A44. Utility-Impersonating Env-Stealer Crate
