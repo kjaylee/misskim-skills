@@ -214,6 +214,22 @@ New RustSec advisories (`RUSTSEC-2026-0027`, `RUSTSEC-2026-0028`) show a second-
 - https://rustsec.org/advisories/RUSTSEC-2026-0027.html
 - https://rustsec.org/advisories/RUSTSEC-2026-0028.html
 
+### Solana SDK Supply Chain Takeover (NPM Trusted Tooling)
+GHSA-8f57-hh49-gmqf (2026-03-26) reported malicious behavior in `@solana-ipfs/sdk` (`>=0` vulnerable, first patched version: none): any computer using it should be considered fully compromised; all local secrets should rotate from a clean machine. This is a high-risk **off-protocol**, yet protocol-relevant risk because Solana JS tooling and infra scripts are part of the signing/operations trust boundary.
+
+**Solana-specific risk**:
+- A single compromised SDK in local/off-chain tooling can leak KMS/env credentials, RPC private keys, wallet seed material, or keeper operator tokens before a tx reaches chain.
+- Impact is often non-deterministic: uninstalling package rarely fully restores trust because prior process execution may have dropped persistent payloads.
+- Even if protocol code is clean, operational compromise can authorize privileged keeper actions, oracle feed tampering, or signing abuse.
+
+**Mitigation**:
+- Freeze/add to denylist any dependency with advisory `ghsa_id` from GitHub Advisory DB unless explicit exception signed by security owner.
+- Keep tooling dependency allowlist with 2-person change gate + 7-day quarantine for newly published versions.
+- Use separate ephemeral CI/runner host for any Solana JS tooling that touches signing material; rotate and attest credentials after package alerts.
+- Add CI policy that blocks dependency install if `npm` package has security advisory severity ≥ HIGH and no patched version unless exception.
+
+**Source**: https://api.github.com/advisories/GHSA-8f57-hh49-gmqf
+
 ### ZK Verifier Key Binding Drift (FOOMCASH Pattern)
 FOOMCASH (2026-02-26, ~$2.26M) was exploited after verification-key configuration drift enabled forged/invalid zkSNARK proof acceptance.
 

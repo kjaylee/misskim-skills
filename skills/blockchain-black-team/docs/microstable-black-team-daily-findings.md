@@ -1,5 +1,39 @@
 ---
 
+
+
+## 2026-03-27 Daily Check
+
+### Source Sweep (24h~7d window: 2026-03-20 to 2026-03-27 KST)
+- Sources checked: rekt.news / newsletter.rekt.news, SlowMist, Hacker News + Brave fallback equivalents, GitHub Advisory (web_search + web_fetch), Trail of Bits/Neodyme/OtterSec index pages, X/Twitter hashtag scan.
+- Confirmed incident in window: **GHSA-8f57-hh49-gmqf** (2026-03-26) — `@solana-ipfs/sdk` compromise in npm ecosystem (`vulnerable_version_range: >=0`, no patched version).
+- No additional on-chain Solana protocol exploit with confirmed mechanism published between 2026-03-20 and 2026-03-27 that was not already in matrix.
+- Existing matrix already includes 2026 reinforcement entries for Neutrl, Venus, DBXen, bonk.fun, dTRINITY, etc. No novel mechanism beyond D28 reinforcement today.
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **1 reinforcement candidate**: **D28 Supply Chain** (direct malicious NPM package risk) — no matrix ID extension required.
+
+### 90-Vector Sweep Focus (carry-forward + today)
+- Targeted verification performed for all currently open carry-forwards and today’s reinforcement points.
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **D28 Supply Chain** (`@solana-ipfs/sdk` NPM advisory) | off-chain tooling/runtime boundary | ⚠️ MEDIUM-OPEN (N/A for on-chain logic) | Advisory confirms any host running package is potentially fully compromised; rotate keys/certs from clean device. No direct Smart-Contract-path effect observed in current files, but high trust-boundary risk for keeper/dev workflows. |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 22) | audit-attestation.json absent; full unattested delta persists |
+| A43 Commit/Reveal Threshold Circumvention | lib.rs rebalance() | ⚠️ MEDIUM CARRY-FORWARD | No cumulative drift tracking |
+| B44 SPL Token Delegate Drain | lib.rs mint() | ⚠️ MEDIUM CARRY-FORWARD | No delegate.is_none() check in mint() |
+| A75 MANUAL_ORACLE_MODE TWAP Drift Guard Missing | keeper / oracle write path | ⚠️ MEDIUM CARRY-FORWARD | Manual price write path lacks explicit TWAP-drift assertion in current code |
+| D26 Frontend Compromise / CSP | docs/index.html | ✅ N/A | CSP meta exists (`script-src 'self'`) and connect-src allowlist; no newly introduced high-risk frontend regression observed |
+
+### Today's Verdict
+- New incidents found: **1** (GitHub advisory only)
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0**
+- All existing carry-forwards unchanged and still prioritized: **B45 HIGH**, **A43 MEDIUM**, **B44 MEDIUM**, **A75 MEDIUM**.
+- Microstable code-level status: **no actionable new high-severity regression** from today's sweep.
+
+
 ## 2026-03-24 Daily Check
 
 ### Source Sweep (24h window: 2026-03-23 to 2026-03-24 KST)

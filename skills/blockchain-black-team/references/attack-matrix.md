@@ -271,6 +271,7 @@ function execute() external {
 **Historical**: event-stream (2018), ua-parser-js (2021), multiple npm attacks
 **Mechanism**: Compromise dependency → inject malicious code into build.
 **2026 reinforcement (RustSec)**: short-lived typosquat waves (`rpc-check`, `tracing-check`) targeted a specific ecosystem to steal credentials before package takedown.
+**2026 reinforcement (GHSA-8f57-hh49-gmqf, 2026-03-26): `@solana-ipfs/sdk` (npm) malware with `vulnerable_version_range: >=0` and no patched version. Any machine with the package installed/running should be treated as fully compromised; all secrets and keys should be rotated from a separate machine, and package removal alone is insufficient. Maps to D28 as confirmed direct package compromise with universal scope via tooling trust chain, not registry typo.
 **Defense**: Lock files, audit dependencies, minimal dependency tree, vendoring, Cargo.lock attestation, registry-source allowlists, and two-person review for new deps.
 
 ### D31. Protocol-Metadata Confusion (IDL/Schema Trust)
