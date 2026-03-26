@@ -4272,7 +4272,14 @@ The Resolv Labs exploit (previously documented under A72) reveals a more specifi
 | A82 Solana Blockchain as C2 Transport — Developer Machine Targeting | Bitdefender 2026-03-18: malicious Windsurf IDE extension (`reditorsupporter.r-vscode-2.8.8-universal`) retrieves encrypted JS payload from Solana blockchain transactions instead of traditional C2 server → bypasses firewalls (traffic looks like legitimate Solana RPC). Drops native binaries (w.node, c_x64.node) → credential/secret exfiltration from developer machine. Selective targeting (skips Russian TZ). **Microstable impact: HIGH DEV-ENV** — keeper developer machines running Solana IDEs (VS Code/Cursor/Windsurf) are exact attack surface. Successful compromise → Anchor deploy keypairs, keeper hot wallet seeds, Helius/QuickNode API keys. Attack path: GitHub contributor recon → spear-target with fake Anchor extension → pivot to keeper authority. Defense: IDE extension allowlist + HSM-backed keypairs + no flat .env secrets on dev machines. |
 
 
-<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-26 (04:00 KST) -->
+*(2026-03-27 Red Team Evolution: A83~A84 — 2 new vectors)*
+
+| Vector | Details |
+|--------|---------|
+| A83 libcrux-ml-dsa Signature Verification Faults (Panic + Weak Norm Check) | RUSTSEC-2026-0076 (HIGH CVSS 8.7, 2026-03-24): malformed `hint` in ML-DSA signature can trigger out-of-bounds read during verification, causing panic-based availability DoS on signature-checking endpoints when fed attacker-crafted signature data. RUSTSEC-2026-0077 accepts some malformed signatures due incorrect signer-response norm check (integrity bypass in verification). Patched in >=0.0.8. Microstable does not include libcrux-ml-dsa today, so this is preemptive risk for future PQ signature paths. |
+| A84 libcrux-sha3 Incremental SHAKE first-block drop | RUSTSEC-2026-0074: `portable::incremental::Shake*::squeeze` dropped first output block when squeezing > RATE bytes, causing deterministic output truncation / drift in XOF/DRBG outputs. Patched in >=0.0.8. Not present in Microstable today; future migrations to libcrux-ml-kem/ml-dsa should enforce patched versions. |
+
+<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-27 (04:00 KST) -->
 
 ## META-23: Cloud AI Agent Infrastructure IAM Attack Surface (CAAI-IAS)
 

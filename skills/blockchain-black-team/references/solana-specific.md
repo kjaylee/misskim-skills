@@ -769,3 +769,20 @@ If any future Microstable component uses hpke-rs for keeperâ†”oracle or keeperâ†
   3. Keeper hot wallet: HSM or at minimum OS keychain, never plaintext .env
   4. API keys: 1Password / environment injection at runtime, never committed
   5. Rotate all secrets if any team member's machine shows unexpected Solana RPC traffic
+
+## 2026-03-27 Patterns
+
+### libcrux-ml-dsa Signature Verification Faults (A83)
+- **RUSTSEC-2026-0076 (HIGH)**: malformed ML-DSA signature hints can trigger an out-of-bounds read during verification, producing panic-based remote DoS when verification service accepts attacker-controlled serialized signatures.
+- **RUSTSEC-2026-0077 (HIGH)**: ML-DSA signer response norm check incorrectly validated, allowing malformed signatures to pass verification in some paths (integrity policy break).
+- **Microstable relevance**: no `libcrux-ml-dsa` in `microstable/solana/Cargo.lock` today; attack is **latent**.
+- **If adopted in keeper or program**: blocklist versions `<0.0.8` and require explicit fuzz tests for invalid/oversized hint cases.
+
+### libcrux-sha3 Incremental SHAKE Discrepancy (A84)
+- **RUSTSEC-2026-0074**: `libcrux-sha3` incremental `portable::incremental::Shake*::squeeze` dropped first output block when output exceeds RATE size.
+- **Impact**: deterministic output mismatch / entropy drift in protocols that rely on long-output XOF streams.
+- **Microstable relevance**: no `libcrux-sha3` dependency today; no direct exploit path.
+- **Future migration guard**: require `libcrux-sha3 >= 0.0.8` for any PQ hashing/KEM rollout.
+
+---
+
