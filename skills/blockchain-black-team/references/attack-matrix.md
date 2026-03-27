@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26) | META-01~23
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28) | META-01~24
 
 ## A. Smart Contract Vectors
 
@@ -956,6 +956,7 @@ location /rpc {
 | A38 ZK Verifier Key Misbinding / Proof-Parameter Drift | ZK 증명 검증 루트(verification key / circuit id / public input schema)를 운영 설정으로 느슨하게 관리해, 암호학적 신뢰 경계 자체가 교란되는 위험을 감사 범위 밖으로 분리 (FOOMCASH). |
 | B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
 | B38 Multi-turn Tool-Return Boundary Takeover | 단일 프롬프트/단일 턴 필터링 중심 평가로는 누적 컨텍스트 드리프트를 포착하지 못함. 도구 반환값 경계를 신뢰 재설정 지점으로 다루지 않아, 합법처럼 보이는 다중 턴 경로를 통해 권한 오용이 점진적으로 유도됨 (arXiv 2602.22724/2602.22302). |
+| META-24 Off-Chain Attack Surface 80/20 + Agentic MEV | ① "감사 통과 = 안전"이라는 업계 신화가 실증적으로 붕괴(Q1 2025: 92% 익스플로잇 계약이 감사 통과, 손실의 80.5%가 감사 범위 밖 오프체인 벡터). 감사사는 "코드를 감사하지, 운영·직원·제3자 통합·거버넌스는 감사하지 않는다"고 명시적으로 진술. ② AI 기반 MEV 봇이 단일 블록 내 샌드위치 공격을 자율 실행하는 패턴은 전통적 취약점이 아닌 프로토콜 설계 가정(인간 속도 시장 참여자) 위반이므로 감사 체크리스트에 항목 자체가 없음. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -4382,3 +4383,103 @@ META-23 is PRE-RUNTIME: keeper agent's instructions are rewritten before it runs
 4. Developer machine hygiene: crypto wallet files and deploy keypairs must NOT be on the same machine as general cargo install experiments
 
 **Source**: https://rustsec.org/advisories/ (March 26, 2026 batch); crates.io removal notices
+
+---
+<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-28 (04:00 KST) -->
+
+## META-24: Off-Chain Attack Surface Crystallization + Agentic MEV Weaponization (OACS-AMCW)
+
+**Date**: 2026-03-28 | **Team**: Purple | **Severity**: SYSTEMIC
+
+### Signal 1: The 80/20 Audit Breakdown — Quantified Proof of Structural Failure
+
+**Source**: markaicode.com "Why Smart Contract Security Audits Are Failing" (2026 analysis of Q1 2025 incidents, 150+ post-mortems)
+
+**Hard numbers**:
+- Q1 2025 total losses: $2.05B across 37 incidents
+- **92% of exploited value came from audited contracts** (91.96%)
+- **80.5% of stolen funds came from off-chain attack surface** not covered by any audit
+- Bybit hack ($1.5B): contracts were secure. Attack came via compromised third-party software (Safe Wallet), frontend injection, social engineering. No audit covers this.
+
+**Direct auditor quote (senior auditor, top-5 firm)**:
+> "We audit code. We don't audit your operations, your employees, your third-party integrations, or your governance. That's where 80% of attacks happen now."
+
+**Five off-chain attack categories audits miss completely**:
+1. **Access control compromises via human/key layer** (70% of Q1 2025 losses = $1.46B)
+2. **Third-party software supply chain** (Safe Wallet → Bybit)
+3. **Frontend injection** (D26, but not in standard audit scope)
+4. **Social engineering targeting operators** (B36 class, but explicitly "out of scope")
+5. **Post-deployment governance/operational changes** (Infini Protocol: rogue developer, perfect code)
+
+### Signal 2: Agentic MEV Weaponization — Block-Speed Autonomous Drain
+
+**Source**: cryptollia.com "Agentic DeFi Risk Landscape 2026" (2026-03-27)
+
+**New threat model**: AI-powered liquidity drain bots (not traditional MEV bots) are now:
+- Autonomously scanning mempools 24/7
+- Predicting slippage tolerance of pending transactions
+- Executing entire sandwich attacks within a **single block**
+- Dominating entire Ethereum transaction blocks, siphoning millions
+
+**Why this is META-level (not just A2/C25)**:
+- Traditional MEV (C25) is modeled as discrete arbitrage. Agentic MEV is **continuous, 24/7 extraction**.
+- The attack isn't a "vulnerability" — sandwiching is permissionless. Auditors have no checklist item for "this protocol can be drained by AI sandwich bots."
+- The meta failure: **protocol economic models assume human-speed market participants**. AI agents operating at block speed violate this assumption without touching a single line of vulnerable code.
+- Projected losses from AI-driven DeFi exploits: $10B–$20B annually by 2027 if trends continue (multiple analyst projections).
+
+**AI Agent Identity Impersonation (emerging, 2026-H2 risk)**:
+- AI agents are acquiring Self-Sovereign Identities (SSI) + Decentralized Identifiers (DIDs) in 2026
+- Future attack: malicious AI agent impersonates trusted keeper/oracle agent using legitimate verifiable credentials
+- Why audits miss it: SSI/DID identity systems are never in scope for smart contract audits; identity fraud detection for machine agents has no established audit methodology
+
+### Core Structural Gap (Purple Team Perspective)
+
+**META-24 is distinct from previous METAs because it operates at the meta-meta level:**
+- META-01–23 document specific attack surface expansions (key management, AI infrastructure, oracle, supply chain, etc.)
+- META-24 documents why the **audit model itself** systematically fails to cover 80% of the real attack surface
+- META-24 is the theoretical frame that unifies and explains why META-13, META-15, META-16, META-17, META-18, META-22, META-23 all exist as a class
+
+**The core asymmetry**: Auditors are incentivized to define narrow scope (code only = deliverable, falsifiable, liability-bounded). Attackers are not scope-bounded. This structural asymmetry guarantees that any protocol relying solely on code audits will remain 80% unprotected.
+
+### Why Audits Miss It (both signals)
+
+1. **Scope contract limitation**: Audit firm engagement letters explicitly exclude operations, DevOps, personnel, governance, and third-party integrations. "Out of scope" = treated as "not a risk" by protocol teams.
+2. **Discrete event model**: Audit methodology models attacks as discrete events (one TX, one exploit). AI MEV bots create continuous low-amplitude extraction — no single exploitable transaction to flag.
+3. **No economic viability analysis**: Auditors don't model "what happens when a protocol faces 24/7 AI sandwich bots at block speed?" as a security question. It's treated as a market microstructure problem.
+4. **Social engineering is HR, not security**: Compromised operators (B36), rogue developers (Infini), phishing (65% of 2026 DeFi incidents) are classified as HR/operational failures, not audit findings.
+5. **AI agent identity**: No audit methodology includes SSI/DID identity verification for machine-to-machine trust. The attack surface doesn't exist in current audit vocabularies.
+
+### Microstable Architecture Analysis
+
+**Signal 1 (Off-Chain 80/20)**:
+- Microstable's keeper and deployment pipeline = squarely in the 80% unaudited attack surface
+- Smart contract code can be perfectly audited while keeper compromise, dashboard phishing, or RPC takeover drains the protocol
+- **Current status**: keeper is Rust deterministic binary (deterministic, auditable). Dashboard/RPC layer is the primary unaudited exposure.
+- **Recommended**: Quarterly "operational security" review covering keeper environment, dashboard supply chain, deploy pipeline — separate from smart contract audits.
+
+**Signal 2 (Agentic MEV)**:
+- Microstable mint/redeem path with oracle refresh windows creates potential AI MEV surface
+- Current defense: `MAX_DRIFT_BPS` + 120-slot timebox limits exploitation window
+- **These parameters must be maintained as AI-speed threat defenses** (already classified as such in META-21). The agentic MEV signal reinforces this.
+- TWAP/cooldown mechanisms are now doubly critical: they enforce a human-speed interaction model against AI-speed adversaries.
+
+**Current Microstable status**: LOW (no acute risk). Architectural defenses partially in place.
+**Future risk trigger**: Any oracle refresh path that allows rapid repeated reads without cooldown becomes an agentic MEV target.
+
+### Defense Checklist (META-24)
+
+**Against Off-Chain Attack Surface**:
+1. Audit RFPs must explicitly include scope: cloud IAM, keeper operational environment, deploy pipeline, dashboard supply chain, governance key management
+2. Threat model must document off-chain trust boundaries (operators, third-party tools, development machines)
+3. Bug bounty scope should cover operational layer, not just code
+4. Incident response playbook must include: "assume keeper/operator machine compromised" as a scenario
+5. "Passed audit" is a necessary but not sufficient security signal — add operational security checklist
+
+**Against Agentic MEV Weaponization**:
+1. Mint/redeem cooldowns are anti-AI-MEV measures — treat them as security parameters, not UX parameters
+2. Oracle refresh windows must be at minimum 2+ blocks to prevent single-block MEV exploitation
+3. TWAP enforcement is now a first-class security requirement (not just economic design)
+4. Monitor for AI bot activity: unusual slippage patterns, same-block buy/sell sequences, block-filling behavior
+5. MEV-resistant order sequencing (fair sequencing services) for any AMM interaction
+
+**Source**: markaicode.com "Why Smart Contract Security Audits Are Failing" (2026) | cryptollia.com "Agentic DeFi Risk Landscape 2026" (2026-03-27) | Bessemer Venture Partners "Securing AI Agents 2026" (2026-03-25) | sherlock.xyz "Cross-Chain Security in 2026" (2026)
