@@ -786,3 +786,40 @@ If any future Microstable component uses hpke-rs for keeper↔oracle or keeper�
 
 ---
 
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-28 -->
+
+## 2026-03-28 Patterns
+
+### libcrux-poly1305 Standalone MAC Unauthenticated Panic (A85)
+- **RUSTSEC-2026-0073 (HIGH, CVSS 8.7)**: incorrect constant for key length in `libcrux-poly1305` causes `libcrux_poly1305::mac` to always panic with out-of-bounds memory access.
+- **Attack surface**: any service exposing a code path that calls `libcrux_poly1305::mac` with attacker-controlled input. Network-reachable, no authentication required (AV:N/AC:L/AT:N/PR:N/UI:N).
+- **Scope boundary**: standalone MAC use only. `libcrux-chacha20poly1305` (AEAD) is **unaffected** — the vulnerability is isolated to the standalone MAC API, not the AEAD composition.
+- **Patched**: `libcrux-poly1305 >= 0.0.5`
+- **Microstable relevance**: no `libcrux-poly1305` dependency in Cargo.lock today; attack is **LATENT**.
+- **Sibling cluster**: A83 (libcrux-ml-dsa), A84 (libcrux-sha3), A85 (libcrux-poly1305) — all `libcrux` PQ/crypto primitives advisory batch (2026-03-24). The cluster pattern suggests the libcrux library is undergoing broad security audit; expect additional advisories.
+- **Future migration guard**: if any libcrux-* crate is introduced, verify advisory status for ALL libcrux-* sibling crates, not just the directly imported one. Pin to advisory-clean versions at adoption time.
+- **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0073.html | https://github.com/cryspen/libcrux/pull/1351
+
+### Coordinated Mass-Deployment Malicious Crate Wave — Crypto Ecosystem Targeting (A86)
+- **Signal**: 2026-03-26, RustSec batch removal of 20+ malicious crates in a single day; crate names include crypto/DeFi/trading targets: `monero-rpc-rs`, `monero-api`, `acceptxmr-rs` (Monero payment processor), `lfest-main` (trading framework), alongside Windows-ecosystem cloaks (`registry-win`, `win-crypto`, `windows-service-rs`, `openvpn-plugin-rs`, `win-base64-rs`, `winx-rs`, `lasso-rs`, `tauri-winrt-notifications`).
+- **Attack pattern — carpet-bomb multi-vector**:
+  1. Attacker registers 20+ crates simultaneously under different categories (crypto-utility, OS-wrapper, UI)
+  2. Crates are dormant or functional for weeks; legitimate installs accumulate
+  3. Malicious payload activates at a trigger time (e.g., specific date, environment variable) or exfiltrates continuously
+  4. All crates are taken down in a coordinated wave — but any developer who installed during the active window is compromised
+  5. **Key asymmetry**: crate-by-crate deny-listing is too slow; the attacker deploys faster than defenders remove
+- **Why distinct from A44 (single direct-dep env-stealer)**: A44 is a targeted, single-crate injection aimed at one ecosystem. A86 is a carpet-bomb deployment across multiple package categories simultaneously — scale and cross-ecosystem targeting are the novel elements.
+- **Why distinct from A45 (campaign-clone rotation)**: A45 is a reactive pattern (clone appears AFTER original takedown). A86 is a proactive parallel deployment — all clones are live simultaneously.
+- **Crypto developer kill chain**: `monero-api` or `lfest-main` added to Solana project → exfiltrates RPC keys, Anchor deploy keypair, `.env` secrets → attacker sends privileged keeper/upgrade transactions with stolen keys.
+- **Microstable relevance**: Cargo.lock clean ✅. Risk elevated when: (a) incident-response pressure to add new utility crates quickly, (b) new team members or contractors add dependencies without full review.
+- **Mitigation upgrade** (extends A44/A45 defenses):
+  1. Campaign-level detection: when 5+ crates are removed in one day in any registry, trigger immediate full Cargo dependency audit across ALL projects
+  2. Category quarantine: if one crypto-adjacent crate is flagged malicious, quarantine the entire semantic cluster (Monero-related, trading-related, Windows-adjacent) for 7 days pending review
+  3. Install telemetry: log ALL `cargo install`/`cargo build` events with new crate additions (date, crate name, version, maintainer age) — alert on any new crate <30 days old
+  4. Out-of-band maintainer verification: for any DeFi-adjacent crate (matching name contains: monero, btc, eth, sol, defi, trade, crypto), require direct GitHub-verified maintainer identity check before allowlist approval
+- **Source**: https://rustsec.org/advisories/ (batch, 2026-03-26)
+
+### Solana-Specific Defense Checklist Update
+39. ☐ libcrux-* adoption: full advisory check across ALL sibling crates (not just the directly imported one) before adoption
+40. ☐ Registry mass-removal detection: CI/toolchain monitors crates.io security events; 5+ removals/day triggers immediate full Cargo audit
