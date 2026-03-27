@@ -2,6 +2,44 @@
 
 
 
+## 2026-03-28 Daily Check
+
+### Source Sweep (24h~7d window: 2026-03-21 to 2026-03-28 KST)
+- Sources checked: rekt.news (frontpage + newsletter.rekt.news 2026-03-23 issue), hacked.slowmist.io, rustsec.org/advisories, search-fallback (SearXNG), web_fetch (dTRINITY NomosLabs detail, RUSTSEC-2026-0049 rustls-webpki)
+- Brave Search API quota exhausted → SearXNG fallback used throughout
+- **New confirmed items in window**:
+  1. **March 26 malicious Rust crate batch** (RUSTSEC-2023-0104~0124): 15+ Rust crates confirmed malicious removed from crates.io on 2026-03-26. Targets Windows service wrappers, Monero tooling, Tauri UI, OpenVPN Rust binding. → **D28 reinforcement** added to attack-matrix.md + incidents doc.
+  2. **RUSTSEC-2026-0049** (rustls-webpki CRL matching, March 20, 2026): CRL Distribution Point matching flaw — "limited impact" per advisory (requires compromised CA first). CVSS not listed. Not relevant to Microstable keeper (no rustls-webpki dep in keeper).
+  3. **dTRINITY** (2026-03-17, $257K) — already in matrix as A68; comprehensive incidents doc already has full entry (confirmed in file). No matrix change required.
+- No new on-chain Solana exploit with public mechanism between 2026-03-23 and 2026-03-28.
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **1 reinforcement**: **D28** (Rust crate malicious-code batch, March 26, 2026)
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **D28 March 26 crate batch** | keeper Cargo.lock | ✅ SAFE | grep confirms 0 matches for all 15+ named malicious crates in keeper build tree |
+| **A68 dTRINITY first-depositor / index inflation** | lib.rs mint/redeem/deposit logic | ✅ NOT APPLICABLE | Microstable uses on-chain instruction-tracked accounting (total_deposits field, slot flow caps). ERC4626-style vault share inflation attack surface does not exist in Solana Anchor account model. |
+| **RUSTSEC-2026-0049 rustls-webpki** | keeper deps | ✅ N/A | No rustls-webpki in keeper Cargo.lock |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 23) | audit-attestation.json absent; full unattested delta persists |
+| **A43 Commit/Reveal Threshold Circumvention** | lib.rs rebalance() | ⚠️ MEDIUM CARRY-FORWARD | No cumulative drift tracking in rebalance(); LARGE_REBALANCE_THRESHOLD constant exists (line 130) but no cross-slot accumulator |
+| **B44 SPL Token Delegate Drain** | lib.rs mint() | ⚠️ MEDIUM CARRY-FORWARD | No `delegate.is_none()` check in mint() (grep: no DelegateNotAllowed error, no delegate field validation) |
+| **A75 MANUAL_ORACLE_MODE TWAP Drift Guard Missing** | keeper / oracle write path | ⚠️ MEDIUM CARRY-FORWARD | manual_oracle_mode_expiry_slot (line 2655 lib.rs) enforced but no on-chain `assert(|manual_price - twap| <= MAX_DRIFT_BPS)` in write path |
+
+### Today's Verdict
+- New incidents found: **2** (D28 crate batch; dTRINITY already in matrix)
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0**
+- All existing carry-forwards unchanged: **B45 HIGH (DAY 23)**, **A43 MEDIUM**, **B44 MEDIUM**, **A75 MEDIUM**
+- Microstable code-level status: **no actionable new high-severity regression** from today's sweep
+
+---
+
+
+
 ## 2026-03-27 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-03-20 to 2026-03-27 KST)

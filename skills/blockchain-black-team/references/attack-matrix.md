@@ -4350,3 +4350,35 @@ META-23 is PRE-RUNTIME: keeper agent's instructions are rewritten before it runs
 - Cloud AI IAM audit included as MANDATORY scope in future smart contract audit RFPs
 
 **Source**: The Register "AI agents are gullible" (2026-03-23) | XM Cyber / The Hacker News "8 AWS Bedrock Attack Vectors" (2026-03-24) | Bessemer Venture Partners "Securing AI Agents 2026" (2026-03-25)
+
+---
+<!-- AUTO-ADDED BY BLACKTEAM DAILY EVOLUTION 2026-03-28 (03:00 KST) -->
+
+*(2026-03-28 Red Team Evolution — D28 Reinforcement Only — 0 new named vectors)*
+
+### D28 Reinforcement: March 2026 Malicious Rust Crate Batch (RUSTSEC-2023-0104~0124)
+
+**Date**: 2026-03-26 (advisories filed) | **Severity**: HIGH (supply chain) | **Microstable impact**: ✅ NOT AFFECTED (cargo.lock verified)
+
+**Signal**: RustSec Advisory Database filed 15+ advisories simultaneously on 2026-03-26 confirming malicious code in Rust crates removed from crates.io. Advisory IDs carry RUSTSEC-2023-* numbering (retroactive formal processing of a 2023-era campaign). Crates by category:
+- **Windows service wrappers**: `windowsservice`, `windows-service-rs`, `win_run_rs`, `winx-rs`, `win-crypto`, `registry-win`, `hann-rs-service`
+- **Tauri UI bindings**: `tauri-winrt-notifications`, `tauri-win-rt-notification`
+- **Monero tooling**: `monero-api`, `monero-rpc-rs`
+- **Utility**: `littest`, `lasso-rs`, `lfest-main`, `bit-flags`
+- **VPN binding**: `openvpn-plugin-rs`
+
+**Why distinct from previous D28 entries**: Prior D28 signals targeted npm ecosystem (`@solana-ipfs/sdk`, `event-stream`, `ua-parser-js`). This batch targets **Rust crates** — expanding the supply chain attack surface to the Rust/cargo ecosystem specifically. `monero-api` + `monero-rpc-rs` indicate crypto-adjacent developer machines as explicit targets.
+
+**Attack mechanism**: Malicious code embedded in crate source code executed at compile-time (build scripts) or runtime, targeting: local secret files, wallet seeds, API keys, SSH keys, AWS credentials accessible to the developer machine.
+
+**Amplification with A82 (Solana Blockchain as C2)**: Combined with the March 18, 2026 Windsurf IDE extension attack (A82), this represents a two-pronged 2026-Q1 campaign targeting Rust + TypeScript developer environments for Solana builders: one path through IDE extension, one through cargo install.
+
+**Microstable Cargo.lock verification (2026-03-28)**: `grep` search for all 15+ named crates → **ZERO matches**. Keeper build is not affected.
+
+**Defense (D28 additions)**:
+1. Run `cargo audit` after every `cargo update` — advisory DB now includes this full batch
+2. Review `Cargo.lock` additions against `cargo audit --deny warnings` in CI
+3. Specifically distrust crates with `windows-*`, `win-*`, `monero-*` names in registry if not from established authors; verify crate authorship before install
+4. Developer machine hygiene: crypto wallet files and deploy keypairs must NOT be on the same machine as general cargo install experiments
+
+**Source**: https://rustsec.org/advisories/ (March 26, 2026 batch); crates.io removal notices
