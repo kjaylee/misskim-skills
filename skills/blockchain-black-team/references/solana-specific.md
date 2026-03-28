@@ -823,3 +823,61 @@ If any future Microstable component uses hpke-rs for keeper↔oracle or keeper�
 ### Solana-Specific Defense Checklist Update
 39. ☐ libcrux-* adoption: full advisory check across ALL sibling crates (not just the directly imported one) before adoption
 40. ☐ Registry mass-removal detection: CI/toolchain monitors crates.io security events; 5+ removals/day triggers immediate full Cargo audit
+
+---
+<!-- AUTO-ADDED 2026-03-29 (Red Team Daily Evolution) — A87~A90 Solana/Anchor-relevant patterns -->
+
+## 2026-03-29 New Pattern Additions
+
+### A87 — Groth16 Trusted Setup Ceremony Skip (ZK circuits on Solana/Anchor)
+- **Solana context**: While mainstream Solana programs do not use Groth16 ZK proofs directly, Solana's ZK Token standard (Confidential Transfers in Token-2022) uses ElGamal + range proofs. Any custom Solana program integrating a Groth16 ZK verifier (via a Solana-native ZK VM or off-chain verifier contract) faces this attack surface.
+- **Future risk trigger**: If Microstable adds confidential transfer support or a ZK proof-based compliance feature, mandatory ceremony verification must be part of the deployment checklist.
+- **Detection command**: For any `verification_key.json`, verify `gamma_g2 != [G2_GENERATOR_X, G2_GENERATOR_Y]`. If equal → ceremony was not completed.
+- **Checklist item 41**: ☐ Any ZK verifier deployed to Solana/Anchor must provide ceremony transcript with ≥ 1 external contributor. Verify `snarkjs zkey verify` output before deploy.
+
+### A88 — Token-2022 TransferHook CPI Reentrancy (Solana analog of ERC-3525 SFT reentrancy)
+- **Solana context**: SPL Token-2022 `TransferHook` extension fires an additional CPI instruction during every transfer. If the hook's target program re-enters the calling instruction before all accounts are finalized:
+  - Balances, supply counters, or position states can be read mid-update (stale).
+  - The calling program may have transferred tokens (changing ATA balances) but not yet updated its internal state.
+  - A malicious hook could trigger a second deposit, borrow, or mint against the pre-update state.
+- **Microstable current status**: spl-transfer-hook-interface 0.9.0/0.10.0 in Cargo.lock (transitive dep). No active hook handler in lib.rs. LATENT.
+- **Guard pattern for Anchor programs using Token-2022 with TransferHook**:
+```rust
+// SAFE pattern: update ALL internal state before any SPL transfer that invokes a hook
+ctx.accounts.vault.total_deposits = ctx.accounts.vault.total_deposits
+    .checked_add(deposit_amount)
+    .ok_or(ErrorCode::MathOverflow)?;  // state updated FIRST
+
+// THEN initiate transfer (which will fire TransferHook CPI)
+token_2022::transfer_checked(...)?;  // hook fires here against updated state
+```
+- **Checklist item 42**: ☐ If Token-2022 TransferHook is applied to mSTABLE or any vault collateral token, audit all callers: ensure state updates precede transfer calls (CEI for SPL).
+
+### A89 — Supply Cap Enforcement: Internal Tracker vs. ATA Balance (Solana-Specific)
+- **Microstable confirmation (2026-03-29)**: `total_collateral_value()` correctly uses `v.total_deposits` (internal counter). NOT vulnerable to donation attack. ✅ CONFIRMED SAFE.
+- **General Solana pattern**: Programs that read `token_account.amount` from a vault ATA as the authoritative deposit counter are vulnerable to donation-bypass. Any `require!(vault_ata.amount <= cap)` check is bypassable by direct SPL token transfer to the ATA.
+- **Vulnerable pattern**:
+```rust
+// VULNERABLE: reads ATA balance directly
+let vault_balance = ctx.accounts.vault_ata.amount;
+require!(vault_balance <= supply_cap, ErrorCode::SupplyCapExceeded);
+```
+- **Safe pattern** (what Microstable correctly implements):
+```rust
+// SAFE: reads internal program-controlled state
+let protocol_deposits = ctx.accounts.vault.total_deposits;
+require!(protocol_deposits <= supply_cap, ErrorCode::SupplyCapExceeded);
+```
+- **Checklist item 43**: ☐ Audit ALL supply/collateral caps: verify they read from program-internal state, not raw ATA `token_account.amount`.
+- **Multi-horizon monitoring note**: Standard per-slot circuit breakers do not catch 9-month slow accumulation. Add 30-day/90-day rolling concentration alerts.
+
+### A90 — RNG Failure Key Generation Oracle (libcrux-ed25519 / ed25519 Variants)
+- **Solana context**: Solana validators and programs use ed25519 signatures. If keeper or validator software uses `libcrux-ed25519 < 0.0.4` for key generation, catastrophic RNG failure → all-zero key → predictable.
+- **Keeper key generation risk**: Any Rust binary that generates ed25519 keypairs using libcrux-ed25519 without RNG error handling is vulnerable. Microstable keeper: libcrux-ed25519 NOT present (confirmed). Standard Solana `solana-keygen` uses a different code path.
+- **Checklist item 44**: ☐ If any new Rust utility is introduced for Microstable keypair generation, verify: (a) does NOT use libcrux-ed25519 < 0.0.4; (b) always validates generated key != all-zeros before use; (c) uses hardware RNG source (HSM/TPM/TRNG) in production.
+
+### Solana-Specific Defense Checklist Update
+41. ☐ ZK verifier deployment: ceremony transcript with ≥1 external contributor + `snarkjs zkey verify` before mainnet deploy
+42. ☐ Token-2022 TransferHook callers: CEI ordering enforced — internal state updated BEFORE transfer CPI
+43. ☐ Supply cap enforcement: uses program-internal deposit tracker, NOT raw ATA `token_account.amount`
+44. ☐ New keypair generation utilities: verify libcrux-ed25519 >= 0.0.4 + non-zero key validation + hardware RNG

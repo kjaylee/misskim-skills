@@ -4513,3 +4513,86 @@ The following two incidents were tracked in the attack matrix (A41 reinforced on
 2. **Aave/CoWSwap $50M Price Impact** (2026-03-12): solver thin-pool routing loss → A59 confirmation
 
 No new named vectors added this cycle. Matrix holds at **93 named vectors** (including A79–A84 compact table entries) + META-01~24.
+
+---
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-29 (03:30 KST) — A87~A90 + 4 new vectors -->
+
+## New Vectors Added 2026-03-29 (Red Team Daily Evolution)
+
+### A87. Groth16 Trusted Setup Ceremony Skip — ZK Default Parameter Exploit
+**Historical**: Veil Cash (Base, ~Feb 20, 2026, 2.9 ETH) + FoomCash (~March 3, 2026, $2.26M). **First confirmed live exploits of deployed ZK cryptography in production.**
+**Mechanism**: Groth16 ZK-SNARK proofs require a trusted setup ceremony (snarkjs phase2) where `gamma` and `delta` keys are generated fresh and independently. If the team skips the `snarkjs zkey contribute` + `snarkjs zkey beacon` finalization steps, both parameters remain pinned to the BN254 G2 generator (the snarkjs default placeholder). This makes the verifier accept ANY proof — including completely fabricated ones with arbitrary nullifier hashes (0xdead0000 through 0xdead001c). No real deposit needed; any claimed withdrawal succeeds.
+**Exploit chain**: `snarkjs new circuit` → skip `phase2 contribute/beacon` → deploy verifier with generator defaults → attacker calls `withdraw()` N times with fabricated nullifier hashes → drain pool.
+**Why new**: Prior attack matrix had no ZK-specific setup ceremony failure vector. This is distinct from A1 (reentrancy), A4 (access control), and any prior cryptographic advisory. The trusted setup ceremony is a one-time deployment step that is frequently "out of scope" for smart contract audits — auditors review the Solidity verifier contract but not whether the ceremony was properly completed.
+**Audit blind spot pattern**: Pashov Audit Group had audited Veil Cash — the verifier contract was explicitly out of scope. FoomCash: one skipped CLI step before deployment. Attacker read the Veil Cash post-mortem, scaled it up.
+**Affected ZK systems**: Groth16 (snarkjs), PLONK variants (via "Frozen Heart" class — Trail of Bits 2022). Also applies to circuits with Fiat-Shamir public input binding failures.
+**Code pattern to find**:
+```bash
+# VULNERABLE deployment: ceremony never finalized
+snarkjs groth16 setup circuit.r1cs pot.ptau circuit_0000.zkey
+# MISSING: snarkjs zkey contribute circuit_0000.zkey circuit_final.zkey
+# MISSING: snarkjs zkey beacon circuit_final.zkey circuit_final.zkey <entropy>
+# MISSING: snarkjs zkey export verificationKey circuit_final.zkey verification_key.json
+# If verification_key.json has gamma_g2 == G2 generator → VULNERABLE
+
+# SAFE: verify gamma/delta are not the generator
+# snarkjs zkey verify circuit.r1cs pot.ptau circuit_final.zkey
+# All contributions must be listed in the ceremony transcript
+```
+**Defense**: (1) Mandatory ceremony transcript verification before deploy; (2) include verifier key generation in audit scope; (3) automated CI check: verify `gamma_g2 != G2_generator` before deploy; (4) use MPC ceremony with ≥1 independent external contributor; (5) monitor for nullifier reuse / proof forgery patterns post-deploy.
+**Microstable relevance**: LATENT — Microstable does not use ZK circuits or Groth16 proofs. Risk activates if ZK privacy features are added in a future version.
+
+---
+
+### A88. ERC-3525 Semi-Fungible Token (SFT) `onERC3525Received` Callback Reentrancy — Double-Mint Loop
+**Historical**: Solv Protocol BRO vault (Ethereum, March 5, 2026, $2.73M). 135 BRO in → 567,000,000 BRO minted → 38 SolvBTC extracted.
+**Mechanism**: ERC-3525 Semi-Fungible Token standard includes an `onERC3525Received` callback hook that fires on token transfers, analogous to ERC-721's `onERC721Received`. The BRO `BitcoinReserveOffering` contract called the external `onERC3525Received` hook **before** updating internal deposit accounting (violation of Checks-Effects-Interactions). Attacker: (1) deposit 135 BRO; (2) callback fires → re-enter deposit before books balance; (3) second deposit minted against stale internal state; (4) loop 22 times; (5) withdraw 38 SolvBTC. Contract was unaudited and had no bug bounty coverage.
+**Why new**: A1 (reentrancy) covers ETH transfer callbacks and ERC-20 rebasing/hooks. A88 is specifically the **ERC-3525 SFT transfer callback** vector — a less-common token standard (semi-fungible, slot-based value) that inherits reentrancy risk from its callback mechanism. The 22-loop amplification pattern (135 → 567M, 4.2M× amplification in a single TX) demonstrates the severity.
+**Solana/Token-2022 parallel**: SPL Token-2022 `TransferHook` extension fires an external CPI during token transfers. If a Token-2022 mint uses `TransferHook` AND the program that implements the hook re-enters the calling program before state settles, the same class of double-accounting can occur on Solana.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: ERC-3525 callback before accounting update
+function deposit(uint256 tokenId, uint256 amount) external {
+    IERC3525(sftToken).transferFrom(msg.sender, address(this), tokenId, amount);
+    // ^ fires onERC3525Received → attacker re-enters deposit() here
+    // ^ internal accounting NOT updated yet → stale balance used for mint
+    balances[msg.sender] += amount;  // too late
+    _mint(msg.sender, mintAmount);
+}
+```
+**Defense**: (1) Strict CEI (Checks-Effects-Interactions) — update ALL internal accounting BEFORE any external transfer call; (2) reentrancy guard on all functions that call external token contracts; (3) do NOT use ERC-3525 SFTs as vault input without explicit reentrancy hardening; (4) audit scope MUST include all callback-enabled token standards; (5) for Solana Token-2022 `TransferHook`: verify hook CPI cannot re-enter the calling instruction before its accounts are finalized.
+**Microstable relevance**: LATENT — Microstable is Solana-based (not ERC-3525). `spl-transfer-hook-interface 0.9.0/0.10.0` IS in Cargo.lock as a transitive dependency, but grep confirms no active `transfer_hook` instruction handler in the main program. Risk activates if Token-2022 transfer hook extension is applied to mSTABLE mint in future.
+
+---
+
+### A89. Patient 9-Month Position Accumulation + Supply Cap Donation Bypass (Long-Horizon Mango-Style Attack)
+**Historical**: Venus Protocol rekt4 (BNB Chain, March 15, 2026). Attacker spent **9 months** accumulating 84% of the Thena (THE) supply cap → donation attack to bypass remaining cap → Mango-style recursive borrow loop → $3.7M extracted → $2.15M bad debt left. Flagged in Code4rena 2023 audit as "donation bypasses supply cap" — team dismissed it as "supported behavior with no negative side effects."
+**Mechanism**: (1) Supply cap = per-token upper bound on how much of a collateral asset can be deposited into a lending market. (2) Donation attack: send tokens directly to the market contract's token account (bypassing the normal deposit pathway) to inflate the vault's on-chain balance beyond the cap. (3) Once cap is nominally bypassed via donation, use the inflated position as collateral for a recursive borrow loop against thin liquidity. (4) Price manipulation cascade (Mango-style): large borrow pressure + thin liquidity → collateral token price moves → further borrow headroom → drain until position implodes.
+**Why new**: A2 (flash loan + price manipulation) and A3 (oracle manipulation) cover similar end-states but assume single-block execution. **A89's defining characteristic is the temporal patience dimension**: 9 months of gradual accumulation (84% of cap) is invisible to all monitoring systems that alert on per-block, per-day, or per-week anomalies. Standard MEV bots, circuit breakers, and flow-rate limiters are irrelevant to a months-long accumulation strategy. The donation bypass (direct token transfer to inflate balance without using protocol deposit function) is the triggering mechanism; the months-long accumulation is the prerequisite.
+**Dismissed audit finding pattern**: Code4rena 2023 audit flagged this exact vector for Venus. Team response: "supported behavior with no negative side effects." This matches A87's and RT-2026-0227-02's "audit scope exclusion exploitation" pattern but specifically for findings that were discovered and DISMISSED rather than excluded from scope.
+**Code pattern to find**:
+```
+// VULNERABLE: reads token balance from vault ATA directly (not internal tracker)
+let vault_balance = token_account.amount;  // includes direct donations
+require!(vault_balance <= supply_cap, Error::SupplyCapExceeded);
+// ^ attacker sends tokens directly to token_account (outside deposit function)
+// ^ vault_balance inflated → cap bypassed → use as collateral
+
+// SAFE: internal tracker (not raw token balance)
+let protocol_tracked_deposits = vault.total_deposits;  // updated only via deposit()
+require!(protocol_tracked_deposits <= supply_cap, Error::SupplyCapExceeded);
+```
+**Defense**: (1) Use an **internal deposit tracker** (not raw token account balance) as the authoritative source for supply cap enforcement; (2) reject supply cap "donation" findings in audits — label them as CRITICAL, not "expected behavior"; (3) deploy multi-horizon monitoring: add 30-day and 90-day rolling accumulation alerts, not just per-block anomalies; (4) circuit breaker should activate on unusual single-actor market concentration (e.g., one address holding >50% of collateral supply cap); (5) thin-liquidity markets require tighter collateral factors and smaller supply caps.
+**Microstable relevance**: LOW-CONFIRMED SAFE — `total_collateral_value()` reads `v.total_deposits` (internal tracker updated only via `mint()`/`redeem()` instructions), NOT the raw vault ATA `token_account.amount`. A direct token donation to the vault ATA does NOT inflate `total_deposits` and does NOT bypass Microstable's collateralization logic. **This protection is confirmed by code review (2026-03-29).** No action required.
+
+---
+
+### A90. libcrux-ed25519 All-Zero Key Generation on Catastrophic RNG Failure
+**Historical**: RUSTSEC-2026-0075 (March 24, 2026, HIGH severity). Affects `libcrux-ed25519` crate versions < 0.0.4.
+**Mechanism**: When the underlying system RNG fails catastrophically (returns error or zero entropy), `libcrux-ed25519::generate_key()` silently generates an all-zero private key (0x000...000) instead of returning an error. The resulting keypair is deterministically predictable: any party aware of the RNG failure window can compute the exact private key generated. Attack scenarios: (1) exploit RNG failure on a freshly booted server with low entropy; (2) trigger RNG depletion via entropy-exhaustion technique before key generation; (3) monitor deployment logs for RNG errors coincident with key generation calls; (4) brute-force attack with seed=0 as starting point.
+**Why new**: Distinct from generic D28 (supply chain) and B15 (key compromise). This is a **silent RNG failure propagation** pattern — the library design philosophy "generate something rather than crash" creates a cryptographic oracle (all-zero = known bad key). Prior advisory A76 (hpke-rs nonce reuse) was about state management; this is about key generation failure mode.
+**Defense**: (1) Always handle `generate_key()` errors; do not silently use a returned key without verifying it is non-zero; (2) pin `libcrux-ed25519 >= 0.0.4`; (3) validate generated keys: `require!(private_key != [0u8; 32])` before use; (4) use hardware entropy sources (HSM, TPM) for key generation in production; (5) log and alert any RNG failure during key generation.
+**Microstable relevance**: LATENT — `libcrux-ed25519` NOT present in `microstable/solana/Cargo.lock` (confirmed grep 2026-03-29). Pre-emptive: if post-quantum or alternative signing is introduced, enforce `>= 0.0.4` pin.
+
+---
+**Matrix state as of 2026-03-29: 97 named vectors (A1–A90 + META-01~24). 4 new vectors added this cycle (A87–A90).**
