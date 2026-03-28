@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28) | META-01~24
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29) | META-01~24
 
 ## A. Smart Contract Vectors
 
@@ -4483,3 +4483,33 @@ META-23 is PRE-RUNTIME: keeper agent's instructions are rewritten before it runs
 5. MEV-resistant order sequencing (fair sequencing services) for any AMM interaction
 
 **Source**: markaicode.com "Why Smart Contract Security Audits Are Failing" (2026) | cryptollia.com "Agentic DeFi Risk Landscape 2026" (2026-03-27) | Bessemer Venture Partners "Securing AI Agents 2026" (2026-03-25) | sherlock.xyz "Cross-Chain Security in 2026" (2026)
+
+---
+<!-- AUTO-ADDED BY BLACKTEAM DAILY EVOLUTION 2026-03-29 (03:00 KST) — META-24 STATS REINFORCEMENT + INCIDENTS LOG BACKFILL -->
+
+## META-24 Addendum: Q1 2026 Quantified Ground Truth (published 2026-03-27)
+
+**Source**: CoinPaprika "DeFi Exploits in 2026: Biggest Hacks and Attack Vectors" (2026-03-27, citing CipherResearchx + Halborn/Nominis reports)
+
+### Hard Numbers — Q1 2026 (January–March)
+| Metric | Value |
+|--------|-------|
+| Total protocols exploited | 15 |
+| Total funds drained | **$137.7M** |
+| Recovery rate (as of March 2026) | **6.5%** (~$9M returned) |
+| Ethereum-hosted exploits | 7 of 15 (dominant TVL position) |
+| Primary loss driver (incidents count) | Smart contract bugs |
+| Primary loss driver (dollar amount) | Private key compromise (single largest losses) |
+| OWASP 2026 #1 smart contract risk | Access control vulnerabilities |
+
+### Meta-24 Implication (off-chain 80/20 reinforcement)
+The 6.5% recovery rate confirms that once funds leave via private key compromise (B15 class), on-chain traceability does NOT translate to recovery. The "private key compromise = largest dollar losses" pattern is now consistent across Q1 2025 ($1.46B, 70% of total) and Q1 2026 ($137.7M total, key-compromise class dominant).
+
+**For Microstable**: The keeper key (2-of-3 Solana accounts) remains the highest-value attack surface not covered by smart contract audit. A single keeper key compromise is recoverable (2-of-3 quorum required). A 2-of-3 compromise has no on-chain defense. Operational security of the three keeper key holders is the protocol's single largest unaudited risk.
+
+### Incidents Log Backfill (2026-03-29 — two missed entries from March 12, 2026)
+The following two incidents were tracked in the attack matrix (A41 reinforced on 2026-03-20; A59 added on 2026-03-23) but were missing from the `docs/blockchain-security-incidents-comprehensive.md` timeline. Both have now been added (2026-03-29 backfill):
+1. **AM/USDT Pool BSC** (2026-03-12, ~$131K): burn reserve manipulation via `toBurnAmount` injection → A41 reinforcement
+2. **Aave/CoWSwap $50M Price Impact** (2026-03-12): solver thin-pool routing loss → A59 confirmation
+
+No new named vectors added this cycle. Matrix holds at **93 named vectors** (including A79–A84 compact table entries) + META-01~24.
