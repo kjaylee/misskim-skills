@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29) | META-01~24
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29) | META-01~25
 
 ## A. Smart Contract Vectors
 
@@ -957,6 +957,7 @@ location /rpc {
 | B37 AI Agent Steganographic Oversight Evasion | 프롬프트 인젝션 차단(B29)만으로 충분하다고 가정해, 텍스트는 정상처럼 보이지만 협력 에이전트에만 의미가 전달되는 은닉 채널(감시 비대칭)을 검증하지 않음 (arXiv 2602.23163). |
 | B38 Multi-turn Tool-Return Boundary Takeover | 단일 프롬프트/단일 턴 필터링 중심 평가로는 누적 컨텍스트 드리프트를 포착하지 못함. 도구 반환값 경계를 신뢰 재설정 지점으로 다루지 않아, 합법처럼 보이는 다중 턴 경로를 통해 권한 오용이 점진적으로 유도됨 (arXiv 2602.22724/2602.22302). |
 | META-24 Off-Chain Attack Surface 80/20 + Agentic MEV | ① "감사 통과 = 안전"이라는 업계 신화가 실증적으로 붕괴(Q1 2025: 92% 익스플로잇 계약이 감사 통과, 손실의 80.5%가 감사 범위 밖 오프체인 벡터). 감사사는 "코드를 감사하지, 운영·직원·제3자 통합·거버넌스는 감사하지 않는다"고 명시적으로 진술. ② AI 기반 MEV 봇이 단일 블록 내 샌드위치 공격을 자율 실행하는 패턴은 전통적 취약점이 아닌 프로토콜 설계 가정(인간 속도 시장 참여자) 위반이므로 감사 체크리스트에 항목 자체가 없음. |
+| META-25 Formal Verification Specification Completeness Gap (FVSC) — 퍼플팀 2026-03-29 | **핵심 비대칭**: 형식 검증(formal verification)이 2026년 업계 표준으로 부상했지만, 형식 검증이 증명하는 것은 "코드가 명세(spec)에 맞게 구현됐는가"이지 "명세 자체가 올바른가"가 아님. Q1 2026 실증: ① A87 ZK trusted setup skip — 검증자 컨트랙트는 형식적으로 정확하지만 의식(ceremony) 완료라는 암묵적 배포 전제 조건이 명세에서 누락됨 ② Aave CAPO $26M — CAPO 속도 제한이 "올바르게 구현"됐지만 제한 파라미터가 잘못된 명세에서 도출됨 ③ Moonwell cbETH $1.78M — `cbETH/ETH × ETH/USD` 수식은 수학적으로 정확하지만 실제 사용된 명세에서 단계가 누락됨 (ratio feed를 USD 가격으로 직접 사용). **왜 감사가 놓치는가**: ① 감사사는 클라이언트가 제공한 명세에 대해 코드를 검증 — 명세 자체의 올바름을 독립적으로 검증하지 않음 ② "형식 검증 통과 = 수학적으로 안전"이라는 신뢰 신호가 명세 오류에 대한 심리적 면역을 형성 ③ 표준 감사 체크리스트에 "경제·보안 모델을 독립적으로 도출하여 명세와 대조"하는 항목 없음 ④ 배포 전 일회성 절차(ZK 의식, 파라미터 설정 의식)는 명세 범위 밖으로 분류됨. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -4595,4 +4596,95 @@ require!(protocol_tracked_deposits <= supply_cap, Error::SupplyCapExceeded);
 **Microstable relevance**: LATENT — `libcrux-ed25519` NOT present in `microstable/solana/Cargo.lock` (confirmed grep 2026-03-29). Pre-emptive: if post-quantum or alternative signing is introduced, enforce `>= 0.0.4` pin.
 
 ---
-**Matrix state as of 2026-03-29: 97 named vectors (A1–A90 + META-01~24). 4 new vectors added this cycle (A87–A90).**
+**Matrix state as of 2026-03-29: 97 named vectors (A1–A90 + META-01~25). 4 new vectors added this cycle (A87–A90). META-25 added by Purple Team (04:02 KST).**
+
+---
+<!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-29 (04:02 KST) — META-25 FVSC -->
+
+## META-25: Formal Verification Specification Completeness Gap (FVSC)
+
+**Purple Team Signal Date**: 2026-03-29 04:02 KST | **Analyst**: Purple Team (Miss Kim) | **Run**: #17
+
+### Signal Origin
+
+- Q1 2026 Exploit Autopsy ($137M, 15 protocols, 5 root-cause patterns) — dev.to/ohmygod (2026-03-25)
+- cryptollia.com "Formal Verification and Agent-Based Protocols — DeFi's Intelligent Core in 2026" (2026)
+- Q1 2026 A87 (ZK trusted setup ceremony skip — Veil Cash / FoomCash): formally correct verifier, wrong ceremony precondition
+- Q1 2026 Aave CAPO ($26M): formally correct rate-of-change implementation, wrong cap parameters in spec
+- Q1 2026 Moonwell cbETH ($1.78M): mathematically correct code against wrong oracle spec (missing ETH/USD multiplication)
+
+### The Meta-Pattern
+
+The DeFi security industry in 2026 has mandated formal verification as the gold standard:
+
+> "No longer 'code is law'; we are building a new financial operating system where 'verified intelligence is law'." — cryptollia.com, 2026
+
+But this mandate contains a structural blind spot: **formal verification proves code-to-spec correspondence, not spec correctness**.
+
+| What Formal Verification Proves | What It Does NOT Prove |
+|----------------------------------|------------------------|
+| Code matches the provided specification | Specification is economically sound |
+| Function behaves as specified under given assumptions | Assumptions are complete and correct |
+| Mathematical properties hold for specified invariants | Invariants are the right invariants |
+| Implementation is correct given initial conditions | Initial conditions (ceremony, setup) were correct |
+
+### Q1 2026 Empirical Evidence
+
+| Incident | Loss | Formal Verification Claim | Actual Spec Failure |
+|----------|------|--------------------------|---------------------|
+| Aave CAPO | $26M | CAPO mechanism "correctly implemented" | Rate-of-change cap parameters set to wrong values (spec error, not code error) |
+| Moonwell cbETH | $1.78M | Oracle formula "correctly computed" | Formula spec omitted ETH/USD multiplication step (spec error: `cbETH/ETH` ≠ `cbETH/USD`) |
+| Veil Cash / FoomCash (A87) | $2.26M+ | ZK verifier contract "correct" | Spec contained implicit precondition (ceremony completion) that was never formally stated; snarkjs default parameters left in production |
+| Resolv Labs | $25M | KMS rate-limit "correctly enforced" | Spec did not include rate-limit bounds (unbounded minting omitted from security spec) |
+
+**Pattern**: In each case, the security team or auditor could truthfully state "the code correctly implements the specification." The specification itself was the failure point.
+
+### Why Audits Miss It (Structural)
+
+1. **Client-provided spec trust**: Standard audit engagement begins with the client providing the specification. Auditors verify code against that spec. No standard methodology requires independent derivation of the correct security model to compare against the provided spec.
+
+2. **"Formally verified" trust signal amplification**: As protocols adopt formal verification (Certora, Halmos, HEVM), they display "formally verified" prominently. This creates a stronger safety perception than traditional audits — making spec-level errors more dangerous, not less.
+
+3. **One-time deployment ritual exclusion**: ZK trusted setup ceremonies, parameter initialization scripts, and initial oracle configuration are typically classified as "operational" (not "code"), placing them outside both smart contract audit scope and formal verification scope.
+
+4. **No "independent economic model derivation" checklist item**: No standard audit framework (Trail of Bits, OpenZeppelin, Certora Prover workflows) includes a mandatory step: "derive the expected economic behavior from first principles, then compare to client spec."
+
+5. **Specification completeness is undecidable in general**: Formal tools can check exhaustiveness of cases within a given spec domain, but cannot flag that an entire dimension (e.g., "what if the oracle is a ratio feed, not a USD feed?") was omitted from the spec.
+
+### Distinction from Existing METAs
+
+| META | What It Covers | Gap from META-25 |
+|------|---------------|-----------------|
+| META-06 | Deployment configuration blind spot (env vars, init params) | Covers parameter values; META-25 covers the spec that SPECIFIES what values should be |
+| META-12 | Fuzzer monoculture (stateful testing gap) | Covers test tooling inadequacy; META-25 covers that even correct testing of wrong spec fails |
+| META-24 | Off-chain attack surface 80/20 | Covers audit scope (off-chain); META-25 covers audit depth (spec derivation) |
+| A87 (Red Team) | ZK trusted setup ceremony skip | Covers specific exploit mechanism; META-25 is the meta-explanation of why A87 exists as a class |
+
+META-25 is to specification what META-24 is to scope: it operates at the **meta-meta level** — not "what the auditor missed" but "why the audit model structurally cannot catch it."
+
+### Defense Checklist (META-25)
+
+**Against Spec-Level Failures**:
+1. **Independent spec derivation gate**: Before engaging formal verification tools, derive the expected security model from first principles (economics, game theory, oracle behavior). Compare to client-provided spec. Discrepancies = critical findings.
+2. **Spec completeness review as a separate audit deliverable**: "Security Properties Document" (distinct from spec) that lists: all invariants, all oracle input types/units, all rate-limiting bounds WITH their security justification (not just their values).
+3. **Deployment ceremony checklist**: For ZK protocols — ceremony completion log must be part of security review. For non-ZK protocols — initial parameter configuration (oracle bounds, rate limits, collateral factors) must be reviewed against the security model, not just against the implementation.
+4. **"Wrong spec" fuzzing**: Write invariant tests that specifically probe for "is this formula dimensionally correct?" — not just "does this formula compute consistently?" (e.g., `oracle_price > 1e6` for any USD-denominated asset, regardless of what the formula computes).
+5. **Audit RFPs must include**: "Independently derive the security-critical mathematical specifications (oracle formulas, rate-limit bounds, collateral factor logic) and compare to the implemented and stated specifications. Report any discrepancy as a finding, regardless of implementation correctness."
+
+### Microstable Architecture Implication
+
+**PT-ARCH-2026-0329-01 (LOW) — Oracle Formula Specification Independence**
+
+- **Condition**: Microstable oracle chain reads `oracle_price` and computes `collateral_value = f(oracle_price, collateral_amount)`.
+- **META-25 exposure**: The formula and its unit assumptions are embedded in code. There is no standalone "Oracle Security Specification" document that an independent reviewer could use to verify: (a) the formula is dimensionally correct, (b) decimal normalization is complete, (c) edge cases (zero price, max uint, staleness boundary) are specified.
+- **Current risk level**: LOW — the formula is simple and the Rust code is deterministic. However, if a future oracle upgrade changes the feed type (e.g., from spot to ratio feed, or adds LST collateral), the absence of a standalone spec creates META-25 exposure.
+- **Recommended action**: Draft a 1-page "Oracle Security Specification" as a non-code artifact. Include: expected feed type, units, decimal normalization formula, staleness policy, bounds validation (min/max price), and what happens at each boundary. Use this spec as the reference for all future oracle code reviews.
+- **Priority**: LOW-PREVENTIVE (no acute risk; proactive defense against future spec drift).
+
+**META-25 is NOT currently exploitable** for Microstable (oracle formula is simple, deterministic, well-constrained by `MAX_DRIFT_BPS`). The risk vector activates on any oracle architecture change or LST collateral addition without an explicit spec update.
+
+### Source References
+- dev.to/ohmygod Q1 2026 DeFi Exploit Autopsy ($137M / 15 protocols) — 2026-03-25
+- cryptollia.com "Formal Verification and Agent-Based Protocols in DeFi 2026" — 2026
+- A87 ZK Trusted Setup skip (Veil Cash / FoomCash) — red team 2026-03-29
+- Aave CAPO / Moonwell cbETH / Resolv Labs post-mortems — Q1 2026
