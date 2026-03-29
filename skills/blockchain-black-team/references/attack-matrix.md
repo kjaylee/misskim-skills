@@ -38,7 +38,8 @@ mint(user, mint_amount);
 **Historical**: Mango (Pyth feed manipulation), BonqDAO (TellorFlex oracle), Harvest (Curve pool as oracle), Moonwell (2026, $1.78M bad debt), YieldBlox (2026-02-22, $10.97M)
 **Mechanism**: Push stale/false price data to oracle → protocol acts on wrong price → value extraction.
 **2026 reinforcement (Moonwell + YieldBlox)**: (1) Oracle-composition unit mismatch (`cbETH/ETH` ratio treated as USD price), and (2) low-liquidity market exploitation where tiny self-trades distorted quoted collateral value and enabled excess borrowing.
-**Source**: https://rekt.news/moonwell-rekt | https://rekt.news/yieldblox-rekt
+**2026-03-27 reinforcement (BSC Stake Contract ~$133K — confirmed, BlockSec Phalcon)**: **Staking Reward Spot-Price Oracle + Referral Amplification** sub-pattern. Mechanism: (1) Attacker manipulated price of TUR in the TUR-NOBEL DEX pool (spot price, no TWAP); (2) staked TUR tokens, triggering the staking contract to calculate reward yield based on the artificially inflated TUR price; (3) claimed amplified rewards through a referral account (referral bonus multiplied the already-inflated reward); (4) swapped stolen TUR → USDT for profit. Key insight: the staking reward function used the live DEX pool price as its oracle for reward rate calculation — a design that is trivially manipulable within a single transaction. Referral mechanics acting as a reward multiplier compound any oracle inflation. Single-TX attack, no multi-block patience required.
+**Source**: https://rekt.news/moonwell-rekt | https://rekt.news/yieldblox-rekt | https://x.com/Phalcon_xyz/status/2037245722454876304 (SlowMist 2026-03-27)
 **Solana/Pyth specific**: Pyth confidence intervals, staleness (slot age), status checks.
 **Code pattern to find**:
 ```
