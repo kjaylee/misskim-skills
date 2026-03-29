@@ -4689,3 +4689,145 @@ META-25 is to specification what META-24 is to scope: it operates at the **meta-
 - cryptollia.com "Formal Verification and Agent-Based Protocols in DeFi 2026" — 2026
 - A87 ZK Trusted Setup skip (Veil Cash / FoomCash) — red team 2026-03-29
 - Aave CAPO / Moonwell cbETH / Resolv Labs post-mortems — Q1 2026
+
+---
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-30 (03:30 KST) -->
+
+### A91. Solana Multi-Slot Wide Sandwich Attack — Validator-Rotation MEV Collusion
+
+**Date**: 2026-03-30 | **Severity**: HIGH (ecosystem) | **Microstable**: LATENT
+
+**Historical**: $500M+ extracted from Solana users in 16 months (2024-2026). Single bot program `vpeNALD…Noax38b`: 51,600 TX/day, 88.9% success, ~$450K/day. Wide sandwich = 93% of all Solana sandwich attacks in 2025-2026.
+
+**Mechanism**:
+```
+Slot N (Attacker-Controlled Validator):
+  tx[last]: Attacker buys TOKEN (front-run)
+
+Slot N+1 (Any Validator — natural price impact):
+  tx[mid]: Victim's swap executes at inflated price
+
+Slot N+2 (Attacker-Controlled Validator):
+  tx[0]: Attacker sells TOKEN (back-run)
+```
+Attacker needs to control only ONE validator slot. Front-run and back-run appear in different blocks → nearly invisible to single-block detection. Victim's natural price impact in the intermediate slot does the extraction work. With Firedancer increasing block throughput, tight validator slot windows create even denser attack surfaces.
+
+**Why distinct from C25 (MEV Extraction)**:
+- C25 covers single-block/mempool sandwich attacks.
+- A91 is a multi-slot, validator-rotation-exploiting attack that bypasses per-block detection systems.
+- Requires attacker to control stake-weighted validator slots — not just mempool access.
+- Detection: three TXs are NOT in the same block; traditional sandwich detection fails.
+
+**Solana protocol context**: 92% of Solana validators run Jito-Solana client → Jito block engine is the primary MEV marketplace. Searchers submit bundles with tips for priority inclusion. Validator stake acquisition + Jito bundle submission = complete attack infrastructure.
+
+**Microstable relevance**: LATENT — current keeper performs no DEX swaps. `rebalance` instruction updates collateral weight parameters on-chain; actual token exchanges (if any) are external. **Activation trigger**: If DEX swap integration is added to keeper rebalance flow, keeper TX with encoded `max_slippage_bps` becomes a precision extraction target.
+
+**Code pattern to watch**:
+```rust
+// WATCH: if any keeper TX encodes slippage parameter for DEX swap
+// MEV searcher reads slippage_bps from pending TX instruction data
+// Calculates: max_extractable = amount * slippage_bps / 10_000
+// Submits Jito bundle to sandwich within slippage tolerance
+```
+
+**Defense**: Private RPC submission (skip public mempool), commit-reveal for large rebalances (already implemented in Microstable), Jito bundle for keeper's own TXs (use same infrastructure to protect), per-validator-rotation monitoring.
+
+**Source**: dev.to/ohmygod "Solana MEV Defense in 2026" | Jito Labs MEV research | solverrouter.com "Intent-Based DEX Aggregators with MEV Protection" (2026-03-05)
+
+---
+
+### A92. Jito Bundle Slippage-Tolerance Precision Extraction (Quantitative MEV Formula)
+
+**Date**: 2026-03-30 | **Severity**: HIGH (when DEX-integrated) | **Microstable**: LATENT (MEDIUM on future DEX integration)
+
+**Historical**: Jito block engine processes majority of Solana MEV activity. With 92% of validators running Jito-Solana, the slippage-precision attack is now standard searcher tooling.
+
+**Mechanism**:
+```python
+def sandwich_opportunity(pending_tx):
+    token_in = pending_tx.token_in
+    amount = pending_tx.amount
+    slippage = pending_tx.max_slippage  # explicitly visible in TX instruction data
+
+    price_impact = estimate_impact(token_out, amount)
+
+    if price_impact < slippage:
+        # Profitable: victim absorbs up to `slippage` price impact
+        # Attacker extracts: amount * slippage - price_impact(frontrun)
+        frontrun_size = binary_search_optimal(amount, slippage, pool_depth)
+        bundle = JitoBundle([buy(frontrun_size), victim_tx, sell(frontrun_size)])
+        bundle.tip = expected_profit * 0.6  # 60% profit → validator tip
+        submit(bundle)
+```
+Key insight: the victim's explicit slippage tolerance becomes the attacker's guaranteed minimum extraction target. A 2% slippage on a $1M swap = $20,000 guaranteed extraction zone.
+
+**Why distinct from A91**:
+- A91 is about multi-slot timing and validator rotation.
+- A92 is about the mathematical precision formula that converts visible slippage parameters into optimal front-run sizing.
+- A92 can operate within a single slot (classic sandwich) or multi-slot (A91) — it's the quantification layer.
+- A92 is specifically about instruction data parsing + optimization calculation; A91 is about temporal distribution.
+
+**Microstable specific risk (future)**:
+- Current `rebalance` `max_slippage_bps=200` is a weight-turnover guard, NOT a DEX swap slippage parameter. NOT currently exploitable.
+- **HIGH risk activation**: If keeper adds DEX swap (e.g., Jupiter quote + swap TX with slippage_bps), the encoded slippage becomes A92 precision extraction target.
+- Default config `max_rebalance_slippage_bps: 200` (2%) → for a $5M rebalance swap = $100K extraction zone per TX.
+
+**Defense**: Never encode DEX slippage tolerance in publicly submitted TX instruction data. Use commit-reveal for slippage parameter. Use Jito private bundles. Use dynamic slippage calculation that degrades precision (add noise to encoded slippage parameter vs actual acceptance threshold).
+
+**Source**: dev.to/ohmygod "Solana MEV Defense in 2026" | solverrouter.com (2026-03-05)
+
+---
+
+## META-26: OWASP Smart Contract Top 10: 2026 — Taxonomy Shift Alert
+
+**Date**: 2026-03-30 | **Team**: Red | **Severity**: SYSTEMIC (audit methodology)
+
+### Signal
+OWASP Smart Contract Top 10: 2026 published. Based on 2025 incident data + practitioner surveys across 122+ incidents. Major shifts vs prior year:
+
+| # | Category | 2026 Change |
+|---|----------|------------|
+| SC01 | Access Control | → Stable #1 |
+| SC02 | Business Logic | ↑ New to Top 3 (was #4) |
+| SC03 | Price Oracle Manipulation | → Stable |
+| SC04 | Flash Loan–Facilitated Attacks | → Stable |
+| SC05 | Lack of Input Validation | ↑ Climbed |
+| SC06 | Unchecked External Calls | → Stable |
+| SC07 | Arithmetic Errors | ↓ Dropped |
+| SC08 | Reentrancy Attacks | ↓↓ Fell from #2 to #8 |
+| SC09 | Integer Overflow/Underflow | ↓ Dropped |
+| SC10 | Proxy & Upgradeability Vulns | 🆕 New entry |
+
+### Key Implication 1: Read-Only Reentrancy is the New Reentrancy
+Classic reentrancy (CEI pattern, OZ nonReentrant) is largely solved. The remaining reentrancy surface is **read-only reentrancy**:
+```solidity
+// VULNERABLE: view function reads state mid-update
+function getPrice() public view returns (uint256) {
+    return totalAssets / totalShares; // stale during reentrant call in calling contract
+}
+// SAFE: check reentrancy guard in view functions
+function getPrice() public view returns (uint256) {
+    require(!_reentrancyGuardEntered(), "ReentrancyGuard: reentrant view");
+    return totalAssets / totalShares;
+}
+```
+Cross-contract read-only reentrancy: Contract A calls Contract B; B reads Contract A's price function mid-update. Classic guards on A don't prevent B from reading inconsistent state via A's view function.
+
+**Microstable relevance**: Solana programs don't have EVM-style view functions. CPI callbacks cannot call back into a Solana program while it holds a mutable borrow (runtime prevents). Read-only reentrancy is NOT a Microstable surface. LATENT.
+
+### Key Implication 2: Proxy & Upgradeability Vulnerabilities — New Category
+SC10 enters as a new OWASP category, recognizing that proxy patterns (EVM) and upgrade authorities (Solana) create:
+1. **Storage slot collision** (EVM proxy): implementation function selector clashes with proxy storage layout
+2. **Upgrade authority key compromise** (Solana): the `upgrade_authority_address` in a BPF program is effectively the admin key
+3. **Uninitialized implementation contracts**: `initialize()` callable by anyone if not called at deploy time
+4. **Function selector clashing**: proxy delegate-call routing can be exploited with crafted selectors
+
+**Microstable relevance**:
+- Solana `upgrade_authority_address` compromise = attacker can deploy new program version → full exploit. Already partially covered by A72 (Privileged Minter EOA Key Compromise) and A82 (IDE extension attack on dev keys).
+- **GAP**: No explicit "upgrade authority key" as a standalone Microstable threat in current matrix. A72 focuses on mint authority; upgrade authority is a distinct and equally critical key.
+- **Recommended addition to carry-forward**: Verify upgrade authority is transferred to a multisig or frozen post-launch.
+
+### Carry-Forward Update
+- **NEW MEDIUM**: Audit Microstable program's `upgrade_authority_address` — must be multisig or frozen. If single-key, this is HIGH (full program replacement possible).
+
+**Source**: dev.to/ohmygod "OWASP Smart Contract Top 10: 2026" | scs.owasp.org/sctop10
