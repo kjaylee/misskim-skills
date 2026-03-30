@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30) | META-01~28
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31) | META-01~31
 
 ## A. Smart Contract Vectors
 
@@ -5092,5 +5092,121 @@ function _transfer(address from, address to, uint256 amount) internal {
 
 **Source**: https://capwolf.com/moonwell-governance-attack-1-08m-at-risk-for-just-1800/ | https://dev.to/ohmygod/the-1808-governance-heist-how-an-attacker-nearly-drained-1m-from-moonwell-2o1
 
+### META-29. Infrastructure Key + On-chain Mint Authority: The Lethal Combination
+**Date**: 2026-03-31 | **Team**: Purple | **Category**: Audit Scope Exclusion × Key Management Architecture
+
+**Evidence**: Resolv Labs USR Stablecoin (2026-03-22, $25M realized / $80M minted).
+
+**Root Meta-Pattern**: Q1 2026 data confirms Private Key Compromise = #1 killer (40%+ of all losses). But the NEW escalation is **Infrastructure-as-Code key compromise combined with absent on-chain guard on privileged minting authority**. The key was AWS KMS-managed — auditable infrastructure by normal security review. What was NOT in scope: (a) KMS key had direct mint authority with NO on-chain rate limit, daily cap, or circuit breaker; (b) no MAX_MINT_PER_TX or MAX_MINT_PER_DAY invariant existed at contract level; (c) the design assumed off-chain key management = sufficient defense.
+
+**Why Audits Miss This**:
+1. Smart contract audits explicitly exclude "cloud IAM configuration, KMS key policies, and operational key management"
+2. Even infrastructure-audit firms (AWS security reviews) do not audit on-chain contract logic for missing mint caps
+3. The integration gap between Infrastructure key authority and On-chain mint authority is owned by NOBODY in the audit chain
+4. "We use KMS" is treated as equivalent to "we have key security" — the on-chain authority scope is never stress-tested
+
+**Why This Escalates Beyond B15 (Key Compromise)**:
+- B15 covers the trigger: key gets stolen
+- A72 covers the architectural failure: privileged EOA with no on-chain cap
+- META-29 covers the **meta-failure**: the audit scope boundary that left the integration gap invisible
+
+**Microstable Relevance**: Already verified: User-signed mint only, multiple on-chain flow caps (A72 DEFENDED). BUT: future if Keeper or any infra key ever gains write authority over any privileged on-chain parameter → META-29 guard MUST be retroactively applied.
+
+**Defense Pattern (Purple Team Recommendation)**:
+```rust
+// ON-CHAIN GUARD: even if infra key is compromised, damage is capped
+modifier mintGuarded(uint256 amount) {
+    require(amount <= MAX_MINT_PER_TX, "Exceeds tx cap");
+    uint256 today = block.timestamp / 1 days;
+    if (today != lastMintDay) { dailyMinted = 0; lastMintDay = today; }
+    dailyMinted += amount;
+    require(dailyMinted <= MAX_MINT_PER_DAY, "Exceeds daily cap");
+    _;
+}
+```
+Auditors must add explicit checklist: "Does any single key (EOA, KMS-derived, multisig) have minting/writing authority over any on-chain state? If YES → is there an on-chain rate/daily/per-TX cap enforced regardless of caller privilege?"
+
+**Source**: Q1 2026 DeFi Exploit Pattern Analysis (dev.to/ohmygod, 2026-03-30); BlockSec weekly (2026-03-25)
+
 ---
-**Matrix state as of 2026-03-31 (final): 99 named vectors (A1–A92; A90 = A78 duplicate; A85/A86 reserved) + META-01~28 = 127 total entries. A91 added 2026-03-31 daily sweep (BCE burn mechanism / fee-on-transfer AMM reserve manipulation). A92 added 2026-03-31 daily sweep (low-cost rapid-quorum governance attack). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (2026-03-30 04:00 KST) — APSC + OCPI.**
+
+### META-30. Donation + Market Manipulation: The Synergistic Pair Attack
+**Date**: 2026-03-31 | **Team**: Purple | **Category**: Combination Vulnerability × Historical Dismissal Pattern
+
+**Evidence**: Venus Protocol Rekt4 (2026-03-15, $2.15M bad debt); Balancer V2 ($128M, Nov 2025→Mar 2026 shutdown).
+
+**Root Meta-Pattern**: Individual components can be "working as designed" while their combination creates catastrophic vulnerability. This is the hardest vulnerability class to detect because each component passes individual review.
+
+**Venus Rekt4 Anatomy**:
+1. Donation attack: Direct token transfer to vToken contract → raw balance inflates → exchangeRate jumps 3.81×. Protocol's supply cap only checked on mint path (not on direct donation). "Supported behavior, no negative side effects" — dismissed in 2023 Code4arena audit.
+2. Market manipulation: Shallow THE/USD liquidity → sustained buy pressure accepted by oracle at $0.51 (double pre-attack price). 37 minutes of oracle rejections before accepting manipulated price.
+3. Synergy: Inflated exchangeRate × manipulated collateral price = 3.67× supply cap bypass, $14.9M borrows against collateral worth ~1/4 that in honest terms.
+
+**Why Audits Miss Synergistic Pair Attacks**:
+1. Audit scope is per-component or per-function. "Does X work correctly?" → yes. "Does X + Y interaction create unexpected state?" → not asked.
+2. Economic analysis is separate from code audit. "What is the realistic attack cost given 84% supply accumulation + sustained buy pressure?" → not modeled.
+3. "Supported behavior" dismissals are never revisited when protocol composition changes (new token listed, liquidity drops, market conditions shift).
+
+**Balancer V2 Same-Class Recurrence**: A precision bug class was reported in 2023, patched for one pool type, but never propagated to composable stable pool variant (different scaling math). Each control in isolation worked — audit passed, bug bounty paid for the first finding, fix deployed. The class recurred in the non-audited variant 2 years later.
+
+**Microstable Relevance**: Microstable's `total_deposits` field is not raw SPL token balance (DEFENDED for A73). BUT: the "supported behavior" dismissal anti-pattern is a systemic risk. Any future audit finding dismissed as "supported behavior" should trigger a mandatory re-review trigger when: (a) new collateral asset is listed, (b) market conditions change materially, (c) new entry path is added.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Add explicit "combination attack" review phase in audit scope — ask "what pairs of features interact to create new attack surface?"
+2. All "supported behavior" dismissals must be logged with expiry condition: "re-review required if X condition changes"
+3. Precision-loss fuzzing must test boundary values across all math patterns, not just the reported variant
+
+**Source**: BlockSec weekly (2026-03-25); Q1 2026 DeFi Exploit Pattern Analysis; Balancer post-mortem (Immunefi expert insights)
+
+---
+
+### META-31. Precision/Rounding Epidemic: Why Complexity Compounds Arithmetic Risk
+**Date**: 2026-03-31 | **Team**: Purple | **Category**: Systemic Technical Debt × Multi-Pool Architecture
+
+**Evidence**: Balancer V2 ($128M, 65 micro-swaps), Venus Protocol ($2.15M bad debt), ERC-4626 vault inflation attacks (ongoing).
+
+**Root Meta-Pattern**: DeFi protocol complexity increase (more decimal places, more cross-pool interactions, more compounding calculations) creates multiplicative opportunities for precision loss. Each arithmetic operation is a precision-loss compounding point. The attack cost approaches zero once an attacker finds the right balance range.
+
+**Why This Pattern Is Accelerating**:
+1. More tokens with different decimal places (18, 6, 8, etc.) multiply conversion edge cases
+2. Cross-pool interactions (e.g., Curve's factory-deployed composable stable pools) create new scaling factor chains
+3. Compounding calculations (share price = totalAssets / totalShares) magnify small rounding errors over many transactions
+4. Factory-deployed pools inherit vulnerable math patterns without re-audit
+
+**Why Audits Miss Precision/Rounding Bugs**:
+1. At correct scale, precision loss produces dust-level amounts — economically invisible in normal testing
+2. auditors optimize for high-severity findings; rounding dust in isolation = LOW
+3. Formal verification tools (Certora, Echidna) struggle to model the full state space of token decimal × pool composition × attacker-controlled balance range combinations
+4. The vulnerability only becomes material when (a) attacker pushes balances to extreme values AND (b) repeats many times
+
+**Balancer V2 Anatomy (The Definitive Case)**:
+- `_upscaleArray` used `mulDown` where `mulUp` was required for one of the scaling paths
+- Attacker used 65 micro-swaps to push raw balances into the vulnerable small-value range
+- Each micro-swap extracted rounding dust; 65 rounds × large principal = $128M extraction
+- Root cause was in a DIFFERENT pool variant than the one audited in 2023 for the same class
+
+**Dimensional Analysis Defense (Underused)**:
+```solidity
+// BAD: What units are these?
+uint256 result = (amountA * priceB) / totalShares;
+
+// GOOD: Annotated with dimensional analysis
+// amountA: [tokenA_wei]
+// priceB: [USD_per_tokenB * 1e18]
+// totalShares: [shares_wei]
+// result: [tokenA_wei * USD_per_tokenB * 1e18 / shares_wei]
+// Missing: tokenA-to-tokenB conversion factor
+```
+
+**Microstable Relevance**: Precision-loss risk in mint/redeem share price math must be invariant-tested with boundary values (very small and very large balances). The dimensional analysis annotation approach should be added to keeper code review checklist.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Every arithmetic operation in value-transfer math should carry explicit dimensional annotation
+2. Invariant fuzzing must include `invariant_roundingNeverProfitable()` — deposit 1 wei, immediately withdraw, vault.totalAssets() must not decrease
+3. Cross-pool factory deployments must re-trigger vulnerability-class review for the new variant, not just inherit the parent's audit
+
+**Source**: Q1 2026 DeFi Exploit Pattern Analysis (dev.to/ohmygod, 2026-03-30); Balancer V2 post-mortem
+
+---
+
+**Matrix state as of 2026-03-31 (final): 99 named vectors (A1–A92; A90 = A78 duplicate; A85/A86 reserved) + META-01~31 = 130 total entries. A91 added 2026-03-31 daily sweep (BCE burn mechanism / fee-on-transfer AMM reserve manipulation). A92 added 2026-03-31 daily sweep (low-cost rapid-quorum governance attack). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (2026-03-30 04:00 KST) — APSC + OCPI. META-29~31 added by Purple Team (2026-03-31 04:00 KST) — InfraKey+Mint combo, Donation+Manipulation synergy, Precision/Rounding epidemic.**
