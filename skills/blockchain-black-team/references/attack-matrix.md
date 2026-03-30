@@ -4992,5 +4992,105 @@ Becomes relevant if:
 
 Preventive: document "all on-chain string data is untrusted input" as explicit policy in any future AI agent design spec.
 
+### A91. Token Supply Externalities — Burn-on-Transfer / Fee-on-Transfer AMM Reserve Manipulation
+**Date**: 2026-03-30 | **Team**: Black | **Severity**: HIGH (if AMM integration)
+
+**Historical**: BCE token PancakeSwap BCE-USDT pool (2026-03-23, $679K) — BlockSec Phalcon confirmed; also applies to SafeMoon clones, reflection tokens, Ampleforth-style rebases, transfer-tax tokens on AMM V2 forks.
+
+**Mechanism**: A custom token's `transfer()` function modifies `totalSupply` (burn) or recipient balance (fee-on-transfer / reflection) without notifying the AMM pool. The pool's `reserve0 / reserve1` cached in `getReserves()` becomes permanently stale — every `swap()` using the stale reserve misprices the trade. The attacker fragments large transfers to stay under per-tx limits (if present), cycles transfers between attacker-controlled addresses to accumulate desync, then executes a single large swap at the inflated price.
+
+```python
+# BCE vulnerable transfer logic (reconstructed)
+def _transfer(from, to, amount):
+    burn_amount = amount * burn_rate / 100
+    transfer_amount = amount - burn_amount
+
+    _balances[from] -= amount
+    _balances[to] += transfer_amount
+    _total_supply -= burn_amount  # ← pool doesn't know; no sync() called
+
+    emit Transfer(from, to, transfer_amount)
+    emit Transfer(from, ZERO, burn_amount)
+```
+
+**Attack cycle**:
+1. Fragment buy into chunks (bypass per-tx limits) → accumulate BCE in contract A
+2. Transfer BCE A→B → burn reduces totalSupply but pool `reserve0` remains cached at pre-burn value
+3. Repeat → reserve desync accumulates
+4. `getAmountOut()` now returns inflated values for sell side
+5. Sell BCE → receive far more USDT than fair value → pool drained
+
+**Key insight**: The AMM constant-product formula `x * y = k` assumes reserves only change through `swap()`/`mint()`/`burn()`/`sync()`. Any mechanism that changes a token's pool balance outside these paths creates permanent, exploitable price desync.
+
+**Fee-on-transfer variant**: Instead of burning, a transfer tax is applied — recipient gets `amount * (1 - taxRate)` tokens, but the pool thinks the sender sent the full `amount`. The tax is retained by the contract or redistributed to holders. Same reserve-desync outcome.
+
+**Reflection-token variant**: A reflection mechanism (`_reflect()`) automatically redistributes a portion of every transfer to all existing holders, simultaneously reducing sender balance and increasing holder balances. The pool's reserve never reflects these automatic holder balance increases, creating permanent inflation of the pool's effective token supply.
+
+**Rebase variant (Ampleforth)**: A negative rebase reduces all balances proportionally. If the pool doesn't `sync()`, `k` becomes permanently inflated relative to actual token counts.
+
+**Code pattern to find (AMM V2)**:
+```solidity
+// VULNERABLE: AMM V2 pair — reserves only updated on sync/mint/burn/swap
+function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1) {
+    _reserve0 = reserve0;  // cached — stale after burn-on-transfer
+    _reserve1 = reserve1;
+}
+
+// VULNERABLE: token transfer without sync call
+function _transfer(address from, address to, uint256 amount) internal {
+    uint256 burn = amount * burnRate / 100;
+    _balances[from] -= amount;
+    _balances[to] -= burn;           // burn or fee
+    _totalSupply -= burn;             // pool reserve unaware
+    // missing: IPancakePair(pair).sync()
+}
+```
+
+**Defense**:
+1. **Exempt pool addresses from burn/fee**: `if (isPool[from] || isPool[to]) { burn = 0; }`
+2. **Auto-sync after pool interaction**: Call `sync()` when sender/receiver is a known pool address
+3. **Burn-to-dead-address instead of totalSupply reduction**: Keeps `balanceOf(pool)` accurate; dead address balance = permanently locked
+4. **AMM side**: Use `balanceOf(token)` instead of `reserve` for tokens with burn/fee mechanisms
+5. **Protocol listing gate**: Only list tokens with formal audit confirming no automatic supply modification on transfer
+
+**Source**: https://dev.to/ohmygod/the-679k-bce-burn-exploit-how-a-defective-burn-mechanism-drained-a-pancakeswap-pool-4g00 | https://x.com/phalcon_xyz/status/2035998829296984572
+
+### A92. Low-Cost Governance Attack with Rapid Quorum Exploitation
+**Date**: 2026-03-30 | **Team**: Black | **Severity**: HIGH (if governance token exists)
+
+**Historical**: Moonwell Moonriver (2026-03-26, $1.08M at risk, $0 lost) — attacker spent ~$1,808 to buy 40M MFAM, submitted malicious proposal, passed initial quorum in 11 minutes, targeting 7 lending markets + comptroller + oracle admin control. Community counter-mobilized; "No" votes eventually prevailed.
+
+**Mechanism**: The attacker exploits a combination of:
+1. **Low token liquidity** → governance token cheaply acquirable on secondary markets (often <$2K to acquire majority)
+2. **Low quorum threshold** → small number of votes needed to reach quorum
+3. **Rapid proposal execution** → proposal auto-executes or can be queued quickly
+4. **Malicious parameter change** → proposal transfers admin keys to attacker-controlled contract
+
+```python
+# Attack sequence
+1. Acquire governance token on DEX (SolarBeam for MFAM):
+   buy 40_000_000 MFAM @ $0.000025 = $1,000
+
+2. Submit governance proposal:
+   proposal = {
+       target: [comptroller, oracle, 7× market],
+       callData: [transferAdmin(new_admin=attacker_contract)]
+   }
+
+3. Wait for voting window:
+   # Small token supply + low quorum = quorum reached in minutes
+   # Early quorums may pass before community notices
+
+4. If successful → execute():
+   # All lending markets now have attacker as admin
+   # Drain all user funds via malicious liquidation sweep
+```
+
+**Key insight**: Low-cost governance attacks are the governance equivalent of flash loans — an attacker can borrow governance power temporarily, execute the attack, and unwind. The window between proposal submission and community detection is the critical attack surface. Unlike governance token accumulation (A23), this pattern emphasizes the **speed** and **low liquidity** exploitation path — not a long-horizon holding strategy.
+
+**2026 amplification factor**: AI-powered monitoring tools now detect governance proposals in real time, compressing the "window before community notices." However, DAO member coordination (especially across time zones) remains slow, leaving 12–24h windows exploitable for proposals with short voting periods.
+
+**Source**: https://capwolf.com/moonwell-governance-attack-1-08m-at-risk-for-just-1800/ | https://dev.to/ohmygod/the-1808-governance-heist-how-an-attacker-nearly-drained-1m-from-moonwell-2o1
+
 ---
-**Matrix state as of 2026-03-30 (final): 97 named vectors (A1–A90 + META-01~28). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (04:00 KST) — APSC + OCPI.**
+**Matrix state as of 2026-03-31 (final): 99 named vectors (A1–A92; A90 = A78 duplicate; A85/A86 reserved) + META-01~28 = 127 total entries. A91 added 2026-03-31 daily sweep (BCE burn mechanism / fee-on-transfer AMM reserve manipulation). A92 added 2026-03-31 daily sweep (low-cost rapid-quorum governance attack). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (2026-03-30 04:00 KST) — APSC + OCPI.**
