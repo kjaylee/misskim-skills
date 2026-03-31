@@ -11,7 +11,7 @@ description: Execute real-world blockchain attack scenarios against smart contra
 - **Use `blockchain-purple-team`** for meta-level coverage gaps, audit failure causes, and architecture/ops blind spots.
 
 
-Execute battle-tested attack vectors from 90+ historical blockchain incidents ($10B+ total losses) against target protocol code. (Matrix: 103 named vectors + META-01~31 meta-patterns | last updated 2026-04-01 | note: A90 = A78 duplicate; A85/A86 reserved; A91 = BCE burn/fee-on-transfer AMM reserve manipulation; A92 = low-cost rapid-quorum governance attack; B73 = LiteLLM PyPI supply chain; B74 = GlassWorm Wave 5 Solana C2 + developer supply chain; B75 = RUSTSEC-2026-0078 intaglio; B76 = Token-2022 delegate check gap in mint())
+Execute battle-tested attack vectors from 90+ historical blockchain incidents ($10B+ total losses) against target protocol code. (Matrix: 103 named vectors + META-01~33 meta-patterns | last updated 2026-04-01 | note: A90 = A78 duplicate; A85/A86 reserved; A91 = BCE burn/fee-on-transfer AMM reserve manipulation; A92 = low-cost rapid-quorum governance attack; B73 = LiteLLM PyPI supply chain; B74 = GlassWorm Wave 5 Solana C2 + developer supply chain; B75 = RUSTSEC-2026-0078 intaglio; B76 = Token-2022 delegate check gap in mint())
 
 ## When to Use
 

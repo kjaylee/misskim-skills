@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31) | META-01~31
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01) | META-01~33
 
 ## A. Smart Contract Vectors
 
@@ -5326,4 +5326,100 @@ uint256 result = (amountA * priceB) / totalShares;
 
 ---
 
-**Matrix state as of 2026-04-01 (daily): 103 named vectors (A1–A92 + A85/A86 reserved + A93~A95) + META-01~31 + B73~B76 = 134 total entries. B73~B76 added 2026-04-01 03:00 KST daily sweep: LiteLLM PyPI supply chain (B73), GlassWorm Wave 5 (B74), intaglio RUSTSEC-2026-0078 (B75), Token-2022 delegate check gap in mint (B76). A91 added 2026-03-31 daily sweep (BCE burn mechanism / fee-on-transfer AMM reserve manipulation). A92 added 2026-03-31 daily sweep (low-cost rapid-quorum governance attack). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (2026-03-30 04:00 KST) — APSC + OCPI. META-29~31 added by Purple Team (2026-03-31 04:00 KST) — InfraKey+Mint combo, Donation+Manipulation synergy, Precision/Rounding epidemic.**
+### META-32. Cross-Component Configuration Desync (CCCCD): The Integration Gap
+**Date**: 2026-04-01 | **Team**: Purple | **Category**: Off-chain/On-chain Integration Failure × Configuration Mismatch
+
+**Evidence**: Aave CAPO Oracle Incident (2026-03-10, $26-27M in wstETH liquidations across 34 accounts).
+
+**Root Meta-Pattern**: Each component (off-chain oracle system, on-chain oracle consumer contract) is individually correct and passes individual review. The vulnerability emerges from a **parameter/configuration desync** across the integration boundary — a gap that neither on-chain audits nor off-chain system reviews cover.
+
+**Aave CAPO Anatomy — The Definitive Case**:
+1. CAPO (Correlated Asset Price Oracle) maintains wstETH/ETH exchange rate with a rate-of-change cap: snapshot ratio can increase by at most ~3% every 3 days.
+2. Off-chain oracle system attempted a routine update with a 7-day reference window:
+   - `snapshot_ratio = exchange_rate_from_7_days_ago`
+   - `snapshot_timestamp = now - 7_days`
+3. On-chain CAPO contract enforces 3% per 3-day cap. The ratio was partially updated (capped at +3%), but the timestamp was fully updated (reflecting the 7-day window):
+   - `snapshot_ratio = partially_updated (capped at +3%)`
+   - `snapshot_timestamp = now - 7_days (fully updated)`
+4. CAPO formula: `max_exchange_rate = snapshot_ratio × (1 + growth_rate)^(time_elapsed)`. With timestamp showing 7 days elapsed but ratio having only increased 3%:
+   - Calculated max_exchange_rate was ~2.85% below actual market rate
+   - wstETH collateral in E-Mode undervalued at ~1.1939 instead of ~1.228
+5. E-Mode positions at 90%+ LTV (only ~7% margin) were pushed underwater. MEV bots swept through in a single block: ~10,938 wstETH liquidated, ~499 ETH liquidator profit.
+
+**Why Audits Miss CCCD**:
+1. **Component isolation**: On-chain contract audited separately from off-chain oracle system. Each is "correct." The integration parameter mismatch is never tested.
+2. **Configuration drift**: Configuration parameters (update windows, rate caps) are typically not audited as part of smart contract review — they are treated as "deployment constants."
+3. **Cross-team ownership**: Off-chain oracle team and on-chain contract team maintain separate configs, reviewed by separate auditors, with no integration test bridging them.
+4. **No unified test environment**: No automated test that validates "what off-chain sends + how on-chain processes = correct outcome" across all parameter combinations.
+
+**Why This Is Distinct from META-29 (Infra Key + Mint Combo)**:
+- META-29: Cloud IAM/KMS key compromise combined with on-chain mint authority (key security + protocol design failure)
+- META-32: Both off-chain and on-chain components are individually secure and correct, but their parameter/configuration integration creates a mismatch
+
+**E-Mode Amplification (META-33 precursor)**: The 2.85% error consumed ~40% of the E-Mode safety margin (7% total). High-LTV modes amplify any oracle error into liquidation triggers. This is a separate but related meta-pattern (META-33).
+
+**Microstable Relevance**: Microstable uses Pyth oracle + on-chain staleness/confidence checks + TWAP. The integration boundary between Pyth's off-chain data delivery and Microstable's on-chain price processing must be validated: (1) Pyth's price age vs. Microstable's staleness threshold alignment; (2) confidence threshold consistent with price feed's actual distribution; (3) no cross-component parameter desync like CAPO's timestamp/ratio mismatch. Any future oracle upgrade must include cross-component parameter alignment test.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Add "cross-component parameter alignment matrix" to every audit scope: for each off-chain/on-chain pair, validate that parameter windows, thresholds, and update frequencies are explicitly matched.
+2. Deploy integration fuzzing: simulate off-chain oracle sending various update patterns and verify on-chain contract's response is within expected bounds.
+3. Configuration change requires same review rigor as code change — treat config drift as a first-class security risk.
+
+**Source**: The Aave CAPO Oracle Misfire — Timestamp-Ratio Desync ($26-27M) (dev.to/ohmygod, 2026-03-25); BlockSec weekly (Mar 9-15, 2026)
+
+---
+
+### META-33. Leverage Mode (E-Mode) Amplification: Why High-LTV Correlated-Asset Modes Amplify Oracle Error
+**Date**: 2026-04-01 | **Team**: Purple | **Category**: Economic Design × Oracle Error Tolerance × Systemic Amplification
+
+**Evidence**: Aave CAPO Incident (2026-03-10, $26-27M). The 2.85% oracle undervaluation consumed ~40% of the E-Mode safety margin.
+
+**Root Meta-Pattern**: High-leverage modes (E-Mode at 90%+ LTV for correlated assets) leave only a thin margin of safety. Any oracle error — even a "small" 2-3% mispricing — can consume a disproportionate share of that margin, triggering cascading liquidations. This creates a systemic amplification where individual oracle errors produce protocol-wide cascades.
+
+**The Math of E-Mode Amplification**:
+- E-Mode LTV: 90-93% for correlated pairs (wstETH/ETH)
+- Safety margin: ~7-10% (inverse of LTV)
+- Oracle misfire magnitude: 2.85% (Aave CAPO)
+- Safety margin consumed: 2.85% / 7% = ~40.7%
+- Result: Nearly half the safety margin evaporated from a "minor" oracle configuration error
+
+**Attack Chain**:
+```
+Oracle config desync (META-32)
+  → price undervalued by 2.85%
+  → E-Mode health factor drops 40%
+  → 34 accounts breach liquidation threshold
+  → MEV bots execute liquidations in 1 block
+  → 10,938 wstETH liquidated
+  → $26-27M at risk, protocol solvent but users harmed
+```
+
+**Why This Is a Distinct Meta-Pattern**:
+- Not an oracle manipulation (A3) — the price was wrong due to config, not manipulation
+- Not an oracle design flaw — both components were correct in isolation
+- This is an **oracle error tolerance design failure**: the protocol's leverage mode did not account for the realistic error bound of its oracle system
+
+**When E-Mode Amplification Applies Beyond Aave**:
+1. Any lending protocol with >80% LTV modes for correlated assets
+2. Any protocol where collateral oracle price variance > safety margin
+3. Any multi-step DeFi composition where each step introduces oracle variance and the composition multiplies those variances
+
+**Why Audits Miss E-Mode Amplification**:
+1. Oracle audit focuses on "is price correct?" not "what is the realistic error bound and does the protocol's LTV account for it?"
+2. Economic modeling typically uses point estimates (correct price) rather than range estimates (price ± error)
+3. Stress testing uses extreme scenarios (50% price drop) not realistic scenarios (2-3% oracle misconfiguration)
+
+**Balancer V2 Correlation**: Balancer's cascading pool failures (2025-2026, $128M+) follow a similar amplification pattern where small arithmetic errors compound through high-leverage pool compositions.
+
+**Microstable Relevance**: Microstable does NOT implement E-Mode or similar high-LTV correlated-asset mode. Standard mint/redeem with collateral ratio management is less susceptible to this specific amplification pattern. HOWEVER: any future introduction of high-LTV modes or leverage products must include explicit oracle error tolerance analysis.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. For any high-LTV mode (>80%): add "oracle error tolerance budget" — the LTV must leave enough margin to absorb the oracle's realistic maximum error (including config errors, not just manipulation).
+2. Stress test with range estimates, not point estimates: model oracle price as a distribution, not a single value.
+3. Add liquidation circuit breaker for multi-account simultaneous threshold breach — if >N accounts breach health factor in same block, pause liquidations for M blocks (gives time to diagnose).
+
+**Source**: The Aave CAPO Oracle Misfire (dev.to/ohmygod, 2026-03-25); BlockSec weekly (Mar 9-15, 2026)
+
+---
+
+**Matrix state as of 2026-04-01 (daily): 103 named vectors (A1–A92 + A85/A86 reserved + A93~A95) + META-01~33 + B73~B76 = 136 total entries. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~31 added by Purple Team (2026-03-31 04:00 KST). META-32~33 added by Purple Team (2026-04-01 04:00 KST) — Cross-Component Configuration Desync + E-Mode/LTV Amplification.**

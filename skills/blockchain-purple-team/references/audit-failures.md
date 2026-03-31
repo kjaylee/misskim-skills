@@ -50,6 +50,16 @@
 **Historical**: Compound distribution error — not a "known" vulnerability class, just wrong math.
 **Detection**: Beyond checklist: "Does the implementation match the specification for EVERY operation?"
 
+## AF-11: Cross-Component Configuration Desync (CCCCD)
+**Pattern**: Each off-chain/on-chain component reviewed individually and found correct. The vulnerability emerges from a parameter/configuration mismatch across the integration boundary that no single audit covers.
+**Historical**: Aave CAPO (2026-03-10, $26-27M): off-chain oracle updated with 7-day reference window; on-chain CAPO enforced 3% per 3-day cap. Both individually correct. The timestamp/ratio mismatch caused 2.85% price undervaluation → E-Mode liquidations.
+**Detection**: Build "cross-component parameter alignment matrix" — for each off-chain/on-chain pair, verify parameter windows and thresholds are explicitly matched. Automated integration fuzzing must validate "what off-chain sends + how on-chain processes = correct outcome."
+
+## AF-12: Leverage Mode Amplification Blindness
+**Pattern**: Audits test "is the oracle price correct?" but not "what is the realistic oracle error bound, and does the protocol's LTV account for it?" High-leverage modes (90%+ LTV) amplify even small oracle errors into liquidation cascades.
+**Historical**: Aave E-Mode: 2.85% oracle misfire consumed ~40% of the ~7% safety margin.
+**Detection**: For high-LTV modes: model oracle price as a distribution, not point estimate. Verify LTV leaves margin beyond oracle's realistic maximum error. Stress-test simultaneous multi-account liquidation scenarios.
+
 ## Meta-Insight
 The common thread: **auditors optimize for known patterns and explicit scope.**
 Purple Team optimizes for: **unknown patterns, implicit assumptions, and scope gaps.**

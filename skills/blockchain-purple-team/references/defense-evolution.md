@@ -40,6 +40,12 @@
 **Example**: Rate limit of 1000 tokens/block. Attacker extracts 999/block for 1000 blocks = 999,000 tokens.
 **Detection**: Evaluate defenses against sustained low-intensity attacks, not just single large attacks.
 
+## DE-9: MEV as Unintended Beneficiary of Protocol Misconfiguration
+**Pattern**: Protocol misconfiguration creates MEV opportunity. MEV bots automatically extract value — with NO incentive to report the underlying misconfiguration. The extractor profits regardless of whether the root cause is fixed.
+**Example**: Aave CAPO misfire (2026-03-10): ~499 ETH in liquidator profits captured by MEV bots while $26-27M in user positions were liquidated. The MEV bots had zero incentive to report the CAPO bug — they profited from it.
+**Detection**: Map all protocol misconfiguration scenarios and ask: "Does MEV bot participation create a perverse incentive to not report?" If yes → the misconfiguration is self-amplifying.
+**Defense**: Protocol-level MEV awareness — monitor for anomalous MEV bot behavior that correlates with user harm. Consider MEV rebate mechanisms that align bot incentives with protocol health.
+
 ## Evolution Tracking Framework
 
 For each known vulnerability + fix:
