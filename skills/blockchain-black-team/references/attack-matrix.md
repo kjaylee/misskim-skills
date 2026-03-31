@@ -3831,7 +3831,124 @@ function execute(address target, bytes calldata data) external onlySigners {
 **Microstable relevance**: ⚠️ MEDIUM (future) — If Microstable keeper evolves to include any LLM-based decision layer or multi-step agentic execution: (a) ensure keeper TX logs include decision rationale, not just action taken; (b) add content-aware circuit breaker that fires on anomalous TVL-delta per TX regardless of auth; (c) B72 + B62 together define the full agentic keeper threat model.
 **Source**: https://www.prnewswire.com/news-releases/hiddenlayer-releases-the-2026-ai-threat-landscape-report-302716687.html | https://stellarcyber.ai/learn/agentic-ai-securiry-threats/ (2026-03-18)
 
-<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-24 (03:00 KST) -->
+### B73. Python AI Tooling Supply Chain — Malicious PyPI Release with System-Wide Credential Exfiltration
+**Signal**: Futuresearch.ai / SlowMist CISO 23pds (2026-03-24) — litellm 1.82.7 and 1.82.8 published to PyPI with malicious `.pth` file. Maintainer's GitHub (krishdholakia) likely fully compromised.
+**Mechanism**: At 10:52 UTC on March 24, 2026, litellm v1.82.8 was uploaded directly to PyPI — bypassing the normal GitHub release/tag process. No corresponding tag exists on the litellm GitHub repository. The package contains `litellm_init.pth` which executes automatically on every Python interpreter startup (`.pth` files are imported by the Python runtime on startup). Payload stages:
+1. **Collection**: Harvests SSH private keys, `.env` files, AWS/GCP/Azure credentials, Kubernetes configs, database passwords, `.gitconfig`, shell history, crypto wallet files (`.sols`, `.secrets`)
+2. **Exfiltration**: Bundles stolen data → tar archive → encrypts with hardcoded 4096-bit RSA public key (AES-256-CBC) → POSTs to `models.litellm.cloud` (fake domain impersonating legitimate litellm infra)
+3. **Lateral movement + persistence**: If K8s service account token present, reads ALL cluster secrets across all namespaces, deploys alpine:latest pod on every node mounting host filesystem, installs backdoor at `/root/.config/sysmon/sysmon.py` with systemd user service
+**Fork bomb bug**: The `.pth` re-triggers on every Python process startup; child processes re-trigger the same `.pth` → exponential fork bomb → crashes machine. This bug accidentally exposed the attack (discovered when MCP plugin inside Cursor triggered it).
+**Secondary indicator**: Author's GitHub likely fully compromised; public GitHub issue #24512 was flooded with bot comments to dilute discussion; owner closed issue as "not planned"
+**Why distinct from A43 (NPM Ecosystem Malware)**: A43 is primarily JS/TS/npm attack surface. B73 is a Python-specific, AI-tooling-targeting attack exploiting a different ecosystem (PyPI) and a different developer profile (AI/LLM developers vs general JS devs). PyPI has fewer guardrails than npm (no auto-malware scanning, no reproducibility requirements). The credential exfiltration scope (SSH + cloud + K8s + crypto wallets) is broader than typical npm malware.
+**Why distinct from B29 (AI Agent Prompt Injection)**: B29 targets the AI agent's input/output layer. B73 compromises the DEVELOPMENT ENVIRONMENT before any agent interaction — stealing the keys that would be used to authenticate the agent to cloud services, databases, and blockchain wallets.
+**Code/dependency pattern to find**:
+```bash
+# Check if you're affected
+pip show litellm
+# If version is 1.82.7 or 1.82.8 → compromised
+# Also check uv caches
+find ~/.cache/uv -name "litellm_init.pth" 2>/dev/null
+
+# Check Cargo build scripts if any Rust crates invoke Python
+grep -r "subprocess\|pip\|python" build.rs | grep -v "// safe comment"
+```
+**Supply chain hygiene pattern**:
+```toml
+# Cargo.toml: if any build script invokes Python pip
+[build-dependencies]
+# Pin to exact git tag, not version number
+python-litellm = { git = "https://github.com/BerriAI/litellm", tag = "v1.82.6" }
+
+# requirements.txt: pin hashes
+litellm==1.82.6 --hash=sha256:XXXXXXX  # verify against GitHub release, not PyPI listing
+```
+**Microstable relevance**: ⚠️ **LOW for on-chain/keeper (pure Rust)**, ⚠️ **MEDIUM for dashboard/research scripts** — If any Microstable Python tooling (dashboards, data analysis scripts, AI-based monitoring/agentic tools) uses litellm or any AI gateway, it is directly exposed. Keeper is Rust, immune. On-chain code, immune. Any CI/CD runner using litellm: exposed.
+**Defense**:
+1. Pin all Python package versions to exact git tags, not PyPI latest
+2. Use `pip hash` verification: compare against GitHub release asset checksums
+3. Add `pip-audit` / `safety` to CI/CD pipeline to detect known-malicious versions
+4. For AI agent tooling: isolate in dedicated VM/container with minimal credential scope
+5. Do NOT install litellm 1.82.7/1.82.8; downgrade to v1.82.6 or earlier; audit all environment variables and filesystem access after potential exposure
+**Source**: https://futuresearch.ai/blog/litellm-pypi-supply-chain-attack/ | https://docs.litellm.ai/blog/security-update-march-2026 | https://x.com/im23pds/status/2036599387267428713 (2026-03-25)
+
+### B74. GlassWorm Campaign Wave 5 — Solana Blockchain Dead Drop C2 + 433-Package Developer Tool Supply Chain
+**Signal**: The Hacker News / BleepingComputer / SOC Prime / Malwarebytes (2026-03); Step Security, Aikido, Socket.dev research (2026-03).
+**Mechanism**: GlassWorm is an ongoing supply-chain attack campaign that has evolved across 5 waves since October 2025. Wave 5 (March 2026) is the largest expansion yet — 433 compromised components:
+- 200 GitHub Python repositories (force-pushed malicious commits after account takeover)
+- 151 GitHub JS/TS repositories
+- 72 VSCode/OpenVSX extensions
+- 10 npm packages
+**Solana Blockchain as C2 Dead Drop (NEW in Wave 4→5)**: The malware queries the Solana blockchain every 5 seconds for new command instructions. Between November 27, 2025 and March 13, 2026, researchers observed 50 new transactions updating the payload URL. Instructions are embedded as transaction memos on the Solana network — the blockchain acts as an unblockable, tamper-evident command server. If DHT bootstrap nodes fail, the malware falls back to Solana-based C2 retrieval. Two known Solana wallet addresses used as dead-drop locations.
+**Attack chain**: Compromised GitHub account → force-push malicious commit with invisible Unicode (U+200B zero-width space) obfuscation → publishes malicious npm package / VSCode extension → victim installs → Node.js runtime downloaded from attacker server → JavaScript info-stealer runs → steals cryptocurrency wallets, SSH keys, browser credentials, environment tokens
+**macOS-specific**: Trojanized Trezor and Ledger clients; fake browser extensions for surveillance
+**Why distinct from A43 (NPM Ecosystem Malware)**: GlassWorm predates A43 and operates across MULTIPLE registries simultaneously (GitHub + npm + VSCode + OpenVSX). The Solana C2 dead drop is a first-of-its-kind blockchain-as-infrastructure pattern — the attacker doesn't need to control any server; the Solana network IS their command infrastructure.
+**Code/config pattern to find**:
+```bash
+# Check for GlassWorm indicators in installed packages
+grep -r "solana\|web3\|@solana" node_modules/*/package.json 2>/dev/null | grep -v "solana-web3.js"
+npm ls --depth=3 2>/dev/null | grep -i "glassworm\|force-push\|aiohttp" # GlassWorm uses aiohttp for C2
+# Check VSCode extensions for suspicious Solana RPC polling
+code --list-extensions | xargs -I{} cat ~/.vscode/extensions/{}/package.json 2>/dev/null | grep -i "solana\|rpc"
+```
+**Microstable relevance**: ⚠️ **MEDIUM for developer toolchain** — If Microstable developers use VSCode extensions, npm packages, or Python packages from the compromised registry pool, their environment (including Solana keypairs, SSH keys, and cloud credentials) can be stolen. Keeper running on infrastructure: if that infrastructure was set up by a developer whose environment was compromised, the keeper keys could be exfiltrated. **On-chain Rust code: not directly affected.**
+**Defense**:
+1. Enable 2FA on all GitHub accounts; review "recently pushed commits" for unexpected force-pushes
+2. Do NOT install VSCode extensions from unverified publishers; check extension permissions
+3. Use Socket.dev or similar to audit npm packages for suspicious behavior before installation
+4. Monitor Solana wallet addresses associated with GlassWorm C2 (Step Security IOC list)
+5. For CI/CD runners: use ephemeral environments, rotate credentials frequently
+**Source**: https://thehackernews.com/2026/03/glassworm-malware-uses-solana-dead.html | https://www.bleepingcomputer.com/news/security/glassworm-malware-hits-400-plus-code-repos-on-github-npm-vscode-openvsx/ | https://socprime.com/active-threats/glassworm-hides-a-rat-inside-a-malicious-chrome-extension/ (2026-03)
+
+### B75. RUSTSEC-2026-0078 — intaglio Symbol Confusion After Hasher Panic
+**Signal**: RustSec Advisory Database (2026-03-30) — intaglio < 1.13.3.
+**Mechanism**: `intaglio` is a Rust crate for symbol table interning (symbol → index mapping). When a hasher panics during interning operations, the internal state can become corrupted such that subsequent lookups return the wrong symbol for a given key (symbol confusion). This is a memory-safety-adjacent issue in the hash internals — not a classic memory corruption (buffer overflow), but a logical corruption that can cause incorrect program behavior.
+**Patched**: >= 1.13.3
+**Microstable relevance**: ✅ **NOT APPLICABLE** — Microstable does not use the `intaglio` crate (Cargo.lock scan confirms zero dependencies). Keeper is Rust binary; RustSec advisories for Rust crates are tracked for completeness, but this specific crate is not in use. This vector is logged for RUST ecosystem awareness.
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0078.html | https://github.com/artichoke/intaglio/issues/359 (2026-03-30)
+
+### B76. Token-2022 Delegate Field — Cross-Account Unauthorized Transfer via Bystander Delegation
+**Signal**: Black Team daily sweep 2026-03-31 (lib.rs mint instruction audit).
+**Mechanism**: When a user creates an SPL Token Associated Token Account (ATA), they can set a `delegate` on that account — authorizing a third party to transfer up to an allowance amount FROM that account without the owner's key. The delegate is recorded in the TokenAccount state. If a Microstable user's collateral ATA has a delegate set (to any address, potentially attacker-controlled), the protocol's `mint` instruction accepts the ATA as collateral without checking `delegate.is_none()`.
+
+**Attack scenario (Microstable-specific)**:
+1. Victim creates collateral ATA and, via a phishing site or unintended approval, sets an attacker-controlled address as delegate with high allowance
+2. Victim calls Microstable `mint()` to deposit collateral — protocol transfers collateral from victim's ATA → vault (victim signs, legitimate)
+3. Attacker, using delegate authority (no owner signature needed for delegate transfers), calls a separate transfer instruction (outside Microstable) to drain victim's remaining collateral balance
+4. Net result: Microstable accepted collateral that was already partially compromised; victim lost funds to delegate exploit outside the protocol's control
+
+**Code pattern to find (Rust/Anchor)**:
+```rust
+// VULNERABLE: accepts any TokenAccount as collateral without delegate check
+#[account(
+    mut,
+    associated_token::mint = collateral_mint,
+    associated_token::authority = user,
+)]
+pub user_collateral_ata: Account<'info, TokenAccount>,
+// MISSING: require!(user_collateral_ata.delegate.is_none(), ErrorCode::DelegateNotAllowed);
+
+// SAFE: explicitly reject delegated accounts
+require!(
+    ctx.accounts.user_collateral_ata.delegate.is_none(),
+    ErrorCode::DelegateNotAllowed
+);
+```
+**Why distinct from A6 (Account Substitution)**: A6 is about providing a fake account of the correct type. B76 is about the account being legitimate but having a subtle security property (delegate) that makes the transfer authorization incomplete — the user signs, but so does the delegate, enabling double-spend within a single transaction context.
+**Microstable relevance**: ⚠️ **MEDIUM** — Current `mint` instruction (lib.rs line ~1104) calls `token::transfer_checked` with `authority: ctx.accounts.user.to_account_info()`. The user signs. The delegate field on the ATA is not checked. If a delegate is set on the user's collateral ATA, the protocol is accepting collateral from an account that has a third-party withdrawal authority. While the protocol itself is not exploitable for double-deposit, the user may lose additional funds via the delegate pathway in the same or subsequent transactions.
+**Defense**:
+```rust
+// Add to Mint instruction (before transfer_checked):
+require!(
+    ctx.accounts.user_collateral_ata.delegate.is_none(),
+    ErrorCode::UnauthorizedTokenDelegate
+);
+// And add error code:
+// #[msg("Collateral ATA must not have a delegate set")]
+// UnauthorizedTokenDelegate,
+```
+**Source**: Black Team 2026-03-31 | Microstable lib.rs mint instruction audit
+
+<!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-31 (03:00 KST) -->
 
 ### A72. Privileged Minter EOA Key Compromise + Absent On-Chain Mint Cap
 **Historical**: Resolv Labs USR Stablecoin (2026-03-22, ~$25M realized / $80M tokens minted)
@@ -5209,4 +5326,4 @@ uint256 result = (amountA * priceB) / totalShares;
 
 ---
 
-**Matrix state as of 2026-03-31 (final): 99 named vectors (A1–A92; A90 = A78 duplicate; A85/A86 reserved) + META-01~31 = 130 total entries. A91 added 2026-03-31 daily sweep (BCE burn mechanism / fee-on-transfer AMM reserve manipulation). A92 added 2026-03-31 daily sweep (low-cost rapid-quorum governance attack). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (2026-03-30 04:00 KST) — APSC + OCPI. META-29~31 added by Purple Team (2026-03-31 04:00 KST) — InfraKey+Mint combo, Donation+Manipulation synergy, Precision/Rounding epidemic.**
+**Matrix state as of 2026-04-01 (daily): 103 named vectors (A1–A92 + A85/A86 reserved + A93~A95) + META-01~31 + B73~B76 = 134 total entries. B73~B76 added 2026-04-01 03:00 KST daily sweep: LiteLLM PyPI supply chain (B73), GlassWorm Wave 5 (B74), intaglio RUSTSEC-2026-0078 (B75), Token-2022 delegate check gap in mint (B76). A91 added 2026-03-31 daily sweep (BCE burn mechanism / fee-on-transfer AMM reserve manipulation). A92 added 2026-03-31 daily sweep (low-cost rapid-quorum governance attack). META-26 added by Red Team (OWASP 2026 taxonomy). META-27~28 added by Purple Team (2026-03-30 04:00 KST) — APSC + OCPI. META-29~31 added by Purple Team (2026-03-31 04:00 KST) — InfraKey+Mint combo, Donation+Manipulation synergy, Precision/Rounding epidemic.**

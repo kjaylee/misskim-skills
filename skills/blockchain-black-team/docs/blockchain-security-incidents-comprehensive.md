@@ -173,3 +173,31 @@
   **Why distinct from A8 (Front-running/Sandwich)**: A8 is an active attacker manipulation. This event had no attacker — the loss occurred from the solver's routing decision itself. MEV extraction was a passive consequence, not the mechanism.
   Vector mapping: **A59 DEX Aggregator Solver Race-to-Minimum / Interface-Mediated Thin-Pool Routing Loss** (confirmation; A59 was added 2026-03-23 based on this incident).
   Source: https://rekt.news/price-impact-kills | https://decrypt.co/360961/crypto-trader-loses-nearly-50m-aave-trade-600k-fee-refund | https://x.com/Ehsan1579/status/2032212032901276055
+
+- **2026-03-24 — LiteLLM PyPI Supply Chain Attack (Python Ecosystem)** — Malicious litellm 1.82.7 and 1.82.8 published to PyPI with backdoored `litellm_init.pth` file. Attacker bypassed normal GitHub release process; no corresponding git tag. Malicious `.pth` executes on every Python interpreter startup, harvesting SSH keys, `.env`, AWS/GCP/Azure credentials, Kubernetes configs, database passwords, `.gitconfig`, shell history, crypto wallets. Exfiltrates via encrypted tarball to `models.litellm.cloud`. If K8s token present: reads ALL cluster secrets across namespaces, deploys alpine pod with host filesystem mount and persistent backdoor at `/root/.config/sysmon/sysmon.py`. Maintainer's GitHub (krishdholakia) likely fully compromised; public issue #24512 flooded with bot comments. PyPI versions yanked. ~47,000+ users potentially affected.
+  Vector mapping: **B73 Python AI Tooling Supply Chain (NEW — added 2026-04-01)**.
+  Source: https://futuresearch.ai/blog/litellm-pypi-supply-chain-attack/ | https://docs.litellm.ai/blog/security-update-march-2026 | https://x.com/im23pds/status/2036599387267428713
+
+- **2026-03 (ongoing) — GlassWorm Campaign Wave 5 (Multi-Registry Supply Chain + Solana Blockchain C2)** — Largest GlassWorm expansion yet: 433 compromised components (200 GitHub Python repos, 151 JS/TS repos, 72 VSCode/OpenVSX extensions, 10 npm packages). Attack chain: compromised GitHub account → force-push malicious commits with invisible Unicode → publishes malicious packages → victim's Node.js runtime downloads payload → JavaScript info-stealer runs. NEW: Solana blockchain used as C2 dead drop — queries Solana RPC every 5 seconds for new command instructions embedded as transaction memos. Two known Solana wallet addresses as dead-drop C2 locations. Targets crypto wallets, SSH keys, credentials, browser data. Affects macOS via trojanized Trezor/Ledger clients and fake browser extensions. Between Nov 27 2025 and Mar 13 2026: 50+ C2 update transactions observed on Solana.
+  Vector mapping: **B74 GlassWorm Wave 5 — Solana Blockchain C2 + Developer Tool Supply Chain (NEW — added 2026-04-01)**.
+  Source: https://thehackernews.com/2026/03/glassworm-malware-uses-solana-dead.html | https://www.bleepingcomputer.com/news/security/glassworm-malware-hits-400-plus-code-repos-on-github-npm-vscode-openvsx/ | https://socprime.com/active-threats/glassworm-hides-a-rat-inside-a-malicious-chrome-extension/
+
+- **2026-03-27 — BSC Stake Contract Oracle Manipulation ($133K)** — BlockSec Phalcon detected $133K loss from an unknown contract on BSC. Attacker exploited a spot price dependency vulnerability in the Stake contract. By manipulating the price of TUR in the TUR-NOBEL pool and subsequently staking TUR, the attacker triggered reward calculations based on the artificially inflated price, then claimed amplified rewards via a referral account, ultimately swapping stolen TUR for USDT.
+  Vector mapping: **A3 Oracle Manipulation (fresh variant — BSC spot price dependency)**.
+  Source: https://x.com/Phalcon_xyz/status/2037245722454876304
+
+- **2026-03-26 — Moonwell Moonriver Governance Attack ($1.08M at risk, $0 lost)** — Unknown attacker spent ~$1,808 to acquire 40M MFAM governance tokens, submitted malicious proposal to transfer admin control of 7 lending markets, comptroller, and oracle to attacker-controlled contract. Initial vote passed quorum in 11 minutes. Community counter-mobilized; "No" votes eventually prevailed. Represents low-cost, rapid-quorum governance attack on low-liquidity DeFi protocol.
+  Vector mapping: **A92 Low-Cost Governance Attack with Rapid Quorum Exploitation** (added 2026-03-31 daily sweep).
+  Source: https://www.theblock.co/post/395272/moonwell-governance-attack
+
+- **2026-03-30 — RUSTSEC-2026-0078: intaglio Symbol Confusion (Rust Ecosystem)** — Symbol confusion after hasher panic in intaglio interners. When a hasher panics during interning operations, internal state corrupts causing incorrect symbol-to-index lookup. Patched in >=1.13.3. Not in Microstable Cargo.lock — tracked for Rust ecosystem awareness.
+  Vector mapping: **B75 intaglio Symbol Confusion (NEW — added 2026-04-01)**.
+  Source: https://rustsec.org/advisories/RUSTSEC-2026-0078.html | https://github.com/artichoke/intaglio/issues/359
+
+- **2026-03-31 — Steakhouse Financial DNS Hijack via OVH Cloud Social Engineering ($0 loss)** — Phone-based social engineering attack against OVH Cloud provider. Attacker modified DNS A records to malicious IP, attempted 5-day domain transfer. All vaults and smart contracts not affected; depositor funds safe. Frontend compromised; vaults accessible directly via Morpho. DNS records reverted.
+  Vector mapping: **B57 Third-Party Signing Interface Supply Chain Attack** (DNS-level variant).
+  Source: https://x.com/SteakhouseFi/status/2038714374592852085
+
+- **2026-03-31 — Arf X Account Compromise ($0 loss)** — Huma Finance warned that partner Arf's official X account (@arf_one) was compromised. No direct protocol fund loss. Represents ongoing social media account compromise trend targeting DeFi protocol partner ecosystems.
+  Vector mapping: **B53 Address/Account Poisoning** (social media variant).
+  Source: https://x.com/humafinance/status/2038810915802611834
