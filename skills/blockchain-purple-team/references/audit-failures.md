@@ -60,6 +60,11 @@
 **Historical**: Aave E-Mode: 2.85% oracle misfire consumed ~40% of the ~7% safety margin.
 **Detection**: For high-LTV modes: model oracle price as a distribution, not point estimate. Verify LTV leaves margin beyond oracle's realistic maximum error. Stress-test simultaneous multi-account liquidation scenarios.
 
+## AF-13: Fuzzer Structural Blind Spot — Precision Loss Accumulation
+**Pattern**: All four major smart contract fuzzers (Foundry, Echidna, Medusa, Trident) structurally fail to detect precision loss accumulation across repeated operations. Audit reports present "Foundry invariant testing passed" as comprehensive fuzzing coverage, while the precision loss class remains undetected.
+**Historical**: Smart Contract Fuzzer Showdown (2026-03-20, dev.to/ohmygod): 8 invariant-breaking challenges based on real DeFi hacks. Precision Loss: Foundry ❌ (500K+ timeout), Echidna ❌ (500K+), Medusa ❌, Trident N/A. Foundry also missed Oracle Manipulation (10M+ timeout) and Flash Loan Governance (10M+).
+**Detection**: For any protocol with integer division in share/amount conversions: (a) explicitly test with high-operation-count sequences (deposit/redeem × 100+), (b) derive closed-form bound for N-operation precision error and assert it in a committed invariant test, (c) do NOT accept "fuzzers passed" as precision loss coverage — note this specific gap in close-out reports.
+
 ## Meta-Insight
 The common thread: **auditors optimize for known patterns and explicit scope.**
 Purple Team optimizes for: **unknown patterns, implicit assumptions, and scope gaps.**

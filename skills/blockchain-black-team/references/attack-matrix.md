@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01) | META-01~33
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02) | META-01~35
 
 ## A. Smart Contract Vectors
 
@@ -5422,6 +5422,108 @@ Oracle config desync (META-32)
 
 ---
 
+### META-34. Fuzzer Benchmark — Precision Loss Structural Blind Spot (All 4 Tools Miss)
+
+**Published**: 2026-03-20 (dev.to benchmark) | **Severity**: MEDIUM (methodological) | **Purple Team**
+
+**Signal**: Smart Contract Fuzzer Showdown: Foundry vs Echidna vs Medusa vs Trident (2026 Benchmark) — 8 invariant-breaking challenges based on real DeFi hacks.
+
+**The Finding**: All four major smart contract fuzzers (Foundry `forge fuzz`, Echidna, Medusa, Trident) were benchmarked against standardized vulnerability patterns. Results:
+
+| Bug Pattern | Foundry | Echidna | Medusa | Trident |
+|---|---|---|---|---|
+| First Depositor Inflation | ✅ (3 runs) | ✅ (45 runs) | ✅ (12 runs) | ✅ (Solana) |
+| Reentrancy Callback | ✅ (847 runs) | ✅ (1,203 runs) | ✅ (456 runs) | ✅ |
+| **Oracle Manipulation** | ❌ 10M+ timeout | ✅ (23,456 runs) | ✅ (8,901 runs) | N/A |
+| Unchecked Overflow | ✅ (12 runs) | ✅ (89 runs) | ✅ | ✅ |
+| **Flash Loan Governance** | ❌ 10M+ timeout | ✅ (67,891 runs) | ✅ | N/A |
+| Cross-Function Reentry | ✅ (2,341 runs) | ✅ (5,678 runs) | ✅ | N/A |
+| **Precision Loss** | ❌ 500K+ timeout | ❌ 500K+ timeout | ❌ | N/A |
+| tx.origin Phishing | ✅ (1 run) | ✅ (234 runs) | ✅ | ✅ |
+
+**Key finding for Purple Team**: **Precision Loss Accumulation** (repetitive rounding errors across many small transactions — e.g., Microstable's SPL token `amount_to_shares` / `shares_to_amount` via `Asset::accumulate`) is **not detected by any major fuzzer**. All four tools timeout or fail on this pattern. This is a structural limitation: precision loss requires a high-volume sequence of small operations that individually appear correct, and fuzzers are designed to find fast-breaking bugs, not slow-accumulating ones.
+
+**Why This Is a Distinct Meta-Pattern**:
+- META-12 (Fuzzer Monoculture): identified that Foundry alone misses multi-step attacks; solution = add Echidna/Medusa.
+- **META-34**: identifies that even with ALL four fuzzers running, a specific vulnerability class (precision loss accumulation) is structurally undetected. Tool diversity does NOT solve this gap.
+- The precision loss pattern is especially dangerous in stablecoin/solidity vault systems where `amount_to_shares` uses integer division with truncation — each redeem withdraws slightly less than mathematically correct due to rounding. After thousands of operations, the accumulated error can be material.
+
+**Why Audits Miss This**:
+1. Audits present "Foundry invariant tests passed" as evidence of comprehensive fuzzing coverage — precision loss is NOT in that coverage.
+2. Echidna and Medusa are rarely used in standard audit pipelines (setup cost: YAML config + property contracts + 2-5 min per run vs. Foundry's <1s).
+3. Precision loss requires a specific invariant: "totalAssets() must never decrease after any sequence of deposit/redeem" — this is not a standard property most auditors test.
+
+**Microstable Relevance**: HIGH — Microstable uses SPL tokens with Rust `amount_to_shares` / `shares_to_amount` arithmetic. The accumulated precision loss across many operations is not covered by any standard fuzzer in the current pipeline. An explicit integration-level invariant test (deposit 1 lamport → withdraw 1 lamport → repeat 10,000 times → assert total vault balance unchanged) is required.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Add Foundry invariant test: `invariant_vault_balance_never_decreases()` — deposit, redeem, and repeat 100 times, assert `after_total >= before_total`.
+2. Manual arithmetic review of all `amount_to_shares` / `shares_to_amount` conversions: derive the closed-form bound for N operations and assert it.
+3. Do NOT accept "all fuzzers passed" as precision loss coverage — explicitly note this gap in audit close-out reports.
+4. For Microstable: add `assert!(vault.total_assets() >= pre_test_total - (N * MAX_ROUNDING_ERROR_PER_OP))` as a committed invariant.
+
+**Source**: dev.to/ohmygod "The Smart Contract Fuzzer Showdown: Foundry vs Echidna vs Medusa vs Trident (2026 Benchmark)" (2026-03-20)
+
+---
+
+### META-35. Bridge Confirmation Threshold = 1: The Second-Layer Bypass (Even After Gateway Verification)
+
+**Published**: 2026-03-27 (CrossCurve defensive patterns analysis) | **Severity**: HIGH | **Purple Team**
+
+**Signal**: CrossCurve $3M Bridge Exploit (Feb 2026) — 7 Defensive Patterns That Would Have Stopped the Exploit. CrossCurve's `expressExecute()` had TWO independent failures:
+1. Missing `msg.sender == gateway` check (A48 — CrossCurve ReceiverAxelar)
+2. `confirmationThreshold = 1` — even if gateway check were present, a single corrupted relay node suffices
+
+**The Two-Layer Model for Bridge Message Validation**:
+
+Layer 1 — Gateway Verification (A48 covers this):
+```
+require(msg.sender == GATEWAY_ADDRESS, "NOT_GATEWAY");
+```
+Prevents unauthorized direct calls. CrossCurve was missing this.
+
+Layer 2 — Multi-Guardian Threshold:
+```
+require(validatorCount >= MIN_GUARDIAN_THRESHOLD, "INSUFFICIENT_CONFIRMATIONS");
+```
+Axelar uses N-of-M validator set. If `confirmationThreshold = 1`, one compromised validator = full compromise. CrossCurve set this to 1, negating the multi-guardian guarantee.
+
+**Historical confirmation threshold failures**:
+
+| Bridge | Year | Loss | Threshold Failure |
+|---|---|---|---|
+| Nomad | 2022 | $190M | `initialized with trusted root = 0x00` (effectively threshold=1) |
+| Wormhole | 2022 | $325M | Signature verification bypass (guardian set trivially compromised) |
+| Ronin | 2022 | $624M | 5/9 keys compromised (below 5/5 required) |
+| CrossCurve | 2026 | $3M | `confirmationThreshold = 1` + missing gateway check |
+
+**Griffin AI / LayerZero unauthorized peer initialization (Sep 2025)**: Cross-chain protocols using LayerZero's configurable oracle/relayer model allow manual peer initialization. Griffin AI incident: unauthorized peer initialization led to counterfeit token minting on the destination chain. This is Pattern 2 from the defensive patterns analysis — **source address allowlisting** — a complementary control to gateway verification.
+
+**The 4-Layer Bridge Defense Model** (complete stack):
+1. **Gateway signature verification** — `require(msg.sender == gateway)` (A48)
+2. **Source address allowlisting** — `require(trustedSenders[sourceChain][sourceAddress])` (cross-chain peer validation)
+3. **Multi-guardian confirmation threshold** — `require(validatorCount >= MIN_THRESHOLD, MIN ≥ 2)` (this META-35)
+4. **Timelock on large transfers** — all bridge releases above threshold require timelock delay
+
+**Why Audits Miss Layer 2**:
+1. Audits test "is the gateway check present?" — Layer 2 (threshold) is often assumed from the protocol design and not explicitly tested.
+2. Threshold is typically set in the constructor or initializer — often treated as a deployment constant, not a security parameter.
+3. Axelar/LayerZero documentation says "N-of-M validators confirm messages" — auditors assume the threshold is set to a safe value without verifying.
+
+**Microstable Relevance**: MEDIUM — Microstable does not currently use cross-chain messaging bridges. However, if any future integration adds LayerZero, Axelar GMP, or Wormhole message passing, the full 4-layer model must be implemented. Specifically:
+- Source address allowlisting is a prerequisite before any GMP integration.
+- Confirmation threshold must be explicitly set and tested (not left at default = 1).
+- The 4-layer model should be a mandatory checklist item in any bridge integration RFC.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Any bridge integration RFC must explicitly address all 4 layers, not just gateway verification.
+2. Confirmation threshold must be a security parameter in the protocol spec, reviewed at the same rigor as access control lists.
+3. Add explicit test: `test_bridge_requires_minimum_guardian_threshold()` — assert revert when threshold < 2.
+4. Source address allowlist must be managed via timelock, not single-signer admin.
+
+**Source**: dev.to/ohmygod "Cross-Chain Bridge Message Validation: 7 Defensive Patterns" (2026-03-20); CrossCurve post-mortem (dev.to/ohmygod, 2026-03)
+
+---
+
 ### A93. RateX-Based Order-Book Lending Collateral Pricing Oracle Manipulation (Loopscale $5.8M)
 **Historical**: Loopscale (formerly Bridgesplit) $5.8M exploit (April 2026, Solana) — launched April 10, 2026; $4.25M VC-backed (Solana Labs + Coinbase Ventures); halted after exploit; $5.8M drained from USDC and SOL vaults.
 
@@ -5465,4 +5567,4 @@ require!(deviation <= MAX_DEVIATION_PPM, ErrorCode::PriceDeviationExceeded);
 
 ---
 
-**Matrix state as of 2026-04-02 (daily): 105 named vectors (A1–A92 + A85/A86 reserved + A93~A94) + META-01~33 + B73~B76 = 138 total entries. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 (Drift Protocol ~$200-270M, mechanism TBD) added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST).**
+**Matrix state as of 2026-04-02 (daily): 105 named vectors (A1–A92 + A85/A86 reserved + A93~A94) + META-01~35 + B73~B76 = 140 total entries. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 (Drift Protocol ~$200-270M, mechanism TBD) added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST). META-34~35 added by Purple Team (2026-04-02 04:00 KST).**
