@@ -5422,4 +5422,47 @@ Oracle config desync (META-32)
 
 ---
 
-**Matrix state as of 2026-04-01 (daily): 103 named vectors (A1–A92 + A85/A86 reserved + A93~A95) + META-01~33 + B73~B76 = 136 total entries. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~31 added by Purple Team (2026-03-31 04:00 KST). META-32~33 added by Purple Team (2026-04-01 04:00 KST) — Cross-Component Configuration Desync + E-Mode/LTV Amplification.**
+### A93. RateX-Based Order-Book Lending Collateral Pricing Oracle Manipulation (Loopscale $5.8M)
+**Historical**: Loopscale (formerly Bridgesplit) $5.8M exploit (April 2026, Solana) — launched April 10, 2026; $4.25M VC-backed (Solana Labs + Coinbase Ventures); halted after exploit; $5.8M drained from USDC and SOL vaults.
+
+**Mechanism**: Loopscale uses a RateX-based (order-book based) collateral pricing mechanism distinct from traditional AMM TWAP or Pyth/stale-oracle models. The vulnerability was in how the RateX pricing engine valued collateral positions against the order book — attackers could manipulate the system's valuation of assets by exploiting gaps between the RateX price and actual market price, enabling undercollateralized loans to be taken out and subsequently drained.
+
+**Solana-specific attack surface**: The pricing mechanism ran on-chain (or keeper-maintained) and was not verified against a canonical price feed (Pyth) with staleness/confidence guards. The order-book depth at the price point was thin enough that a moderate-size trade could shift the RateX price significantly without triggering Pyth confidence alarms.
+
+**Why distinct from A3 (Oracle Manipulation)**: A3 covers DEX TWAP manipulation or Pyth/stale-oracle attacks. A93 is specifically about non-standard lending protocol pricing models (RateX-style) where the protocol uses its own internal pricing engine that diverges from market price without on-chain sanity gates.
+
+**Code pattern to find** (collateral pricing without Pyth fallback):
+```rust
+// VULNERABLE: RateX price without Pyth cross-validation
+let collateral_price = ratex_pricing_engine.get_price(asset);
+require!(collateral_price <= max_allowed_price, ErrorCode::PriceExceeded);
+
+// SAFER: RateX price validated against Pyth with deviation threshold
+let pyth_price = read_pyth_price(ctx.accounts.pyth_price)?;
+let deviation = (collateral_price as i64 - pyth_price as i64).abs() as u64 * SCALE / pyth_price;
+require!(deviation <= MAX_DEVIATION_PPM, ErrorCode::PriceDeviationExceeded);
+```
+
+**Microstable risk**: ✅ DEFENDED — Microstable uses Pyth oracle feeds with `validate_spot_vs_twap` and staleness/confidence checks (ORACLE_STALENESS_MAX=120 slots, MINT_ORACLE_CONFIDENCE_MAX=2%, confidence penalty multiplier). Collateral is USDC/USDT/DAI/USDS only (no volatile asset pricing via non-standard mechanism). TWAP deviation enforced inline during mint/redeem.
+
+**Source**: https://cryptodamus.io/en/articles/news/loopscale-hack-unpacking-the-5-8m-solana-defi-exploit-its-lessons | https://blocknews.com/solana-defi-platform-loopscale-suffers-5-8m-exploit-here-is-what-happened/
+
+---
+
+### A94. Drift Protocol Derivative-Exchange Exploit (~$200-270M, April 1, 2026, Solana)
+**Historical**: Drift Protocol (Solana perpetual futures/derivatives DEX) suspected exploit, reported April 1, 2026 by Solana developer Mert Mumtaz. $200-270M estimated loss. One wallet `HkGz4K...` received suspicious transfers. Drift is a Solana-native perp DEX with lending/margin capabilities. **Mechanism not yet publicly confirmed** as of this daily cycle (2026-04-02 KST).
+
+**Preliminary classification (pending mechanism confirmation)**:
+- If mechanism involves **oracle manipulation**: falls under A3 reinforcement
+- If mechanism involves **isolated-margin perpetual liquidations**: falls under A69/A70 or new derivative-pattern
+- If mechanism involves **cross-margining accounting error**: falls under A10 logic bug
+
+**Risk posture**: This incident is listed here as a **watch vector** pending full mechanism disclosure. When the root cause is confirmed, this entry will be updated with specific pattern classification.
+
+**Microstable risk**: Low direct exposure (stablecoin-only, no perp/derivatives). Indirect: any major Solana DeFi exploit that causes market-wide SOL price movement could affect keeper oracle freshness or user confidence. Monitor for Pyth price anomalies following the Drift incident.
+
+**Source**: https://www.kanalcoin.com/drift-protocol-exploit-270m-wallet-hkgz4k/ | https://cryptonews.net/news/security/32640737/ | https://en.bitcoinsistemi.com/breaking-drift-protocol-reportedly-hit-by-a-200-million-hack-8211-major-development/
+
+---
+
+**Matrix state as of 2026-04-02 (daily): 105 named vectors (A1–A92 + A85/A86 reserved + A93~A94) + META-01~33 + B73~B76 = 138 total entries. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 (Drift Protocol ~$200-270M, mechanism TBD) added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST).**

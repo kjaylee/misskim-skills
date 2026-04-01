@@ -198,6 +198,14 @@
   Vector mapping: **B57 Third-Party Signing Interface Supply Chain Attack** (DNS-level variant).
   Source: https://x.com/SteakhouseFi/status/2038714374592852085
 
+- **2026-04-01 — Drift Protocol Exploit (~$200-270M, Solana)** — Solana developer Mert Mumtaz reported strong indications that Drift Protocol (Solana perpetual futures DEX) was hacked on April 1, 2026. Estimated loss $200-270M. One wallet `HkGz4K...` received suspicious transfers. Mechanism not publicly confirmed as of 2026-04-02 KST. Pending: oracle manipulation / isolated-margin liquidation / cross-margining accounting error classification.
+  Vector mapping: **A94 TBD** (pending mechanism confirmation — will map to A3/A69/A10 when disclosed).
+  Source: https://www.kanalcoin.com/drift-protocol-exploit-270m-wallet-hkgz4k/ | https://cryptonews.net/news/security/32640737/
+
+- **2026-04-01 (est.) — Loopscale (Bridgesplit) $5.8M Exploit (Solana)** — Loopscale launched April 10, 2026 as an order-book based lending platform ($4.25M VC-backed: Solana Labs + Coinbase Ventures). Exploit drained $5.8M from USDC and SOL vaults via RateX-based collateral pricing manipulation. Root cause: vulnerability in the protocol's RateX pricing engine that diverged from actual market prices without Pyth sanity gates, enabling undercollateralized loan extraction. Team halted lending; phased restoration of repayments/top-ups/loops. Second audit by Sec3 announced.
+  Vector mapping: **A93 RateX-Based Order-Book Lending Collateral Pricing Oracle Manipulation** (NEW VECTOR, 2026-04-02 daily cycle).
+  Source: https://cryptodamus.io/en/articles/news/loopscale-hack-unpacking-the-5-8m-solana-defi-exploit-its-lessons | https://blocknews.com/solana-defi-platform-loopscale-suffers-5-8m-exploit-here-is-what-happened/
+
 - **2026-03-31 — Arf X Account Compromise ($0 loss)** — Huma Finance warned that partner Arf's official X account (@arf_one) was compromised. No direct protocol fund loss. Represents ongoing social media account compromise trend targeting DeFi protocol partner ecosystems.
   Vector mapping: **B53 Address/Account Poisoning** (social media variant).
   Source: https://x.com/humafinance/status/2038810915802611834
