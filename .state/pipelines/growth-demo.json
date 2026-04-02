@@ -1,0 +1,15 @@
+{
+  "job_id": "growth-demo",
+  "status": "planned",
+  "preset": "implementation",
+  "goal": "기능 구현 작업 수행",
+  "scope": "작업 범위 안에서 구현, 테스트, 검증까지 완료",
+  "tests": "관련 테스트 작성 또는 갱신, 실행 결과 기록",
+  "done": "코드 변경과 검증 증거가 함께 남는다",
+  "artifacts": "specs/growth-demo/plan.md, specs/growth-demo/spawn.md, .state/pipelines/growth-demo.json",
+  "forbidden": "테스트 없는 완료 보고 금지, 범위 밖 리팩터 금지",
+  "state_summary": "초기 생성",
+  "spec_path": "specs/growth-demo/plan.md",
+  "spawn_path": "specs/growth-demo/spawn.md",
+  "created_at": "2026-04-02T02:03:11.940259+00:00"
+}
