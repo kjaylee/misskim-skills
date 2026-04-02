@@ -34,11 +34,13 @@ class ObserverScanTests(unittest.TestCase):
         self,
         job_id: str,
         *,
-        track: bool,
+        track,
         priority: int,
         created_at: str,
+        preset: str = "implementation",
+        enabled: bool = True,
     ) -> Path:
-        harness = run_harness(job_id, "--preset", "implementation")
+        harness = run_harness(job_id, "--preset", preset)
         payload = json.loads(harness.stdout)
         self.addCleanup(self.cleanup_job, job_id, payload)
 
@@ -46,7 +48,11 @@ class ObserverScanTests(unittest.TestCase):
         state = json.loads(state_file.read_text(encoding="utf-8"))
         state["created_at"] = created_at
         state.setdefault("observer", {})
-        state["observer"]["track"] = track
+        state["observer"]["enabled"] = enabled
+        if track is None:
+            state["observer"].pop("track", None)
+        else:
+            state["observer"]["track"] = track
         state["observer"]["priority"] = priority
         state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return state_file
@@ -81,20 +87,52 @@ class ObserverScanTests(unittest.TestCase):
         eligible_job_ids = {item["job_id"] for item in payload["results"] if item.get("should_nudge")}
         self.assertNotIn("observer-scan-demo", eligible_job_ids)
 
-    def test_scan_requires_observer_track_true(self):
+    def test_scan_recovers_legacy_real_work_with_track_false(self):
         self.make_job(
-            "observer-real-untracked",
+            "observer-real-legacy-false",
             track=False,
             priority=900,
             created_at="2026-04-01T00:00:00+00:00",
         )
 
         payload = json.loads(run_scan("--seed", "1").stdout)
-        result = self.find_result(payload, "observer-real-untracked")
+        result = self.find_result(payload, "observer-real-legacy-false")
+
+        self.assertTrue(result["should_nudge"])
+        self.assertTrue(result["observer_track"])
+        self.assertEqual(result["observer_track_source"], "legacy preset 자동 추적")
+
+    def test_scan_recovers_legacy_real_work_with_missing_track(self):
+        self.make_job(
+            "observer-real-legacy-missing",
+            track=None,
+            priority=850,
+            created_at="2026-04-01T00:00:00+00:00",
+        )
+
+        payload = json.loads(run_scan("--seed", "1").stdout)
+        result = self.find_result(payload, "observer-real-legacy-missing")
+
+        self.assertTrue(result["should_nudge"])
+        self.assertTrue(result["observer_track"])
+        self.assertEqual(result["observer_track_source"], "legacy preset 자동 추적")
+
+    def test_scan_respects_explicit_disable(self):
+        self.make_job(
+            "observer-real-disabled",
+            track=False,
+            priority=900,
+            created_at="2026-04-01T00:00:00+00:00",
+            enabled=False,
+        )
+
+        payload = json.loads(run_scan("--seed", "1").stdout)
+        result = self.find_result(payload, "observer-real-disabled")
 
         self.assertFalse(result["should_nudge"])
-        self.assertEqual(result["reason"], "observer.track 꺼짐")
         self.assertFalse(result["observer_track"])
+        self.assertEqual(result["reason"], "observer 비활성화")
+        self.assertEqual(result["observer_track_source"], "observer 비활성화")
 
     def test_scan_prioritizes_priority_before_age(self):
         self.make_job(

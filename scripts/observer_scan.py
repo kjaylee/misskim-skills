@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PIPELINES = ROOT / ".state" / "pipelines"
 WAITING = {"planned", "proposal_pending", "waiting_reply"}
 EXCLUDED_TOKENS = {"demo", "test", "sample", "데모", "테스트", "샘플"}
+AUTO_TRACK_PRESETS = {"research", "implementation", "refactor", "deploy"}
 
 
 def parse_iso(value: Optional[str]) -> Optional[datetime]:
@@ -29,6 +30,10 @@ def age_minutes(ts: Optional[datetime]) -> Optional[int]:
     now = datetime.now(timezone.utc)
     delta = now - ts.astimezone(timezone.utc)
     return max(0, int(delta.total_seconds() // 60))
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def infer_minutes_since_reply(payload: Dict[str, Any], state_path: Path) -> int:
@@ -93,6 +98,37 @@ def is_demo_test_sample(payload: Dict[str, Any], state_path: Path) -> bool:
     return False
 
 
+def is_auto_track_preset(payload: Dict[str, Any]) -> bool:
+    return str(payload.get("preset") or "").strip().lower() in AUTO_TRACK_PRESETS
+
+
+def save_payload(state_file: Path, payload: Dict[str, Any]) -> None:
+    state_file.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def resolve_observer_track(payload: Dict[str, Any], state_file: Path, apply: bool) -> tuple[bool, str]:
+    observer = payload.setdefault("observer", {})
+    enabled = parse_bool(observer.get("enabled"), default=True)
+    if not enabled:
+        return False, "observer 비활성화"
+
+    raw_track = observer.get("track")
+    if parse_bool(raw_track, default=False):
+        return True, "observer.track"
+
+    if is_auto_track_preset(payload):
+        if apply:
+            observer["track"] = True
+            observer["track_migrated_at"] = now_iso()
+            observer["track_migration_reason"] = "legacy preset 자동 추적"
+            save_payload(state_file, payload)
+        return True, "legacy preset 자동 추적"
+
+    if raw_track is None:
+        return False, "observer.track 없음"
+    return False, "observer.track 꺼짐"
+
+
 def build_skip_result(
     payload: Dict[str, Any],
     state_file: Path,
@@ -100,6 +136,7 @@ def build_skip_result(
     minutes_since_reply: int,
     priority: int,
     track: bool,
+    track_source: str,
     reason: str,
 ) -> Dict[str, Any]:
     return {
@@ -112,6 +149,7 @@ def build_skip_result(
         "status": status,
         "priority": priority,
         "observer_track": track,
+        "observer_track_source": track_source,
     }
 
 
@@ -126,7 +164,6 @@ def scan(apply: bool, seed: Optional[int]) -> Dict[str, Any]:
             continue
 
         observer = payload.get("observer", {})
-        track = parse_bool(observer.get("track"), default=False)
         priority = parse_int(observer.get("priority"), default=0)
         minutes = infer_minutes_since_reply(payload, state_file)
 
@@ -138,12 +175,14 @@ def scan(apply: bool, seed: Optional[int]) -> Dict[str, Any]:
                     status=status,
                     minutes_since_reply=minutes,
                     priority=priority,
-                    track=track,
+                    track=False,
+                    track_source="excluded",
                     reason="데모/테스트/샘플 제외",
                 )
             )
             continue
 
+        track, track_source = resolve_observer_track(payload, state_file, apply)
         if not track:
             results.append(
                 build_skip_result(
@@ -153,7 +192,8 @@ def scan(apply: bool, seed: Optional[int]) -> Dict[str, Any]:
                     minutes_since_reply=minutes,
                     priority=priority,
                     track=track,
-                    reason="observer.track 꺼짐",
+                    track_source=track_source,
+                    reason=track_source,
                 )
             )
             continue
@@ -168,6 +208,7 @@ def scan(apply: bool, seed: Optional[int]) -> Dict[str, Any]:
         result["status"] = status
         result["priority"] = priority
         result["observer_track"] = track
+        result["observer_track_source"] = track_source
         results.append(result)
 
     eligible = [r for r in results if r.get("should_nudge")]

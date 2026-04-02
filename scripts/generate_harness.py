@@ -17,7 +17,7 @@ def load_template(name: str) -> str:
     return (TEMPLATES / name).read_text(encoding="utf-8")
 
 
-def load_presets() -> Dict[str, Dict[str, str]]:
+def load_presets() -> Dict[str, Dict[str, object]]:
     if not PRESETS_PATH.exists():
         return {}
     return json.loads(PRESETS_PATH.read_text(encoding="utf-8"))
@@ -146,6 +146,9 @@ def main() -> None:
     spawn_ready_path.write_text(spawn_ready_md + "\n", encoding="utf-8")
 
     observer_defaults = load_observer_defaults()
+    preset_observer = load_presets().get(values["preset"], {})
+    observer_track = bool(preset_observer.get("observer_track", observer_defaults.get("track", False)))
+    observer_priority = int(preset_observer.get("observer_priority", observer_defaults.get("priority", 0)))
 
     payload = {
         "job_id": job_id,
@@ -173,8 +176,8 @@ def main() -> None:
             "interval_minutes": int(observer_defaults.get("interval_minutes", 5)),
             "model": str(observer_defaults.get("model", "minimax-portal/MiniMax-M2.7")),
             "reason": str(observer_defaults.get("reason", "오 분 관찰자 모델은 minimax 사용")),
-            "track": bool(observer_defaults.get("track", False)),
-            "priority": int(observer_defaults.get("priority", 0)),
+            "track": observer_track,
+            "priority": observer_priority,
         },
         "nudge": {
             "proposal_pending": True,

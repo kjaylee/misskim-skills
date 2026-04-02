@@ -1,4 +1,5 @@
 import json
+import shutil
 import subprocess
 import unittest
 from pathlib import Path
@@ -29,6 +30,14 @@ def run_harness(*args: str):
 
 
 class EqualRankNudgeBotTests(unittest.TestCase):
+    def cleanup_job(self, job_id: str, payload: dict) -> None:
+        state_path = ROOT / payload["state"]
+        if state_path.exists():
+            state_path.unlink()
+        spec_dir = ROOT / "specs" / job_id
+        if spec_dir.exists():
+            shutil.rmtree(spec_dir)
+
     def test_nudges_after_five_minutes(self):
         result = run_nudge(
             "--proposal-pending",
@@ -70,9 +79,11 @@ class EqualRankNudgeBotTests(unittest.TestCase):
         self.assertEqual(payload["reason"], "파괴적 삭제 위험")
 
     def test_state_file_integration(self):
-        job_id = "state-linked-nudge"
+        job_id = "test-state-linked-nudge"
         harness = run_harness(job_id, "--preset", "implementation")
-        state_file = ROOT / json.loads(harness.stdout)["state"]
+        harness_payload = json.loads(harness.stdout)
+        self.addCleanup(self.cleanup_job, job_id, harness_payload)
+        state_file = ROOT / harness_payload["state"]
 
         result = run_nudge(
             "--state-file", str(state_file),

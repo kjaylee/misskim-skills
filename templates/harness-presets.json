@@ -5,7 +5,9 @@
     "tests": "근거 표 존재, 최소 두 개 이상 독립 출처, 시나리오 분석 포함 여부 확인",
     "done": "근거와 결론과 실행 요약이 모두 문서화된다",
     "artifacts": "specs/{{job_id}}/plan.md, specs/{{job_id}}/spawn.md, specs/{{job_id}}/spawn-ready.md, .state/pipelines/{{job_id}}.json, specs/{{job_id}}/results.md",
-    "forbidden": "출처 없는 주장 금지, 범위 밖 결론 확대 금지"
+    "forbidden": "출처 없는 주장 금지, 범위 밖 결론 확대 금지",
+    "observer_track": true,
+    "observer_priority": 0
   },
   "implementation": {
     "goal": "기능 구현 작업 수행",
@@ -13,7 +15,9 @@
     "tests": "관련 테스트 작성 또는 갱신, 실행 결과 기록",
     "done": "코드 변경과 검증 증거가 함께 남는다",
     "artifacts": "specs/{{job_id}}/plan.md, specs/{{job_id}}/spawn.md, specs/{{job_id}}/spawn-ready.md, .state/pipelines/{{job_id}}.json",
-    "forbidden": "테스트 없는 완료 보고 금지, 범위 밖 리팩터 금지"
+    "forbidden": "테스트 없는 완료 보고 금지, 범위 밖 리팩터 금지",
+    "observer_track": true,
+    "observer_priority": 0
   },
   "refactor": {
     "goal": "리팩터 작업 수행",
@@ -21,7 +25,9 @@
     "tests": "기존 동작 보존 테스트 통과 여부 확인",
     "done": "동작 보존과 구조 개선이 함께 검증된다",
     "artifacts": "specs/{{job_id}}/plan.md, specs/{{job_id}}/spawn.md, specs/{{job_id}}/spawn-ready.md, .state/pipelines/{{job_id}}.json",
-    "forbidden": "동작 변경을 몰래 섞지 말 것, 테스트 누락 금지"
+    "forbidden": "동작 변경을 몰래 섞지 말 것, 테스트 누락 금지",
+    "observer_track": true,
+    "observer_priority": 0
   },
   "deploy": {
     "goal": "배포 작업 수행",
@@ -29,6 +35,8 @@
     "tests": "배포 전 체크리스트와 배포 후 헬스 확인",
     "done": "배포 결과와 검증 로그가 기록된다",
     "artifacts": "specs/{{job_id}}/plan.md, specs/{{job_id}}/spawn.md, specs/{{job_id}}/spawn-ready.md, .state/pipelines/{{job_id}}.json, specs/{{job_id}}/verify.md",
-    "forbidden": "검증 없는 배포 완료 보고 금지, 파괴적 변경 은폐 금지"
+    "forbidden": "검증 없는 배포 완료 보고 금지, 파괴적 변경 은폐 금지",
+    "observer_track": true,
+    "observer_priority": 0
   }
 }
