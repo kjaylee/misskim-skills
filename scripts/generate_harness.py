@@ -131,7 +131,7 @@ def main() -> None:
 
     payload = {
         "job_id": job_id,
-        "status": "planned",
+        "status": "proposal_pending",
         "preset": values["preset"],
         "goal": values["goal"],
         "scope": values["scope"],

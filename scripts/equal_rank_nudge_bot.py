@@ -77,8 +77,10 @@ def evaluate_state_file(
 ):
     payload = json.loads(state_file.read_text(encoding="utf-8"))
     nudge = payload.get("nudge", {})
+    status = payload.get("status", "proposal_pending")
+    proposal_pending = bool(nudge.get("proposal_pending", status in {"planned", "proposal_pending", "waiting_reply"}))
     result = decide(
-        proposal_pending=bool(nudge.get("proposal_pending", False)),
+        proposal_pending=proposal_pending,
         minutes_since_reply=minutes_since_reply,
         cooldown_minutes=int(nudge.get("cooldown_minutes", 30)),
         last_nudge_minutes_ago=nudge.get("last_nudge_minutes_ago"),
