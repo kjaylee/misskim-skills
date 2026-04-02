@@ -1,0 +1,182 @@
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { evaluateStateFile, parseBoolean, parseNumber } from "./_observer_tooling";
+
+type StatePayload = Record<string, unknown>;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..");
+const PIPELINES = path.join(ROOT, ".state", "pipelines");
+const WAITING = new Set(["planned", "proposal_pending", "waiting_reply"]);
+const EXCLUDED_TOKENS = new Set(["demo", "test", "sample", "데모", "테스트", "샘플"]);
+
+function parseIso(value: unknown): Date | null {
+  if (typeof value !== "string") return null;
+  try {
+    const date = new Date(value.replace("Z", "+00:00"));
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+  } catch {
+    return null;
+  }
+}
+
+function ageMinutes(ts: Date | null): number | null {
+  if (!ts) return null;
+  const now = new Date();
+  return Math.max(0, Math.floor((now.getTime() - ts.getTime()) / 60000));
+}
+
+function inferMinutesSinceReply(payload: StatePayload, statePath: string): number {
+  const nudge = (payload.nudge as Record<string, unknown>) ?? {};
+  const candidates: Array<unknown> = [
+    nudge.last_user_reply_at,
+    payload.updated_at,
+    payload.created_at,
+  ];
+  for (const candidate of candidates) {
+    const parsed = parseIso(candidate);
+    const mins = ageMinutes(parsed);
+    if (mins !== null) {
+      return mins;
+    }
+  }
+
+  const fallback = statSync(statePath).mtime;
+  return ageMinutes(fallback) ?? 0;
+}
+
+function tokenize(value: unknown): string[] {
+  if (value == null) return [];
+  const text = String(value).toLowerCase();
+  return text.split(/[^0-9a-z가-힣]+/g).filter(Boolean);
+}
+
+function isDemoTestSample(payload: StatePayload, statePath: string): boolean {
+  const candidates = [
+    payload.job_id,
+    path.basename(statePath, ".json"),
+    payload.spec_path,
+    payload.spawn_path,
+    payload.spawn_ready_path,
+    payload.artifacts,
+  ];
+  for (const candidate of candidates) {
+    const tokens = tokenize(candidate);
+    if (tokens.some((token) => EXCLUDED_TOKENS.has(token))) return true;
+  }
+  return false;
+}
+
+function buildSkipResult(
+  payload: StatePayload,
+  stateFile: string,
+  status: string,
+  minutesSinceReply: number,
+  priority: number,
+  track: boolean,
+  reason: string,
+) {
+  return {
+    job_id: payload.job_id,
+    state_file: stateFile,
+    should_nudge: false,
+    reason,
+    message: null,
+    minutes_since_reply: minutesSinceReply,
+    status,
+    priority,
+    observer_track: track,
+  };
+}
+
+export function scan(apply: boolean, seed?: number) {
+  if (!existsSync(PIPELINES)) {
+    mkdirSync(PIPELINES, { recursive: true });
+  }
+
+  const files = readdirSync(PIPELINES)
+    .filter((name) => name.endsWith(".json"))
+    .sort();
+
+  const results: Array<Record<string, unknown>> = [];
+
+  for (const fileName of files) {
+    const statePath = path.join(PIPELINES, fileName);
+    const payload = JSON.parse(readFileSync(statePath, "utf8")) as StatePayload;
+    const status = typeof payload.status === "string" ? payload.status : "planned";
+
+    if (!WAITING.has(status)) continue;
+
+    const observer = (payload.observer as Record<string, unknown>) ?? {};
+    const track = parseBoolean(observer.track, false);
+    const priority = parseNumber(observer.priority, 0);
+    const minutes = inferMinutesSinceReply(payload, statePath);
+
+    if (isDemoTestSample(payload, statePath)) {
+      results.push(
+        buildSkipResult(payload, statePath, status, minutes, priority, track, "데모/테스트/샘플 제외"),
+      );
+      continue;
+    }
+
+    if (!track) {
+      results.push(
+        buildSkipResult(payload, statePath, status, minutes, priority, track, "observer.track 꺼짐"),
+      );
+      continue;
+    }
+
+    const result = evaluateStateFile(statePath, minutes, seed, apply);
+    results.push({
+      ...result,
+      minutes_since_reply: minutes,
+      status,
+      priority,
+      observer_track: track,
+    });
+  }
+
+  const eligible = results
+    .filter((item) => item.should_nudge)
+    .sort((left, right) => {
+      const leftPriority = parseNumber(left.priority, 0);
+      const rightPriority = parseNumber(right.priority, 0);
+      if (leftPriority !== rightPriority) return rightPriority - leftPriority;
+      const leftMinutes = parseNumber(left.minutes_since_reply, 0);
+      const rightMinutes = parseNumber(right.minutes_since_reply, 0);
+      if (leftMinutes !== rightMinutes) return rightMinutes - leftMinutes;
+      return String(left.job_id ?? "").localeCompare(String(right.job_id ?? ""));
+    });
+
+  return {
+    checked: results.length,
+    eligible: eligible.length,
+    top: eligible[0] ?? null,
+    results,
+  };
+}
+
+function parseArgs(argv: string[]): { apply: boolean; seed?: number } {
+  const toFind = (key: string): string | undefined => {
+    const idx = argv.indexOf(`--${key}`);
+    if (idx === -1 || idx + 1 >= argv.length) return undefined;
+    return argv[idx + 1];
+  };
+  const has = (key: string): boolean => argv.includes(`--${key}`);
+  return {
+    apply: has("apply"),
+    seed: toFind("seed") ? Number(toFind("seed")) : undefined,
+  };
+}
+
+function main(): void {
+  const args = parseArgs(process.argv.slice(2));
+  const result = scan(args.apply, args.seed);
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+}
+
+if (import.meta.main) {
+  main();
+}

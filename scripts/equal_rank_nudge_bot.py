@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# DEPRECATED: Python implementation is preserved for compatibility.
+# Use scripts/equal_rank_nudge_bot.ts for active execution.
 import argparse
 import json
 import random

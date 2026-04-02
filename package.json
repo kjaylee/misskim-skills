@@ -1,0 +1,14 @@
+{
+  "name": "misskim-skills",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate-harness": "bun run scripts/generate_harness.ts",
+    "equal-rank-nudge": "bun run scripts/equal_rank_nudge_bot.ts",
+    "harness-tick": "bun run scripts/harness_tick.ts",
+    "observer-scan": "bun run scripts/observer_scan.ts",
+    "observer-react": "bun run scripts/observer_react.ts",
+    "test": "bun test",
+    "test:observer": "bun test tests/*.test.ts"
+  }
+}

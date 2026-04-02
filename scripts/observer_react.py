@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# DEPRECATED: Python implementation is preserved for compatibility.
+# Use scripts/observer_react.ts for active execution.
 import argparse
 import json
 from datetime import datetime, timezone
