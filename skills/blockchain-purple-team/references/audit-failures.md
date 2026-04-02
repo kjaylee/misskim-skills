@@ -65,6 +65,16 @@
 **Historical**: Smart Contract Fuzzer Showdown (2026-03-20, dev.to/ohmygod): 8 invariant-breaking challenges based on real DeFi hacks. Precision Loss: Foundry ❌ (500K+ timeout), Echidna ❌ (500K+), Medusa ❌, Trident N/A. Foundry also missed Oracle Manipulation (10M+ timeout) and Flash Loan Governance (10M+).
 **Detection**: For any protocol with integer division in share/amount conversions: (a) explicitly test with high-operation-count sequences (deposit/redeem × 100+), (b) derive closed-form bound for N-operation precision error and assert it in a committed invariant test, (c) do NOT accept "fuzzers passed" as precision loss coverage — note this specific gap in close-out reports.
 
+## AF-14: Approval-Execution Intent Drift
+**Pattern**: Audit verifies that signatures are valid and quorum is met, but does not verify that signer intent remains equivalent from approval time to execution time. Durable nonce, off-band partial signatures, batched approvals, and delayed broadcast create a gap where perfectly valid signatures can authorize materially different real-world outcomes than signers believed.
+**Historical**: Drift Protocol (2026-04-02 reporting): durable nonce accounts enabled pre-signed privileged transactions to remain valid long after approval, turning a multisig workflow into an admin-takeover path without requiring raw key theft.
+**Detection**: For every privileged workflow ask: (a) can the transaction be pre-signed, partially signed, or stored for later broadcast, (b) is there an approval TTL, revoke path, or nonce invalidation flow, (c) do signers review a human-readable intent digest rather than opaque bytes, (d) does any authority transfer or limit lift require second-stage confirmation or timelock.
+
+## AF-15: Framework Security-Default Drift
+**Pattern**: Audit treats framework behavior as a stable trusted substrate and does not revisit protocol risk when the upstream framework later hardens default semantics. Security-relevant release-note items are misread as developer-experience improvements instead of evidence that older defaults were unsafe.
+**Historical**: Anchor `v1.0.0` (2026-04-02) added owner checks on `reload()` and disallowed duplicate mutable accounts by default. This implies older Anchor-pinned protocols may keep latent exposure even when their app code is unchanged and previously audited.
+**Detection**: Maintain an upstream security-delta review for every pinned framework/toolchain. If a release adds new default guards, ask: (a) which older code paths relied on the old behavior, (b) what compensating assertions exist today, (c) does the audit attestation explicitly cover the pinned framework version and its known semantic gaps, (d) is there a version SBOM linking on-chain program, keeper client, and deployment tooling.
+
 ## Meta-Insight
 The common thread: **auditors optimize for known patterns and explicit scope.**
 Purple Team optimizes for: **unknown patterns, implicit assumptions, and scope gaps.**

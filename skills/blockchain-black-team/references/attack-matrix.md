@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02) | META-01~35
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03) | META-01~37
 
 ## A. Smart Contract Vectors
 
@@ -977,6 +977,9 @@ location /rpc {
 | B44 SPL Token Account Persistent Delegate Drain | 계정 소유권(owner)과 위임 권한(delegate)의 분리를 감사가 "정상 Solana 토큰 모델"로 취급하여 dApp 사용 후 delegate 잔존을 별도 공격 벡터로 분류하지 않음. 프로토콜 감사는 vault ATA 보안에 집중하고, 사용자 측 ATA delegate가 프로토콜 mint 흐름을 통해 세탁 경로로 악용될 수 있음을 수신 측에서 거부해야 한다는 점을 놓침 (Ledger/Canissolana 2026-03-02). |
 | A83 libcrux-ml-dsa Signature Verification Faults (RustSec 2026-0076) | A83은 `libcrux` 서명 경계의 malformed 입력에 대한 실패 동작/오류 코드 동작이 핵심인데, 감사가 API 성공경로 테스트에 집중해 크립토 라이브러리 내부 경계와 panic/fault 시의 fail-open/Fail-hard 동작을 누락할 수 있음. |
 | A84 libcrux-sha3 Incremental SHAKE Edge-Case (RustSec 2026-0074) | A84는 바이트 바운더리 상태 머신 결함으로, off-chain 프로세스(keeper/RPC/bridge adaptor)가 같은 크립토 스택을 공유할 경우 운영 경로에서 드문 입력으로 비정상 상태를 만드는 취약점으로 이어짐. 경제적/상태 기계 검토가 없는 감사가 놓치기 쉬움. |
+| B77 Durable Nonce Approval Laundering / Pre-Signed Multisig Admin Takeover | 멀티시그 정족수 충족과 서명 유효성만 확인하면 안전하다고 보고, 승인 시점과 실행 시점 사이의 의도 보존 여부, nonce 무효화 절차, 서명자에게 보이는 인간 가독형 변경 요약을 테스트하지 않음. 결과적으로 "정상 서명"이 "지연 실행된 권한 탈취"로 전환될 수 있음. |
+| A95 Anchor Reload Owner-Drift Bypass | `.reload()` 호출을 안전한 복구 동작으로 가정해 프레임워크 버전별 owner 재검증 의미 차이를 대조하지 않음. CPI 이후 fresh bytes를 다시 읽는 순간의 신뢰 경계가 앱 코드가 아니라 프레임워크 구현에 있다는 점을 놓침. |
+| A96 Duplicate Mutable Account Aliasing | signer, owner, PDA seed 검증이 모두 통과하면 안전하다고 판단해 "두 mutable 역할이 반드시 다른 키여야 한다"는 독립성 불변량을 명시적으로 테스트하지 않음. nested 계정과 `remaining_accounts` 경로는 프레임워크가 막아줄 것이라 가정하기 쉬움. |
 
 
 ### A44. Utility-Impersonating Env-Stealer Crate
@@ -5679,4 +5682,78 @@ require_keys_neq!(
 
 ---
 
-**Matrix state as of 2026-04-03 (daily update): 107 named vectors (A1–A92 + A85/A86 reserved + A93~A96) + META-01~35 + B73~B77 = 143 total entries. Two new Solana/Anchor vectors were added in the 2026-04-03 03:30 KST sweep: A95 reload owner-drift bypass and A96 duplicate mutable account aliasing. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added earlier in the same daily cycle, and A94 was upgraded from watch-only to mechanism-confirmed and linked to B77. D26 was reinforced with Trust Wallet's Discord vanity-link hijack / phishing-server redirect pattern. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 were added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST). META-34~35 added by Purple Team (2026-04-02 04:00 KST).**
+### META-36. Approval-Execution Intent Drift (AEID) — Valid Signatures, Broken Human Intent
+
+**Published**: 2026-04-02 | **Severity**: HIGH (methodological) | **Purple Team**
+
+**Signal**: Drift's April 2 disclosures moved the incident from "smart-contract bug 미확인" 상태에서 **durable nonce + pre-signed privileged transaction + multisig approval abuse** 로 재분류했다. 핵심은 서명 자체가 위조되지 않았다는 점이다. 문제는 **서명 시점의 인간 의도와 실행 시점의 실제 결과가 분리**되었다는 것이다.
+
+**The Pattern**:
+- 감사는 대개 "정족수가 맞는가, 서명이 유효한가"를 본다.
+- 하지만 privileged workflow 에서 더 중요한 질문은 "서명자가 본 요약과 실제 실행 결과가 동일한가"이다.
+- durable nonce, 오프밴드 부분 서명, 사전 승인 배치, shared artifact 보관은 모두 이 간극을 키운다.
+- 결과적으로 **cryptographically valid** 한 승인이라도 **operationally fraudulent** 한 실행이 된다.
+
+**Why This Is a Distinct Meta-Pattern**:
+- **B77** 은 Solana durable nonce 를 이용한 구체 기법이다.
+- **META-36** 은 그 위의 메타 실패다. 즉, 감사와 운영이 **서명 유효성** 을 **의도 보존** 과 동일시하는 구조적 오류.
+- 같은 패턴은 향후 EVM Safe batch, off-chain sign queue, cross-chain council approvals, AI-assisted signing UI 에도 재발할 수 있다.
+
+**Why Audits Miss This**:
+1. 멀티시그 감사가 byte-level authorization 을 확인하면 충분하다고 보고, signer UX 와 review context 를 범위 밖으로 둔다.
+2. transaction preview 가 인간 가독형 diff 를 제공하지 않아도 "지갑이 띄웠으니 검토됐다"고 간주한다.
+3. nonce rotation, approval TTL, revoke path 가 보안 매개변수로 취급되지 않는다.
+4. incident response playbook 은 pause/unpause 를 문서화하지만, **pre-signed privileged intent kill-switch** 는 거의 문서화하지 않는다.
+
+**Microstable Relevance**: 현재 직접 노출은 LOW. 현재 reviewed keeper flow 는 fresh recent blockhash 기반이고 durable nonce workflow 가 확인되지 않았다. 다만 향후 governance timelock, emergency council, treasury multisig, AI-assisted admin signing 이 도입되면 즉시 HIGH 로 상승한다.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. privileged transaction 은 durable nonce 금지 기본, 예외는 emergency-only 로 제한
+2. 서명 전 human-readable intent digest 강제: 변경 권한, 대상 계정, 상한 변경, nonce account, effective TTL
+3. pre-signed privileged tx 는 저장 금지, 공유 금지, TTL 초과 시 자동 폐기
+4. authority transfer / limit lift / treasury move 는 on-chain second-stage confirmation 또는 timelock 필요
+5. 감사 RFP 에 "approval-time vs execution-time equivalence" 점검 항목을 명시
+
+**Source**: CoinDesk Drift coverage (2026-04-02) | The Block Drift reporting (2026-04-02)
+
+---
+
+### META-37. Framework Security-Default Drift (FSDD) — Release Notes Are Threat Intelligence
+
+**Published**: 2026-04-02 | **Severity**: MEDIUM (methodological) | **Purple Team**
+
+**Signal**: Anchor `v1.0.0` stable release 와 PR #3837 / #3946 는 두 가지를 보여줬다.
+1. `reload()` 경로에 owner check 를 추가해야 했다.
+2. duplicate mutable accounts 를 기본 거부해야 했다.
+
+이 둘은 단순한 개발 편의 개선이 아니다. **기존 기본값이 잠재적으로 위험했다는 업스트림의 공개 고백** 이다.
+
+**The Pattern**:
+- 앱 코드는 변하지 않았는데, 프레임워크 기본값이 강화되면서 갑자기 새로운 취약점 클래스가 드러난다.
+- 감사는 보통 repo snapshot 만 본다. 그래서 upstream framework changelog 를 "참고사항" 으로 보고, 기존 감사 결론을 다시 열지 않는다.
+- 그 결과, 오래된 프레임워크에 pin 된 프로젝트는 **감사 통과 상태로 latent risk 를 장기 보유**한다.
+
+**Why This Is a Distinct Meta-Pattern**:
+- **A95** 는 reload owner-drift bypass 라는 구체 벡터다.
+- **A96** 은 duplicate mutable aliasing 이라는 구체 벡터다.
+- **META-37** 은 왜 이 벡터들이 대규모로 놓치는지 설명한다. 즉, 감사가 프레임워크 릴리스 노트를 **새 취약점 인텔** 로 다루지 않고, "버전 업그레이드 이슈" 로 축소한다는 구조적 실패다.
+
+**Why Audits Miss This**:
+1. 프레임워크를 trusted substrate 로 보고, 보안 의미가 있는 default change 를 DX 개선으로 오해한다.
+2. 감사 보고서는 애플리케이션 커밋 기준으로 닫히고, upstream security delta 를 추적하지 않는다.
+3. 테스트가 모두 통과하면 old semantics 도 안전하다고 오판한다.
+4. nested accounts, optional fields, `remaining_accounts`, post-CPI reload 같은 framework edge 는 앱 테스트만으로 잘 드러나지 않는다.
+
+**Microstable Relevance**: MEDIUM latent. 현재 직접 exploit path 는 확인되지 않았지만, 구버전 Anchor pin 상태에서 future feature 가 추가되면 A95/A96 류 리스크가 재활성화될 수 있다. 즉시 패치가 아니라도, **framework delta review gate** 와 compensating assertions 는 필요하다.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. 감사 종료 조건에 "upstream framework security delta reviewed" 항목 추가
+2. `Anchor.toml` / lockfile / on-chain deploy toolchain 의 version SBOM 유지
+3. hardening release 전까지 manual owner assertion, `require_keys_neq!`, `remaining_accounts` guard 를 명시적 보완책으로 유지
+4. 릴리스 노트에서 보안 기본값 변화가 보이면 해당 앱 감사 결과를 재평가
+
+**Source**: Anchor `v1.0.0` release (2026-04-02) | https://github.com/solana-foundation/anchor/pull/3837 | https://github.com/solana-foundation/anchor/pull/3946
+
+---
+
+**Matrix state as of 2026-04-03 (daily update): 107 named vectors (A1–A92 + A85/A86 reserved + A93~A96) + META-01~37 + B73~B77 = 145 total entries. Two new Solana/Anchor vectors were added in the 2026-04-03 03:30 KST sweep: A95 reload owner-drift bypass and A96 duplicate mutable account aliasing. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added earlier in the same daily cycle, and A94 was upgraded from watch-only to mechanism-confirmed and linked to B77. D26 was reinforced with Trust Wallet's Discord vanity-link hijack / phishing-server redirect pattern. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 were added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST). META-34~35 added by Purple Team (2026-04-02 04:00 KST). META-36~37 added by Purple Team (2026-04-03 04:00 KST).**
