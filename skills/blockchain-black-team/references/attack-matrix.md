@@ -5552,20 +5552,131 @@ require!(deviation <= MAX_DEVIATION_PPM, ErrorCode::PriceDeviationExceeded);
 
 ---
 
-### A94. Drift Protocol Derivative-Exchange Exploit (~$200-270M, April 1, 2026, Solana)
-**Historical**: Drift Protocol (Solana perpetual futures/derivatives DEX) suspected exploit, reported April 1, 2026 by Solana developer Mert Mumtaz. $200-270M estimated loss. One wallet `HkGz4K...` received suspicious transfers. Drift is a Solana-native perp DEX with lending/margin capabilities. **Mechanism not yet publicly confirmed** as of this daily cycle (2026-04-02 KST).
+### A94. Drift Protocol Durable-Nonce Admin Takeover (~$280-285M, April 1-2, 2026, Solana)
+**Historical**: Drift Protocol (Solana perpetual futures/derivatives DEX) disclosed on April 2, 2026 that the ~$280-285M incident was **not** a smart-contract arithmetic/oracle bug. Public reporting and Drift's own statement indicate a durable-nonce-based administrative takeover of the Security Council workflow.
 
-**Preliminary classification (pending mechanism confirmation)**:
-- If mechanism involves **oracle manipulation**: falls under A3 reinforcement
-- If mechanism involves **isolated-margin perpetual liquidations**: falls under A69/A70 or new derivative-pattern
-- If mechanism involves **cross-margining accounting error**: falls under A10 logic bug
+**Confirmed mechanism**:
+1. Four durable nonce accounts were reportedly prepared on March 23.
+2. The attacker obtained or misrepresented enough Security Council approvals under Drift's `2-of-5` multisig process.
+3. Because durable nonce transactions stay valid far beyond a normal recent-blockhash lifetime, the attacker could collect approvals in advance and execute later at a chosen time.
+4. Two pre-signed durable-nonce transactions transferred administrative control / protocol-level permissions.
+5. With admin control, the attacker changed key parameters and drained borrow/lend, vault, and trading-deposit funds.
 
-**Risk posture**: This incident is listed here as a **watch vector** pending full mechanism disclosure. When the root cause is confirmed, this entry will be updated with specific pattern classification.
+**Classification**: This is now classified as a **privileged workflow / signing-process exploit**, not a pure on-chain logic bug. The generalized pattern is logged below as **B77**.
 
-**Microstable risk**: Low direct exposure (stablecoin-only, no perp/derivatives). Indirect: any major Solana DeFi exploit that causes market-wide SOL price movement could affect keeper oracle freshness or user confidence. Monitor for Pyth price anomalies following the Drift incident.
+**Microstable risk**: Low direct exposure **today** — current keeper transaction flow fetches a fresh recent blockhash at send time and no durable-nonce account workflow is present in the reviewed keeper code. However, any future upgrade-authority multisig, emergency council, or off-band admin workflow that adopts durable nonce + pre-signed transaction handling inherits B77 immediately.
 
-**Source**: https://www.kanalcoin.com/drift-protocol-exploit-270m-wallet-hkgz4k/ | https://cryptonews.net/news/security/32640737/ | https://en.bitcoinsistemi.com/breaking-drift-protocol-reportedly-hit-by-a-200-million-hack-8211-major-development/
+**Source**: https://coincentral.com/solana-defi-platform-drift-protocol-breaks-silence-after-285-million-exploit/ | https://www.banklesstimes.com/articles/2026/04/02/drift-protocol-suffers-280m-exploit-after-admin-takeover/ | https://www.theblock.co/post/396183/drift-280m-exploit-zachxbt-circle
+
+### B77. Durable Nonce Approval Laundering / Pre-Signed Multisig Admin Takeover
+**Signal**: Drift Protocol post-incident disclosures and April 2, 2026 reporting.
+
+**Mechanism**: Solana durable nonce accounts decouple **signature time** from **execution time**. An attacker who can socially engineer, misrepresent, or otherwise obtain valid signatures on privileged transactions can hold those signed transactions for later broadcast instead of needing to execute immediately within the short recent-blockhash window.
+
+**Attack chain**:
+1. Attacker prepares durable nonce accounts under their control or influence.
+2. Attacker presents a transaction to privileged signers as a benign test, maintenance action, or routine approval.
+3. Signers approve a durable-nonce transaction whose consequences are opaque, misunderstood, or postponed.
+4. Attacker waits until quorum is complete and operational conditions are favorable.
+5. Attacker broadcasts the pre-signed transaction later, advancing admin state, rotating authority, lifting limits, or draining funds.
+
+**Why distinct from B36 / generic key compromise**:
+- No raw seed phrase theft is required.
+- The signatures themselves can be cryptographically valid and voluntarily produced.
+- The exploit lives in the **time separation** between review and execution, plus signer misunderstanding of durable-nonce semantics.
+
+**Code / ops pattern to find**:
+```rust
+// RISKY: privileged tx assembled against a durable nonce and partially signed off-band
+let message = Message::new_with_nonce(
+    instructions,
+    Some(&payer.pubkey()),
+    &nonce_account,
+    &nonce_authority,
+);
+let mut tx = Transaction::new_unsigned(message);
+tx.try_partial_sign(&[signer_a, signer_b], durable_nonce_hash)?;
+store_for_later_broadcast(tx); // approval time separated from execution time
+```
+
+**Defense**:
+1. Ban durable nonce usage for privileged admin / upgrade / treasury transactions unless emergency-only and explicitly approved.
+2. Require signers to review a human-readable instruction digest: affected program, authority changes, limit changes, destination accounts, and nonce account.
+3. Enforce very short approval TTLs and rotate / invalidate nonce accounts after any test flow.
+4. Add on-chain timelock or second-stage confirmation for any authority transfer or withdrawal-limit increase, so a pre-signed tx cannot take immediate effect.
+5. Never keep partially signed privileged transactions in shared chat, ticketing, or CI artifacts.
+
+**Microstable relevance**: ⚠️ **LOW current / HIGH if adopted operationally** — reviewed keeper code uses `get_latest_blockhash()` + `Transaction::new_signed_with_payer(...)` per send, so this exact pattern is not currently present. Risk activates if Microstable introduces durable-nonce-based upgrade, emergency, or treasury workflows.
+
+**Source**: https://coincentral.com/solana-defi-platform-drift-protocol-breaks-silence-after-285-million-exploit/ | https://www.banklesstimes.com/articles/2026/04/02/drift-protocol-suffers-280m-exploit-after-admin-takeover/
 
 ---
 
-**Matrix state as of 2026-04-03 (daily): 105 named vectors (A1–A92 + A85/A86 reserved + A93~A94) + META-01~35 + B73~B76 = 140 total entries. No new named vectors added in the 2026-04-03 03:00 KST sweep; D26 was reinforced with Trust Wallet's Discord vanity-link hijack / phishing-server redirect pattern. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 (Drift Protocol ~$200-270M, mechanism TBD) were added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST). META-34~35 added by Purple Team (2026-04-02 04:00 KST).**
+### A95. Anchor Reload Owner-Drift Bypass (Post-CPI Refresh Trust Collapse)
+**Historical**: Anchor `v1.0.0-rc.3` / `v1.0.0` promoted a security-relevant change: `lang: Check owner on account reload` (PR #3837, merged Mar 25 2026; released in stable Apr 2 2026).
+
+**Mechanism**: Many reviewers treat `ctx.accounts.foo.reload()?` as a universally safe post-CPI refresh. On older Anchor versions, the reload path could deserialize fresh bytes without re-checking that the account was still owned by the expected program. If an attacker can trigger a CPI/account-lifecycle transition (close, re-init, owner change for a foreign account class, or substitute a now-foreign account in a composite flow), the program may reload attacker-controlled bytes and continue under the false assumption that type/owner trust still holds.
+
+**Why distinct from A42 (Post-CPI Stale Account Cache)**: A42 is about **forgetting to reload** and therefore reading stale state. A95 is the opposite failure mode: the developer **does reload**, but the framework trust boundary is incomplete and the refreshed data is still unsafe.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE on older Anchor: reload after CPI, but no owner re-assertion
+some_cpi_that_can_mutate_or_reinitialize_accounts()?;
+ctx.accounts.user_position.reload()?;
+let debt = ctx.accounts.user_position.debt;
+
+// SAFER on old Anchor: re-assert owner/invariants before trusting reload
+some_cpi_that_can_mutate_or_reinitialize_accounts()?;
+require_keys_eq!(
+    *ctx.accounts.user_position.to_account_info().owner,
+    crate::ID,
+    ErrorCode::InvalidOwner,
+);
+ctx.accounts.user_position.reload()?;
+```
+
+**Defense**: Upgrade to Anchor `>=1.0.0`; on older versions, add manual owner assertions before trusting `reload()`, then re-check seeds/mint bindings/business invariants after the reload. Treat any post-CPI `reload()` as a separate audit checkpoint, especially if Token-2022 hooks or account-closing CPIs are involved.
+
+**Microstable risk**: INFO / LATENT — current Microstable codebase shows no `.reload()` call, so there is no direct live exploit path today. However, the program is pinned to Anchor `0.31.1`; any future post-CPI refresh logic would inherit the old semantics unless the framework is upgraded or manual owner checks are added.
+
+**Source**: Anchor `v1.0.0` changelog (`lang: Check owner on account reload`) | https://github.com/solana-foundation/anchor/pull/3837
+
+---
+
+### A96. Duplicate Mutable Account Aliasing (Including `remaining_accounts` Bypass)
+**Historical**: Anchor `v1.0.0-rc.3` / `v1.0.0` made duplicate mutable-account rejection the default (`dup` required for explicit opt-in) via PR #3946, merged Mar 25 2026 and stabilized Apr 2 2026.
+
+**Mechanism**: The same pubkey is supplied into two or more mutable account slots that the program assumes are independent (`source` vs `destination`, `user vault` vs `fee vault`, two agent ledgers, etc.). Without a duplicate-mutable guard or manual inequality checks, both logical roles can alias the same backing account. This collapses separation assumptions, enabling self-transfer accounting bypasses, fee-recipient spoofing, two-phase update collapse, or validation-bypass via nested/optional/`remaining_accounts` paths.
+
+**Why distinct from Missing Owner / Missing Signer checks**: Ownership and signer validation can all pass while the business logic still fails because the program never asserted that two mutable roles must point to different accounts.
+
+**Code pattern to find**:
+```rust
+#[derive(Accounts)]
+pub struct Rebalance<'info> {
+    #[account(mut)]
+    pub source_vault: Account<'info, Vault>,
+    #[account(mut)]
+    pub dest_vault: Account<'info, Vault>,
+}
+
+// attacker passes the same pubkey for both fields
+
+// SAFER
+require_keys_neq!(
+    ctx.accounts.source_vault.key(),
+    ctx.accounts.dest_vault.key(),
+    ErrorCode::DuplicateAccount,
+);
+```
+
+**Defense**: Upgrade to Anchor `>=1.0.0` so duplicate mutable accounts are rejected by default; use `dup` only when aliasing is deliberately intended and explicitly documented. On older Anchor versions, add `require_keys_neq!` assertions for every pair of mutable roles whose independence matters, and extend the same check to nested composite accounts and any `remaining_accounts` parser.
+
+**Microstable risk**: INFO / LATENT — Microstable still uses Anchor `0.31.1`, so it does not receive the new default guard. The current core instruction surface reduces risk because protocol-critical PDAs are seed-pinned (`protocol_state`, `circuit_breaker`, `vault_usdc/usdt/dai/usds`) and no `remaining_accounts` path was found. Generic token-account-heavy flows such as `Redeem` still depend on manual ATA/mint/authority checks, so any future multi-mut role split should add explicit key-inequality guards.
+
+**Source**: Anchor `v1.0.0` changelog (`Disallow duplicate mutable accounts by default`) | https://github.com/solana-foundation/anchor/pull/3946
+
+---
+
+**Matrix state as of 2026-04-03 (daily update): 107 named vectors (A1–A92 + A85/A86 reserved + A93~A96) + META-01~35 + B73~B77 = 143 total entries. Two new Solana/Anchor vectors were added in the 2026-04-03 03:30 KST sweep: A95 reload owner-drift bypass and A96 duplicate mutable account aliasing. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added earlier in the same daily cycle, and A94 was upgraded from watch-only to mechanism-confirmed and linked to B77. D26 was reinforced with Trust Wallet's Discord vanity-link hijack / phishing-server redirect pattern. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 were added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST). META-34~35 added by Purple Team (2026-04-02 04:00 KST).**

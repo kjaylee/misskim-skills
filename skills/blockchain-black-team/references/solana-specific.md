@@ -881,3 +881,60 @@ require!(protocol_deposits <= supply_cap, ErrorCode::SupplyCapExceeded);
 42. ☐ Token-2022 TransferHook callers: CEI ordering enforced — internal state updated BEFORE transfer CPI
 43. ☐ Supply cap enforcement: uses program-internal deposit tracker, NOT raw ATA `token_account.amount`
 44. ☐ New keypair generation utilities: verify libcrux-ed25519 >= 0.0.4 + non-zero key validation + hardware RNG
+
+---
+<!-- AUTO-ADDED 2026-04-03 (Red Team Daily Evolution) — A95~A96 Anchor 1.0 trust-boundary patterns -->
+
+## 2026-04-03 Anchor 1.0 Pattern Additions
+
+### A95 — Anchor `reload()` Owner-Drift Bypass
+- **Solana context**: Developers commonly call `.reload()` after CPI to refresh account state. Anchor's 2026 fix shows that, on older versions, `reload()` itself was not a complete trust barrier because owner validation had to be tightened.
+- **Attack idea**: A CPI path mutates, closes, or otherwise changes the trust context of an account; the caller then `reload()`s and accepts the new bytes as trusted state without re-asserting owner/business invariants.
+- **Why this matters on Solana**: CPI-heavy programs, Token-2022 hook flows, and migration paths frequently depend on post-CPI refresh. Reviewers who know A42 (missing reload) may miss the inverse pattern: reload is present, but still unsafe on older Anchor.
+- **Checklist item 45**: ☐ On Anchor `<1.0.0`, every post-CPI `.reload()` must be preceded by an explicit owner assertion and followed by invariant re-checks (seed, mint, authority, status).
+
+### A96 — Duplicate Mutable Account Aliasing
+- **Solana context**: Passing the same pubkey into two mutable roles can collapse accounting assumptions even when owner/signer checks all pass.
+- **Anchor 1.0 signal**: Default duplicate mutable-account rejection was added because this pattern was repeatedly dangerous in nested, optional, and `remaining_accounts` flows.
+- **Audit question**: For every instruction with two or more mutable roles, ask: "what breaks if these two accounts are actually the same pubkey?"
+- **Checklist item 46**: ☐ For every pair of mutable roles that must be distinct (`source/destination`, `user/fee vault`, `position_a/position_b`), add `require_keys_neq!` unless the instruction uses explicit `dup` and documents why aliasing is safe.
+
+### Solana-Specific Defense Checklist Update
+45. ☐ On Anchor `<1.0.0`, post-CPI `.reload()` requires manual owner assertion + invariant re-check
+46. ☐ Add `require_keys_neq!` for every security-relevant mutable-role pair unless aliasing is explicitly intended via `dup`
+
+---
+<!-- AUTO-ADDED 2026-04-03 (Red Team Daily Evolution) — B77 Drift durable nonce admin-takeover generalization -->
+
+## 2026-04-03 Additional Pattern Additions
+
+### B77 — Durable Nonce Approval Laundering / Pre-Signed Multisig Admin Takeover
+- **Solana context**: durable nonce accounts allow a transaction to remain executable far beyond the normal recent-blockhash lifetime. That is operationally useful, but it also means signer approval time can be separated from execution time by hours or days.
+- **Why this matters on Solana specifically**:
+  1. Multisig / council workflows often happen off-band in chat, ticket, or wallet UI approval flows.
+  2. Signers may treat a durable-nonce transaction as a temporary test or maintenance action, not a transaction that can be stockpiled for later broadcast.
+  3. Once quorum is collected, the attacker no longer needs real-time signer interaction.
+- **Observed real-world signal**: Drift Protocol (April 2, 2026) disclosed a Security Council takeover involving durable nonce accounts and pre-signed transactions.
+- **Attack shape**:
+  1. Prepare durable nonce accounts in advance.
+  2. Gather privileged signatures on opaque or misrepresented transactions.
+  3. Wait until enough signatures are accumulated.
+  4. Broadcast later to rotate authority, change limits, or unlock fund flows.
+- **Detection pattern in Solana code / ops**:
+```rust
+// RISKY: privileged tx remains valid after signer review window closes
+let message = Message::new_with_nonce(
+    instructions,
+    Some(&payer.pubkey()),
+    &nonce_account,
+    &nonce_authority,
+);
+let mut tx = Transaction::new_unsigned(message);
+tx.try_partial_sign(&[signer_a, signer_b], durable_nonce_hash)?;
+archive_or_forward(tx)?; // delayed execution risk
+```
+- **Why distinct from generic multisig compromise**: signer keys do not need to be stolen. The signed transaction itself becomes the weapon because execution is deferred.
+- **Microstable current status**: reviewed keeper code uses fresh `get_latest_blockhash()` send-time signing, not durable nonce accounts. Current path is **not active**. Risk becomes immediate if upgrade-authority or emergency-admin flows adopt durable nonce signing.
+
+### Solana-Specific Defense Checklist Update
+47. ☐ Privileged multisig / upgrade / treasury transactions must not use durable nonce accounts by default; if emergency nonce flow exists, require short TTL, explicit instruction digest review, nonce rotation, and no shared storage of partially signed transactions
