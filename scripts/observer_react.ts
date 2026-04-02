@@ -1,8 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { evaluateStateFile } from "./equal_rank_nudge_bot";
+import { buildActionPlanFromPayload, parseNumber } from "./_observer_tooling";
 import { scan } from "./observer_scan";
-import { parseNumber } from "./_observer_tooling";
 
 type ScanTop = {
   state_file: string;
@@ -10,12 +11,38 @@ type ScanTop = {
   message: string | null;
 };
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..");
+
 function nowIso(): string {
   return new Date().toISOString();
 }
 
+function readState(stateFile: string): Record<string, unknown> {
+  return JSON.parse(readFileSync(stateFile, "utf8")) as Record<string, unknown>;
+}
+
+function buildResponse(
+  payload: Record<string, unknown>,
+  stateFile: string,
+  top: ScanTop,
+  shouldAct: boolean,
+) {
+  const actionPlan = buildActionPlanFromPayload(payload, ROOT);
+  return {
+    should_act: shouldAct,
+    job_id: payload.job_id,
+    reason: top.reason,
+    message: shouldAct ? top.message : null,
+    state_file: path.resolve(stateFile),
+    spawn_ready_path: payload.spawn_ready_path,
+    spawn_ready_json_path: payload.spawn_ready_json_path,
+    action_plan: actionPlan,
+  };
+}
+
 function promote(stateFile: string, top: ScanTop, apply: boolean) {
-  const payload = JSON.parse(readFileSync(stateFile, "utf8")) as Record<string, unknown>;
+  const payload = readState(stateFile);
   payload.status = "auto_execute";
   payload.observer = (payload.observer as Record<string, unknown>) ?? {};
   (payload.observer as Record<string, unknown>).last_auto_execute_at = nowIso();
@@ -27,14 +54,7 @@ function promote(stateFile: string, top: ScanTop, apply: boolean) {
     writeFileSync(stateFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
   }
 
-  return {
-    should_act: true,
-    job_id: payload.job_id,
-    reason: top.reason,
-    message: top.message,
-    state_file: path.resolve(stateFile),
-    spawn_ready_path: (payload as Record<string, unknown>).spawn_ready_path,
-  };
+  return buildResponse(payload, stateFile, top, true);
 }
 
 function reactOne(
@@ -44,13 +64,9 @@ function reactOne(
   seed?: number,
 ) {
   const top = evaluateStateFile(stateFile, minutesSinceReply, seed, apply);
+  const payload = readState(stateFile);
   if (!top.should_nudge) {
-    return {
-      should_act: false,
-      reason: top.reason,
-      message: null,
-      state_file: stateFile,
-    };
+    return buildResponse(payload, stateFile, top as ScanTop, false);
   }
   return promote(stateFile, top as ScanTop, apply);
 }
@@ -63,6 +79,7 @@ function react(apply: boolean, seed?: number) {
       should_act: false,
       reason: "eligible 없음",
       message: null,
+      action_plan: null,
     };
   }
   return promote(String(top.state_file), top as ScanTop, apply);

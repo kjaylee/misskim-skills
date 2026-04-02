@@ -1,6 +1,35 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 export type JsonPayload = Record<string, unknown>;
+export const ACTION_KINDS = ["research", "implementation", "refactor", "deploy"] as const;
+export const RUNTIME_HINTS = ["main", "subagent"] as const;
+export const SESSION_HINTS = ["main", "isolated"] as const;
+
+export type ActionKind = (typeof ACTION_KINDS)[number];
+export type RuntimeHint = (typeof RUNTIME_HINTS)[number];
+export type SessionHint = (typeof SESSION_HINTS)[number];
+
+export type ObserverHints = {
+  role: string;
+  enabled: boolean;
+  interval_minutes: number;
+  model: string;
+  reason: string;
+  track: boolean;
+  priority: number;
+  action_kind: ActionKind;
+  runtime_hint: RuntimeHint;
+  session_hint: SessionHint;
+};
+
+export type ActionPlan = {
+  actionKind: ActionKind;
+  runtimeHint: RuntimeHint;
+  sessionHint: SessionHint;
+  spawnReadyPath: string | null;
+  spawnReadyJsonPath: string | null;
+  recommendedCommand: string;
+};
 
 export type DecisionResult = {
   should_nudge: boolean;
@@ -28,6 +57,18 @@ export const BLOCK_REASONS: Record<string, string> = {
 
 const WAITING_STATUSES = new Set(["planned", "proposal_pending", "waiting_reply"]);
 
+function parseChoice<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  defaultValue: T,
+): T {
+  if (typeof value !== "string") return defaultValue;
+  const normalized = value.trim().toLowerCase();
+  return (allowed as readonly string[]).includes(normalized)
+    ? (normalized as T)
+    : defaultValue;
+}
+
 export function requireValue(value: string | undefined, field: string): string {
   if (!value || !value.trim()) {
     throw new Error(`필수 값 누락: ${field}`);
@@ -44,7 +85,7 @@ export function readJson<T = JsonPayload>(path: string): T {
 }
 
 export function writeJson(path: string, payload: JsonPayload): void {
-  writeFileSync(path, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  writeFileSync(path, `${JSON.stringify(payload, null, 2)}\n`);
 }
 
 export function parseBoolean(value: unknown, defaultValue = false): boolean {
@@ -62,6 +103,87 @@ export function parseBoolean(value: unknown, defaultValue = false): boolean {
 export function parseNumber(value: unknown, defaultValue = 0): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+export function parseActionKind(value: unknown, defaultValue: ActionKind = "implementation"): ActionKind {
+  return parseChoice(value, ACTION_KINDS, defaultValue);
+}
+
+export function parseRuntimeHint(value: unknown, defaultValue: RuntimeHint = "subagent"): RuntimeHint {
+  return parseChoice(value, RUNTIME_HINTS, defaultValue);
+}
+
+export function parseSessionHint(value: unknown, defaultValue: SessionHint = "isolated"): SessionHint {
+  return parseChoice(value, SESSION_HINTS, defaultValue);
+}
+
+export function defaultRuntimeHint(actionKind: ActionKind): RuntimeHint {
+  if (actionKind === "research" || actionKind === "deploy") return "main";
+  return "subagent";
+}
+
+export function defaultSessionHint(actionKind: ActionKind): SessionHint {
+  if (actionKind === "research" || actionKind === "deploy") return "main";
+  return "isolated";
+}
+
+export function normalizeObserverHints(
+  observer: Record<string, unknown> | undefined,
+  fallbackActionKind: ActionKind = "implementation",
+): ObserverHints {
+  const actionKind = parseActionKind(observer?.action_kind, fallbackActionKind);
+  return {
+    role: String(observer?.role ?? "equal-rank-5min-observer"),
+    enabled: parseBoolean(observer?.enabled, true),
+    interval_minutes: parseNumber(observer?.interval_minutes, 5),
+    model: String(observer?.model ?? "minimax-portal/MiniMax-M2.7"),
+    reason: String(observer?.reason ?? "오 분 관찰자 모델은 minimax 사용"),
+    track: parseBoolean(observer?.track, false),
+    priority: parseNumber(observer?.priority, 0),
+    action_kind: actionKind,
+    runtime_hint: parseRuntimeHint(observer?.runtime_hint, defaultRuntimeHint(actionKind)),
+    session_hint: parseSessionHint(observer?.session_hint, defaultSessionHint(actionKind)),
+  };
+}
+
+function shellQuote(value: string): string {
+  if (!value) return "''";
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+export function buildRecommendedCommand(
+  root: string,
+  spawnReadyPath: string | null,
+  runtimeHint: RuntimeHint,
+): string {
+  const cdRoot = `cd ${shellQuote(root)}`;
+  if (!spawnReadyPath) return cdRoot;
+
+  const catPrompt = `cat ${shellQuote(spawnReadyPath)}`;
+  if (runtimeHint === "subagent") {
+    return `${cdRoot} && codex exec --full-auto "$(${catPrompt})"`;
+  }
+  return `${cdRoot} && ${catPrompt}`;
+}
+
+export function buildActionPlanFromPayload(payload: Record<string, unknown>, root: string): ActionPlan {
+  const presetActionKind = parseActionKind(payload.preset, "implementation");
+  const observer = normalizeObserverHints(
+    (payload.observer as Record<string, unknown> | undefined) ?? undefined,
+    presetActionKind,
+  );
+  const spawnReadyPath = typeof payload.spawn_ready_path === "string" ? payload.spawn_ready_path : null;
+  const spawnReadyJsonPath =
+    typeof payload.spawn_ready_json_path === "string" ? payload.spawn_ready_json_path : null;
+
+  return {
+    actionKind: observer.action_kind,
+    runtimeHint: observer.runtime_hint,
+    sessionHint: observer.session_hint,
+    spawnReadyPath,
+    spawnReadyJsonPath,
+    recommendedCommand: buildRecommendedCommand(root, spawnReadyPath, observer.runtime_hint),
+  };
 }
 
 export function decideNudge(input: {

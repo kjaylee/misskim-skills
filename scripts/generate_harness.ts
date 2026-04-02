@@ -1,7 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { requireValue, nowIso } from "./_observer_tooling";
+import {
+  ActionKind,
+  buildActionPlanFromPayload,
+  defaultRuntimeHint,
+  defaultSessionHint,
+  normalizeObserverHints,
+  parseActionKind,
+  requireValue,
+  nowIso,
+} from "./_observer_tooling";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -11,6 +20,7 @@ const STATE = path.join(ROOT, ".state", "pipelines");
 const PRESETS_PATH = path.join(TEMPLATES, "harness-presets.json");
 const OBSERVER_DEFAULTS_PATH = path.join(ROOT, "config", "observer-defaults.json");
 
+type PresetName = ActionKind | "custom";
 type Preset = Record<string, string>;
 type Presets = Record<string, Preset>;
 type Values = Record<string, string>;
@@ -34,6 +44,9 @@ function loadObserverDefaults(): Record<string, unknown> {
       reason: "오 분 관찰자 모델은 minimax 사용",
       track: false,
       priority: 0,
+      action_kind: "implementation",
+      runtime_hint: "subagent",
+      session_hint: "isolated",
     };
   }
 
@@ -50,7 +63,7 @@ function render(template: string, values: Values): string {
 }
 
 function defaultArtifacts(jobId: string): string {
-  return `specs/${jobId}/plan.md, specs/${jobId}/spawn.md, specs/${jobId}/spawn-ready.md, .state/pipelines/${jobId}.json`;
+  return `specs/${jobId}/plan.md, specs/${jobId}/spawn.md, specs/${jobId}/spawn-ready.md, specs/${jobId}/spawn-ready.json, .state/pipelines/${jobId}.json`;
 }
 
 function defaultDone(jobId: string): string {
@@ -60,6 +73,13 @@ function defaultDone(jobId: string): string {
 function buildRedteamBlock(values: Values): string {
   const tpl = loadTemplate("harness-redteam-template.md");
   return render(tpl, values).trim();
+}
+
+function splitCsv(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function parseArgv(argv: string[]): Record<string, string | undefined> {
@@ -88,7 +108,7 @@ function parseArgs() {
   const argv = process.argv.slice(2);
   const positional = argv[0] && !argv[0].startsWith("--") ? argv[0] : "";
   const parsed = parseArgv(argv);
-  const preset = parsed.preset as "research" | "implementation" | "refactor" | "deploy" | undefined;
+  const preset = parsed.preset as ActionKind | undefined;
   if (
     preset !== undefined &&
     !["research", "implementation", "refactor", "deploy"].includes(preset)
@@ -157,6 +177,10 @@ function mergeValues(jobId: string, args: ReturnType<typeof parseArgs>): Values 
   return values;
 }
 
+function resolveFallbackActionKind(preset: string): ActionKind {
+  return parseActionKind(preset, "implementation");
+}
+
 function main(): void {
   const args = parseArgs();
   const jobId = requireValue(args.jobId, "job_id");
@@ -174,6 +198,7 @@ function main(): void {
   const planPath = path.join(specDir, "plan.md");
   const spawnPath = path.join(specDir, "spawn.md");
   const spawnReadyPath = path.join(specDir, "spawn-ready.md");
+  const spawnReadyJsonPath = path.join(specDir, "spawn-ready.json");
   const statePath = path.join(STATE, `${jobId}.json`);
 
   writeFileSync(planPath, `${planMd}\n`, "utf8");
@@ -181,10 +206,20 @@ function main(): void {
   writeFileSync(spawnReadyPath, `${spawnReadyMd}\n`, "utf8");
 
   const observerDefaults = loadObserverDefaults();
-  const payload = {
+  const presetActionKind = resolveFallbackActionKind(values.preset);
+  const observer = values.preset === "custom"
+    ? normalizeObserverHints(observerDefaults, presetActionKind)
+    : {
+        ...normalizeObserverHints(observerDefaults, presetActionKind),
+        action_kind: presetActionKind,
+        runtime_hint: defaultRuntimeHint(presetActionKind),
+        session_hint: defaultSessionHint(presetActionKind),
+      };
+
+  const payload: Record<string, unknown> = {
     job_id: jobId,
     status: "proposal_pending",
-    preset: values.preset,
+    preset: values.preset as PresetName,
     goal: values.goal,
     scope: values.scope,
     tests: values.tests,
@@ -201,15 +236,8 @@ function main(): void {
     spec_path: path.relative(ROOT, planPath),
     spawn_path: path.relative(ROOT, spawnPath),
     spawn_ready_path: path.relative(ROOT, spawnReadyPath),
-    observer: {
-      role: String(observerDefaults.role ?? "equal-rank-5min-observer"),
-      enabled: Boolean(observerDefaults.enabled ?? true),
-      interval_minutes: Number(observerDefaults.interval_minutes ?? 5),
-      model: String(observerDefaults.model ?? "minimax-portal/MiniMax-M2.7"),
-      reason: String(observerDefaults.reason ?? "오 분 관찰자 모델은 minimax 사용"),
-      track: Boolean(observerDefaults.track ?? false),
-      priority: Number(observerDefaults.priority ?? 0),
-    },
+    spawn_ready_json_path: path.relative(ROOT, spawnReadyJsonPath),
+    observer,
     nudge: {
       proposal_pending: true,
       minutes_threshold: 5,
@@ -222,6 +250,37 @@ function main(): void {
     created_at: nowIso(),
   };
 
+  payload.action_plan = buildActionPlanFromPayload(payload, ROOT);
+
+  const spawnReadyJson = {
+    job_id: jobId,
+    preset: values.preset as PresetName,
+    current_state: values.state_summary,
+    goal: values.goal,
+    scope: values.scope,
+    tests: values.tests,
+    done: values.done,
+    artifacts: {
+      raw: values.artifacts,
+      items: splitCsv(values.artifacts),
+    },
+    forbidden: {
+      raw: values.forbidden,
+      items: splitCsv(values.forbidden),
+    },
+    redteam: payload.redteam,
+    paths: {
+      plan: path.relative(ROOT, planPath),
+      spawn: path.relative(ROOT, spawnPath),
+      spawn_ready: path.relative(ROOT, spawnReadyPath),
+      spawn_ready_json: path.relative(ROOT, spawnReadyJsonPath),
+      state: path.relative(ROOT, statePath),
+    },
+    observer,
+    action_plan: payload.action_plan,
+  };
+
+  writeFileSync(spawnReadyJsonPath, `${JSON.stringify(spawnReadyJson, null, 2)}\n`, "utf8");
   writeFileSync(statePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 
   process.stdout.write(
@@ -232,6 +291,7 @@ function main(): void {
         plan: path.relative(ROOT, planPath),
         spawn: path.relative(ROOT, spawnPath),
         spawn_ready: path.relative(ROOT, spawnReadyPath),
+        spawn_ready_json: path.relative(ROOT, spawnReadyJsonPath),
         state: path.relative(ROOT, statePath),
       },
       null,

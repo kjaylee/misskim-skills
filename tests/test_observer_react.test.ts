@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe("observer_react", () => {
-  it("promotes waiting job to auto_execute", () => {
+  it("promotes waiting job to auto_execute and returns action plan", () => {
     const jobId = `observer-react-demo-${Date.now()}`;
     const harness = runHarness([jobId, "--preset", "implementation"]);
     const statePath = harness.state;
@@ -64,6 +64,14 @@ describe("observer_react", () => {
     ]);
     expect(payload.should_act).toBe(true);
     expect(payload.job_id).toBe(jobId);
+    expect(payload.spawn_ready_path).toBe(`specs/${jobId}/spawn-ready.md`);
+    expect(payload.spawn_ready_json_path).toBe(`specs/${jobId}/spawn-ready.json`);
+    expect(payload.action_plan.actionKind).toBe("implementation");
+    expect(payload.action_plan.runtimeHint).toBe("subagent");
+    expect(payload.action_plan.sessionHint).toBe("isolated");
+    expect(payload.action_plan.spawnReadyPath).toBe(`specs/${jobId}/spawn-ready.md`);
+    expect(payload.action_plan.spawnReadyJsonPath).toBe(`specs/${jobId}/spawn-ready.json`);
+    expect(payload.action_plan.recommendedCommand).toContain(`specs/${jobId}/spawn-ready.md`);
 
     const updated = JSON.parse(readFileSync(statePathAbs, "utf8")) as Record<string, any>;
     expect(updated.status).toBe("auto_execute");

@@ -6,6 +6,9 @@
     "model": "minimax-portal/MiniMax-M2.7",
     "reason": "오 분 관찰자 모델은 minimax 사용",
     "track": false,
-    "priority": 0
+    "priority": 0,
+    "action_kind": "implementation",
+    "runtime_hint": "subagent",
+    "session_hint": "isolated"
   }
 }

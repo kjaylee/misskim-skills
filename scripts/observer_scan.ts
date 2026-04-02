@@ -1,9 +1,17 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { evaluateStateFile, parseBoolean, parseNumber } from "./_observer_tooling";
+import { evaluateStateFile } from "./equal_rank_nudge_bot";
+import {
+  buildActionPlanFromPayload,
+  normalizeObserverHints,
+  parseActionKind,
+  parseNumber,
+} from "./_observer_tooling";
 
 type StatePayload = Record<string, unknown>;
+
+type ScanResult = Record<string, unknown>;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -69,25 +77,37 @@ function isDemoTestSample(payload: StatePayload, statePath: string): boolean {
   return false;
 }
 
+function buildBaseResult(
+  payload: StatePayload,
+  stateFile: string,
+  status: string,
+  minutesSinceReply: number,
+  observer: ReturnType<typeof normalizeObserverHints>,
+): ScanResult {
+  return {
+    job_id: payload.job_id,
+    state_file: stateFile,
+    minutes_since_reply: minutesSinceReply,
+    status,
+    priority: observer.priority,
+    observer_track: observer.track,
+    action_plan: buildActionPlanFromPayload(payload, ROOT),
+  };
+}
+
 function buildSkipResult(
   payload: StatePayload,
   stateFile: string,
   status: string,
   minutesSinceReply: number,
-  priority: number,
-  track: boolean,
+  observer: ReturnType<typeof normalizeObserverHints>,
   reason: string,
-) {
+): ScanResult {
   return {
-    job_id: payload.job_id,
-    state_file: stateFile,
+    ...buildBaseResult(payload, stateFile, status, minutesSinceReply, observer),
     should_nudge: false,
     reason,
     message: null,
-    minutes_since_reply: minutesSinceReply,
-    status,
-    priority,
-    observer_track: track,
   };
 }
 
@@ -100,7 +120,7 @@ export function scan(apply: boolean, seed?: number) {
     .filter((name) => name.endsWith(".json"))
     .sort();
 
-  const results: Array<Record<string, unknown>> = [];
+  const results: ScanResult[] = [];
 
   for (const fileName of files) {
     const statePath = path.join(PIPELINES, fileName);
@@ -109,32 +129,30 @@ export function scan(apply: boolean, seed?: number) {
 
     if (!WAITING.has(status)) continue;
 
-    const observer = (payload.observer as Record<string, unknown>) ?? {};
-    const track = parseBoolean(observer.track, false);
-    const priority = parseNumber(observer.priority, 0);
+    const observer = normalizeObserverHints(
+      (payload.observer as Record<string, unknown> | undefined) ?? undefined,
+      parseActionKind(payload.preset, "implementation"),
+    );
     const minutes = inferMinutesSinceReply(payload, statePath);
 
     if (isDemoTestSample(payload, statePath)) {
       results.push(
-        buildSkipResult(payload, statePath, status, minutes, priority, track, "데모/테스트/샘플 제외"),
+        buildSkipResult(payload, statePath, status, minutes, observer, "데모/테스트/샘플 제외"),
       );
       continue;
     }
 
-    if (!track) {
+    if (!observer.track) {
       results.push(
-        buildSkipResult(payload, statePath, status, minutes, priority, track, "observer.track 꺼짐"),
+        buildSkipResult(payload, statePath, status, minutes, observer, "observer.track 꺼짐"),
       );
       continue;
     }
 
-    const result = evaluateStateFile(statePath, minutes, seed, apply);
+    const decision = evaluateStateFile(statePath, minutes, seed, apply);
     results.push({
-      ...result,
-      minutes_since_reply: minutes,
-      status,
-      priority,
-      observer_track: track,
+      ...buildBaseResult(payload, statePath, status, minutes, observer),
+      ...decision,
     });
   }
 

@@ -27,8 +27,14 @@ function runScan(seed: number): Record<string, any> {
   return JSON.parse(new TextDecoder().decode(proc.stdout));
 }
 
-function makeJob(opts: { jobId: string; track: boolean; priority: number; createdAt: string }) {
-  const payload = runHarness([opts.jobId, "--preset", "implementation"]);
+function makeJob(opts: {
+  jobId: string;
+  preset?: "research" | "implementation" | "refactor" | "deploy";
+  track: boolean;
+  priority: number;
+  createdAt: string;
+}) {
+  const payload = runHarness([opts.jobId, "--preset", opts.preset ?? "implementation"]);
   const statePath = payload.state;
   const stateFull = path.join(ROOT, statePath);
   const state = JSON.parse(readFileSync(stateFull, "utf8")) as Record<string, any>;
@@ -69,6 +75,7 @@ describe("observer_scan", () => {
     const result = findResult(payload, jobId);
     expect(result.should_nudge).toBe(false);
     expect(result.reason).toBe("데모/테스트/샘플 제외");
+    expect(result.action_plan.spawnReadyJsonPath).toBe(`specs/${jobId}/spawn-ready.json`);
     const eligibleIds = new Set(
       payload.results.filter((item: any) => item.should_nudge).map((item: any) => item.job_id),
     );
@@ -83,9 +90,10 @@ describe("observer_scan", () => {
     expect(result.should_nudge).toBe(false);
     expect(result.reason).toBe("observer.track 꺼짐");
     expect(result.observer_track).toBe(false);
+    expect(result.action_plan.actionKind).toBe("implementation");
   });
 
-  it("prioritizes priority before age", () => {
+  it("prioritizes priority before age and returns action plan on top", () => {
     const olderJob = `observer-real-older-${Date.now()}`;
     const priorityJob = `observer-real-priority-${Date.now()}`;
     makeJob({ jobId: olderJob, track: true, priority: 900, createdAt: "2026-04-01T00:00:00+00:00" });
@@ -105,5 +113,12 @@ describe("observer_scan", () => {
     expect(sorted[0].job_id).toBe(priorityJob);
     expect(sorted[0].priority).toBe(1000);
     expect(sorted[0].minutes_since_reply).toBeGreaterThanOrEqual(5);
+    expect(payload.top.job_id).toBe(priorityJob);
+    expect(payload.top.action_plan.actionKind).toBe("implementation");
+    expect(payload.top.action_plan.runtimeHint).toBe("subagent");
+    expect(payload.top.action_plan.sessionHint).toBe("isolated");
+    expect(payload.top.action_plan.spawnReadyPath).toBe(`specs/${priorityJob}/spawn-ready.md`);
+    expect(payload.top.action_plan.spawnReadyJsonPath).toBe(`specs/${priorityJob}/spawn-ready.json`);
+    expect(payload.top.action_plan.recommendedCommand).toContain(`specs/${priorityJob}/spawn-ready.md`);
   });
 });
