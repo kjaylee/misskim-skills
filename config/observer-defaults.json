@@ -1,0 +1,9 @@
+{
+  "observer": {
+    "role": "equal-rank-5min-observer",
+    "enabled": true,
+    "interval_minutes": 5,
+    "model": "minimax-portal/MiniMax-M2.7",
+    "reason": "오 분 관찰자 모델은 minimax 사용"
+  }
+}

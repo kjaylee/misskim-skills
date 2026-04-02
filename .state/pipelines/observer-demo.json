@@ -1,0 +1,38 @@
+{
+  "job_id": "observer-demo",
+  "status": "proposal_pending",
+  "preset": "implementation",
+  "goal": "기능 구현 작업 수행",
+  "scope": "작업 범위 안에서 구현, 테스트, 검증까지 완료",
+  "tests": "관련 테스트 작성 또는 갱신, 실행 결과 기록",
+  "done": "코드 변경과 검증 증거가 함께 남는다",
+  "artifacts": "specs/observer-demo/plan.md, specs/observer-demo/spawn.md, specs/observer-demo/spawn-ready.md, .state/pipelines/observer-demo.json",
+  "forbidden": "테스트 없는 완료 보고 금지, 범위 밖 리팩터 금지",
+  "state_summary": "초기 생성",
+  "redteam": {
+    "attack_1": "범위가 커져서 원래 작업이 흔들릴 수 있음",
+    "attack_2": "검증이 약하면 빈 문서만 늘어날 수 있음",
+    "defense": "범위, 테스트, 완료 조건, 산출물 경로를 강제해서 빈 작업을 줄인다",
+    "decision": "위험 수용"
+  },
+  "spec_path": "specs/observer-demo/plan.md",
+  "spawn_path": "specs/observer-demo/spawn.md",
+  "spawn_ready_path": "specs/observer-demo/spawn-ready.md",
+  "observer": {
+    "role": "equal-rank-5min-observer",
+    "enabled": true,
+    "interval_minutes": 5,
+    "model": "minimax-portal/MiniMax-M2.7",
+    "reason": "오 분 관찰자 모델은 minimax 사용"
+  },
+  "nudge": {
+    "proposal_pending": true,
+    "minutes_threshold": 5,
+    "cooldown_minutes": 30,
+    "last_nudge_minutes_ago": null,
+    "risk": "normal",
+    "last_nudge_at": null,
+    "last_nudge_message": null
+  },
+  "created_at": "2026-04-02T02:52:47.123808+00:00"
+}

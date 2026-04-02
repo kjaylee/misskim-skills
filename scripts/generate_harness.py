@@ -10,6 +10,7 @@ TEMPLATES = ROOT / "templates"
 SPECS = ROOT / "specs"
 STATE = ROOT / ".state" / "pipelines"
 PRESETS_PATH = TEMPLATES / "harness-presets.json"
+OBSERVER_DEFAULTS_PATH = ROOT / "config" / "observer-defaults.json"
 
 
 def load_template(name: str) -> str:
@@ -20,6 +21,19 @@ def load_presets() -> Dict[str, Dict[str, str]]:
     if not PRESETS_PATH.exists():
         return {}
     return json.loads(PRESETS_PATH.read_text(encoding="utf-8"))
+
+
+def load_observer_defaults() -> Dict[str, object]:
+    if not OBSERVER_DEFAULTS_PATH.exists():
+        return {
+            "role": "equal-rank-5min-observer",
+            "enabled": True,
+            "interval_minutes": 5,
+            "model": "minimax-portal/MiniMax-M2.7",
+            "reason": "오 분 관찰자 모델은 minimax 사용",
+        }
+    payload = json.loads(OBSERVER_DEFAULTS_PATH.read_text(encoding="utf-8"))
+    return payload.get("observer", {})
 
 
 def render(template: str, values: Dict[str, str]) -> str:
@@ -129,6 +143,8 @@ def main() -> None:
     spawn_path.write_text(spawn_md + "\n", encoding="utf-8")
     spawn_ready_path.write_text(spawn_ready_md + "\n", encoding="utf-8")
 
+    observer_defaults = load_observer_defaults()
+
     payload = {
         "job_id": job_id,
         "status": "proposal_pending",
@@ -149,6 +165,13 @@ def main() -> None:
         "spec_path": str(plan_path.relative_to(ROOT)),
         "spawn_path": str(spawn_path.relative_to(ROOT)),
         "spawn_ready_path": str(spawn_ready_path.relative_to(ROOT)),
+        "observer": {
+            "role": observer_defaults.get("role", "equal-rank-5min-observer"),
+            "enabled": bool(observer_defaults.get("enabled", True)),
+            "interval_minutes": int(observer_defaults.get("interval_minutes", 5)),
+            "model": str(observer_defaults.get("model", "minimax-portal/MiniMax-M2.7")),
+            "reason": str(observer_defaults.get("reason", "오 분 관찰자 모델은 minimax 사용"))
+        },
         "nudge": {
             "proposal_pending": True,
             "minutes_threshold": 5,

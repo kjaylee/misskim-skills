@@ -51,6 +51,8 @@ class GenerateHarnessTests(unittest.TestCase):
         self.assertIn("레드팀", spawn_ready_text)
         self.assertIn("실행 원칙", spawn_ready_text)
         self.assertEqual(state["status"], "proposal_pending")
+        self.assertEqual(state["observer"]["model"], "minimax-portal/MiniMax-M2.7")
+        self.assertEqual(state["observer"]["interval_minutes"], 5)
         self.assertTrue(state["nudge"]["proposal_pending"])
         self.assertEqual(state["nudge"]["minutes_threshold"], 5)
 
