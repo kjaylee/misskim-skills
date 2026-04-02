@@ -1,0 +1,14 @@
+{
+  "job_id": "demo-harness",
+  "status": "planned",
+  "goal": "하네스 생성기 검증",
+  "scope": "최소 생성기 실제 출력 확인",
+  "tests": "plan.md, spawn.md, 상태 파일 생성 여부 확인",
+  "done": "세 파일이 모두 생성되고 경로가 출력된다",
+  "artifacts": "specs/demo-harness/plan.md, specs/demo-harness/spawn.md, .state/pipelines/demo-harness.json",
+  "forbidden": "보호 디렉토리 삭제 금지, 범위 밖 변경 금지",
+  "state_summary": "초기 생성",
+  "spec_path": "specs/demo-harness/plan.md",
+  "spawn_path": "specs/demo-harness/spawn.md",
+  "created_at": "2026-04-02T01:57:58.461206+00:00"
+}
