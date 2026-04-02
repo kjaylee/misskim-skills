@@ -149,6 +149,15 @@ def main() -> None:
         "spec_path": str(plan_path.relative_to(ROOT)),
         "spawn_path": str(spawn_path.relative_to(ROOT)),
         "spawn_ready_path": str(spawn_ready_path.relative_to(ROOT)),
+        "nudge": {
+            "proposal_pending": True,
+            "minutes_threshold": 5,
+            "cooldown_minutes": 30,
+            "last_nudge_minutes_ago": None,
+            "risk": "normal",
+            "last_nudge_at": None,
+            "last_nudge_message": None
+        },
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

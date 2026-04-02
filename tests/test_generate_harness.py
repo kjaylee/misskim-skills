@@ -50,6 +50,8 @@ class GenerateHarnessTests(unittest.TestCase):
         self.assertIn(f"specs/{job_id}/results.md", state["artifacts"])
         self.assertIn("레드팀", spawn_ready_text)
         self.assertIn("실행 원칙", spawn_ready_text)
+        self.assertTrue(state["nudge"]["proposal_pending"])
+        self.assertEqual(state["nudge"]["minutes_threshold"], 5)
 
 
 if __name__ == "__main__":
