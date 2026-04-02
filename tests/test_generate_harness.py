@@ -29,11 +29,15 @@ class GenerateHarnessTests(unittest.TestCase):
             "--artifacts", f"specs/{job_id}/plan.md, specs/{job_id}/spawn.md, specs/{job_id}/spawn-ready.md, .state/pipelines/{job_id}.json",
         )
         payload = json.loads(result.stdout)
+        state = json.loads((ROOT / payload["state"]).read_text(encoding="utf-8"))
+
         self.assertEqual(payload["job_id"], job_id)
         self.assertTrue((ROOT / payload["plan"]).exists())
         self.assertTrue((ROOT / payload["spawn"]).exists())
         self.assertTrue((ROOT / payload["spawn_ready"]).exists())
         self.assertTrue((ROOT / payload["state"]).exists())
+        self.assertFalse(state["observer"]["track"])
+        self.assertEqual(state["observer"]["priority"], 0)
 
     def test_preset_generation(self):
         job_id = "test-research-harness"
@@ -53,6 +57,8 @@ class GenerateHarnessTests(unittest.TestCase):
         self.assertEqual(state["status"], "proposal_pending")
         self.assertEqual(state["observer"]["model"], "minimax-portal/MiniMax-M2.7")
         self.assertEqual(state["observer"]["interval_minutes"], 5)
+        self.assertFalse(state["observer"]["track"])
+        self.assertEqual(state["observer"]["priority"], 0)
         self.assertTrue(state["nudge"]["proposal_pending"])
         self.assertEqual(state["nudge"]["minutes_threshold"], 5)
 

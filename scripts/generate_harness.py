@@ -31,6 +31,8 @@ def load_observer_defaults() -> Dict[str, object]:
             "interval_minutes": 5,
             "model": "minimax-portal/MiniMax-M2.7",
             "reason": "오 분 관찰자 모델은 minimax 사용",
+            "track": False,
+            "priority": 0,
         }
     payload = json.loads(OBSERVER_DEFAULTS_PATH.read_text(encoding="utf-8"))
     return payload.get("observer", {})
@@ -170,7 +172,9 @@ def main() -> None:
             "enabled": bool(observer_defaults.get("enabled", True)),
             "interval_minutes": int(observer_defaults.get("interval_minutes", 5)),
             "model": str(observer_defaults.get("model", "minimax-portal/MiniMax-M2.7")),
-            "reason": str(observer_defaults.get("reason", "오 분 관찰자 모델은 minimax 사용"))
+            "reason": str(observer_defaults.get("reason", "오 분 관찰자 모델은 minimax 사용")),
+            "track": bool(observer_defaults.get("track", False)),
+            "priority": int(observer_defaults.get("priority", 0)),
         },
         "nudge": {
             "proposal_pending": True,

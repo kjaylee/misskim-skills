@@ -1,0 +1,47 @@
+{
+  "job_id": "observer-upgrade-20260402",
+  "status": "done",
+  "preset": "implementation",
+  "goal": "오 분 관찰자 고도화",
+  "scope": "데모와 테스트 작업은 자동 반응 대상에서 제외하고, 실제 작업만 우선순위와 경과 시간 기준으로 선택하도록 개선",
+  "tests": "unittest 전체 통과, 데모 작업 제외 테스트 추가, 우선순위 선택 테스트 추가",
+  "done": "관찰자가 데모 작업을 집지 않고 실제 작업을 우선순위와 시간 기준으로 선택하며 테스트가 통과한다",
+  "artifacts": "specs/observer-upgrade-20260402/plan.md, specs/observer-upgrade-20260402/spawn.md, specs/observer-upgrade-20260402/spawn-ready.md, .state/pipelines/observer-upgrade-20260402.json, specs/observer-upgrade-20260402/results.md",
+  "forbidden": "테스트 없는 완료 보고 금지, 범위 밖 리팩터 금지",
+  "state_summary": "observer_scan 에 데모 제외, track/priority 지원, priority 우선 정렬을 추가했고 전체 unittest 13개를 통과시켰다",
+  "redteam": {
+    "attack_1": "범위가 커져서 원래 작업이 흔들릴 수 있음",
+    "attack_2": "검증이 약하면 빈 문서만 늘어날 수 있음",
+    "defense": "범위, 테스트, 완료 조건, 산출물 경로를 강제해서 빈 작업을 줄인다",
+    "decision": "위험 수용"
+  },
+  "spec_path": "specs/observer-upgrade-20260402/plan.md",
+  "spawn_path": "specs/observer-upgrade-20260402/spawn.md",
+  "spawn_ready_path": "specs/observer-upgrade-20260402/spawn-ready.md",
+  "results_path": "specs/observer-upgrade-20260402/results.md",
+  "observer": {
+    "role": "equal-rank-5min-observer",
+    "enabled": true,
+    "interval_minutes": 5,
+    "model": "minimax-portal/MiniMax-M2.7",
+    "reason": "오 분 관찰자 모델은 minimax 사용",
+    "track": false,
+    "priority": 0
+  },
+  "nudge": {
+    "proposal_pending": false,
+    "minutes_threshold": 5,
+    "cooldown_minutes": 30,
+    "last_nudge_minutes_ago": null,
+    "risk": "normal",
+    "last_nudge_at": null,
+    "last_nudge_message": null
+  },
+  "verification": {
+    "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
+    "passed": true,
+    "test_count": 13
+  },
+  "created_at": "2026-04-02T04:03:56.780036+00:00",
+  "updated_at": "2026-04-02T04:45:00+00:00"
+}
