@@ -1,0 +1,22 @@
+{
+  "job_id": "autonomous-demo",
+  "status": "planned",
+  "preset": "deploy",
+  "goal": "배포 작업 수행",
+  "scope": "배포 전 점검, 배포 실행, 배포 후 검증",
+  "tests": "배포 전 체크리스트와 배포 후 헬스 확인",
+  "done": "배포 결과와 검증 로그가 기록된다",
+  "artifacts": "specs/autonomous-demo/plan.md, specs/autonomous-demo/spawn.md, .state/pipelines/autonomous-demo.json, specs/autonomous-demo/verify.md",
+  "forbidden": "검증 없는 배포 완료 보고 금지, 파괴적 변경 은폐 금지",
+  "state_summary": "초기 생성",
+  "redteam": {
+    "attack_1": "배포 범위가 퍼질 수 있음",
+    "attack_2": "검증 없는 완료 보고 위험",
+    "defense": "배포 후 확인 항목을 문서와 상태 파일에 고정",
+    "decision": "위험 수용"
+  },
+  "spec_path": "specs/autonomous-demo/plan.md",
+  "spawn_path": "specs/autonomous-demo/spawn.md",
+  "spawn_ready_path": "specs/autonomous-demo/spawn-ready.md",
+  "created_at": "2026-04-02T02:13:07.767189+00:00"
+}

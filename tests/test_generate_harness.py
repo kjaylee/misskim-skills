@@ -26,12 +26,13 @@ class GenerateHarnessTests(unittest.TestCase):
             "--scope", "출력 파일 확인",
             "--tests", "파일 생성 확인",
             "--done", "세 파일 생성",
-            "--artifacts", f"specs/{job_id}/plan.md, specs/{job_id}/spawn.md, .state/pipelines/{job_id}.json",
+            "--artifacts", f"specs/{job_id}/plan.md, specs/{job_id}/spawn.md, specs/{job_id}/spawn-ready.md, .state/pipelines/{job_id}.json",
         )
         payload = json.loads(result.stdout)
         self.assertEqual(payload["job_id"], job_id)
         self.assertTrue((ROOT / payload["plan"]).exists())
         self.assertTrue((ROOT / payload["spawn"]).exists())
+        self.assertTrue((ROOT / payload["spawn_ready"]).exists())
         self.assertTrue((ROOT / payload["state"]).exists())
 
     def test_preset_generation(self):
@@ -41,11 +42,14 @@ class GenerateHarnessTests(unittest.TestCase):
         self.assertEqual(payload["preset"], "research")
 
         plan_text = (ROOT / payload["plan"]).read_text(encoding="utf-8")
+        spawn_ready_text = (ROOT / payload["spawn_ready"]).read_text(encoding="utf-8")
         state = json.loads((ROOT / payload["state"]).read_text(encoding="utf-8"))
 
         self.assertIn("리서치 작업 수행", plan_text)
         self.assertEqual(state["preset"], "research")
         self.assertIn(f"specs/{job_id}/results.md", state["artifacts"])
+        self.assertIn("레드팀", spawn_ready_text)
+        self.assertIn("실행 원칙", spawn_ready_text)
 
 
 if __name__ == "__main__":
