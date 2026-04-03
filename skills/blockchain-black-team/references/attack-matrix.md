@@ -5555,21 +5555,49 @@ require!(deviation <= MAX_DEVIATION_PPM, ErrorCode::PriceDeviationExceeded);
 
 ---
 
-### A94. Drift Protocol Durable-Nonce Admin Takeover (~$280-285M, April 1-2, 2026, Solana)
-**Historical**: Drift Protocol (Solana perpetual futures/derivatives DEX) disclosed on April 2, 2026 that the ~$280-285M incident was **not** a smart-contract arithmetic/oracle bug. Public reporting and Drift's own statement indicate a durable-nonce-based administrative takeover of the Security Council workflow.
+### A94. Drift Protocol Durable-Nonce Admin Takeover ($270-285M, April 1, 2026, Solana) — FULL MECHANISM
+**Historical**: Drift Protocol (Solana perpetual futures/derivatives DEX) — **largest crypto hack of 2026** as of April. Not a smart-contract bug, oracle manipulation, or flash loan. A pure **operational-security failure + Solana feature exploitation**.
 
-**Confirmed mechanism**:
-1. Four durable nonce accounts were reportedly prepared on March 23.
-2. The attacker obtained or misrepresented enough Security Council approvals under Drift's `2-of-5` multisig process.
-3. Because durable nonce transactions stay valid far beyond a normal recent-blockhash lifetime, the attacker could collect approvals in advance and execute later at a chosen time.
-4. Two pre-signed durable-nonce transactions transferred administrative control / protocol-level permissions.
-5. With admin control, the attacker changed key parameters and drained borrow/lend, vault, and trading-deposit funds.
+**Full Attack Timeline (CoinDesk post-mortem, April 2, 2026)**:
+- **March 23 (T-9 days)**: Four durable nonce accounts created. Two associated with legitimate Drift Security Council members. Two controlled by attacker. **Attacker had already obtained 2 of 5 required signatures** through "unauthorized or misrepresented transaction approvals" — signers likely thought they were approving a routine transaction.
+- **March 27 (T-5 days)**: Drift executed planned Security Council migration (member swap). Attacker adapted: obtained fresh signature from NEW council member.
+- **March 30 (T-2 days)**: New durable nonce account appeared, tied to updated multisig member → **attacker re-established 2-of-5 approval threshold under new configuration**.
+- **April 1 (T-0)**:
+  1. Drift ran a **legitimate test withdrawal** from insurance fund (~1 min before attack)
+  2. Attacker submitted pre-signed durable nonce transactions
+  3. **Two transactions, four slots apart**: (a) create malicious admin transfer, (b) approve and execute
+  4. Within minutes: **full control of Drift's protocol-level permissions**
+  5. Introduced **fraudulent withdrawal mechanism** → drained vaults
 
-**Classification**: This is now classified as a **privileged workflow / signing-process exploit**, not a pure on-chain logic bug. The generalized pattern is logged below as **B77**.
+**Loss Breakdown (onchain tracking)**:
+- $155.6M JPL tokens (largest)
+- $60.4M USDC
+- $11.3M CBBTC (Coinbase wrapped BTC)
+- $5.65M USDT
+- $4.7M wETH + $4.4M WBTC
+- $4.5M DSOL + $4.1M FARTCOIN
+- Smaller: JUP, JITOSOL, MSOL, BSOL, EURC
 
-**Microstable risk**: Low direct exposure **today** — current keeper transaction flow fetches a fresh recent blockhash at send time and no durable-nonce account workflow is present in the reviewed keeper code. However, any future upgrade-authority multisig, emergency council, or off-band admin workflow that adopts durable nonce + pre-signed transaction handling inherits B77 immediately.
+**Fund Flow**:
+- Primary drainer wallet funded 8 days pre-attack via NEAR Protocol intents
+- Stolen funds → intermediary wallets (funded day before via Backpack — KYC exchange, potential investigative lead)
+- Bridged to Ethereum via Wormhole
+- Ethereum addresses pre-funded via **Tornado Cash** (sanctioned mixer)
+- ZachXBT: $230M+ USDC bridged Solana→Ethereum via Circle CCTP (100+ transactions)
+- Circle criticized for not freezing during 6-hour window
 
-**Source**: https://coincentral.com/solana-defi-platform-drift-protocol-breaks-silence-after-285-million-exploit/ | https://www.banklesstimes.com/articles/2026/04/02/drift-protocol-suffers-280m-exploit-after-admin-takeover/ | https://www.theblock.co/post/396183/drift-280m-exploit-zachxbt-circle
+**Why This Attack Succeeded**:
+1. **No code bug required** — Drift's smart contracts worked as designed
+2. **No private key theft** — signatures were voluntarily provided
+3. **Time separation weaponized** — signers approved on March 23-30, execution on April 1; context had changed
+4. **Human layer failure** — multisig members signed transactions they didn't understand
+5. **Durable nonce semantics misunderstood** — indefinitely valid transactions, no revocation path
+
+**Classification**: Privileged workflow / signing-process exploit. Generalized pattern logged as **B77**.
+
+**Microstable risk**: ✅ **DEFENDED** — Keeper transaction flow uses `get_latest_blockhash()` per send; no durable-nonce workflow exists. Keeper is automated daemon (no human signers to social-engineer). 2-of-3 keeper_set operates within keeper execution context, not as separate Security Council. Attack surface **does not exist** in current architecture.
+
+**Source**: https://www.coindesk.com/tech/2026/04/02/how-a-solana-feature-designed-for-convenience-let-an-attacker-drain-usd270-million-from-drift | https://techcrunch.com/2026/04/01/de-fi-platform-drift-suspends-deposits-and-withdrawals-after-millions-in-crypto-stolen-in-hack/ | https://www.theblock.co/post/396183/drift-280m-exploit-zachxbt-circle
 
 ### B77. Durable Nonce Approval Laundering / Pre-Signed Multisig Admin Takeover
 **Signal**: Drift Protocol post-incident disclosures and April 2, 2026 reporting.
