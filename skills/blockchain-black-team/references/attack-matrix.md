@@ -5826,4 +5826,82 @@ pub fn process_governance_vote(ctx: Context<Vote>, token_mint: Pubkey) -> Result
 
 ---
 
-**Matrix state as of 2026-04-05 (daily update): 108 named vectors (A1–A92 + A85/A86 reserved + A93~A97) + META-01~37 + B73~B77 = 146 total entries. A97 fabricated governance token attack added in 2026-04-05 03:30 KST sweep (Drift Protocol $285M, CarbonVote Token vector). B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
+### META-38. AI Agent Runtime Governance Framework Gap (AARGFG) — Beyond Prompt-Level Defense
+
+**Published**: 2026-04-05 | **Severity**: MEDIUM (current) → HIGH (AI agent adoption) | **Purple Team**
+
+**Signal**: Microsoft Agent Governance Toolkit (2026-04-02) is the first open-source runtime security framework addressing all 10 OWASP Agentic AI risks. This reveals that current AI agent security is predominantly **prompt-level defense** — lacking runtime governance, policy enforcement, execution rings, and trust decay mechanisms.
+
+**The Pattern**:
+- Most AI agent security focuses on prompt injection prevention (B29), memory poisoning (B43), context drift (B38).
+- Missing: **Tool-Call Interceptor** that intercepts every agent action before execution at sub-millisecond latency.
+- Missing: **Execution Rings** that isolate agent capabilities into privilege levels (read-only / recommend-only / execute-with-approval / execute-autonomous).
+- Missing: **Trust Decay** — dynamic trust scoring that decays over time, not binary trusted/untrusted.
+- Missing: **Circuit Breakers** that prevent cascading failures across agent networks.
+
+**Why This Is a Distinct Meta-Pattern**:
+- **B29/B38/B43/B46/B52/B62** = specific AI attack vectors.
+- **META-38** = the structural absence of runtime governance layer in AI agent security methodology itself.
+
+**Why Audits Miss This**:
+1. AI agent audits focus on model behavior → not runtime execution paths.
+2. Framework integrations (LangChain, CrewAI, AutoGen) are treated as trusted infrastructure.
+3. Permission models are static (tool access list) → dynamic privilege escalation not considered.
+4. Cross-agent communication security is nascent (Inter-Agent Trust Protocol equivalent missing).
+
+**Microstable Relevance**: MEDIUM (no AI keeper currently) → HIGH (if AI-assisted governance/monitoring introduced). If Microstable ever adds AI agents for parameter tuning, monitoring, or governance assistance, META-38 becomes immediately applicable.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Before AI agent adoption, review Microsoft Agent Governance Toolkit architecture.
+2. Implement Tool-Call Interceptor pattern: every action passes through policy engine.
+3. Design Execution Rings: read-only → recommend-only → execute-with-approval → execute-autonomous.
+4. Apply Trust Decay: agent permissions decay over time, requiring re-authorization.
+5. Add Circuit Breakers: detect and halt cascading agent failures.
+
+**Source**: Microsoft Open Source Blog (2026-04-02) | Agent Governance Toolkit GitHub | OWASP Agentic AI Top 10 (Dec 2025)
+
+---
+
+### META-39. Incident Response Latency Gap (IRLG) — The 60-Minute Window
+
+**Published**: 2026-04-05 | **Severity**: MEDIUM | **Purple Team**
+
+**Signal**: Resolv USR $25M (March 2026) vs Drift $285M (April 2026) — the critical difference was **detection-to-pause latency**. Resolv paused within minutes, preventing a nine-figure catastrophe. Drift was drained in 12 minutes because pre-signed transactions were already staged. The 60-minute IR playbook is now a standard benchmark.
+
+**The Pattern**:
+- Most protocols have IR playbooks "on paper" → no drills.
+- Guardian networks lack 24/7 coverage across time zones.
+- Pause capability requires consensus (too slow) → should be unilateral for pause, multisig for unpause.
+- Monitoring is threshold-based → business logic invariants not encoded.
+- Evidence preservation scripts are ad-hoc → not pre-prepared.
+
+**The 60-Minute Playbook** (from dev.to 2026-03):
+- **0-5 min**: Detection & Triage — TVL drop >5%, mint spike >10x, outflow >$500K/5min.
+- **5-15 min**: Emergency Pause — single guardian can pause, unpause requires multisig.
+- **15-30 min**: Contain & Communicate — preserve evidence, initial user communication.
+- **30-60 min**: Root Cause & Recovery Planning — categorize exploit (validation/auth/economic/infra/logic), plan recovery.
+
+**Why This Is a Distinct Meta-Pattern**:
+- **B45** = Post-audit deployment delta.
+- **META-39** = IR process design failure — why IR doesn't work in practice even when documented.
+
+**Why Audits Miss This**:
+1. IR playbooks are "operational concerns" → excluded from smart contract audit scope.
+2. Guardian network composition is "team management" → not reviewed.
+3. Pause capability architecture is "devops" → not in code audit.
+4. Monitoring thresholds are "operational parameters" → not validated against business logic.
+
+**Microstable Relevance**: MEDIUM — need to verify current IR playbook, guardian network, pause capability, and monitoring thresholds.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. Document 60-minute IR playbook adapted for Microstable.
+2. Guardian network: minimum 3 guardians across different time zones, hardware wallets mandatory.
+3. Pause architecture: unilateral pause, multisig unpause.
+4. Monitoring: encode business logic invariants (not just raw thresholds).
+5. Quarterly pause drills on testnet.
+
+**Source**: dev.to "The First 60 Minutes After a DeFi Exploit" (2026-03) | Resolv USR post-mortem | Drift Protocol post-mortem
+
+---
+
+**Matrix state as of 2026-04-05 (daily update): 108 named vectors (A1–A92 + A85/A86 reserved + A93~A97) + META-01~39 + B73~B77 = 148 total entries. META-38~39 added by Purple Team 2026-04-05. A97 fabricated governance token attack added in 2026-04-05 03:30 KST sweep (Drift Protocol $285M, CarbonVote Token vector). B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
