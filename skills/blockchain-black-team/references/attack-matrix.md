@@ -5785,4 +5785,45 @@ require_keys_neq!(
 
 ---
 
-**Matrix state as of 2026-04-03 (daily update): 107 named vectors (A1–A92 + A85/A86 reserved + A93~A96) + META-01~37 + B73~B77 = 145 total entries. Two new Solana/Anchor vectors were added in the 2026-04-03 03:30 KST sweep: A95 reload owner-drift bypass and A96 duplicate mutable account aliasing. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added earlier in the same daily cycle, and A94 was upgraded from watch-only to mechanism-confirmed and linked to B77. D26 was reinforced with Trust Wallet's Discord vanity-link hijack / phishing-server redirect pattern. A93 (Loopscale $5.8M, RateX pricing manipulation) + A94 were added 2026-04-02 03:00 KST daily sweep. B73~B76 added 2026-04-01 03:00 KST daily sweep. META-29~33 added by Purple Team (2026-03-31~04-01 04:00 KST). META-34~35 added by Purple Team (2026-04-02 04:00 KST). META-36~37 added by Purple Team (2026-04-03 04:00 KST).**
+### A97. Fabricated Governance Token Attack (Social Engineering → Admin Key Compromise)
+
+**Historical**: Drift Protocol ($285M, April 1, 2026) — "CarbonVote Token" (CVT) deployment
+**Mechanism**: Attacker deploys a fabricated governance token designed to interact with a protocol's admin infrastructure in a way that exposes or extracts private keys. The fake token serves as a social engineering lure to gain administrative credentials, bypassing smart contract logic entirely. Once admin keys are compromised, the attacker has unrestricted control over vault operations without needing a smart contract vulnerability.
+
+**Why distinct from B77**: B77 covers durable nonce + pre-signed transaction abuse *after* key compromise. A97 covers the *initial key extraction vector* via fabricated token social engineering — the entry point that enabled the subsequent B77-style attack.
+
+**Attack Chain (Drift Protocol)**:
+1. Attacker deploys fabricated "CarbonVote Token" (CVT) on Solana
+2. CVT is designed to interact with protocol's admin infrastructure
+3. Admin credentials extracted via CVT-based social engineering vector
+4. Attacker gains admin key control
+5. 31 rapid withdrawals executed in 12 minutes ($285M total)
+6. $232M USDC bridged to Ethereum via Circle CCTP
+
+**Code pattern to find**:
+```rust
+// VULNERABLE: Admin key infrastructure exposed to external token interactions
+pub fn process_governance_vote(ctx: Context<Vote>, token_mint: Pubkey) -> Result<()> {
+    // MISSING: Verify token_mint is an authorized governance token
+    // MISSING: Verify interaction does not expose admin credentials
+    execute_admin_operation(ctx.accounts.admin_authority)?;
+}
+```
+
+**Defense**:
+1. Whitelist authorized governance token mints
+2. Never expose admin credentials to external token interaction paths
+3. Separate governance token logic from admin key infrastructure
+4. Require multisig + timelock for any admin credential changes
+5. Anomaly detection circuit breakers for rapid sequential withdrawals
+
+**Solana-specific implications**:
+- Fabricated SPL tokens can be deployed in minutes
+- No native verification of token authenticity in governance integrations
+- Admin key infrastructure often lacks proper separation from user-facing features
+
+**Source**: Drift Protocol post-mortem (April 2026) | TRM Labs DPRK attribution | CoinDesk coverage
+
+---
+
+**Matrix state as of 2026-04-05 (daily update): 108 named vectors (A1–A92 + A85/A86 reserved + A93~A97) + META-01~37 + B73~B77 = 146 total entries. A97 fabricated governance token attack added in 2026-04-05 03:30 KST sweep (Drift Protocol $285M, CarbonVote Token vector). B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
