@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03) | META-01~37
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06) | META-01~42
 
 ## A. Smart Contract Vectors
 
@@ -5904,4 +5904,116 @@ pub fn process_governance_vote(ctx: Context<Vote>, token_mint: Pubkey) -> Result
 
 ---
 
-**Matrix state as of 2026-04-05 (daily update): 108 named vectors (A1–A92 + A85/A86 reserved + A93~A97) + META-01~39 + B73~B77 = 148 total entries. META-38~39 added by Purple Team 2026-04-05. A97 fabricated governance token attack added in 2026-04-05 03:30 KST sweep (Drift Protocol $285M, CarbonVote Token vector). B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
+---
+
+### META-40. AI Security Tool Ambivalence (ASTA) — The Double-Edged Sword
+
+**Published**: 2026-04-06 | **Severity**: MEDIUM (current) → HIGH (AI tool proliferation) | **Purple Team**
+
+**Signal**: Q1 2026 DeFi Exploit Autopsy ($137M, 15 protocols) reveals a paradox: AI security tools claim 92% vulnerability detection, yet Moonwell ($1.78M) had AI-co-authored code that introduced an oracle bug. AI is simultaneously the shield and the sword.
+
+**The Pattern**:
+- **Moonwell**: Claude Opus 4.6 co-authored the cbETH oracle formula — missing ETH/USD multiplier. Governance approved. Auditors signed off.
+- **AI Security Tools**: Purpose-built AI auditors detect 92% of known vulnerability classes (SecurityBoulevard 2026-03).
+- **The Gap**: The 8% blind spot is precisely **economic logic, multi-step sequences, and cross-protocol composition** — exactly where AI code generation introduces bugs.
+- **The Paradox**: "AI-assisted code = more eyes on it" is false when human reviewers trust AI output and skip independent mathematical verification.
+
+**Why This Is a Distinct Meta-Pattern**:
+- **B39** = AI code reviewer false-negative trust cascade.
+- **B59** = AI co-authored code introduces bugs (Moonwell-specific).
+- **META-40** = structural ambivalence: AI tools that defend also create a new attack surface through trust bias. The more AI security tools are adopted, the more teams assume AI-generated code is safe.
+
+**Why Audits Miss This**:
+1. AI-generated code is treated as "already reviewed by AI" → human scrutiny decreases.
+2. Compound oracle formulas are mathematically complex → reviewers rely on AI explanation.
+3. "Co-authored by AI" badge creates false confidence in governance proposals.
+4. AI security tools optimize for known patterns → miss novel composition bugs.
+
+**Microstable Relevance**: MEDIUM — if AI-assisted development is used for oracle integration, LST collateral, or governance proposals, META-40 applies immediately.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. **Mandatory independent verification**: AI-co-authored mathematical formulas must be independently derived by a human reviewer.
+2. **AI code flagging**: Commit messages and PR templates must flag AI-generated code explicitly.
+3. **Blind spot awareness**: Teams using AI security tools must acknowledge the 8% gap (economic logic, multi-step, cross-protocol).
+4. **Dual review requirement**: AI-co-authored code requires two independent human reviewers, not one.
+
+**Source**: dev.to "Q1 2026 DeFi Exploit Autopsy" (2026-03-25) | Moonwell post-mortem | SecurityBoulevard AI auditor benchmark
+
+---
+
+### META-41. Copycat Acceleration (CCA) — The AI-Amplified Replication Window
+
+**Published**: 2026-04-06 | **Severity**: HIGH (structural) | **Purple Team**
+
+**Signal**: Drift Protocol $285M (April 2026) demonstrates a new tempo: from first exploit disclosure to copycat attacks, the window is now measured in **hours**, not days. AI autonomous exploit synthesis (B49) compresses the timeline further.
+
+**The Pattern**:
+- **Historical**: FoomCash $2.26M → Veil Cash copycat within days (Feb 2026).
+- **Drift**: DPRK-linked attacker executed 31 withdrawals in 12 minutes — no time for guardian intervention.
+- **AI Acceleration**: B49 (AI-Speed Adversary) means once a vulnerability class is disclosed, AI agents can autonomously scan for similar patterns across all deployed protocols.
+- **The New Normal**: "Disclose → Patch" window is dead. Disclosure IS the attack signal.
+
+**Why This Is a Distinct Meta-Pattern**:
+- **A45** = Post-takedown clone rotation (malicious crate variants).
+- **B49** = AI-Speed adversary latency assumption violation.
+- **META-41** = structural acceleration: the entire threat landscape evolves at AI speed, not human speed. Patch cycles measured in days are now indefensible.
+
+**Why Audits Miss This**:
+1. Audit cycles are quarterly → threat landscape changes hourly.
+2. Vulnerability disclosure assumes "responsible disclosure" → attackers don't follow this model.
+3. Patch deployment requires governance → days to weeks.
+4. Cross-protocol monitoring for similar vulnerability patterns is nonexistent.
+
+**Microstable Relevance**: HIGH — any disclosed vulnerability in Solana DeFi (especially governance/admin/oracle) should trigger immediate review, not wait for scheduled audit cycle.
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. **24-hour response SLA**: any critical vulnerability disclosed in comparable protocols triggers mandatory Microstable review within 24 hours.
+2. **Automated cross-protocol monitoring**: subscribe to BlockSec/SlowMist feeds; auto-alert on relevant patterns.
+3. **Hot-patch authority**: emergency admin path to disable vulnerable functions without governance delay.
+4. **Pre-patch positioning**: assume vulnerability is known to attackers before disclosure; pre-deploy mitigations where possible.
+
+**Source**: Drift Protocol post-mortem (2026-04) | FoomCash/Veil Cash copycat analysis | B49 AI-Speed Adversary research
+
+---
+
+### META-42. Attack Surface Quantification (ASQ) — The 92% Audit Failure Rate
+
+**Published**: 2026-04-06 | **Severity**: HIGH (methodological) | **Purple Team**
+
+**Signal**: Q1 2026 DeFi Exploit Autopsy confirms: **92% of exploited contracts passed audits**. This is not a failure of individual audits but a structural methodological failure. The attack surface being audited is NOT the attack surface being exploited.
+
+**The Pattern**:
+- **Quantitative Evidence**: $137M lost in Q1 2026, 15 protocols, 92% audit pass rate.
+- **Root Cause Distribution**: Private Key Compromise (40%+), Oracle Manipulation (29%), Arbitrary External Call (12%) — only 19% are pure smart contract bugs.
+- **The Methodology Gap**: Audits verify code correctness. Attacks exploit **key management, operational security, governance design, oracle integration, cross-protocol composition**.
+- **SIGINTZERO 2026**: "80.5% of stolen funds came from attack vectors outside smart contract audit scope."
+
+**Why This Is a Distinct Meta-Pattern**:
+- **META-02** = Full Attack Surface ≠ Deployed Contract.
+- **META-34** = Fuzzer benchmark blind spots.
+- **META-42** = quantitative framework: we now have data showing that smart contract audits cover <20% of real attack surface.
+
+**Why Audits Miss This**:
+1. Audit scope is contract code → keys, operations, governance, oracles are "out of scope".
+2. Audit methodology assumes adversarial user → doesn't model adversarial operator, compromised key, or social engineering.
+3. Audit deliverables are "no critical findings" → doesn't quantify uncovered attack surface.
+4. Audit contracts are scoped to deployed commit → doesn't cover deployment delta (B45).
+
+**Microstable Relevance**: HIGH — Microstable's security posture must extend beyond smart contract audit to cover:
+- Keeper key management (B36, B57, B68)
+- Governance/admin timelock (META-36, PT-0405-01)
+- Oracle integration assumptions (A3, META-38)
+- Incident response capability (META-39)
+- Cross-protocol monitoring (META-41)
+
+**Defense Pattern (Purple Team Recommendation)**:
+1. **Attack Surface Mapping**: document all attack surfaces beyond code (keys, governance, oracle, IR, cross-protocol).
+2. **Audit Scope Expansion**: require audits to explicitly list out-of-scope attack surfaces.
+3. **Quantitative Risk Allocation**: allocate security resources proportionally to attack surface (20% code, 80% non-code based on Q1 2026 data).
+4. **Continuous Non-Code Audit**: governance review, key rotation audit, oracle integration review, IR drill — quarterly, not one-time.
+
+**Source**: dev.to "Q1 2026 DeFi Exploit Autopsy" (2026-03-25) | SIGINTZERO 2026 Software Security Report | Markaicode audit failure analysis
+
+---
+
+**Matrix state as of 2026-04-06 (daily update): 108 named vectors (A1–A92 + A85/A86 reserved + A93~A97) + META-01~42 + B73~B77 = 151 total entries. META-40~42 added by Purple Team 2026-04-06. META-38~39 added 2026-04-05. A97 fabricated governance token attack added in 2026-04-05. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
