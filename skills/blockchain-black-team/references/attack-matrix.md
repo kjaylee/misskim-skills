@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06) | META-01~42
+# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07) | META-01~44
 
 ## A. Smart Contract Vectors
 
@@ -6258,4 +6258,93 @@ logtrace = "0.1"  # downloads RAT at build time
 
 ---
 
-**Matrix state as of 2026-04-07 (daily update): 115 named vectors (A1–A92 + A85/A86 reserved + A93~A104) + META-01~42 + B73~B77 = 158 total entries. A102~A104 added by Red Team 2026-04-07. Anchor v1.0.0 release noted. LML Protocol $950K added. logtrace RAT added.**
+### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
+
+**Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**
+
+**Signal**: ByteXel "The $2.8 Billion Vulnerability: Why Your 2026 Smart Contract Audit is Still Failing" (2026-04-07) documents a **reentrancy renaissance** driven by async cross-chain call patterns that traditional reentrancy guards do not catch.
+
+**Mechanism**: Traditional reentrancy (A1) assumes synchronous callback within same transaction. The 2026 evolution introduces:
+1. **Read-Only Reentrancy via Async Cross-Chain Calls**: A cross-chain message is sent → destination chain executes → state changes → message returns → original contract reads stale view state. No synchronous callback, no reentrancy guard triggered.
+2. **Multi-Chain State Desynchronization**: Protocol operates across N chains. Chain A's view function reads Chain B's state via bridge oracle. Bridge latency creates window where Chain B has already modified state but Chain A's view still reports old values.
+3. **Bridge-Oracle-Protocol Triangulation**: Bridge message + oracle price + protocol mint logic combine to create extraction path that looks like legitimate cross-chain operation.
+
+**Why Distinct from A1**:
+- A1 = synchronous reentrancy within single transaction on single chain.
+- META-43 = asynchronous reentrancy across multiple chains with cross-chain state propagation delay.
+
+**Why Audits Miss This**:
+1. Reentrancy guards (OpenZeppelin ReentrancyGuard) are designed for synchronous callbacks.
+2. Cross-chain message handlers are audited separately from main protocol logic.
+3. "View" functions are assumed to be side-effect-free — but cross-chain views have state propagation latency.
+4. Bridge integration is often treated as "infrastructure" not "attack surface".
+
+**Defense Pattern**:
+1. **Cross-chain state versioning**: every cross-chain message must carry source-chain block height; destination rejects if too old.
+2. **Reentrancy guard for async**: extend reentrancy guard to cover cross-chain message lifecycles, not just synchronous callbacks.
+3. **View function freshness check**: any view function that reads cross-chain state must verify freshness (max_age_blocks).
+4. **Integration boundary audit**: cross-chain receiver handlers must be in scope when auditing main protocol.
+
+**Microstable Relevance**: MEDIUM — Microstable is Solana-native with no current cross-chain bridge. If Wormhole/IBC integration is added, META-43 applies immediately.
+
+**Source**: https://bytexel.org/the-2-8-billion-vulnerability-why-your-2026-smart-contract-audit-is-still-failing/
+
+---
+
+### META-44. Bridge Attestation System Classification Gap (BASC)
+
+**Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**
+
+**Signal**: Dev.to "Cross-Chain Bridge Security Checklist: 7 Lessons from $140M in Bridge Exploits (2025-2026)" + nomoslabs.io deep dive establish a systematic classification of bridge attestation systems, each with distinct failure modes that audits systematically underspecify.
+
+**Classification Framework**:
+
+| Attestation Type | Trust Assumption | Failure Mode | Example |
+|------------------|------------------|--------------|---------|
+| **External Validator** (Axelar, LayerZero, Wormhole) | N-of-M guardian honesty | Guardian key compromise, guardian collusion, threshold bypass | Ronin $624M, Wormhole $320M |
+| **Optimistic** (Nomad, Hashflow) | No fraud within challenge window | Challenge window bypass, fake challenge, operator collusion | Nomad $190M |
+| **Light Client** (Cosmos IBC, Near Rainbow) | Consensus finality of source chain | Fake light client, consensus-level attack, chain split | SagaEVM $7M |
+| **ZK Proof** (Polymer, Succinct) | Cryptographic soundness | Proof parameter manipulation, circuit bug, trusted setup failure | Veil Cash, FoomCash $2.26M |
+
+**Why Audits Miss This**:
+1. Bridges are audited as "black box" without systematic attestation-type analysis.
+2. Guardian set change processes are not in scope (assumed "operational").
+3. Challenge window parameters are treated as "configuration" not "security-critical".
+4. Light client integration depth is not fully reviewed.
+5. ZK ceremony verification is out of scope (A49 pattern).
+
+**CrossCurve $3M Pattern**:
+- External validator type (Axelar).
+- `expressExecute()` had no gateway validation (A48).
+- `confirmationThreshold = 1` (META-35).
+- Both layers failed simultaneously — neither was sufficient alone.
+
+**Defense Pattern**:
+
+1. **External Validator Bridges**:
+   - Guardian key rotation process audit mandatory.
+   - Threshold ≥ N/2 + 1 enforced in contract.
+   - Guardian geographic/jurisdictional diversity verification.
+
+2. **Optimistic Bridges**:
+   - Challenge window duration must exceed realistic fraud detection time.
+   - Bond slashing must exceed expected profit from fraud.
+   - Watcher network incentivization verified.
+
+3. **Light Client Bridges**:
+   - Source chain consensus finality assumptions documented.
+   - Light client update verification logic fully reviewed.
+   - Chain fork/upgrade handling audited.
+
+4. **ZK Bridges**:
+   - Ceremony verification included in scope (META-25).
+   - Circuit version pinning enforced.
+   - Trusted setup participation transparency verified.
+
+**Microstable Relevance**: MEDIUM — No current bridge integration. If any cross-chain functionality is added, attestation type must be explicitly declared and full attestation-type checklist applied.
+
+**Source**: https://dev.to/ohmygod/cross-chain-bridge-security-checklist-7-lessons-from-140m-in-bridge-exploits-2025-2026-5ap3 | https://nomoslabs.io/blog/cross-chain-bridge-vulnerabilities-2026-deep-dive
+
+---
+
+**Matrix state as of 2026-04-07 (daily update): 115 named vectors (A1–A92 + A85/A86 reserved + A93~A104) + META-01~44 + B73~B77 = 160 total entries. META-43~44 added by Purple Team 2026-04-07. Async Cross-Chain Reentrancy + Bridge Attestation Classification Gap documented.**
