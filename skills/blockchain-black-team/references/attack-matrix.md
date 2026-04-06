@@ -6170,4 +6170,92 @@ let key = SigningKey::generate(&mut rng); // if rng fails, key = zeros
 
 ---
 
-**Matrix state as of 2026-04-06 (daily update): 112 named vectors (A1–A92 + A85/A86 reserved + A93~A101) + META-01~42 + B73~B77 = 155 total entries. A98~A101 added by Red Team 2026-04-06. META-40~42 added by Purple Team 2026-04-06. META-38~39 added 2026-04-05. A97 fabricated governance token attack added in 2026-04-05. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
+### A102. Reward-Oracle vs Trade-Oracle Price Mismatch Manipulation
+
+**Published**: 2026-04-07 | **Severity**: HIGH | **Red Team**
+
+**Signal**: LML/USDT Staking Protocol ($950K, April 1, 2026, BSC) — BlockSec Phalcon.
+
+**Mechanism**:
+- Staking protocol calculates rewards based on TWAP or snapshot price.
+- Live pool price is manipulated separately via zero-address recipient path trades.
+- Attacker claims rewards at inflated snapshot price, then sells at real pool price.
+- **Dual-oracle mismatch**: reward calculation uses one price source, trading uses another.
+
+**Attack Flow**:
+1. Attacker executes swaps through zero-address recipient path → spot price inflates without token transfer.
+2. TWAP/snapshot oracle captures inflated price.
+3. Attacker invokes `claim()` from pre-funded wallets → rewards calculated at inflated price.
+4. Attacker sells tokens at market price → profit from price mismatch.
+
+**Key Insight**: A3 covers oracle manipulation. A102 is **structural dual-oracle mismatch** — two different price feeds for the same asset, one used for reward calculation, another for trading. This creates a deterministic arbitrage window that doesn't require oracle breakage, just timing mismatch.
+
+**Microstable Relevance**: Microstable uses Pyth oracle for all price operations. No separate reward vs trade oracle split. **DEFENDED** — single oracle source for all value calculations.
+
+**Defense Pattern**:
+1. Use same oracle for all price-dependent operations (mint, redeem, reward, trading).
+2. If dual oracles are required, enforce strict synchronization: reward price = trade price at claim time.
+3. Add sanity check: `abs(reward_price - spot_price) / spot_price < MAX_DEVIATION`.
+4. Reject claims during price volatility or when TWAP deviates significantly from live spot.
+
+**Source**: https://hacked.slowmist.io/ | https://x.com/Phalcon_xyz/status/2039211832947408928
+
+---
+
+### A103. Malicious Crate RAT Download — logtrace (RUSTSEC-2026-0081)
+
+**Published**: 2026-04-07 | **Severity**: HIGH | **Red Team**
+
+**Signal**: RUSTSEC-2026-0081 — `logtrace` crate removed from crates.io for downloading a RAT (Remote Access Trojan).
+
+**Mechanism**:
+- Crate appeared to be a logging/tracing utility.
+- At build time, `logtrace` downloaded and executed a RAT.
+- 2 versions published on 2026-04-01, 30 total downloads.
+- No crates depending on it.
+
+**Key Insight**: This is continuation of D43 (tracing-* namespace squatting). Difference: D43 was credential exfiltration, A103 is **RAT deployment**. Same namespace strategy, different payload.
+
+**Affected Code Pattern**:
+```toml
+# VULNERABLE: near-name tracing crate
+[dependencies]
+logtrace = "0.1"  # downloads RAT at build time
+```
+
+**Microstable Relevance**: Cargo.toml uses `tracing = "0.1"` (legitimate crate). No `logtrace` dependency. **NOT AFFECTED**.
+
+**Defense Pattern**:
+1. Pin all dependencies to exact versions in Cargo.lock.
+2. Block newly published crates (<7 days) for production builds.
+3. Run `cargo tree --locked` diff on every dependency change.
+4. Enforce two-person review for new crate additions.
+5. Use dependency allowlist with publisher reputation checks.
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0081
+
+---
+
+### A104. Anchor v1.0.0 Stable Release — Trust-Boundary Hardening
+
+**Published**: 2026-04-07 | **Severity**: INFO | **Red Team (Reference)**
+
+**Signal**: Anchor v1.0.0 released 2026-04-02 — first stable major release.
+
+**Key Changes**:
+- Trust-boundary patterns formalized (A95, A96 already tracked).
+- Breaking changes from 0.x to 1.0 require migration audit.
+- Security-focused release notes published.
+
+**Microstable Relevance**: Microstable uses anchor-lang 0.31.1. **Upgrade path pending** — v1.0.0 hardening patterns not yet applied.
+
+**Recommendation**: Audit v1.0.0 migration guide and plan upgrade. Key hardening:
+- Account validation constraint enforcement.
+- CPI cross-program invocation safety.
+- PDA derivation security.
+
+**Source**: https://github.com/solana-foundation/anchor/releases/tag/v1.0.0
+
+---
+
+**Matrix state as of 2026-04-07 (daily update): 115 named vectors (A1–A92 + A85/A86 reserved + A93~A104) + META-01~42 + B73~B77 = 158 total entries. A102~A104 added by Red Team 2026-04-07. Anchor v1.0.0 release noted. LML Protocol $950K added. logtrace RAT added.**
