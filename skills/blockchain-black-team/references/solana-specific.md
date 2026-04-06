@@ -938,3 +938,41 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 47. ☐ Privileged multisig / upgrade / treasury transactions must not use durable nonce accounts by default; if emergency nonce flow exists, require short TTL, explicit instruction digest review, nonce rotation, and no shared storage of partially signed transactions
+
+---
+<!-- AUTO-ADDED 2026-04-06 (Red Team Daily Evolution) — A98~A99 Drift Protocol refined patterns -->
+
+## 2026-04-06 Drift Protocol Refined Patterns
+
+### A98 — Oracle Manipulation via Fake Asset with Minimal Liquidity (Solana-Specific Variant)
+- **Solana context**: SPL token creation is cheap (<0.01 SOL). Raydium and other Solana AMMs have no minimum liquidity requirement for listing. Oracles that use AMM spot price without liquidity weighting are vulnerable.
+- **Attack shape**:
+  1. Mint 750M units of fake token (CVT in Drift case).
+  2. Seed $3,000 liquidity on Raydium.
+  3. Wash trade to maintain price near $1.
+  4. Oracle accepts token as collateral based on spot price.
+  5. Deposit fake tokens, withdraw real assets.
+- **Why distinct from A3**: A3 manipulates price of REAL assets. A98 creates the asset itself — no underlying value exists.
+- **Solana-specific defense**:
+  - Pyth oracle: only lists assets on major exchanges (gatekeeping).
+  - Custom oracle: minimum liquidity threshold (>$1M TVL), asset age requirement (30+ days), liquidity-weighted price.
+- **Checklist item 48**: ☐ If protocol accepts custom collateral assets, require: (a) TVL > $1M on primary DEX, (b) asset age > 30 days, (c) liquidity-weighted oracle price, (d) manual governance whitelist.
+
+### A99 — Zero-Timelock Governance Migration Attack (Solana-Specific Variant)
+- **Solana context**: Solana programs often use PDAs as admin authorities. Migration of admin authority (e.g., Security Council) can change threshold and timelock settings.
+- **Attack shape**:
+  1. Protocol migrates governance to new council/multisig.
+  2. Migration sets timelock = 0 for "operational flexibility".
+  3. Attacker (already positioned) immediately executes privileged operations.
+  4. No time for monitoring/alerting/response.
+- **Observed real-world signal**: Drift Protocol migrated Security Council to 2/5 threshold on March 27, 2026 — with zero timelock. This eliminated the detection window.
+- **Why distinct from A5**: Not a timelock bypass — it's a governance decision that REMOVES the timelock entirely.
+- **Solana-specific defense**:
+  - Enforce minimum timelock (24h) at program level.
+  - Migration requires separate governance vote.
+  - Monitor governance config changes.
+- **Checklist item 49**: ☐ All governance/admin migrations must: (a) enforce ≥24h timelock, (b) require separate vote for timelock removal, (c) trigger monitoring alert on config change.
+
+### Solana-Specific Defense Checklist Update
+48. ☐ Custom collateral onboarding: TVL > $1M, age > 30 days, liquidity-weighted oracle, governance whitelist
+49. ☐ Governance migration: enforce ≥24h timelock, separate vote for removal, monitoring alert

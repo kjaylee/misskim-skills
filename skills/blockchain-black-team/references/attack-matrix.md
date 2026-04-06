@@ -6016,4 +6016,158 @@ pub fn process_governance_vote(ctx: Context<Vote>, token_mint: Pubkey) -> Result
 
 ---
 
-**Matrix state as of 2026-04-06 (daily update): 108 named vectors (A1–A92 + A85/A86 reserved + A93~A97) + META-01~42 + B73~B77 = 151 total entries. META-40~42 added by Purple Team 2026-04-06. META-38~39 added 2026-04-05. A97 fabricated governance token attack added in 2026-04-05. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
+### A98. Oracle Manipulation via Fake Asset with Minimal Liquidity
+
+**Published**: 2026-04-06 | **Severity**: HIGH | **Red Team**
+
+**Signal**: Drift Protocol $285M (April 2026) — CarbonVote Token (CVT) was a completely fabricated asset with only $3,000 seeded liquidity on Raydium, yet Drift's oracle accepted it as legitimate collateral worth hundreds of millions.
+
+**Historical**: Unlike A3 (oracle manipulation of real assets), this creates the asset AND the liquidity from scratch.
+
+**Mechanism**:
+1. Attacker mints 750M units of fake token (CVT).
+2. Seeds $3,000 liquidity on Raydium (or any AMM).
+3. Wash trades to establish price history near $1.
+4. Oracle picks up artificial price signal (no minimum liquidity threshold).
+5. Deposits fake tokens as collateral against fabricated value.
+6. Withdraws real assets (USDC, JLP, etc.).
+
+**Solana-Specific Pattern**:
+- SPL token creation is cheap (<0.01 SOL).
+- Raydium liquidity pools have no minimum TVL.
+- Oracles that use AMM spot price without liquidity weighting are vulnerable.
+
+**Why This Is Distinct from A3**:
+- A3 manipulates price of REAL assets with real liquidity.
+- A98 creates the asset itself — no underlying value exists.
+- Defense is asset onboarding gatekeeping, not just oracle design.
+
+**Code Pattern to Find**:
+```rust
+// VULNERABLE: no minimum liquidity check before accepting collateral
+pub fn add_collateral(ctx: Context<AddCollateral>, mint: Pubkey) -> Result<()> {
+    let price = get_oracle_price(mint)?;
+    // MISSING: require!(get_liquidity(mint) > MIN_LIQUIDITY_THRESHOLD);
+    collateral_whitelist.insert(mint, price);
+}
+
+// VULNERABLE: spot price without liquidity weighting
+let price = get_raydium_spot_price(mint); // $1 with $3k liquidity
+```
+
+**Defense Pattern**:
+1. **Minimum Liquidity Threshold**: assets must have >$1M TVL before oracle onboarding.
+2. **Asset Age Requirement**: token must exist on-chain for 30+ days with active trading.
+3. **Liquidity-Weighted Price**: weight oracle price by sqrt(TVL).
+4. **Circuit Breaker**: reject collateral deposit if price moves >10% in 1 hour with <1M volume.
+5. **Manual Whitelist**: no automatic oracle onboarding; governance vote required.
+
+**Source**: TRM Labs Drift Protocol post-mortem (2026-04-02) | SpotedCrypto analysis
+
+---
+
+### A99. Zero-Timelock Governance Migration Attack
+
+**Published**: 2026-04-06 | **Severity**: HIGH | **Red Team**
+
+**Signal**: Drift Protocol migrated Security Council to 2/5 threshold on March 27, 2026 — with zero timelock. This eliminated the detection window that would have allowed intervention.
+
+**Historical**: Similar to A5 (timelock bypass), but specifically targets governance configuration migration.
+
+**Mechanism**:
+1. Protocol plans governance migration (legitimate intent).
+2. Migration sets timelock = 0 for "operational flexibility".
+3. Attacker (already positioned) immediately executes privileged operations.
+4. No time for monitoring/alerting/response.
+
+**Why This Is Distinct**:
+- Not a vulnerability in timelock implementation (A5).
+- It's a governance decision that REMOVES the timelock.
+- The attack surface is the migration process itself.
+
+**Code Pattern to Find**:
+```rust
+// VULNERABLE: migration sets timelock to 0
+pub fn migrate_security_council(ctx: Context<MigrateCouncil>) -> Result<()> {
+    council.threshold = 2;
+    council.timelock = 0; // EXPLOITABLE: removes detection window
+}
+
+// SAFE: enforce minimum timelock
+pub fn migrate_security_council(ctx: Context<MigrateCouncil>) -> Result<()> {
+    require!(new_timelock >= MIN_TIMELOCK, ErrorCode::TimelockTooShort);
+}
+```
+
+**Defense Pattern**:
+1. **Mandatory Minimum Timelock**: all governance migrations must have ≥24h timelock.
+2. **Timelock Removal = Separate Vote**: removing timelock requires explicit governance approval.
+3. **Monitoring Alert**: trigger on any governance config change (threshold, timelock, signers).
+4. **Emergency Pause**: circuit breaker that can halt operations during suspicious config changes.
+
+**Source**: TRM Labs Drift Protocol post-mortem (2026-04-02)
+
+---
+
+### A100. RustSec CRITICAL — hpke-rs Nonce Reuse
+
+**Published**: 2026-04-06 | **Severity**: CRITICAL | **Red Team**
+
+**Signal**: RUSTSEC-2026-0071 rated CRITICAL — hpke-rs library reuses nonces in HPKE context, enabling key recovery and message decryption.
+
+**Mechanism**:
+- HPKE (Hybrid Public Key Encryption) requires unique nonces for each encryption.
+- hpke-rs implementation reuses nonces under certain conditions.
+- Nonce reuse enables attacker to recover key material and decrypt messages.
+
+**Affected Code Pattern**:
+```rust
+// VULNERABLE: hpke-rs < patched version
+use hpke:: HpkeContext;
+let mut context = HpkeContext::new(...);
+context.seal(&message1, nonce1); // nonce reused
+context.seal(&message2, nonce1); // CRITICAL: key recovery possible
+```
+
+**Microstable Relevance**: Check if `hpke-rs` or `hpke` crate is in Cargo.toml.
+
+**Defense Pattern**:
+1. Update hpke-rs to patched version immediately.
+2. Audit all HPKE usage for nonce management.
+3. Add explicit nonce uniqueness check before sealing.
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0071
+
+---
+
+### A101. RustSec CRITICAL — libcrux-ed25519 All-Zero Key Generation
+
+**Published**: 2026-04-06 | **Severity**: CRITICAL | **Red Team**
+
+**Signal**: RUSTSEC-2026-0075 rated CRITICAL — libcrux-ed25519 generates all-zero keys on catastrophic RNG failure.
+
+**Mechanism**:
+- Ed25519 key generation requires strong randomness.
+- On RNG failure, libcrux-ed25519 generates keys with all zeros.
+- All-zero keys are trivially guessable → private key compromise.
+
+**Affected Code Pattern**:
+```rust
+// VULNERABLE: libcrux-ed25519 < patched version
+use libcrux_ed25519::SigningKey;
+let key = SigningKey::generate(&mut rng); // if rng fails, key = zeros
+```
+
+**Microstable Relevance**: Check if `libcrux-ed25519` crate is in Cargo.toml. Microstable uses `ed25519-dalek` — NOT affected.
+
+**Defense Pattern**:
+1. Update libcrux-ed25519 to patched version.
+2. Verify RNG status before key generation.
+3. Reject all-zero keys explicitly.
+4. Prefer well-audited implementations (ed25519-dalek, ring).
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0075
+
+---
+
+**Matrix state as of 2026-04-06 (daily update): 112 named vectors (A1–A92 + A85/A86 reserved + A93~A101) + META-01~42 + B73~B77 = 155 total entries. A98~A101 added by Red Team 2026-04-06. META-40~42 added by Purple Team 2026-04-06. META-38~39 added 2026-04-05. A97 fabricated governance token attack added in 2026-04-05. B77 durable nonce approval laundering / pre-signed multisig admin takeover was added 2026-04-03. A95~A96 (Anchor 1.0 trust-boundary hardening) added 2026-04-03. META-36~37 added 2026-04-03. A93 (Loopscale $5.8M) + A94 (Drift mechanism TBD → confirmed) added 2026-04-02. B73~B76 added 2026-04-01. META-29~35 added by Purple Team (2026-03-31~04-02).**
