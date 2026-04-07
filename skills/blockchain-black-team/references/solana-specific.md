@@ -976,3 +976,49 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 48. ☐ Custom collateral onboarding: TVL > $1M, age > 30 days, liquidity-weighted oracle, governance whitelist
 49. ☐ Governance migration: enforce ≥24h timelock, separate vote for removal, monitoring alert
+
+### A105 — Persistent Nonce Durable Pre-Signed Transaction Bypass (Drift Pattern)
+- **Solana context**: Durable nonce accounts allow transactions to remain executable indefinitely beyond normal recent-blockhash lifetime (~150 slots). Pre-signed durable nonce transactions can be stockpiled and executed at attacker-chosen time.
+- **Drift-specific attack chain** (April 1, 2026):
+  1. March 23: Attacker initialized 4 persistent nonce accounts (2 linked to Drift Security Council signers, 2 attacker-controlled)
+  2. Pre-signed instructions were obtained under guise of routine protocol maintenance
+  3. March 27: Governance migration to 2/5 + zero timelock removed delay window
+  4. April 1: Pre-signed txs executed in 12 minutes across 31 withdrawals
+- **Why distinct from A99**: A99 covers the governance migration to zero timelock. A105 is the *mechanism* — durable nonces make ANY pre-signed privileged tx a deferred weapon, regardless of governance changes
+- **Keeper/infrastructure relevance**: If Microstable privileged operations (upgrade, emergency admin, treasury) ever use durable nonce accounts, the same stockpiling attack applies. Keeper binary uses fresh `get_latest_blockhash()` per transaction — NOT currently using durable nonces
+- **Detection command**: Search for `nonce_account` or ` durable_nonce` in all privileged admin scripts and program initialization paths
+- **Checklist item 50**: ☐ No privileged operations use durable nonce accounts. If emergency nonce flow is added, require: (a) short TTL ≤10 slots, (b) explicit instruction digest review by all signers, (c) no stockpiling of partially-signed nonce transactions
+
+### A106 — Stablecoin Issuer CCTP Exfil via Selective Inaction (Drift $232M USDC Pattern)
+- **Solana context**: Circle's Cross-Chain Transfer Protocol (CCTP) is the primary USDC bridge from Solana to Ethereum. CCTP requires Circle's mint/burn mechanism — Circle can freeze minted USDC on destination chain
+- **Drift-specific exploit**: $232M USDC bridged Solana → Ethereum via CCTP during active exploit. Circle had frozen 16 unrelated wallets 8 days earlier for a sealed U.S. civil case, demonstrating active freeze capability. Circle took 6+ hours to begin partial freezing — 0 freeze during active attack
+- **Attack shape**:
+  1. Drain Solana DeFi protocol using admin key compromise or smart contract exploit
+  2. Convert assets to USDC
+  3. Bridge USDC to Ethereum via CCTP (Circle's own infrastructure)
+  4. Circle has freeze power but may delay or refuse during active exploit
+- **Microstable specific risk**: Microstable accepts USDC, USDT, DAI, USDS as collateral. If USDC is the dominant collateral and a similar exploit occurs, $232M in USDC could be exfil'd via CCTP before Circle acts
+- **Defense requirements**:
+  1. Document Circle emergency freeze contact procedure and SLA (target: <30 min response)
+  2. Maintain alternative circuit breaker that pauses mint/redeem if >$10M USDC exits via CCTP in <1 hour
+  3. Cross-chain bridge usage monitoring with automatic alert
+- **Source**: https://www.cryptotimes.io/2026/04/03/285m-gone-in-12-minutes-how-a-fake-token-and-stolen-keys-gutted-drift-protocol/
+
+### B78 — Wide Cross-Slot Sandwich Attack (Firedancer Era, 93% of Solana MEV)
+- **Signal**: dev.to analysis (2026-04), Solana MEV defense research
+- **Pattern**: 93% of Solana sandwich attacks now span multiple validator slots — no longer detectable as same-block transactions:
+  ```
+  Slot N (Attacker-Controlled Validator): tx[last] = front-run buy
+  Slot N+1 (Any Validator): tx[mid] = victim swap at inflated price
+  Slot N+2 (Attacker-Controlled Validator): tx[0] = back-run sell
+  ```
+- **Distinct from B40**: B40 (ACE fairness) is about protocol-level ordering rules. B78 is about MEV extraction across slot boundaries made possible by validator-level coordination
+- **Single bot dominance**: One program (vpeNALD) executes 51,600 TX/day, 88.9% success rate, ~$450K SOL/day extraction
+- **Firedancer verification lag amplifier**: Firedancer's dynamic block sizing + skip-vote creates intra-slot price lag. Keeper oracle update TX in slot N may show `oracle_slot=N` while price publication was 200ms prior — attacker can sandwich against the stale inner-slot price
+- **Microstable risk**: LOW (stablecoin mint/redeem with fixed-price oracles, not AMM swaps). Keeper oracle updates use Pyth with publish_time + slot freshness — Firedancer intra-slot lag is absorbed by the publish_time check
+- **Mitigation**: Jito `dontfront` flag protects within-block ordering; wide-slot attacks require separate defense
+
+### Solana-Specific Defense Checklist Update
+50. ☐ No privileged operations use durable nonce accounts; emergency nonce flow has ≤10 slot TTL + instruction digest review
+51. ☐ Circle CCTP exfil: documented freeze procedure SLA <30 min + circuit breaker on large USDC bridge outflows
+52. ☐ Wide cross-slot sandwich: Jito dontfront for keeper TX when possible; monitor for multi-slot MEV patterns

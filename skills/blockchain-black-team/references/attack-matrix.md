@@ -6261,6 +6261,101 @@ logtrace = "0.1"  # downloads RAT at build time
 
 ---
 
+### A105. Persistent Nonce Durable Pre-Signed Transaction Bypass (Drift Pattern)
+
+**Published**: 2026-04-08 | **Severity**: CRITICAL | **Red Team**
+
+**Signal**: TRM Labs + CryptoTimes Drift Protocol post-mortem (April 2026). Persistent nonce accounts initialized March 23, 2026 — 9 days before exploit.
+
+**Mechanism**: Solana durable nonce accounts allow transactions to remain executable far beyond normal recent-blockhash lifetime (~150 slots). Pre-signed durable nonce transactions can be stockpiled and broadcast at attacker-chosen time.
+
+**Drift-specific attack chain**:
+1. March 23: Attacker initialized 4 persistent nonce accounts (2 linked to Drift Security Council multi-sig signers, 2 attacker-controlled)
+2. Pre-signed instructions obtained via CVT social engineering lure — signed under guise of routine protocol maintenance
+3. March 27: Governance migration to 2/5 + zero timelock removed detection window
+4. April 1: Pre-signed nonce transactions executed 31 withdrawals in 12 minutes
+
+**Why distinct from A99**: A99 covers governance migration to zero timelock. A105 is the **mechanism** — durable nonces make ANY pre-signed privileged transaction a deferred weapon, regardless of governance changes. Signer interaction is separated from execution time by design.
+
+**Solana-specific checklist**: For every privileged operation (upgrade authority, treasury, emergency admin), ask: "can this be pre-signed and stockpiled?"
+
+**Detection command**:
+```bash
+# Scan for durable nonce usage in all privileged scripts
+grep -r "nonce_account\|create_nonce_account\| durable_nonce\|advance_nonce" \
+  programs/ keeper/src/ scripts/ --include="*.rs" --include="*.ts" --include="*.js"
+```
+
+**Microstable status**: Keeper binary confirmed uses fresh `get_latest_blockhash()` per transaction — NOT using durable nonces. ✅ SAFE. No durable nonce in privileged admin paths.
+
+**Checklist item 50**: ☐ No privileged operations use durable nonce accounts; if emergency nonce flow exists: TTL ≤10 slots + instruction digest review + no stockpiling
+
+---
+
+### A106. Stablecoin Issuer CCTP Exfil via Selective Inaction (Drift $232M USDC Pattern)
+
+**Published**: 2026-04-08 | **Severity**: HIGH | **Red Team**
+
+**Signal**: Drift Protocol $285M exploit (April 1, 2026) — $232M USDC bridged from Solana to Ethereum via Circle CCTP. Circle had frozen 16 unrelated corporate wallets on March 23 for a sealed civil case. Circle took 6+ hours to begin partial freeze during active exploit. ZachXBT: "Circle was asleep while $230M+ USDC swapped via CCTP for hours."
+
+**Mechanism**: CCTP is Circle's own mint/burn bridge. USDC on Solana is minted when transferred via CCTP to Ethereum; Circle can freeze minted USDC on destination chain. Circle has technical capability but operational decision to freeze is discretionary.
+
+**Attack shape**:
+1. Drain Solana DeFi protocol (admin key compromise, smart contract exploit, oracle manipulation)
+2. Convert assets to USDC
+3. Bridge USDC Solana → Ethereum via CCTP (passes through Circle's own infrastructure)
+4. Circle has freeze power but may delay 6+ hours or refuse during active exploit
+
+**Microstable specific risk**: Microstable accepts USDC (dominant stablecoin collateral) as primary collateral. If similar exploit occurs, large USDC exits via CCTP before Circle acts.
+
+**Defense pattern**:
+```rust
+// Circuit breaker: pause mint/redeem if large CCTP outflow detected
+let cctp_outflow_1h = protocol_state.usdc_cctp_bridge_outflow_last_1h;
+require!(cctp_outflow_1h <= CCTP_CIRCUIT_BREAKER_THRESHOLD,
+    ErrorCode::CCTPOutflowExceeded);
+```
+
+**Checklist item 51**: ☐ Document Circle emergency freeze contact procedure + SLA target <30 min; add CCTP outflow circuit breaker
+
+**Source**: https://www.cryptotimes.io/2026/04/03/285m-gone-in-12-minutes-how-a-fake-token-and-stolen-keys-gutted-drift-protocol/
+
+---
+
+### B78. Wide Cross-Slot Sandwich Attack (Firedancer Era, 93% of Solana MEV)
+
+**Published**: 2026-04-08 | **Severity**: HIGH | **Red Team**
+
+**Signal**: dev.to "Solana MEV Defense in 2026" (2026-04). vpeNALD bot executes 51,600 TX/day, 88.9% success rate, extracting ~$450K/day in SOL.
+
+**Pattern — 93% of Solana sandwich attacks now span multiple slots**:
+```
+Slot N (Attacker-Controlled Validator):  tx[last] = front-run buy order
+Slot N+1 (Any Validator):                tx[mid] = victim swap executes at inflated price
+Slot N+2 (Attacker-Controlled Validator): tx[0] = back-run sell order
+```
+
+**Why distinct from B40 (ACE fairness)**: B40 is about protocol-level ordering constraints. B78 is about MEV extraction across validator slot boundaries using Jito bundle infrastructure + validator coordination.
+
+**Firedancer verification lag amplifier**:
+- Firedancer skip-vote creates gap between `Confirmed` and `Finalized`
+- Keeper oracle update TX in slot N shows `oracle_slot=N` but price was published 200ms prior
+- Victim TX in slot N+1 may read stale intra-slot price despite oracle freshness check passing
+- This is a **new Firedancer-era attack surface** not covered by B50 or B65
+
+**Microstable risk**: LOW — stablecoin mint/redeem with fixed oracle price, not AMM dynamic pricing. Keeper oracle updates use both slot AND publish_time freshness (PTV2-002 implemented). Firedancer intra-slot lag is absorbed by publish_time check.
+
+**Mitigation**:
+- Jito `dontfront` flag (index 0 priority) — only protects within-block ordering
+- Wide-slot attacks require multi-slot monitoring + cross-validator coordination detection
+- Keeper should use `Finalized` commitment for irrevocable operations
+
+**Checklist item 52**: ☐ Wide cross-slot MEV: keeper TX uses Jito dontfront where possible; irrevocable operations use Finalized commitment; monitor for multi-slot MEV extraction patterns
+
+**Source**: https://dev.to/ohmygod/solana-mev-defense-in-2026-how-sandwich-bots-extracted-500m-and-the-6-protocol-level-defenses-16d9
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**
@@ -6472,4 +6567,4 @@ logtrace = "0.1"  # downloads RAT at build time
 
 **META-45 (2026-04-08)**: Two major exploits (Drift $285M, Resolv $25M) added. Both exploit the gap between "technically correct code" and "operationally secure infrastructure" — Drift via fake token social engineering, Resolv via supply chain lateral movement. Defense-in-Depth principle reinforced: no single point of failure should enable catastrophic loss. Microstable's 2-of-3 keeper + per-slot caps + oracle checks align with this principle.
 
-**Matrix state as of 2026-04-08 (daily update): 117 named vectors (A1–A104 + A52~A53 new + D45) + META-01~45 + B73~B77 = 164 total entries. META-45 added by Red Team 2026-04-08. Drift Protocol + Resolv Labs patterns documented.**
+**Matrix state as of 2026-04-08 (daily update): 120 named vectors (A1–A106 + A52~A53 new + D45) + META-01~46 + B73~B78 = 169 total entries. META-46 added by Red Team 2026-04-08. Drift $285M (A105+A106), Wide Cross-Slot Sandwich (B78) patterns documented.**
