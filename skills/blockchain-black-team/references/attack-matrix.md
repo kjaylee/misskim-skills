@@ -6348,3 +6348,125 @@ logtrace = "0.1"  # downloads RAT at build time
 ---
 
 **Matrix state as of 2026-04-07 (daily update): 115 named vectors (A1–A92 + A85/A86 reserved + A93~A104) + META-01~44 + B73~B77 = 160 total entries. META-43~44 added by Purple Team 2026-04-07. Async Cross-Chain Reentrancy + Bridge Attestation Classification Gap documented.**
+
+---
+
+<!-- AUTO-ADDED 2026-04-08 (Red Team Daily Evolution) — A52~A53 Drift Protocol + Resolv Labs patterns -->
+
+## 2026-04-08 Major Exploit Pattern Additions
+
+### A52. Fake Token Legitimacy Manufacturing + Admin Key Social Engineering (Drift Protocol $285M)
+**Signal**: Drift Protocol (Solana DEX) — April 1, 2026, $285M stolen in 12 minutes. Largest DeFi exploit of 2026. DPRK-linked (TRM Labs, Elliptic).
+
+**Mechanism**:
+1. **Legitimacy Manufacturing Phase (weeks)**: Attacker creates CarbonVote Token (CVT), mints 750M units, seeds ~$3K liquidity on Raydium, wash-trades to maintain price near $1. Oracle infrastructure picks up the artificial price signal.
+2. **Admin Key Extraction**: CVT interaction with Drift's admin infrastructure exposes or extracts privileged keys. Full forensic details pending, but outcome: attacker gains admin-level access to vault operations.
+3. **Execution Phase**: Pre-signed transactions deployed April 1. Attacker lists CVT as valid market, uses compromised admin key to bypass governance safeguards, drains $285M via 31 sequential withdrawals.
+4. **Cross-Chain Escape**: $232M USDC bridged from Solana to Ethereum via Circle CCTP. Circle delayed freezing for 6+ hours despite active exploit.
+
+**Why distinct from A3 (Oracle Manipulation)**:
+- A3 manipulates price of REAL assets with existing liquidity.
+- A52 CREATES the asset from scratch — no underlying value exists.
+- Legitimacy is manufactured over weeks, not exploited in a single block.
+
+**Why distinct from A4 (Access Control)**:
+- A4 is typically direct key theft or role bypass.
+- A52 uses a FAKE ASSET as the social engineering vector to extract admin credentials.
+- The token itself is the attack tool, not just the stolen funds.
+
+**Solana-specific risk factors**:
+- SPL token creation is cheap (<0.01 SOL).
+- Raydium has no minimum liquidity requirement for listing.
+- AMM spot price oracles without liquidity weighting are trivially manipulated.
+- Admin key infrastructure often interacts with new token listings.
+
+**Microstable-specific assessment**:
+- ✅ **DEFENDED**: Microstable does NOT accept custom collateral assets.
+- ✅ **DEFENDED**: Pyth feed IDs are hardcoded (USDC, USDT, DAI, USDS only).
+- ✅ **DEFENDED**: `TRUSTED_INITIALIZER` restricts who can configure feeds.
+- ✅ **DEFENDED**: `expected_pyth_feed_account()` enforces allowlist.
+
+**General protocol defense**:
+1. Custom collateral onboarding: require TVL > $1M on primary DEX, asset age > 30 days, liquidity-weighted oracle price, governance whitelist vote.
+2. Admin key infrastructure: audit all paths where new token listings interact with privileged operations.
+3. Oracle composition: reject spot-price feeds from low-liquidity AMMs; require TWAP or CEX price sources.
+4. Cross-chain monitoring: emergency freeze authority for major stablecoin issuers should have 24/7 on-call.
+
+**Sources**: https://www.spotedcrypto.com/drift-protocol-285m-hack-explained/ | https://www.trmlabs.com/resources/blog/north-korean-hackers-attack-drift-protocol-in-285-million-heist | Bloomberg | TechCrunch | rekt.news
+
+| A52 Fake Token Legitimacy Manufacturing + Admin Key Social Engineering | 공격자가 수주에 걸쳐 가짜 토큰(CVT)에 정당성을 부여(유동성 심기, 워시 트레이딩), admin infrastructure와 상호작용하여 key 탈취, pre-signed tx로 $285M 탈취. A3(실제 자산 가격 조작)과 달리 자산 자체를 창조. Microstable은 커스텀 담보 미허용 + Pyth feed ID 하드코딩으로 방어됨. 커스텀 담보 온보딩 시 TVL>$1M, 30일+, 유동성 가중 오라클 필수. (Drift 2026-04-01, $285M) |
+
+---
+
+### D45. Supply Chain → CI/CD → Cloud → Signing Authority Lateral Movement (Resolv Labs $25M)
+**Signal**: Resolv Labs (USR stablecoin) — March 22, 2026, $25M stolen. Supply chain attack leading to unlimited minting.
+
+**Mechanism**:
+1. **Supply Chain Entry**: Contractor's GitHub credential compromised at a third-party project where they previously contributed.
+2. **CI/CD Weaponization**: Malicious workflow deployed in Resolv's repository. Workflow exfiltrates infrastructure credentials without triggering outbound network detection.
+3. **Cloud Reconnaissance**: Days of quiet enumeration in Resolv's cloud infrastructure. Attacker probes for API keys and escalation paths.
+4. **Privilege Escalation**: Multiple escalation attempts denied before finding a path: using higher-privileged role's policy management to modify the minting key's access policy, granting attacker signing authority.
+5. **Unlimited Minting**: Compromised `SERVICE_ROLE` EOA (held since May 2024) authorizes minting 80M unbacked USR with only $200K collateral — a 500:1 mismatch. No multisig, no oracle check, no on-chain ceiling.
+6. **Exit**: Print → wrap (wstUSR) → swap (Curve/Uniswap) → convert to ETH. $25M consolidated in single wallet. No mixer used.
+
+**Why distinct from B15 (Key Compromise)**:
+- B15 is direct key theft.
+- D45 is a multi-stage lateral movement: supply chain → CI/CD → cloud → privilege escalation → signing authority.
+- The key itself was never "stolen" — the attacker gained signing authority via policy modification.
+
+**Why distinct from D28 (Supply Chain)**:
+- D28 is supply chain compromise of a direct dependency.
+- D45 is supply chain compromise of a THIRD-PARTY project → lateral movement to target organization.
+- Contractor's work on an unrelated project became the entry vector.
+
+**Defense-in-Depth failures**:
+- Single EOA held `SERVICE_ROLE` for 22 months with unlimited minting authority.
+- No multisig threshold for minting.
+- No oracle sanity check on mint amounts.
+- No on-chain ceiling for total supply.
+- Governance Safe required multisig to pause, but assembly took 3 hours — exploit completed multiple iterations in that window.
+- Real-time monitoring with auto-pause could have limited losses to $8M (first transaction catch).
+
+**Microstable-specific assessment**:
+- ✅ **DEFENDED (minting authority)**: 2-of-3 keeper quorum required for oracle updates and privileged ops.
+- ✅ **DEFENDED (mint cap)**: Per-slot flow limits (`MAX_MINT_PER_SLOT_PPM = 6%`), per-TX limits (`MAX_MINT_PER_TX_PPM = 2%`).
+- ✅ **DEFENDED (oracle check)**: Pyth oracle mandatory, staleness + confidence + status checks enforced on-chain.
+- ⚠️ **OPERATIONAL RISK**: Keeper keypair storage and CI/CD pipeline security are off-chain operational concerns. If keeper build environment or `.env` is compromised, 2-of-3 mitigates but does not eliminate risk.
+
+**General protocol defense**:
+1. **Signing authority scope-limiting**: Keys should be scope-limited to specific operations, not blanket admin.
+2. **Multisig for minting**: Any operation that creates unbacked tokens must require M-of-N.
+3. **On-chain sanity guards**: Mint amount vs collateral ratio, max supply cap, oracle price sanity bounds.
+4. **CI/CD hardening**: Secrets never in repo; infrastructure credentials rotated; build pipelines isolated.
+5. **Auto-pause monitoring**: Real-time detection with automated pause authority (no human in loop for critical windows).
+6. **Contractor access audit**: Third-party project access should be reviewed when contractors join/leave.
+
+**Sources**: https://rekt.news/resolv-labs-rekt | Chainalysis post-mortem | PeckShield | Hacken | QuillAudits
+
+| D45 Supply Chain → CI/CD → Cloud → Signing Authority Lateral Movement | Contractor GitHub 탈취 → 악성 CI/CD workflow → cloud credential exfiltration → privilege escalation → SERVICE_ROLE signing authority 획득 → 80M USR 무제한 민팅. 단일 EOA가 22개월간 무제한 민팅 권한 보유. multisig, oracle check, supply cap 전무. Microstable은 2-of-3 keeper + per-slot cap + oracle check로 방어. Keeper 키 관리는 운영 리스크. (Resolv 2026-03-22, $25M) |
+
+---
+
+## Solana-Specific Defense Checklist Update (2026-04-08)
+
+50. ☐ Custom collateral onboarding (if ever implemented): TVL > $1M, asset age > 30 days, liquidity-weighted oracle, governance whitelist vote
+51. ☐ Admin key infrastructure: audit all paths where new token listings interact with privileged operations
+52. ☐ CI/CD pipeline hardening: secrets never in repo, infrastructure credentials rotated, build pipelines isolated from production environment
+53. ☐ Contractor access audit: when team members join/leave, review third-party project access that may provide lateral movement paths
+54. ☐ Auto-pause monitoring: real-time detection with automated pause authority for critical operations (no human in loop for exploit windows)
+55. ☐ Keeper keypair operational security: scope-limited keys, hardware signer for treasury/withdraw authority, separate from keeper ops key
+
+---
+
+## Incidents Log Update (2026-04-08)
+
+| Date | Protocol | Chain | Amount | Vector | Reference |
+|------|----------|-------|--------|--------|-----------|
+| 2026-04-01 | Drift Protocol | Solana | $285M | A52 (Fake Token + Admin Key) | rekt.news, Bloomberg, TRM Labs |
+| 2026-03-22 | Resolv Labs | Ethereum | $25M | D45 (Supply Chain → Signing Authority) | rekt.news/resolv-labs-rekt |
+
+---
+
+**META-45 (2026-04-08)**: Two major exploits (Drift $285M, Resolv $25M) added. Both exploit the gap between "technically correct code" and "operationally secure infrastructure" — Drift via fake token social engineering, Resolv via supply chain lateral movement. Defense-in-Depth principle reinforced: no single point of failure should enable catastrophic loss. Microstable's 2-of-3 keeper + per-slot caps + oracle checks align with this principle.
+
+**Matrix state as of 2026-04-08 (daily update): 117 named vectors (A1–A104 + A52~A53 new + D45) + META-01~45 + B73~B77 = 164 total entries. META-45 added by Red Team 2026-04-08. Drift Protocol + Resolv Labs patterns documented.**
