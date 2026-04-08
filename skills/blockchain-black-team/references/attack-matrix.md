@@ -1,4 +1,4 @@
-# Attack Matrix — 93 Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08) | META-01~45
+# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09) | META-01~46
 
 ## A. Smart Contract Vectors
 
@@ -6322,6 +6322,52 @@ require!(cctp_outflow_1h <= CCTP_CIRCUIT_BREAKER_THRESHOLD,
 
 ---
 
+### A107. AMM Reserve Desync via Permanent Token Destruction to Dead Address (TMM $1.665M, BSC)
+
+**Published**: 2026-04-08 | **Severity**: HIGH | **Red Team**
+
+**Signal**: TMM/USDT pair on BSC — April 5, 2026, $1.665M drained. ExVul monitoring + Phemex + Bitget confirmed.
+
+**Mechanism**:
+```
+1. Flash loans: borrow massive TMM from ListaDAO Moolah, Venus, Aave V3, PancakeSwap Vault, Uniswap PoolManager
+2. Send all borrowed TMM to dead address (0xdEaD) — permanent destruction, no transfer hook needed
+3. totalSupply(TMM) reduced but AMM pair reserves remain at pre-burn cached values
+4. AMM pair's getReserves() reads pair's balanceOf(TMM) — still counts all tokens as if not burned
+5. Now: pair holds ~1 TMM (attacker is the only TMM holder), 272M USDT
+   Constant product: k = 1 × 272M = 272M
+   Attacker swaps 850M TMM (from fresh flash loan or pre-held) → gets ~272M USDT out
+6. Repay all flash loans; net profit ~$1.665M USDT
+```
+
+**Why distinct from A91 (BCE burn-on-transfer)**:
+- A91: burn happens inside `_transfer()` — a transfer hook triggers AMM reserve sync
+- A107: burn is direct send-to-dead-address — no transfer hook, no AMM callback, reserves never sync
+- In A91, the pair's `sync()` is called after each transfer-burn, keeping reserves fresh (but totalSupply is wrong)
+- In A107, the pair never knows tokens were destroyed — it still reports stale reserve values
+- **Core distinction**: A91 = transfer hook burns → reserves stale because `sync()` wasn't called. A107 = dead-address burns bypass the AMM pair's awareness entirely.
+
+**Why distinct from A41 (fee-exempt burn path)**:
+- A41 is about exploiting fee-exempt burn paths within same contract to extract protocol value
+- A107 is about AMM reserve desync — the attack surface is the AMM pair, not the token contract itself
+
+**Microstable specific risk**: LOW — Microstable does not use AMM pools. However, if Microstable integrates with any AMM (Raydium, Orca, Jupiter) for liquidity or LP-backed collateral, this pattern applies.
+
+**Defense pattern** (for protocols using AMM pairs with burnable tokens):
+1. **TWAP oracle over spot price**: use time-weighted average price, not spot reserves
+2. **Supply-aware oracle**: oracle should read `totalSupply` and `balanceOf(pair)` together to detect burns
+3. **Dead-address supply tracking**: explicitly subtract dead-address balance from circulating supply in any accounting
+4. **Virtual reserve accounting**: maintain internal "real supply" accounting that excludes dead-address holdings
+5. **Minimum liquidity enforcement**: AMM pairs should require minimum initial liquidity with no burn exemption
+
+**Checklist item 53**: ☐ If any AMM integration is added: verify pair reserves account for dead-address balances; use TWAP not spot; enforce minimum liquidity with no burn exemption
+
+**Source**: https://x.com/exvulsec/status/2040649377803546859 | https://phemex.com/news/article/bsc-network-hit-by-tmmusdt-reserve-manipulation-attack-1665-million-lost-71016 | https://www.bitget.com/asia/news/detail/12560605337534
+
+| A107 AMM Reserve Desync via Permanent Token Destruction to Dead Address | Flash loan TMM → burn to dead address → totalSupply reduced but AMM pair reserves stale → swap 850M TMM for 272M USDT at manipulated price. No transfer hook triggered. A91(BCE burn-on-transfer)와的区别: A91是transfer hook内burn; A107是直接发送到dead address，绕过AMM pair感知. Microstable AMM 미사용으로 직접 위험 낮음. AMM 통합 시 TWAP + dead-address supply 추적 필수. (TMM/BSC 2026-04-05, $1.665M) |
+
+---
+
 ### B78. Wide Cross-Slot Sandwich Attack (Firedancer Era, 93% of Solana MEV)
 
 **Published**: 2026-04-08 | **Severity**: HIGH | **Red Team**
@@ -6556,15 +6602,70 @@ Slot N+2 (Attacker-Controlled Validator): tx[0] = back-run sell order
 
 ---
 
-## Incidents Log Update (2026-04-08)
+### META-46. AI Agent Self-Learned MEV Pattern — Copycat Acceleration + Autonomous Exploit Replication
+
+**Published**: 2026-04-09 | **Severity**: WATCH (AI tooling 도입 시 elevated) | **Purple Team**
+
+**Signal**: CrossCurve Olympix post-mortem (2026-02) + Cryptonium Cloud "Agentic Dark Forest: AI, MEV, and Front-Running in DeFi 2026 Outlook."
+
+**핵심 비대칭**: AI 에이전트가 공개 exploit 계약를 학습하고 재현. 기존 "copycat 공격은 인간 분석가 필요" 가정 붕괴.
+
+**Mechanism**:
+1. 첫 번째 공격자가 $X 프로토콜에서 벡터 V를 사용해 공격 성공
+2. 공격 계약(bytecode)이 on-chain에 공개됨 (실패한 공격 계약도 mempool에 존재 가능)
+3. AI 에이전트가 공개 계약를 decompile/analyze
+4. 동일 벡터 V를 사용하는 유사 프로토콜 Y를 자동으로 식별
+5. 공격 계약를 프로토콜 Y에 대해 same-block 또는 near-instantaneous로 재실행
+6. 첫 번째 공격자의 이윤을 AI 에이전트가 차익 거래 (front-run the original attacker)
+
+**왜 기존 메타와 다른가**:
+- **META-41 (Copycat Acceleration, 2026-03-25)**: 인간 개발자가 수동으로 패턴 복제. 시간 창 = 수 시간~수 일.
+- **META-46**: AI 에이전트가 자율적으로 복제. 시간 창 = 블록 단위. 인건비 없음.
+
+**CrossCurve copycat 사례 분석**:
+- 첫 번째 공격: 2026-02-02, $3M
+- copycat 공격: 정확한 날짜 미확인, 그러나 공격 패턴 공개 직후 유사 브릿지에 복제
+- **설계적 의미**: 공격 계약 공개 → AI 봇가 복제 → 동일 벡터의 secondary victim 발생
+
+**AI MEV 참여 가속 (A8/C25 강화)**:
+- 2025년: 인간 MEV 검색어가 majority. 봇은 스크립트 기반, 사전 정의된 패턴만.
+- 2026년: LLM 기반 에이전트가 자율적으로 pending TX 풀 분석, gas 최적화, slippage 예측, 복수 프로토콜 sandwich/arb/liquidation 경로 탐색
+- **경제적 의미**: 인간 MEV 수익률 ↓, AI MEV 수익률 ↑. 기존 front-running 방어 (commit-reveal, private mempool)가 인간 속도를 전제로 설계 → AI 속도에는 안전 마진 소실.
+
+**DeFi 에이전트 MEV 경제적 인센티브阀値**:
+| Vault 규모 | AI MEV 예상 수익 | gas 비용 대비 | 위험 등급 |
+|-----------|----------------|-------------|---------|
+| < $100K | ≈ $0 (sandwich margin < gas) | 불필요 | LOW |
+| $100K–$1M | $100–$1K (경계) | 경우에 따라 | MEDIUM |
+| > $1M | $1K+ (명확한 인센티브) | 흑자 | HIGH |
+
+**Microstable relevance**:
+- **현재**: stablecoin mint/redeem는economically unattractive target (금액 = deposit amount, sandwich margin ≈ 0). ✅ 미적용.
+- **트리거**: vault 규모 > $1M + 사용자Facing DEX swap interface 추가 + AI keeper 도입 중 하나라도 발생 시 META-46 elevated.
+- ** Certora FV 도입과 결합**: AI-assisted 코드 + AI MEV 환경 → AI 생성 코드의 implicit assumption을 AI 에이전트가 발견하고 exploit하는 시간 창이 단축 (META-25 + META-46 복합 위험).
+
+**방어**:
+1. **Vault 규모 기준 AI MEV 경제적 타당성 분석** (분기별 재평가)
+2. **AI tooling 도입 시 META-46 Formal Threat Model 수립** — vault 내 가치 기반 위험 등급 설정
+3. **"Vault 규모 > $X → AI MEV 프로텍션 검토" 자동 알람閾값 설정** — vault 모니터링에 통합
+4. **복제 공격 방지를 위한 프로토콜별 경로 다변화**: 동일 벡터로 여러 프로토콜 연속出事 시 자동 경보 → proactive defense initiation
+
+**Sources**: https://cryptonium.cloud/articles/agentic-dark-forest-ai-mev-frontrunning-2026-outlook | https://olympixai.medium.com/crosscurve-exploit-post-mortem-1-4m-lost-to-a-missing-access-control-check-c128e0aeb360
+
+| META-46 AI Agent Self-Learned MEV Pattern | AI 에이전트가 공개 exploit 계약를 학습하고 재현. 기존 "copycat 공격은 인간 분석가 필요" 가정 붕괴. META-41(CCA)과 구별: META-41은 인간 수동 복제, META-46은 AI 자율 복제. A8(front-running) + C25(MEV extraction)의 위협 주체 인간→AI 전환. vault 규모>$1M에서 AI MEV 경제적 인센티브 명확. CrossCurve copycat이 첫实证. (퍼플팀 2026-04-09) |
+
+---
+
+## Incidents Log Update (2026-04-09)
 
 | Date | Protocol | Chain | Amount | Vector | Reference |
 |------|----------|-------|--------|--------|-----------|
 | 2026-04-01 | Drift Protocol | Solana | $285M | A52 (Fake Token + Admin Key) | rekt.news, Bloomberg, TRM Labs |
+| 2026-04-08 | KuCoin | CEX | $45M | B50 (Multi-Agent Amplification) | Multi-agent AI trading agents amplified attack flow |
 | 2026-03-22 | Resolv Labs | Ethereum | $25M | D45 (Supply Chain → Signing Authority) | rekt.news/resolv-labs-rekt |
 
 ---
 
 **META-45 (2026-04-08)**: Two major exploits (Drift $285M, Resolv $25M) added. Both exploit the gap between "technically correct code" and "operationally secure infrastructure" — Drift via fake token social engineering, Resolv via supply chain lateral movement. Defense-in-Depth principle reinforced: no single point of failure should enable catastrophic loss. Microstable's 2-of-3 keeper + per-slot caps + oracle checks align with this principle.
 
-**Matrix state as of 2026-04-08 (daily update): 120 named vectors (A1–A106 + A52~A53 new + D45) + META-01~46 + B73~B78 = 169 total entries. META-46 added by Red Team 2026-04-08. Drift $285M (A105+A106), Wide Cross-Slot Sandwich (B78) patterns documented.**
+**Matrix state as of 2026-04-09 (daily update): 120+ named vectors + META-01~46 + B73~B78 = 169+ total entries. META-46 added by Purple Team 2026-04-09: AI Agent Self-Learned MEV Pattern (copycat acceleration + AI-driven MEV economics shift). Certora Prover open-source (FV democratization) reinforces META-25.
