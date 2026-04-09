@@ -6655,6 +6655,8 @@ Slot N+2 (Attacker-Controlled Validator): tx[0] = back-run sell order
 **Sources**: https://cryptonium.cloud/articles/agentic-dark-forest-ai-mev-frontrunning-2026-outlook | https://olympixai.medium.com/crosscurve-exploit-post-mortem-1-4m-lost-to-a-missing-access-control-check-c128e0aeb360
 
 | META-46 AI Agent Self-Learned MEV Pattern | AI 에이전트가 공개 exploit 계약를 학습하고 재현. 기존 "copycat 공격은 인간 분석가 필요" 가정 붕괴. META-41(CCA)과 구별: META-41은 인간 수동 복제, META-46은 AI 자율 복제. A8(front-running) + C25(MEV extraction)의 위협 주체 인간→AI 전환. vault 규모>$1M에서 AI MEV 경제적 인센티브 명확. CrossCurve copycat이 첫实证. (퍼플팀 2026-04-09) |
+| META-47 Quantum Computing / ECC | 검증 대상(온체인 서명 체계)이 외부 기술 환경 변화에 따라 근본적으로 무력화될 수 있음. FV, 감사, 모니터링 모두 "현재" 기준. 취약점 공개 시점과 마이그레이션 완료 시점 사이의 창이 치명적. (블랙팀 2026-04-10) |
+| META-48 OCHTG (Onchain Correctness / Offchain Human Trust Gap) | 검증 경계 역설: 모든 보안 도구(감사, FV, 모니터링)는 온체인 경계에서 작동. 공격 표면은 인간-기계 인터페이스까지 확장. Drift $270M이 대표적: 코드 감사 통과, FV 증명 완료, 모니터링 가동 — 전부 정상이었지만 6개월 social engineering → 장비 침해 → durable nonce 유출로 온체인 안전망 무력화. 온체인에서 "유효한 트랜잭션"은 "의도된 트랜잭션"을 의미하지 않음. (퍼플팀 2026-04-10) |
 
 ---
 

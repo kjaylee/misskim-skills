@@ -1,5 +1,47 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-04-10 (KST) — Daily Evolution (#28)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| BlockSec Drift Protocol post-mortem | 2026-04-02 | A105 durable nonce mechanism 분석 — 2/5 nonce account control가 핵심. 멀티시그 정족수와 nonce 실행 정족수가 구조적으로 분리 가능. |
+| CoinDesk "Solana Foundation SIRN" | 2026-04-07 | Solana Foundation 공식 인정: "Stride formal verification도 Drift 공격 포착 불가." onchain correctness와 offchain human trust 간격(OCHTG)을 당국이 인정. |
+| BlockSec/KuCoin AI agent breach 분석 | 2026-04-02 | Memory poisoning → AI 에이전트가 잘못된 가격 신호를 정당한 것으로 처리 → cascade of beneficial trades. |
+| Certora + Aave V4 6년 협력 결과 | 2026-03 | Formal verification이 "검증 가능한 속성"만 증명. OpSec/social engineering은 명시적으로 범위 밖. |
+| Google DeepMind/SecurityWeek AI Agent Traps | 2026-04-03~07 | Agent Trap 분류 체계: Interaction Traps, Systemic Traps, Human-in-the-Loop Traps. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**: META-01~47, B50~B51, A105, A52 (Drift social engineering)
+
+**오늘 신규 식별 갭**:
+
+#### META-48 — Onchain Correctness / Offchain Human Trust Gap (OCHTG)
+- **현상**: Drift $270M — 코드는 감사 통과, 온체인 로직은 정당한데, 오프체인 OpSec 붕괴로 전체 안전망 무력화. 6개월 social engineering → 장비 침해 → durable nonce pre-signed tx 유출 → 지연 실행으로 온체인 방어 우회.
+- **메타 원인**:
+  1. **검증 경계 역설**: 모든 보안 도구(감사, FV, 모니터링)는 온체인 경계에서 작동. 공격 표면은 인간-기계 인터페이스까지 확장.
+  2. **정족수 desync**: 멀티시그 정족수(n/5)와 nonce account 실행 정족수(2/5)가 구조적으로 다를 수 있음.
+  3. **지연 실행의 정당성**: durable nonce tx는 온체인에서 완전한 권한으로 실행됨.
+  4. **감사의 본질적 한계**: 감사는 "코드가 명세대로 동작하는가"를 검증. 팀원 6개월 훈련 ditwing 대응은 검증 대상이 아님.
+  5. **FV의 암묵적 가정**: Certora의 Aave V4 FV는 모든 실행 경로에서 수학적 안전 속성을 증명하지만, 정족수 변경, nonce account 초기화, 장비 보안은 범위 밖.
+- **Purple Team 고유 기여**: META-48은 블랙팀(A105 mechanism), 레드팀(A52 social engineering vector)을 합성하여 "왜 모든 노력이 실패했는가"의 메타 구조를 규명.
+- **A105 강화**: 2/5 nonce account control 추가. nonce account 초기화 시점과 control assignment가 보안 경계의 첫 번째 결정점.
+
+### Phase 3) 스킬 강화 델타 (2026-04-10)
+- `attack-matrix.md`: META-48 추가 — OCHTG 패턴, 왜 모든 도구가 놓치는지 표 형태 분석, Microstable keeper 아키텍처 관련성, 방어 아키텍처 6가지.
+- `attack-matrix.md`: A105 Durable Nonce 항목 BlockSec detail 추가 — 2/5 nonce account control + nonce account 초기화가 보안 경계의 첫 결정점.
+- Matrix state: META-01~48, 총 172+ entries.
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0410-01 (MEDIUM)**: Keeper operational security audit 필요 — 코드 수준 "no durable nonce" 확인 + 운영 수준 "keeper device/network security" 확인.
+- **PT-ARCH-2026-0410-02 (MEDIUM)**: Keeper key ceremony 문서화 필요 — hardware signer 사용 여부, dedicated VM 여부.
+- **PT-ARCH-2026-0410-03 (MEDIUM)**: META-48 OCHTG Keeper relevance — keeper OpSec audit Q2 내로 스케줄링.
+- **CRITICAL 없음 (현재 아키텍처 기준).**
+
+---
+
 ## 2026-04-08 (KST) — Daily Evolution (#26)
 
 **Current Time**: 2026-04-08 04:00 KST | **Run**: #26 | **Analyst**: Purple Team (Miss Kim)
@@ -796,8 +838,31 @@ git push origin main
 | META-23 | Cloud AI Agent Infrastructure IAM Attack Surface (CAAI-IAS) | 2026-03-26 (퍼플팀) |
 | META-24 | Off-Chain Attack Surface Crystallization + Agentic MEV (OACS-AMCW) | 2026-03-28 (퍼플팀) |
 | META-25 | Formal Verification Specification Completeness Gap (FVSC) | 2026-03-29 (퍼플팀) |
+| META-26 | Cross-Chain Interoperability Security Verification Completeness Gap (CISV) | 2026-03-30 (퍼플팀) |
+| META-27 | AI Protocol Oracle Manipulation Amplification Pattern (AIPOMAP) | 2026-03-30 (퍼플팀) |
+| META-28 | On-chain Verification Boundary Attack Class: Valid Tx / Malicious Intent (OVBC) | 2026-03-30 (퍼플팀) |
+| META-29 | Keeper Architecture Operational Security Pattern (KAOSP) | 2026-03-31 (퍼플팀) |
+| META-30 | Economic Security Assumption Unbounded Leverage Pattern (ESAULP) | 2026-03-31 (퍼플팀) |
+| META-31 | Protocol-State-Permission Correlation Failure Pattern (PSPCF) | 2026-03-31 (퍼플팀) |
+| META-32 | Social Engineering + Smart Contract Compound Attack Pattern (SE+SC) | 2026-04-01 (퍼플팀) |
+| META-33 | Incident Response Coordination Gap Pattern (IRCG) | 2026-04-01 (퍼플팀) |
+| META-34 | Fuzzer Benchmark Blind Spot Pattern (FBBP) | 2026-04-02 (퍼플팀) |
+| META-35 | Cross-Protocol Monitoring Latency Gap (CPMLG) | 2026-04-02 (퍼플팀) |
+| META-36 | Approval-Execution Intent Drift (AEID) | 2026-04-03 (퍼플팀) |
+| META-37 | Framework Security-Default Drift (FSDD) | 2026-04-03 (퍼플팀) |
+| META-38 | AI Agent Runtime Governance Framework Gap (AARGFG) | 2026-04-05 (퍼플팀) |
+| META-39 | Incident Response Latency Gap (IRLG) | 2026-04-05 (퍼플팀) |
+| META-40 | AI Security Tool Ambivalence (ASTA) | 2026-04-06 (퍼플팀) |
+| META-41 | Copycat Acceleration (CCA) | 2026-04-06 (퍼플팀) |
+| META-42 | Attack Surface Quantification (ASQ) | 2026-04-06 (퍼플팀) |
+| META-43 | Async Cross-Chain Reentrancy Class (ACCRC) | 2026-04-07 (퍼플팀) |
+| META-44 | Bridge Attestation System Classification Gap (BASC) | 2026-04-07 (퍼플팀) |
+| META-45 | AI Agent Coordination Attack Surface (AARGFG-C) | 2026-04-08 (퍼플팀) |
+| META-46 | AI Agent Self-Learned MEV Pattern (AASLMP) | 2026-04-09 (퍼플팀) |
+| META-47 | Quantum Computing Threat to ECC | 2026-04-10 (블랙팀) |
+| META-48 | Onchain Correctness / Offchain Human Trust Gap (OCHTG) | 2026-04-10 (퍼플팀) |
 
-**총 퍼플팀 메타 인사이트: 25건**
+**총 퍼플팀 메타 인사이트: 47건 (META-47 제외, 블랙팀 제공)**
 
 ### Sources
 - https://dev.to/ohmygod/the-q1-2026-defi-exploit-autopsy-137m-lost-15-protocols-breached-the-5-root-cause-patterns-and-3o92
