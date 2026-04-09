@@ -6669,3 +6669,13 @@ Slot N+2 (Attacker-Controlled Validator): tx[0] = back-run sell order
 **META-45 (2026-04-08)**: Two major exploits (Drift $285M, Resolv $25M) added. Both exploit the gap between "technically correct code" and "operationally secure infrastructure" — Drift via fake token social engineering, Resolv via supply chain lateral movement. Defense-in-Depth principle reinforced: no single point of failure should enable catastrophic loss. Microstable's 2-of-3 keeper + per-slot caps + oracle checks align with this principle.
 
 **Matrix state as of 2026-04-09 (daily update): 120+ named vectors + META-01~46 + B73~B78 = 169+ total entries. META-46 added by Purple Team 2026-04-09: AI Agent Self-Learned MEV Pattern (copycat acceleration + AI-driven MEV economics shift). Certora Prover open-source (FV democratization) reinforces META-25.
+
+---
+
+**META-47 (2026-04-10) — Quantum Computing Threat to ECC: Shor's Algorithm Practical Timeline Shrinking**
+Google Research (2026-04) published evidence that breaking elliptic curve cryptography (ECDSA, Ed25519) requires far fewer qubits than previously assumed — potentially within reach of state-level adversaries within this decade. Solana's entire key model is built on Ed25519 (and ECDSA for compatibility). On-chain, keeper keypairs, multisig authorities, and any externally-owned admin keys are at risk if a sufficiently powerful quantum computer becomes available. Post-quantum migration for Solana would require a hard fork and new key derivation scheme — not a simple smart contract upgrade.
+**Why it matters for Microstable**: Keeper keypairs (Ed25519) protect the 2-of-3 oracle update + mint/redeem path. If quantum computing reaches practical break-level before Microstable migrates, keeper keypairs could be derived from public keys, enabling retroactive transaction forgery. This is a long-horizon (5-10yr) but non-zero tail risk.
+**Defense**: (1) Monitor NIST PQC standardization progress (ML-KEM, SLH-DSA). (2) If Solana adds post-quantum signature support, migrate keeper keypairs immediately. (3) Consider time-lock encrypted backup key ceremony (shamir secret sharing of emergency recovery key with delayed reveal). (4) Accept as known systemic Solana risk — cannot be mitigated unilaterally without network-level hard fork.
+**Source**: https://research.google/blog/safeguarding-cryptocurrency-by-disclosing-quantum-vulnerabilities-responsibly/ | rekt.news newsletter 2026-04-06
+
+**Matrix state as of 2026-04-10 (daily update): 120+ named vectors + META-01~47 + B73~B78 = 170+ total entries. META-47 added by Black Team 2026-04-10: quantum computing ECC break timeline update from Google Research. All prior patterns (A52/A105/A106/B77 Drift durable nonce + fake oracle) remain active.**
