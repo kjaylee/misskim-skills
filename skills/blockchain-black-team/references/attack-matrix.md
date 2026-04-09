@@ -1,4 +1,4 @@
-# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09) | META-01~46
+# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10) | META-01~48
 
 ## A. Smart Contract Vectors
 
@@ -6288,7 +6288,9 @@ grep -r "nonce_account\|create_nonce_account\| durable_nonce\|advance_nonce" \
 
 **Microstable status**: Keeper binary confirmed uses fresh `get_latest_blockhash()` per transaction — NOT using durable nonces. ✅ SAFE. No durable nonce in privileged admin paths.
 
-**Checklist item 50**: ☐ No privileged operations use durable nonce accounts; if emergency nonce flow exists: TTL ≤10 slots + instruction digest review + no stockpiling
+**BlockSec critical detail (2026-04-02 post-mortem)**: The attack required only 2 of 5 nonce accounts — not a traditional 3/5 multisig threshold. The Drift attacker controlled 2 nonce accounts from the initial setup (March 23), while Drift Security Council controlled 2 others. Combined with the governance migration to 2/5 + zero timelock (March 27), this gave the attacker effective durable nonce execution capability without needing to compromise additional council members. **Purple Team lesson**: Nonce account initialization and control assignment is a first-class security boundary. If Microstable ever introduces any durable nonce workflow (emergency recovery, offline signing, multisig batch operations), the nonce account control structure must be mapped and verified as part of the security model — not assumed from the multisig signer count.
+
+**Checklist item 50**: ☐ No privileged operations use durable nonce accounts; if emergency nonce flow exists: TTL ≤10 slots + instruction digest review + no stockpiling; map all nonce account control assignments
 
 ---
 
@@ -6710,3 +6712,61 @@ let transfer_ix = load_instruction_at_checked((current_index - 1) as usize, &sys
 **Source**: https://dev.to/ohmygod/solanas-cpi-security-trap-why-instruction-introspection-doesnt-make-your-protocol-flash-26ie | https://solana.com/docs/core/instructions/instruction-introspection
 
 **Matrix state as of 2026-04-10 (daily update): 120+ named vectors + META-01~47 + B73~B78 + A108 = 171 total entries. META-47 added by Black Team 2026-04-10: quantum computing ECC break timeline. A108 added: Improper Instruction Introspection (absolute vs relative indexing). All prior patterns remain active.**
+
+---
+
+### META-48. Onchain Correctness / Offchain Human Trust Gap (OCHTG) — The Definitive Purple Team Pattern
+
+**Published**: 2026-04-10 | **Source**: Purple Team Daily Evolution | **Signal**: Drift Protocol $270M (2026-04-01), BlockSec post-mortem, Solana Foundation SIRN announcement (2026-04-07), Certora+Aave V4 formal verification (2026-03), KuCoin $45M AI agent breach (2026-04-02)
+
+**Mechanism**: The attacker's wedge is the gap between what onchain systems verify and what humans trust. The onchain layer (smart contracts, multisig logic, oracles) operates correctly. The offchain layer (device security, key management, social engineering, pre-signed transaction workflows) is compromised. Because the onchain layer cannot distinguish a legitimate pre-signed transaction from a malicious one, the attacker's transactions execute as valid administrative actions — with full protocol authorization — despite representing a complete breach of the organization's actual security posture.
+
+**Drift Protocol case study (BlockSec, 2026-04-02)**:
+1. Attacker spent 6 months building relationships with Drift contributors (social engineering layer).
+2. Compromised devices via malicious code repository + fake TestFlight app (device security layer).
+3. Obtained multisig approvals — but those approvals were locked into durable nonce transactions (pre-signed, delayed execution layer).
+4. Attacker controlled 2 of 5 nonce accounts (2/5 threshold, not the 3/5 or higher the protocol assumed was required for attack).
+5. Durable nonces bypassed the protocol's multisig expiration logic — pre-signed tx valid indefinitely.
+6. Transactions executed weeks later, draining vaults — valid by onchain rules, catastrophic by human intent.
+
+**Why every existing tool misses this**:
+
+| Tool/Method | What it catches | What it misses |
+|---|---|---|
+| Smart Contract Audit | Reentrancy, access control, arithmetic bugs | Durable nonce pre-signing, OpSec failure |
+| Formal Verification (Certora/Move Prover) | All execution paths within contract scope | Social engineering, device compromise, pre-signed tx workflows |
+| On-chain Monitoring (TLE, 24/7) | Anomalous TVL changes, unusual vault drains | Valid transactions indistinguishable from legitimate admin actions |
+| Fuzzing/Invariant Testing | Property violations in contract logic | Offchain key compromise leading to valid but malicious tx |
+| Multisig Governance | Unauthorized calls without sufficient signers | Pre-signed nonce transactions that circumvent multisig timing |
+
+**The compound failure**: No single tool is designed to verify "the humans who authorized this transaction intended what the transaction does." Formal verification + audits + monitoring each independently verify the onchain layer. None verify the human trust layer. The failure is structural.
+
+**Durable Nonce specific architecture risk for Microstable**: A105 (Persistent Nonce Durable Pre-Signed Transaction Bypass) documents the Solana feature. BlockSec analysis adds a critical detail: **2/5 nonce account control** was sufficient to execute the attack. The multisig threshold assumption (how many signers needed for what) can be desynced from the actual durable nonce execution threshold. Microstable keeper architecture uses pre-signed or queued transactions for oracle updates and privileged operations — if any keeper workflow uses durable nonces, the 2/3 keeper quorum could theoretically be neutralized by an attacker who compromises 2 of 5 nonce accounts (or creates 2 additional nonce accounts as part of a setup phase). **Verify: Microstable's keeper transaction submission does NOT use durable nonces.** If durable nonces are in the keeper pipeline, immediately assess whether 2/5 nonce account compromise scenario is possible.
+
+**Certora + Aave V4 (2026-03) — Formal Verification Gap Confirmation**: Certora's 6-year formal verification partnership with Aave V4 produced mathematically proven safety properties — but the properties proven are all onchain execution properties. The announcement explicitly excludes operational security from scope. This confirms META-48 structurally: FV is the strongest possible onchain verification, yet it does not address OpSec failure modes. **Implication for Microstable**: Certora-level FV on mint/redeem invariants would prove `invariant: vault.solvent = true` across all paths — but would not prove that the keeper keys haven't been socially engineered, that the deployment pipeline isn't compromised, or that pre-signed txs aren't stored insecurely.
+
+**Purple Team corollary to META-48**: The security community's response to Drift (SIRN, Stride, formal verification funding for TVL>$100M protocols) addresses the onchain layer more rigorously. Nothing addresses the human trust layer structurally. Purple Team is the only team type whose mandate covers this gap.
+
+**Why audits miss OCHTG**:
+1. Audits verify code correctness against a specification — but the specification never includes "the deployer's laptop will be compromised."
+2. Audit scope is defined by the project team — and no project team puts "offchain OpSec" in the audit scope by default.
+3. Social engineering attacks assume the auditor would be the target — audit firms don't test whether their clients' team members will fall for a 6-month relationship-building campaign.
+4. Durable nonce risk is a Solana-specific advanced feature — most auditors don't enumerate every Solana-specific transaction feature in their threat model.
+
+**Microstable Relevance**: **HIGH — Keeper architecture is a first-class OCHTG risk.** The keeper's ability to submit oracle updates, execute mint/redeem at stale price thresholds, and trigger liquidations depends on keypair security and transaction submission infrastructure. Specific risk vectors:
+- Keeper keypair storage on cloud VMs vs. HSM — if VM compromise → keeper key exfiltration → valid-but-malicious oracle updates.
+- Keeper CI/CD pipeline security — if deploy pipeline compromised → malicious keeper binary → valid transaction submission.
+- Keeper transaction pre-signing or durable nonce usage — if 2 nonce accounts compromised → delayed attack execution bypassing normal keeper flow.
+- Social engineering of keeper operators — 6-month relationship before device compromise is the proven playbook.
+
+**Defensive architecture for OCHTG**:
+1. **Hardware signer for keeper operations** — key never exists in plaintext on a network-connected machine.
+2. **No durable nonces in keeper pipeline** — all privileged operations use recent blockhash, not persistent nonces.
+3. **Out-of-band human approval for large vault operations** — even if keeper key is compromised, >$X vault movement requires human email/SMS approval.
+4. **Keeper device security policy** — dedicated hardware, no personal device access, no third-party code repository contributions from keeper infrastructure.
+5. **Durable nonce audit** — scan entire keeper + admin transaction pipeline for durable nonce usage; eliminate where found.
+6. **Keeper key ceremony** — multi-party key generation, no single point of key material exposure.
+
+**Purple Team addition rationale**: META-48 synthesizes the past week's findings (Drift, SIRN, Certora+Aave, KuCoin) into the definitive Purple Team meta pattern. All four prior Purple Team patterns (META-24 organizational, META-25 fuzzer, META-36 approval-execution intent, META-39 IR latency) are sub-cases of OCHTG. This is the layer that Black Team (onchain) and Red Team (future onchain exploits) structurally cannot cover.
+
+**Purple Team classification**: META-48 supersedes and absorbs META-24, META-25, META-36, META-39 as specialized expressions of the same root failure: **the verification boundary ends at the onchain edge, while the attack surface extends to the human-machine interface.**
