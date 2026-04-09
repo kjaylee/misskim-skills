@@ -6678,4 +6678,35 @@ Google Research (2026-04) published evidence that breaking elliptic curve crypto
 **Defense**: (1) Monitor NIST PQC standardization progress (ML-KEM, SLH-DSA). (2) If Solana adds post-quantum signature support, migrate keeper keypairs immediately. (3) Consider time-lock encrypted backup key ceremony (shamir secret sharing of emergency recovery key with delayed reveal). (4) Accept as known systemic Solana risk — cannot be mitigated unilaterally without network-level hard fork.
 **Source**: https://research.google/blog/safeguarding-cryptocurrency-by-disclosing-quantum-vulnerabilities-responsibly/ | rekt.news newsletter 2026-04-06
 
-**Matrix state as of 2026-04-10 (daily update): 120+ named vectors + META-01~47 + B73~B78 = 170+ total entries. META-47 added by Black Team 2026-04-10: quantum computing ECC break timeline update from Google Research. All prior patterns (A52/A105/A106/B77 Drift durable nonce + fake oracle) remain active.**
+---
+
+### A108. Improper Instruction Introspection: Absolute vs Relative Indexing (Solana CPI)
+**Published**: 2026-04-10 | **Severity**: HIGH | **New vector — Red Team Daily Evolution**
+
+**Signal**: dev.to "Solana's CPI Security Trap" (2026-04-09) — https://dev.to/ohmygod/solanas-cpi-security-trap-why-instruction-introspection-doesnt-make-your-protocol-flash-26ie
+
+**Mechanism**: Solana programs can inspect all instructions in a transaction via the Instructions Sysvar (`load_instruction_at_checked(index)` for absolute, `get_instruction_relative(offset)` for relative). Using absolute indexing creates a replay-like vulnerability:
+
+```rust
+// VULNERABLE: absolute index — attacker reuses one valid instruction
+let transfer_ix = load_instruction_at_checked(0, &sysvar_info)?;
+// same ix[0] satisfies validation at ix[1], ix[2], ix[3]
+
+// SAFE: relative index — check only the instruction immediately preceding current one
+let current_index = load_current_index_checked(&sysvar_info)?;
+let transfer_ix = load_instruction_at_checked((current_index - 1) as usize, &sysvar_info)?;
+```
+
+**Attack shape**: Attacker crafts a transaction where a single valid transfer at index 0 satisfies pre-condition checks at multiple subsequent instruction indices — effectively three operations for the price of one transfer. The Solana runtime executes all instructions; the program sees multiple "valid" prerequisites from one instruction.
+
+**Why distinct from A42 (Anchor Post-CPI Stale Account Cache)**:
+- A42 = post-CPI account state staleness (caller reads stale account bytes after callee wrote them).
+- A108 = pre-condition verification bypass via instruction index reuse (caller's introspection reads same instruction bytes for multiple checks).
+
+**Microstable status**: Scan of `/programs/microstable/src/lib.rs` — zero `load_instruction_at` or `instruction_introspection` sysvar calls. Not affected. ✅
+
+**Checklist item 53**: ☐ Any Solana program using `load_instruction_at_checked` with hardcoded absolute index must migrate to `get_instruction_relative(offset)` for all prerequisite verification checks
+
+**Source**: https://dev.to/ohmygod/solanas-cpi-security-trap-why-instruction-introspection-doesnt-make-your-protocol-flash-26ie | https://solana.com/docs/core/instructions/instruction-introspection
+
+**Matrix state as of 2026-04-10 (daily update): 120+ named vectors + META-01~47 + B73~B78 + A108 = 171 total entries. META-47 added by Black Team 2026-04-10: quantum computing ECC break timeline. A108 added: Improper Instruction Introspection (absolute vs relative indexing). All prior patterns remain active.**

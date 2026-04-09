@@ -1022,3 +1022,10 @@ archive_or_forward(tx)?; // delayed execution risk
 50. ☐ No privileged operations use durable nonce accounts; emergency nonce flow has ≤10 slot TTL + instruction digest review
 51. ☐ Circle CCTP exfil: documented freeze procedure SLA <30 min + circuit breaker on large USDC bridge outflows
 52. ☐ Wide cross-slot sandwich: Jito dontfront for keeper TX when possible; monitor for multi-slot MEV patterns
+53. ☐ Instruction introspection: if using `load_instruction_at_checked`, migrate to `get_instruction_relative`; no hardcoded absolute instruction index for prerequisite checks
+
+### A108 — Improper Instruction Introspection: Absolute vs Relative Indexing
+- **Signal**: dev.to "Solana's CPI Security Trap" (2026-04-09)
+- **Pattern**: `load_instruction_at_checked(n)` with hardcoded absolute index allows single instruction to satisfy multiple checks
+- **Fix**: Use `get_instruction_relative(offset)` — verifies instruction immediately adjacent to current instruction
+- **Microstable**: Not used — zero instruction introspection calls in program code ✅
