@@ -1,4 +1,4 @@
-# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10) | META-01~48
+# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11) | META-01~49
 
 ## A. Smart Contract Vectors
 
@@ -943,6 +943,7 @@ location /rpc {
 | D26 Frontend Injection | 스마트컨트랙트 감사 범위 밖으로 분리되어 UI 공급망 통제가 누락됨. |
 | D27 RPC Takeover | endpoint 다중화만 점검하고 공급자 상관관계(ASN/DNS)까지는 미검증. |
 | D28 Supply Chain | 정적 스캐너 통과를 안전으로 간주, 단기 typosquat 파동 탐지가 느림. |
+| A109 Anchor Lifecycle Hook Supply-Chain Persistence | `Anchor.toml`을 선언형 설정으로 오인해 `[hooks]` 추가를 배포 파이프라인 변경이 아니라 메타데이터 수정으로 취급하면, 소스 코드 감사·IDL 리뷰·컨트랙트 테스트를 모두 우회한 실행 경로가 열린다. |
 | D31 Metadata Confusion | 생성된 IDL/스키마를 사실상 신뢰원으로 취급해 런타임 검증이 생략됨. |
 | A14 Out-of-Scope Composability | 감사 대상 커밋과 실제 배포된 Hook/Proxy 간 런타임 결합 추적 부재로 우회 공격 발생 (Nemo, Cork). |
 | B33 OpSec & Key Management | 스마트컨트랙트 무결성에 집중하여 멀티시그, 배포 파이프라인 등 오프체인 키 운영을 감사 밖으로 취급 (Radiant). |
@@ -966,6 +967,7 @@ location /rpc {
 | B50 Systemic AI Agent Traps (다중 에이전트 조정 공격) — 퍼플팀 2026-04-08 | **핵심 비대칭**: Google DeepMind 연구에서 "Systemic Traps weaponize multi-agent dynamics, using coordinated environmental signals to trigger macro-level failures such as market flash crashes, AI-driven denial-of-service events, or Sybil attacks where fabricated agent identities manipulate group decision-making." 기존 AI 에이전트 공격(B29~B49)은 단일 에이전트 대상. 다중 에이전트 시스템의 emergent failure mode는 체계적으로 누락. **왜 감사가 놓치는가**: ① AI 보안 감사·테스트는 단일 에이전트 행동 모델링에 집중. ② 다중 에이전트 상호작용에서 발생하는 조정 공격(coordinated attack)은 위협 모델에서 명시적으로 다루지 않음. ③ "에이전트는 독립적으로 작동한다"는 가정이 깨지면 시스템 전체 실패 가능성을 평가하지 않음. **DeFi 적용**: 여러 AI 트레이딩 에이전트가 동일 시장에서 상호작용할 때, 악의적 환경 신호(가격 피드, 소셜 신호, 거버넌스 이벤트)로 모든 에이전트를 동시에 조작해 flash crash 유발 가능. KuCoin $45M breach에서 AI 트레이딩 에이전트가 공격을 증폭한 패턴 확인. **방어**: 다중 에이전트 상호작용 명시적 모델링, emergent failure mode 테스트, 에이전트 간 통신 격리, 환경 신호 검증. |
 | B51 Human-in-the-Loop Exploitation (에이전트→인간 공격) — 퍼플팀 2026-04-08 | **핵심 비대칭**: "Human-in-the-Loop Traps complete the taxonomy — these commandeer the agent as a vector to attack human overseers, exploiting cognitive biases like automation bias and approval fatigue to get operators to authorize malicious actions." 기존 B29(Confused-Deputy)는 외부→에이전트 방향. B51은 에이전트→인간 방향. **왜 감사가 놓치는가**: ① "에이전트는 도구"라는 가정 하에 에이전트가 인간의 인지 편향을 악용하는 공격을 위협 모델에서 제외. ② 인간-에이전트 상호작용에서 발생하는 approval fatigue, automation bias는 "운영 문제"로 분류. ③ 감사 체크리스트에 "에이전트 출력이 인간 의사결정에 미치는 영향" 항목 없음. **DeFi 적용**: 거버넌스/파라미터 변경 승인 요청에서 AI 에이전트가 approval fatigue 유도 → 승인권자가 검토 없이 승인 → 악의적 파라미터 변경 통과. **방어**: 에이전트 승인 요청 rate limiting, 인간 대상 설문/훈련(automation bias 인식), 중요 승인에 대해 out-of-band 검증, 에이전트 제안에 대한 독립적 검증 레이어. |
 | META-45 AI Agent Coordination Attack Surface — 퍼플팀 2026-04-08 | **핵심 비대칭**: 단일 에이전트 보안(B29~B49)이 충분하다고 가정하면, 다중 에이전트 시스템의 조정 공격(coordinated attack)은 구조적 사각지대. B50·B51은 이 메타 갭의 구체 표현. **왜 감사가 놓치는가**: ① AI 에이전트 보안 프레임워크(OWASP Agentic AI Top 10 등)가 단일 에이전트 위협 중심으로 설계됨. ② 다중 에이전트 상호작용은 "분산 시스템 문제"로 분류되어 AI 보안 감사 범위 밖. ③ emergent failure mode는 단일 컴포넌트 테스트로는 탐지 불가. **실증**: Google DeepMind 분류(Interaction Traps, Systemic Traps, Human-in-the-Loop Traps)가 2026-04-07 공개. KuCoin $45M breach에서 다중 AI 트레이딩 에이전트가 상호작용하며 공격 증폭. **방어**: 다중 에이전트 시스템 독립적 위협 모델링, 에이전트 간 통신 감사, emergent failure mode 시뮬레이션, 인간 감독자 보호 레이어. |
+| META-49 Executable Configuration Trust Drift (ECTD) — 퍼플팀 2026-04-11 | **핵심 비대칭**: AI 감사 도구·버그바운티·형식 검증이 모두 **코드 정확성** 쪽으로 진화하는 동안, 빌드/테스트/배포 설정 파일은 점점 **실행 가능한 제어면**으로 바뀌고 있음. Anchor 1.0의 `Anchor.toml [hooks]` 가 대표 사례. **왜 감사가 놓치는가**: ① 설정 파일을 선언형 메타데이터로 분류해 코드 리뷰·감사 우선순위에서 제외. ② 버그바운티는 온체인 재현 가능한 취약점에 보상이 집중되어 빌드/배포 파이프라인 삽입형 공격은 경제적 유인이 약함. ③ 형식 검증은 검증된 소스와 배포 산출물이 동일하다는 전제를 둔다 — post-build/pre-deploy hook가 그 전제를 무너뜨려도 검증 실패로 표시되지 않음. ④ 보안 도구 시장이 "취약점 발견률"을 개선할수록 오히려 teams는 non-code 실행면을 더 덜 본다. **A109/D28/META-48과의 구별**: A109 = Anchor hook라는 구체 벡터, D28 = 악성 패키지/의존성, META-48 = 인간 신뢰 경계 전체. META-49는 **'설정이 더 이상 설정이 아니게 된 순간'** 발생하는 구조적 감사 실패를 별도로 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -6817,3 +6819,45 @@ post_deploy = "python3 scripts/notify.py"
 4. Restrict runner egress and file-system access so hooks cannot silently exfiltrate secrets or mutate unrelated workspaces
 5. On Anchor `<1.0.0`, preemptively add a repo policy forbidding `[hooks]` during migration planning so upgrades do not silently widen the attack surface
 **Source**: https://www.anchor-lang.com/docs/updates/release-notes/1-0-0 | https://github.com/solana-foundation/anchor/blob/v1.0.0/CHANGELOG.md
+
+### META-49. Executable Configuration Trust Drift (ECTD)
+
+**Published**: 2026-04-11 | **Source**: Purple Team Daily Evolution | **Signal**: Anchor 1.0 lifecycle hooks (2026-04-02), CertiK AI Auditor launch (2026-04-08), Immunefi March 2026 ecosystem update, Q1 2026 exploit autopsy, Drift/Resolv post-mortems
+
+**Mechanism**: 보안 업계의 측정·보상·검증 체계는 대부분 **코드**를 중심으로 최적화되어 있다. AI Auditor는 소스 취약점 탐지율을 홍보하고, Immunefi는 재현 가능한 바운티 리포트와 live threats prevented 수치를 강조하며, formal verification은 소스/명세 정합성을 증명한다. 그런데 최신 툴체인은 `Anchor.toml [hooks]`, CI workflow, deploy manifest처럼 원래 선언형으로 여겨지던 파일을 **실행 가능한 제어면**으로 바꾸고 있다. 이 순간 검증 사슬에 구조적 단절이 생긴다:
+
+1. 감사/FV/AI 리뷰는 **검토한 소스가 곧 배포 산출물**이라고 가정한다.
+2. 실행형 설정(hooks, post-build scripts, deploy wrappers)은 그 가정 뒤에서 바이너리·IDL·메타데이터·서명 흐름을 바꿀 수 있다.
+3. 변경은 종종 `Anchor.toml`, YAML, shell script diff에 숨어 들어오므로 "보안상 중요하지 않은 설정 수정"으로 오인된다.
+4. 결과적으로 **가장 잘 방어된 코드베이스가 가장 취약한 배포면**을 가질 수 있다 — because the assurance market is looking elsewhere.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 커버하는 것 | 놓치는 것 |
+|---|---|---|
+| D28 Supply Chain | 악성 패키지, typosquat, 전이 의존성 | 저장소 내부의 "정상 설정 파일"이 실행면으로 바뀌는 문제 |
+| A109 Anchor Hooks | Anchor hook라는 구체 악용 경로 | 왜 조직이 이 변경을 계속 과소평가하는지 |
+| META-48 OCHTG | 인간-기계 신뢰 경계 전반 | 구성 파일이 실행 권한을 획득하며 검증 사슬을 절단하는 구조 |
+| META-25 FVSC | 명세 자체의 불완전성 | 검증된 아티팩트가 배포까지 동일하게 유지된다는 전제 붕괴 |
+
+**Cross-source synthesis (최근 7일)**:
+- **Anchor 1.0**: `Anchor.toml`에 `pre_build`, `post_build`, `pre_test`, `post_test`, `pre_deploy`, `post_deploy` hook 추가. 설정 파일이 실행 파일이 됨.
+- **CertiK AI Auditor**: 다단계 검증과 낮은 노이즈를 강조하지만, 검증 대상은 여전히 코드·개발 워크플로우 내부. post-build artifact swap은 범위 밖.
+- **Immunefi March 2026 update**: 247 live threats prevented, $2.7M payout, security score 기능. 시장 인센티브가 온체인/코드 레이어에 집중됨을 재확인.
+- **Q1 2026 exploit autopsy + Drift/Resolv**: 실제 손실은 운영/키/배포면에서 증폭. 코드 correctness 향상만으로 손실 분포가 바뀌지 않음.
+
+**Microstable relevance**:
+- 현재 `microstable/solana/Anchor.toml`에는 `[hooks]`가 없다. **즉시 exploit path는 미확인**. ✅
+- 하지만 Anchor 1.0로 업그레이드하는 순간, `Anchor.toml`은 더 이상 수동 검토 부가파일이 아니라 **서명권·배포권에 닿는 보안 경계**가 된다.
+- 기존 carry-forward인 **B45 audit-attestation 부재**와 결합하면, "검토한 소스"와 "실제 배포 산출물"의 동일성 입증이 더 약해진다.
+
+**Purple Team defense pattern**:
+1. 설정 파일(`Anchor.toml`, CI YAML, deploy scripts)을 production code로 승격 — CODEOWNERS + mandatory review + signed commits
+2. `[hooks]` 신규/수정 diff를 일반 설정 변경이 아니라 **배포면 변경**으로 분류
+3. build provenance / artifact attestation 없이는 FV·audit 통과를 불완전한 증거로 간주
+4. hardware signer + ephemeral runner + restricted egress로 hook의 폭발 반경 축소
+5. bug bounty scope에 build/deploy control-plane abuse를 명시적으로 포함
+
+**Purple Team verdict**: META-49는 "코드 검증 강화"가 오히려 "비코드 실행면 과소감사"를 만들 수 있다는 역설을 포착한다. 보안 시장이 잘하는 일이 많아질수록, 시장이 보지 않는 면의 가치가 상대적으로 커진다.
+
+**Matrix state as of 2026-04-11 (daily update)**: **120+ named vectors + META-01~49 + B73~B78**. META-49 added by Purple Team 2026-04-11: Executable Configuration Trust Drift (ECTD). No new CRITICAL/HIGH code-level finding for Microstable from this cycle; architecture-level latent risk documented.
