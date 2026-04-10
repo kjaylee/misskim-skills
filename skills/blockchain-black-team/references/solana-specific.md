@@ -1029,3 +1029,18 @@ archive_or_forward(tx)?; // delayed execution risk
 - **Pattern**: `load_instruction_at_checked(n)` with hardcoded absolute index allows single instruction to satisfy multiple checks
 - **Fix**: Use `get_instruction_relative(offset)` — verifies instruction immediately adjacent to current instruction
 - **Microstable**: Not used — zero instruction introspection calls in program code ✅
+
+---
+<!-- AUTO-ADDED 2026-04-11 (Red Team Daily Evolution) — A109 Anchor lifecycle hooks -->
+
+## 2026-04-11 Anchor 1.0 Tooling-Plane Pattern Additions
+
+### A109 — Anchor Lifecycle Hook Supply-Chain Persistence
+- **Solana context**: Anchor 1.0 adds executable lifecycle hooks in `Anchor.toml` (`pre_build`, `post_build`, `pre_test`, `post_test`, `pre_deploy`, `post_deploy`). That makes project configuration an execution surface on developer and deploy machines.
+- **Attack idea**: A malicious PR or compromised contributor adds a seemingly harmless hook or referenced script. Routine `anchor build/test/deploy` then runs attacker code that swaps artifacts, exfiltrates wallet material, or mutates release outputs before on-chain deployment.
+- **Why this matters on Solana**: Solana projects often keep deploy authority, IDL workflows, local validators, and CLI wallets in the same operator environment. Compromise of the Anchor hook plane can become upgrade-authority compromise without any on-chain bug.
+- **Microstable current status**: `programs/microstable/Cargo.toml` and `keeper/Cargo.toml` are still on Anchor `0.31.1`, and no `Anchor.toml` / `[hooks]` usage was found in the repo. The vector is **not active today**, but becomes immediately relevant on Anchor 1.0 migration.
+- **Checklist item 54**: ☐ If migrating to Anchor `>=1.0.0`, treat `Anchor.toml` as executable code: forbid `[hooks]` by default, require CODEOWNER review for any hook, and run deploys from ephemeral/hardware-signer environments.
+
+### Solana-Specific Defense Checklist Update
+54. ☐ Anchor `>=1.0.0` migration: no lifecycle hooks by default; any `[hooks]` entry requires explicit review, allowlist, and isolated runner/hardware signer path

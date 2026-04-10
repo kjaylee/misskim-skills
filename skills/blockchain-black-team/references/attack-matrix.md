@@ -6772,3 +6772,48 @@ let transfer_ix = load_instruction_at_checked((current_index - 1) as usize, &sys
 **Purple Team addition rationale**: META-48 synthesizes the past week's findings (Drift, SIRN, Certora+Aave, KuCoin) into the definitive Purple Team meta pattern. All four prior Purple Team patterns (META-24 organizational, META-25 fuzzer, META-36 approval-execution intent, META-39 IR latency) are sub-cases of OCHTG. This is the layer that Black Team (onchain) and Red Team (future onchain exploits) structurally cannot cover.
 
 **Purple Team classification**: META-48 supersedes and absorbs META-24, META-25, META-36, META-39 as specialized expressions of the same root failure: **the verification boundary ends at the onchain edge, while the attack surface extends to the human-machine interface.**
+
+---
+
+### D46. Wasmtime Backend-Divergence Sandbox Escape (Winch / AArch64 Cranelift)
+**Historical**: RustSec `RUSTSEC-2026-0095/0096` (Wasmtime, 2026-04-09)
+**Mechanism**: Protocol teams often treat embedded Wasm as a safe sandbox for partially-trusted strategy plugins, quote engines, simulation adapters, or risk modules. The April 2026 Wasmtime bugs show that assumption can collapse at the compiler-backend layer itself: Winch and AArch64 Cranelift could permit sandbox-escaping memory access even when the guest was already constrained by ordinary resource limits.
+**Key insight vs D34**: D34 is about **resource exhaustion / panic-driven DoS inside an otherwise sound sandbox**. D46 is worse: the sandbox boundary itself may fail, allowing confidentiality/integrity compromise of the host process.
+**Code/config pattern to find**:
+```rust
+// RISKY: untrusted Wasm shares process and secrets with privileged host logic
+let engine = wasmtime::Engine::default();
+let module = wasmtime::Module::from_binary(&engine, untrusted_bytes)?;
+let mut store = wasmtime::Store::new(&engine, signer_state); // signer_state in same process
+let instance = linker.instantiate(&mut store, &module)?;
+let run = instance.get_typed_func::<(), ()>(&mut store, "run")?;
+run.call(&mut store, ())?; // sandbox escape turns plugin compromise into host compromise
+```
+**Defense**:
+1. Do not colocate signing keys, RPC auth, or deploy credentials with any process executing untrusted/partially-trusted Wasm
+2. Patch Wasmtime to fixed versions (`>=36.0.7`, `=42.0.2`, `=43.0.1`) before enabling Winch or AArch64 Cranelift paths
+3. Treat backend/compiler selection as a security boundary, not just a performance toggle; gate backend changes behind explicit security review
+4. Run untrusted Wasm in a separate worker process / VM with narrow IPC and crash-only restart semantics
+5. Add CI checks that fail if `wasmtime` appears in privileged keeper/deployer dependency graphs without isolation notes
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0095.html | https://rustsec.org/advisories/RUSTSEC-2026-0096.html
+
+### A109. Anchor Lifecycle Hook Supply-Chain Persistence
+**Historical**: Anchor `v1.0.0` stable release notes / changelog (2026-04-02), within 7-day window for 2026-04-11 review
+**Mechanism**: Anchor 1.0 introduces executable lifecycle hooks in `Anchor.toml` (`pre_build`, `post_build`, `pre_test`, `post_test`, `pre_deploy`, `post_deploy`). This turns what many reviewers treated as static project configuration into an executable control plane. A malicious PR, contractor, compromised dependency, or insider can add a hook that swaps artifacts, exfiltrates deploy keys, mutates IDL/program metadata, or backdoors the operator workstation during routine `anchor build/test/deploy` usage.
+**Key insight**: Existing blue-team checks that focus on Rust program diffs, account validation, or IDL changes can all pass while the compromise happens in `Anchor.toml` or a referenced shell script. The attack surface moves from on-chain logic to the build/deploy plane.
+**Code/config pattern to find**:
+```toml
+# RISKY: executable config hidden in routine project settings
+[hooks]
+pre_build = "scripts/check-env.sh"
+post_build = "node scripts/post-build.js"
+pre_deploy = "./scripts/prepare-release.sh"
+post_deploy = "python3 scripts/notify.py"
+```
+**Defense**:
+1. Treat `Anchor.toml` and any referenced hook scripts as production code: CODEOWNERS, mandatory review, and signed commits for deploy repos
+2. CI should fail on new or modified hooks unless the change is explicitly labeled as a deploy-pipeline change
+3. Execute build/deploy from ephemeral runners with no long-lived plaintext keys; prefer hardware signers or offline signing for privileged authorities
+4. Restrict runner egress and file-system access so hooks cannot silently exfiltrate secrets or mutate unrelated workspaces
+5. On Anchor `<1.0.0`, preemptively add a repo policy forbidding `[hooks]` during migration planning so upgrades do not silently widen the attack surface
+**Source**: https://www.anchor-lang.com/docs/updates/release-notes/1-0-0 | https://github.com/solana-foundation/anchor/blob/v1.0.0/CHANGELOG.md
