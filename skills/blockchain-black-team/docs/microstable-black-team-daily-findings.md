@@ -1,6 +1,40 @@
 ---
 
+## 2026-04-11 Daily Check
 
+### Source Sweep (24h~7d window: 2026-04-04 to 2026-04-11 KST)
+- Sources checked: rekt.news frontpage, hacked.slowmist.io, Solana ecosystem security page, GitHub Advisory API, Trail of Bits/OtterSec/Neodyme blog indexes, SearXNG fallback for Immunefi/X queries
+- Brave Search API quota exhaustion persisted on direct web search → SearXNG fallback used for query-based checks
+- **Confirmed in-window items**:
+  1. **TMM/USDT** (2026-04-05, BNB Chain, $1.665M) — already mapped as **A107**; no new vector required
+  2. **HypurrFi** (2026-04-04) — domain hijack only; reinforces **D26**; no new vector required
+  3. **Denaria** (2026-04-05, ~$165K) — public incident exists, but no code-level mechanism disclosed yet; excluded from matrix delta
+  4. **GitHub advisories 2026-04-09/10** — Wasmtime issues present, but no Solana/Anchor/SPL-specific GHSA affecting current Microstable stack
+- No new on-chain Solana exploit with public code-level mechanism requiring matrix expansion in this sweep window.
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **0 reinforcements applied to matrix** (all relevant in-window patterns already covered)
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A107 TMM dead-address burn reserve desync** | on-chain + keeper architecture | ✅ NOT APPLICABLE / DEFENDED | No AMM pair reserve accounting, no burnable protocol token path, stablecoin-only collateral ATAs |
+| **A94/B77 durable nonce admin takeover** | keeper tx flow + privileged on-chain paths | ✅ DEFENDED | Keeper uses fresh `get_latest_blockhash()`; no durable nonce accounts or pre-signed multisig governance workflow |
+| **D26 frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | CSP is meta-only, vendored Solana web3 bundle has no SRI hash, devnet faucet keypair remains embedded client-side |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual fallback still fetches externally validated prices and writes on-chain without explicit fallback-path max-drift assertion vs TWAP before write |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal threshold is per-call; no cross-slot cumulative drift accumulator observed in reviewed path |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 42) | `microstable/security/audit-attestation.json` absent; critical-path delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **3 relevant + 1 advisory batch**, but all were already covered or lacked public mechanism
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0** beyond **B45 HIGH carry-forward**
+- Blue-team priority remains unchanged:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path
+  3. Move CSP to headers, add SRI, remove client-side faucet keypair
 
 ## 2026-03-28 Daily Check
 
