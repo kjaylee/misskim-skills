@@ -6861,3 +6861,112 @@ post_deploy = "python3 scripts/notify.py"
 **Purple Team verdict**: META-49는 "코드 검증 강화"가 오히려 "비코드 실행면 과소감사"를 만들 수 있다는 역설을 포착한다. 보안 시장이 잘하는 일이 많아질수록, 시장이 보지 않는 면의 가치가 상대적으로 커진다.
 
 **Matrix state as of 2026-04-11 (daily update)**: **120+ named vectors + META-01~49 + B73~B78**. META-49 added by Purple Team 2026-04-11: Executable Configuration Trust Drift (ECTD). No new CRITICAL/HIGH code-level finding for Microstable from this cycle; architecture-level latent risk documented.
+
+---
+
+### D47. Rand Custom-Logger Reentrant Reseed UB
+**Historical**: RustSec `RUSTSEC-2026-0097` (reported 2026-04-09, issued 2026-04-11)
+**Mechanism**: `rand::rng()` / `thread_rng()`는 보통 안전한 난수 유틸리티로 취급되지만, `log` + `thread_rng` feature가 켜져 있고, **custom logger가 다시 `rand::rng()`를 호출**하며, 그 순간 RNG reseed가 겹치면 aliasing mutable reference가 만들어져 Undefined Behaviour로 붕괴할 수 있다. 즉, “로그는 관찰면”이라는 가정이 깨지고, **관찰면이 난수 경로를 재진입(reentrant)하며 메모리 안전 경계를 깨는** 패턴이다.
+
+**공격 형태**:
+1. 공격자는 trace/warn logging이 터지도록 입력이나 환경을 유도한다.
+2. 운영팀은 custom logger/JSON logger/telemetry sink 안에서 request-id, jitter, sampling용 난수를 다시 사용한다.
+3. `ThreadRng`가 64KB reseed 구간과 겹치면 로깅 경로가 RNG 내부에 재진입한다.
+4. 최적화 빌드에서 UB가 비결정적으로 표면화되며, 크래시/메모리 손상/예측 불가 상태를 만든다.
+
+**왜 D34와 다른가**:
+- **D34** = sandbox/guest 자원고갈이나 panic 기반 DoS.
+- **D47** = “안전한 Rust API”로 보이던 로깅-난수 조합이 **메모리 안전성 자체를 무너뜨리는** 오프체인 런타임 패턴.
+
+**찾아야 할 코드 냄새**:
+```rust
+// RISKY: custom logger path re-enters rand::rng()
+impl log::Log for MyLogger {
+    fn log(&self, record: &log::Record) {
+        let mut rng = rand::rng();
+        let jitter: u64 = rng.random();
+        ship_json(record, jitter);
+    }
+}
+```
+
+**방어**:
+1. custom logger / telemetry sink / tracing layer 안에서 `rand::rng()` 호출 금지
+2. `rand`를 `>=0.9.3` 또는 `>=0.10.1`로 올리고, 영향받는 feature 조합(`log`, `thread_rng`)을 감사
+3. 로깅 경로는 deterministic ID generator나 precomputed entropy pool만 사용
+4. “로그는 부수효과가 없다”는 가정을 버리고, logger 구현을 privileged code와 동일한 수준으로 리뷰
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0097.html
+
+### A110. Receipt-Threshold Poisoning / Commit-Set Saturation
+**Historical**: arXiv `MEV-ACE: Identity-Authenticated Fair Ordering for Proposer-Controlled MEV Mitigation` (2026-04-08)
+**Mechanism**: 공정 주문(fair ordering) 시스템은 종종 “threshold commit/open receipt를 받은 트랜잭션 집합”을 admissible set으로 고정한 뒤, 그 이후에 무작위 순서를 정한다. 문제는 **무작위화 이전의 admission 단계**다. 공격자는 가치가 낮은 commit을 대량 살포하거나, threshold 직전까지 receipt를 모은 뒤 selective non-open / open withholding을 일으켜 **좋은 트랜잭션이 임계치를 못 넘게 만들고, 공격자 트랜잭션만 admissible set을 채우게** 할 수 있다. 순서 무작위화는 이미 오염된 집합 위에서만 공정하다.
+
+**공격 형태**:
+1. 저비용 commit을 다수 등록해 validator receipt capacity를 포화시킨다.
+2. 경쟁 트랜잭션은 threshold receipt를 늦게 받거나 못 받게 만든다.
+3. 공격자 쪽 commit만 admissible set에 안정적으로 들어간다.
+4. 이후 VDF/random ordering이 적용돼도, 이미 admission 단계에서 선택 편향이 끝난 상태다.
+
+**왜 A91/A92/B78과 다른가**:
+- **A91/A92/B78** = 주문이 어떻게 보이고, 어느 슬롯에서 sandwich/MEV를 뽑는가.
+- **A110** = 애초에 **어떤 주문이 공정 순서 대상 집합에 들어가느냐**를 독점하는 공격.
+
+**찾아야 할 설계 냄새**:
+```text
+admissible_set = { tx | commit_receipts(tx) >= threshold }
+// 위험: receipt capacity / validator attention / open bandwidth를 경제적으로 포화시킬 수 있으면
+// fairness는 ordering 단계가 아니라 admission 단계에서 이미 깨진다.
+```
+
+**방어**:
+1. commit/open 단계에 identity-bonded rate limit 및 per-identity slot quota 적용
+2. receipt threshold뿐 아니라 **queue fairness / admission fairness**를 별도 측정
+3. open 미이행(non-open)에는 bond slash, repeated near-threshold spam에는 exponential cost 부과
+4. admissible set 크기 상한 + low-value spam eviction 정책 설계
+
+**Source**: https://arxiv.org/abs/2604.07568v1
+
+### A111. VDF Economic Speedup Grinding / Reward-Spike Delay Collapse
+**Historical**: arXiv `Economic Security of VDF-Based Randomness Beacons` (2026-04-06)
+**Mechanism**: VDF beacon은 암호학적으로는 순차 지연을 강제하지만, 실제 공격자는 암호학자가 아니라 **경제적 행위자**다. 보상이 평시에는 작아도, MEV·청산·경매처럼 **reward spike**가 생기면 더 빠른 하드웨어 구매, selective abort, grinding이 경제적으로 합리적이 된다. 즉, “몇 초면 충분하다”는 지연 파라미터는 평균 상황에만 안전할 뿐, tail reward 상황에서는 무너질 수 있다.
+
+**공격 형태**:
+1. 공격자는 reward spike가 큰 슬롯/이벤트만 기다린다.
+2. 그 순간에만 더 빠른 하드웨어 / 병렬 준비 / selective abort 전략을 사용한다.
+3. 기대보상이 지연비용을 넘는 구간에서만 공격하므로, 평균 비용 모델로는 탐지가 늦다.
+4. 결과적으로 beacon bias resistance가 “암호학적으로는 유지되지만 경제적으로는 실패”한다.
+
+**왜 기존 randomness/vdf 서술과 다른가**:
+- 기존 논의는 보통 cryptographic sequentiality를 본다.
+- **A111**은 동일 설계가 reward distribution의 꼬리(tail) 때문에 **경제적으로 붕괴**할 수 있음을 패턴으로 분리한다.
+
+**방어**:
+1. delay 파라미터는 평균값이 아니라 **p99 reward spike** 기준으로 산정
+2. selective abort / multi-adversary competition / temporary hardware rental까지 비용 모델에 반영
+3. beacon 설계 리뷰 시 “sequentially secure?”만이 아니라 “economically secure under MEV spikes?”를 필수 질문으로 추가
+4. randomness가 liquidation / keeper selection / auction clearing에 연결되면, peak-value 이벤트별 별도 보수 파라미터 사용
+
+**Source**: https://arxiv.org/abs/2604.04744v1
+
+### A112. Anchor Raw IDL Metadata Trust-Boundary Confusion
+**Historical**: Anchor commit `a380b91` — `decodeIdlAccountRaw` 추가 (2026-04-09)
+**Mechanism**: Anchor tooling이 raw IDL metadata account의 `program`, `authority`, `mutable`, `canonical`, `seed`, `encoding`, `compression`, `dataSource`를 직접 노출하기 시작하면, 오프체인 툴링/인덱서/배포 파이프라인이 이 값을 **진실의 근원(source of truth)** 으로 잘못 승격할 위험이 생긴다. 공격자는 가짜 metadata account나 잘못 연결된 account bytes를 주입해 **IDL spoofing / program-binding confusion / authority confusion**을 유도할 수 있다.
+
+**공격 형태**:
+1. 운영 툴이나 대시보드가 raw IDL bytes를 받아 자동으로 decode한다.
+2. account owner / canonical flag / expected program pubkey 검증 없이 metadata를 신뢰한다.
+3. 공격자는 가짜 IDL 또는 잘못 압축/인코딩된 metadata를 넣어 툴링이 다른 프로그램을 같은 프로그램처럼 취급하게 만든다.
+4. 결과적으로 잘못된 client generation, 잘못된 deploy target, 잘못된 authority 판단으로 이어진다.
+
+**왜 A109와 다른가**:
+- **A109** = `Anchor.toml [hooks]`가 빌드·배포 실행면이 되는 문제.
+- **A112** = raw metadata decode가 **툴링의 신뢰 경계**를 흔들어 잘못된 IDL/프로그램 식별을 유발하는 문제.
+
+**방어**:
+1. raw IDL decode 결과를 신뢰하기 전에 metadata account owner / program pubkey / canonical / authority를 모두 재검증
+2. decoded metadata를 자동 배포/자동 코드생성의 입력으로 직결하지 말고, attested artifact와 교차검증
+3. compressed/encoded metadata path는 fuzz + malformed corpus 테스트 추가
+4. "IDL을 읽었다"와 "정상 program metadata임을 검증했다"를 별도 단계로 분리
+
+**Source**: https://github.com/solana-foundation/anchor/commit/a380b9136fc5437fbf9268d7e52ba7fe53ae6728

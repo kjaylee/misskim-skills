@@ -1044,3 +1044,44 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 54. ☐ Anchor `>=1.0.0` migration: no lifecycle hooks by default; any `[hooks]` entry requires explicit review, allowlist, and isolated runner/hardware signer path
+
+---
+<!-- AUTO-ADDED 2026-04-12 (Red Team Daily Evolution) — A110~A112 fair-ordering / randomness / Anchor raw-metadata patterns -->
+
+## 2026-04-12 Fair-Ordering / Randomness / Anchor Pattern Additions
+
+### A110 — Receipt-Threshold Poisoning / Commit-Set Saturation
+- **Solana context**: 앞으로 Jito-like private ordering, encrypted mempool, committee receipt, commit/open ordering layer가 붙는 Solana 시스템은 “ordering fairness”와 “admission fairness”를 분리해서 봐야 한다.
+- **핵심 패턴**: threshold receipt를 받은 트랜잭션만 admissible set에 들어가는 구조에서는, 공격자가 저가치 commit spam·selective non-open·validator attention saturation으로 **좋은 주문이 set에 못 들어오게** 만들 수 있다.
+- **왜 Solana에서 중요하나**:
+  1. 빠른 슬롯(400ms대) + validator-local order flow + Jito/private relay 결합 시 receipt capacity가 scarce resource가 된다.
+  2. “순서 랜덤화”가 있어도 admission 단계가 오염되면 공정성은 이미 깨진다.
+  3. Keeper / liquidation / auction flow가 fair-order infra 위에 얹히면 ordering stage보다 admission stage가 먼저 공격받는다.
+- **Microstable current status**: MEV-ACE식 threshold receipt / committee admission layer는 **없다**. 따라서 full vector는 **NOT ACTIVE**.
+- **Microstable-adjacent note**: 다만 `programs/microstable/src/lib.rs`에는 대규모 리밸런스용 단일 `pending_rebalance_commit` 슬롯이 있어, admission fairness가 아니라 **single-slot liveness choke** 관점의 부분 유사성은 있다. 현재는 keeper 2-of-3 compromise가 먼저 필요하므로 직접 severity는 낮다.
+- **Checklist item 55**: ☐ 공정 주문 / private ordering / committee receipt 계층을 도입하면, `threshold receipts` 외에 `admission fairness`, `per-identity quota`, `non-open slashing`, `spam eviction`을 별도 설계할 것
+
+### A111 — VDF Economic Speedup Grinding / Reward-Spike Delay Collapse
+- **Solana context**: VDF 기반 랜덤 순서, keeper selection, liquidation auction randomness, batch fairness 설계를 도입할 경우 “암호학적으로 sequential”하다는 이유만으로 안전하다고 보면 안 된다.
+- **핵심 패턴**: 공격자는 평시가 아니라 **reward spike가 큰 이벤트**에서만 더 빠른 하드웨어·selective abort·grinding을 사용한다. 평균 기준 delay는 tail-event에서 경제적으로 깨질 수 있다.
+- **Solana-specific trigger**:
+  1. liquidation bonus / MEV / auction spread가 특정 슬롯에서 급증
+  2. validator/searcher가 temporary hardware rental 또는 privileged colocated infra 사용
+  3. beacon parameter가 평균 수익 기준으로만 정해짐
+- **Microstable current status**: `programs/microstable/src/lib.rs` / `keeper/src/`에 VDF beacon, randomness-based keeper election, lottery path는 발견되지 않았다. **NOT ACTIVE**.
+- **Checklist item 56**: ☐ VDF / randomness beacon을 도입하면 지연 파라미터를 평균이 아니라 `p99 reward spike + attacker hardware edge + selective abort` 기준으로 산정할 것
+
+### A112 — Anchor Raw IDL Metadata Trust-Boundary Confusion
+- **Solana context**: Anchor가 `decodeIdlAccountRaw`를 추가하면서, 오프체인 툴이 raw metadata account의 `program`, `authority`, `canonical`, `encoding`, `compression` 필드를 직접 사용하는 경로가 생겼다.
+- **핵심 패턴**: account owner / canonical flag / expected program pubkey 검증 없이 raw metadata를 신뢰하면 **IDL spoofing** 또는 **program-binding confusion**이 가능해진다.
+- **왜 Solana/Anchor에서 중요하나**:
+  1. 많은 팀이 IDL을 배포 메타데이터·클라이언트 생성·운영 대시보드의 신뢰 기반으로 사용한다.
+  2. raw decode 노출은 “파싱 가능함”과 “신뢰 가능함”을 혼동하게 만든다.
+  3. 잘못된 metadata account를 받아도 on-chain bug 없이 off-chain tooling이 먼저 속을 수 있다.
+- **Microstable current status**: repo는 여전히 Anchor `0.31.1` 기준이고, `decodeIdlAccountRaw` 사용 흔적은 없다. **LATENT / NOT ACTIVE**.
+- **Checklist item 57**: ☐ Anchor raw IDL metadata를 사용할 경우, `owner`, `program`, `authority`, `canonical` 검증 없이는 decoded 값을 코드생성·배포·모니터링 입력으로 신뢰하지 말 것
+
+### Solana-Specific Defense Checklist Update
+55. ☐ Fair-order / committee-receipt 도입 시 ordering fairness와 admission fairness를 분리 설계하고, per-identity quota + non-open slashing + spam eviction을 넣을 것
+56. ☐ VDF/randomness beacon 파라미터는 평균이 아니라 p99 reward spike + hardware speedup + selective abort 비용 모델로 산정할 것
+57. ☐ Anchor raw IDL metadata는 owner/program/authority/canonical 검증 없이는 자동 코드생성·배포·모니터링 입력으로 신뢰하지 말 것
