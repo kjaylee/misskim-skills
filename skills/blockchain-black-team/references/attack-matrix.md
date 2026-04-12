@@ -1,4 +1,4 @@
-# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11) | META-01~49
+# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13) | META-01~50
 
 ## A. Smart Contract Vectors
 
@@ -968,6 +968,7 @@ location /rpc {
 | B51 Human-in-the-Loop Exploitation (에이전트→인간 공격) — 퍼플팀 2026-04-08 | **핵심 비대칭**: "Human-in-the-Loop Traps complete the taxonomy — these commandeer the agent as a vector to attack human overseers, exploiting cognitive biases like automation bias and approval fatigue to get operators to authorize malicious actions." 기존 B29(Confused-Deputy)는 외부→에이전트 방향. B51은 에이전트→인간 방향. **왜 감사가 놓치는가**: ① "에이전트는 도구"라는 가정 하에 에이전트가 인간의 인지 편향을 악용하는 공격을 위협 모델에서 제외. ② 인간-에이전트 상호작용에서 발생하는 approval fatigue, automation bias는 "운영 문제"로 분류. ③ 감사 체크리스트에 "에이전트 출력이 인간 의사결정에 미치는 영향" 항목 없음. **DeFi 적용**: 거버넌스/파라미터 변경 승인 요청에서 AI 에이전트가 approval fatigue 유도 → 승인권자가 검토 없이 승인 → 악의적 파라미터 변경 통과. **방어**: 에이전트 승인 요청 rate limiting, 인간 대상 설문/훈련(automation bias 인식), 중요 승인에 대해 out-of-band 검증, 에이전트 제안에 대한 독립적 검증 레이어. |
 | META-45 AI Agent Coordination Attack Surface — 퍼플팀 2026-04-08 | **핵심 비대칭**: 단일 에이전트 보안(B29~B49)이 충분하다고 가정하면, 다중 에이전트 시스템의 조정 공격(coordinated attack)은 구조적 사각지대. B50·B51은 이 메타 갭의 구체 표현. **왜 감사가 놓치는가**: ① AI 에이전트 보안 프레임워크(OWASP Agentic AI Top 10 등)가 단일 에이전트 위협 중심으로 설계됨. ② 다중 에이전트 상호작용은 "분산 시스템 문제"로 분류되어 AI 보안 감사 범위 밖. ③ emergent failure mode는 단일 컴포넌트 테스트로는 탐지 불가. **실증**: Google DeepMind 분류(Interaction Traps, Systemic Traps, Human-in-the-Loop Traps)가 2026-04-07 공개. KuCoin $45M breach에서 다중 AI 트레이딩 에이전트가 상호작용하며 공격 증폭. **방어**: 다중 에이전트 시스템 독립적 위협 모델링, 에이전트 간 통신 감사, emergent failure mode 시뮬레이션, 인간 감독자 보호 레이어. |
 | META-49 Executable Configuration Trust Drift (ECTD) — 퍼플팀 2026-04-11 | **핵심 비대칭**: AI 감사 도구·버그바운티·형식 검증이 모두 **코드 정확성** 쪽으로 진화하는 동안, 빌드/테스트/배포 설정 파일은 점점 **실행 가능한 제어면**으로 바뀌고 있음. Anchor 1.0의 `Anchor.toml [hooks]` 가 대표 사례. **왜 감사가 놓치는가**: ① 설정 파일을 선언형 메타데이터로 분류해 코드 리뷰·감사 우선순위에서 제외. ② 버그바운티는 온체인 재현 가능한 취약점에 보상이 집중되어 빌드/배포 파이프라인 삽입형 공격은 경제적 유인이 약함. ③ 형식 검증은 검증된 소스와 배포 산출물이 동일하다는 전제를 둔다 — post-build/pre-deploy hook가 그 전제를 무너뜨려도 검증 실패로 표시되지 않음. ④ 보안 도구 시장이 "취약점 발견률"을 개선할수록 오히려 teams는 non-code 실행면을 더 덜 본다. **A109/D28/META-48과의 구별**: A109 = Anchor hook라는 구체 벡터, D28 = 악성 패키지/의존성, META-48 = 인간 신뢰 경계 전체. META-49는 **'설정이 더 이상 설정이 아니게 된 순간'** 발생하는 구조적 감사 실패를 별도로 규정한다. |
+| META-50 Admissibility Security Gap (ASG) — 퍼플팀 2026-04-13 | **핵심 비대칭**: 업계의 감사·형식 검증·불변식 테스트·버그바운티는 대부분 **'이미 admissible set 안에 들어온 요청이 올바르게 실행되는가'** 를 검증한다. 그러나 최신 공격은 그 이전 단계 — receipt threshold, queue capacity, commit slot, validator attention, expiry window — 를 장악해 **정상 요청이 들어오지 못하게** 만들거나, 방어 트랜잭션만 지연시키는 방식으로 진화한다. **왜 감사가 놓치는가**: ① liveness/fairness/admission 파라미터를 보안 경계가 아니라 성능·운영 튜닝 값으로 취급. ② invariant/fuzz 도구는 target function call 시퀀스가 이미 시스템에 수용됐다는 가정에서 시작. ③ 형식 검증 논문도 대개 admissible set이 고정된 뒤의 ordering/correctness를 증명하고, receipt 포화·identity spam·reward spike 경제성은 모델 밖으로 둔다. ④ 버그바운티는 직접 재현 가능한 자금 손실에 보상이 집중돼, '지금 당장 드레인되진 않지만 방어 행동을 구조적으로 막는 admission choke'는 후순위가 된다. **A110/A111/META-37과의 구별**: A110/A111은 구체 공격 기법, META-37은 자동 리스크 시스템의 경제 가정 붕괴. META-50은 **보안 검증의 시작점 자체가 너무 늦다** 는 구조적 실패를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7004,3 +7005,44 @@ fn keeper_cycle() {
 5. lock attestation은 **비의도적 drift 탐지**일 뿐임을 명시 — 의도적으로 병합된 악성 logger는 별도 검토 없이는 통과 가능
 
 **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0084.html
+
+### META-50. Admissibility Security Gap (ASG)
+
+**Published**: 2026-04-13 | **Source**: Purple Team Daily Evolution | **Signals**: arXiv `MEV-ACE` (2026-04-08), arXiv `Economic Security of VDF-Based Randomness Beacons` (2026-04-06), Foundry invariant testing guide, Echidna docs, Immunefi bug-fix review index, RustSec `logprinter` (2026-04-09)
+
+**Mechanism**: 보안 업계의 주요 assurance 도구는 대체로 **실행 이후(in-execution)** 를 본다. 감사는 함수 경로와 권한 검사를 보고, 불변식 테스트는 이미 target contract에 들어온 call sequence를 돌리며, 형식 검증은 admissible set이 주어졌다고 가정한 뒤 safety/liveness/correctness를 증명한다. 버그바운티 역시 보통 재현 가능한 drain이나 명확한 privilege escalation에 보상이 집중된다. 문제는 실제 공격자가 increasingly 노리는 지점이 **실행 전(pre-execution) admission layer** 라는 점이다.
+
+공격자는 스마트컨트랙트를 깨지 않아도 된다. 대신 다음을 장악하면 된다.
+
+1. threshold receipt를 받는 capacity
+2. validator/operator attention budget
+3. single pending slot / single queue / single commit register
+4. expiry window와 retry budget
+5. reward spike 시점에만 유효해지는 경제적 saturation 전략
+
+그 결과 시스템은 형식적으로는 “공정한 ordering” 또는 “불변식 유지” 상태일 수 있지만, 현실에서는 **정상 요청이 admissible set에 못 들어가거나, 방어적 조치만 제때 실행되지 못하는** 상태가 된다. Purple Team 관점에서 이것은 단순 liveness 문제가 아니라, **방어행위의 admission 자체가 보안 경계가 된 시대의 구조적 blind spot** 이다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **MEV-ACE (2026-04-08)**: threshold commit/open receipts를 받은 뒤의 공정 ordering과 accountable inclusion을 설계한다. 그러나 이 논문이 역설적으로 드러낸 것은 “누가 threshold receipt를 받느냐”가 별도 공격면이라는 사실이다. ordering proof가 강할수록 admission choke는 더 비가시화된다.
+- **VDF Economic Security (2026-04-06)**: 평균 상황에서는 안전해 보이던 delay parameter가 reward spike 구간에서는 경제적으로 붕괴할 수 있음을 보여준다. 이는 randomness/fairness 설계의 약점이 암호학이 아니라 **admission economics** 에 있을 수 있음을 재확인한다.
+- **Foundry invariant testing / Echidna**: 둘 다 매우 유용하지만 기본 모델은 “어떤 call sequence를 시스템 내부에서 실행해도 invariant가 깨지는가”에 최적화돼 있다. queue saturation, receipt starvation, operator attention depletion, single-slot serialization은 기본 테스트 모델에 자연스럽게 들어가지 않는다.
+- **Immunefi bug-fix review ecosystem**: 고가치 보상은 여전히 재현 가능한 코드 버그/권한 우회/자금 손실에 집중돼 있다. admission-only 구조 결함은 exploit chain의 일부가 되기 전까지 가시성이 낮다.
+- **RustSec `logprinter` (2026-04-09)**: 운영자들이 incident/debug/trace 모드에서만 privilege-heavy 경로를 여는 패턴을 보여준다. 이는 “방어를 위해 시스템을 더 많이 쓸수록 admission surface가 넓어진다”는 보조 증거다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 커버하는 것 | 놓치는 것 |
+|---|---|---|
+| A110 | receipt-threshold poisoning이라는 구체 기술 | 왜 업계 전체가 admission 자체를 보안 경계로 취급하지 않는지 |
+| A111 | VDF reward-spike 경제 공격 | 왜 지연 파라미터가 성능값으로만 관리되는지 |
+| META-37 | 자동 리스크 시스템의 경제 가정 붕괴 | fairness/admission 계층의 수용 집합 고정 전 공격 |
+| META-49 | 실행형 설정 파일이 검증 사슬을 끊는 문제 | 요청/행동이 시스템에 들어오는 admission 자체의 choke point |
+
+**Microstable architecture implication**:
+
+Microstable의 large rebalance path는 현재 `pending_rebalance_commit` 하나에 의존한다. 이는 보안 코드 버그라기보다 **admission serialization primitive** 다. tier-2 이상 등록 에이전트 + 2-of-3 keeper quorum이 commit을 올리면, 이후 다른 large rebalance는 동일 슬롯을 공유하지 못하고 reveal 또는 expiry까지 기다려야 한다. `COMMIT_REVEAL_MAX_VALIDITY = 1000` slots인 구조는 평시엔 괜찮아 보여도, 급변장·oracle stress·incident response 시점에는 방어 행동의 admission lane이 하나뿐이라는 뜻이다. Purple Team은 이를 “돈을 훔치는 취약점”보다 한 단계 앞선 **방어 지연 구조** 로 분류한다.
+
+**Purple Team verdict**: 2026년 assurance 시장은 execution correctness를 훨씬 잘 다루게 됐다. 그 대가로, **누가 시스템에 들어오는가 / 무엇이 먼저 admission 되는가 / 어떤 방어 요청이 큐를 점유한 채 타 요청을 막는가** 는 여전히 구조적으로 덜 본다. META-50은 “실행은 안전하지만 admission은 안전하지 않다”는 역설을 별도 메타 패턴으로 고정한다.
+
+**Matrix state as of 2026-04-13 (purple daily update)**: **120+ named vectors + META-01~50 + B73~B78**. META-50 added by Purple Team 2026-04-13: **Admissibility Security Gap (ASG)**. No new CRITICAL code-level finding from this meta pattern; one architecture-level Microstable admission choke documented separately.
