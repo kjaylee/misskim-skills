@@ -6970,3 +6970,37 @@ admissible_set = { tx | commit_receipts(tx) >= threshold }
 4. "IDL을 읽었다"와 "정상 program metadata임을 검증했다"를 별도 단계로 분리
 
 **Source**: https://github.com/solana-foundation/anchor/commit/a380b9136fc5437fbf9268d7e52ba7fe53ae6728
+
+### D48. Logger-Path Stage-2 Remote Payload Fetch
+**Historical**: RustSec `RUSTSEC-2026-0084` (`logprinter`, 2026-04-09)
+**Mechanism**: 기존 악성 크레이트는 주로 **build/install 시점**에 곧바로 payload를 내려받아 실행했다. `logprinter`는 더 교묘하다. 의존성 그래프 안에 잠복해 있다가, 운영자가 `trace()` 같은 로깅 경로를 실제로 호출하는 **런타임 시점**에 외부 HTTP endpoint에서 2차 코드를 가져와 실행한다. 즉, CI 빌드 샌드박스·정적 diff 리뷰·"빌드는 깨끗했다"는 확인을 모두 통과한 뒤, **실제 keeper/operator 프로세스가 고권한 환경에서 로그를 찍는 순간** 감염이 활성화된다.
+
+**공격 형태**:
+1. 공격자는 정상 로깅 유틸처럼 보이는 crate를 의존성에 심는다.
+2. 코드 리뷰에서는 "관측성(observability) 보강" 정도로 보이므로 경계가 느슨해진다.
+3. 빌드/테스트 단계에서는 악성 동작이 거의 없거나, trace 레벨이 꺼져 있어 발화하지 않는다.
+4. 운영 중 incident response, debug, telemetry, verbose 모드에서 `trace()`가 호출되는 순간 외부 payload fetch + 실행이 이뤄진다.
+5. 결과적으로 배포 후 운영 환경의 지갑·RPC 토큰·keeper key material이 노출된다.
+
+**왜 A103 / D43과 다른가**:
+- **A103 (`logtrace`)** = 빌드 시점 RAT 다운로드. build sandbox / CI에서 더 빨리 잡힐 수 있다.
+- **D43** = 코어 생태계 typosquat wave 자체.
+- **D48** = **활성화 시점이 런타임 로그 경로**에 묶인 우회형이다. 팀이 "빌드는 안전했다"고 확신할수록 오히려 더 늦게 발견된다.
+
+**찾아야 할 코드 냄새**:
+```rust
+use logprinter::trace; // harmless-looking logger helper
+
+fn keeper_cycle() {
+    trace("oracle cycle start"); // first privileged runtime call triggers remote fetch/exec
+}
+```
+
+**방어**:
+1. 로깅/telemetry/observability 의존성도 privileged dependency로 취급 — allowlist-only
+2. keeper/runtime 환경에서 **logger code path의 임의 외부 egress**를 차단하거나 명시 allowlist로 제한
+3. 신규 logging crate family(`log*`, `trace*`, `telemetry*`) 추가 시 security review + lock diff 재검토를 강제
+4. TRACE/DEBUG escalation이 필요한 incident response는 secrets 분리된 진단 환경 또는 egress-restricted runner에서 수행
+5. lock attestation은 **비의도적 drift 탐지**일 뿐임을 명시 — 의도적으로 병합된 악성 logger는 별도 검토 없이는 통과 가능
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0084.html

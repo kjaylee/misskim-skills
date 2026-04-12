@@ -1085,3 +1085,21 @@ archive_or_forward(tx)?; // delayed execution risk
 55. ☐ Fair-order / committee-receipt 도입 시 ordering fairness와 admission fairness를 분리 설계하고, per-identity quota + non-open slashing + spam eviction을 넣을 것
 56. ☐ VDF/randomness beacon 파라미터는 평균이 아니라 p99 reward spike + hardware speedup + selective abort 비용 모델로 산정할 것
 57. ☐ Anchor raw IDL metadata는 owner/program/authority/canonical 검증 없이는 자동 코드생성·배포·모니터링 입력으로 신뢰하지 말 것
+
+---
+<!-- AUTO-ADDED 2026-04-13 (Red Team Daily Evolution) — D48 logger-path stage-2 fetch -->
+
+## 2026-04-13 Logging Supply-Chain Runtime-Trigger Pattern
+
+### D48 — Logger-Path Stage-2 Remote Payload Fetch
+- **Solana context**: Solana keeper/operator는 장애 대응, oracle drift 조사, RPC 이상 징후 분석 때 TRACE/DEBUG 로깅을 켜는 경우가 많다. 이때 악성 logging dependency는 빌드 시점이 아니라 **실전 incident-response 시점**에만 활성화될 수 있다.
+- **핵심 패턴**: `trace()` 또는 logger bridge 내부에서 외부 endpoint로 2차 payload를 받아 실행한다. 따라서 빌드 샌드박스·기본 테스트·정적 diff review를 모두 통과한 뒤, 실제 운영 프로세스에서만 발화한다.
+- **왜 Solana에서 특히 위험한가**:
+  1. keeper, deploy CLI, RPC 토큰, signer path가 같은 운영 환경에 공존하는 경우가 많다.
+  2. 평소에는 INFO 수준 로그만 쓰다가 incident 때 TRACE를 켜므로, 악성 코드가 **위기 순간에만** 발화할 수 있다.
+  3. 운영팀은 로깅 dependency를 business logic보다 덜 위험하게 보는 경향이 있어 review intensity가 낮다.
+- **Microstable current status**: `microstable/solana/Cargo.lock`에는 `logprinter` / `logtrace`가 없고, 정상 `tracing` / `tracing-subscriber`만 존재한다. 따라서 **ACTIVE exploit path는 미확인**. 다만 keeper 전역에 tracing 호출이 넓게 퍼져 있어, 향후 악성 logger helper가 병합되면 activation surface는 넓다.
+- **Checklist item 58**: ☐ logging/telemetry dependency는 allowlist-only로 관리하고, 신규 logger crate/bridge 추가 시 security review + egress 제한 + privileged runtime 분리를 강제할 것
+
+### Solana-Specific Defense Checklist Update
+58. ☐ Logging/telemetry dependency는 allowlist-only; 신규 logger crate/bridge 추가 시 security review, lock diff review, runtime egress restriction을 강제할 것
