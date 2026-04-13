@@ -1,5 +1,43 @@
 ---
 
+## 2026-04-14 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-07 to 2026-04-14 KST)
+- Sources checked: rekt.news frontpage/newsletter, hacked.slowmist.io, Solana ecosystem security page, Trail of Bits/OtterSec/Neodyme blog indexes, GitHub Advisory API spot checks, SearXNG fallback for Immunefi/X queries
+- Brave Search API quota exhaustion persisted on direct web search → SearXNG fallback used for query-based checks
+- **Confirmed in-window items**:
+  1. **Hyperbridge / Polytope Labs token gateway** (2026-04-13) — confirmed forged state-proof exploit in the intended relay path; mapped as **A32 reinforcement**, not a new vector
+  2. **GitHub Advisory API cross-checks** produced no fresh Solana/Anchor/SPL-specific GHSA hit affecting current Microstable stack in this window
+  3. **Trail of Bits / OtterSec / Neodyme indexes** showed no new Solana-specific exploit-research post in-window requiring matrix expansion
+  4. **Solana ecosystem security announcement** added ecosystem-program context only (STRIDE/SIRN); no new code-level exploit mechanism requiring a matrix delta
+- No new on-chain Solana exploit with public code-level mechanism requiring matrix expansion in this sweep window.
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **1 reinforcement applied**: **A32 Cross-Chain Bridge Message Forgery** (Hyperbridge forged state-proof → admin/minter seizure)
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A32 Hyperbridge-style bridge proof forgery** | on-chain + keeper architecture | ✅ NOT APPLICABLE / DEFENDED TODAY | No Wormhole / IBC / bridge receiver path present in `lib.rs` or keeper flow; no cross-chain message credit path to abuse |
+| **D48 logger-path stage-2 fetch** | `solana/Cargo.lock`, `keeper/Cargo.toml` | ✅ SAFE TODAY | Logging deps remain `tracing` / `tracing-subscriber`; no `logprinter` / `logtrace` evidence in lockfile or keeper manifest |
+| **A109 / META-49 executable config trust drift** | `solana/Anchor.toml` | ✅ SAFE TODAY | `grep` confirms no `[hooks]` section, so Anchor lifecycle-hook control-plane path is still absent |
+| **A94/B77 durable nonce admin takeover** | keeper tx flow + privileged on-chain paths | ✅ DEFENDED | `keeper/src/utils.rs` still signs fresh transactions using `get_latest_blockhash()` + `Transaction::new_signed_with_payer`; no durable nonce workflow observed |
+| **D26 frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | CSP remains meta-only, vendored Solana web3 bundle has no SRI hash, devnet faucet keypair remains embedded client-side |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual fallback still fetches externally validated prices and writes on-chain without explicit keeper-side max-drift assertion vs TWAP before write |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal threshold is enforced per-call; reviewed state still has no cross-slot cumulative drift accumulator |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 45) | `microstable/security/audit-attestation.json` absent; critical-path delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **1 requiring reinforcement only**
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0** beyond **B45 HIGH carry-forward**
+- Blue-team priority remains unchanged:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path
+  3. Move CSP to headers, add SRI, remove client-side faucet keypair
+
 ## 2026-04-12 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-05 to 2026-04-12 KST)
