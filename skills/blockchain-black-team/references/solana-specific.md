@@ -1103,3 +1103,24 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 58. ☐ Logging/telemetry dependency는 allowlist-only; 신규 logger crate/bridge 추가 시 security review, lock diff review, runtime egress restriction을 강제할 것
+
+---
+<!-- AUTO-ADDED 2026-04-14 (Red Team Daily Evolution) — A113 Token-2022 authority-meta elision -->
+
+## 2026-04-14 Token-2022 Extension Control-Plane Pattern
+
+### A113 — Token-2022 Extension Authority-Meta Elision / Control-Plane Freeze
+- **Solana context**: Anchor upstream PR #4324 (`ead011c`, merged 2026-04-13) fixed a Token-2022 `group_pointer_update` CPI helper that built the instruction correctly but omitted `authority` from the `invoke_signed` account-info slice.
+- **핵심 패턴**: Solana CPI는 “instruction meta는 맞는데 실제 `invoke_signed` 에 넘긴 `AccountInfo` 집합이 빠진” 상태가 생기면, privileged extension update가 조용히 dead path가 된다. 공격자는 이 dead path 자체를 이용해 revoke / rotate / pointer cleanup을 지연시키고, 운영팀이 급히 넣는 permissive raw-CPI hotfix를 두 번째 공격면으로 전환할 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Token-2022 extension pointer/group/member metadata는 off-chain indexer, allowlist, compliance 분류, wallet UX에 연쇄적으로 소비된다.
+  2. update path가 막히면 자금 탈취가 즉시 안 보여도 **신뢰 분류 stale state** 가 길게 지속될 수 있다.
+  3. 팀은 종종 “막힌 CPI wrapper만 우회”하려고 `remaining_accounts` / raw instruction / `UncheckedAccount` 로 문제를 봉합한다. 이때 authority confusion surface가 커진다.
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/`에서 `token_2022_extensions`, `group_pointer`, `remaining_accounts` 사용 흔적을 찾지 못했다.
+  - Anchor `0.31.1` 사용 중이며 `Anchor.toml` 은 존재하지만 `[hooks]` 섹션은 없다.
+  - 따라서 **NOT ACTIVE today**. 다만 향후 Token-2022 extension 기반 자산 분류/registry를 붙이면 즉시 재평가 대상이다.
+- **Checklist item 59**: ☐ privileged CPI wrapper는 instruction metas와 `invoke[_signed]` account-info slice가 동일 계정 집합인지 golden-test로 고정하고, 실패한 extension update를 `remaining_accounts` / raw `UncheckedAccount` 우회로 봉합하지 말 것
+
+### Solana-Specific Defense Checklist Update
+59. ☐ Privileged CPI wrapper는 instruction metas와 `invoke[_signed]` account-info slice 일치성을 테스트로 고정하고, extension update 실패를 permissive raw-CPI 우회로 해결하지 말 것
