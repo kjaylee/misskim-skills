@@ -1,5 +1,40 @@
 ---
 
+## 2026-04-15 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-08 to 2026-04-15 KST)
+- Sources checked: rekt.news frontpage/newsletter, hacked.slowmist.io, Solana ecosystem/security pages, Trail of Bits/OtterSec/Neodyme blog indexes, fallback query checks for Immunefi/X/Twitter, plus Dango incident cross-read via web_fetch
+- Brave Search API quota exhaustion persisted on direct query search → local search-fallback (SearXNG/Scrapling/DDG) used for query-based checks
+- **Confirmed in-window items**:
+  1. **Dango insurance-fund exploit** (2026-04-13 disclosure window) — public donation logic failed to enforce positive-amount semantics; mapped as **A114 NEW**, not generic A10-only
+  2. **GitHub advisory / Solana-specific checks** produced no fresh Solana/Anchor/SPL-specific GHSA hit affecting current Microstable stack in this window
+  3. **Trail of Bits / OtterSec / Neodyme indexes** showed no new Solana-specific exploit-research post in-window requiring matrix expansion
+  4. **rekt.news / SlowMist / ecosystem checks** did not surface an additional code-level Solana-native exploit in-window requiring a second matrix delta today
+
+### New Vectors Added Today
+- **1 NEW vector**: **A114 Signed-Amount Donation Polarity Inversion / Insurance-Fund Drain**
+- **0 reinforcements** beyond the new vector entry
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A114 Dango-style signed donation polarity inversion** | on-chain public amount paths + keeper amount serialization | ✅ DEFENDED / NOT ACTIVE TODAY | `lib.rs` public amount inputs reviewed today remain `u64`; no public insurance-fund / reserve-top-up instruction accepting signed delta was found |
+| **A94/B77 durable nonce admin takeover** | keeper tx flow + privileged on-chain paths | ✅ DEFENDED | `keeper/src/utils.rs` still signs fresh transactions using `get_latest_blockhash()` + `Transaction::new_signed_with_payer`; no durable nonce workflow observed |
+| **D26 frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | CSP remains meta-only, vendored Solana web3 bundle still has no SRI hash, browser-side devnet-only state persists in `docs/app.js` |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual fallback still fetches externally validated prices and writes on-chain without explicit keeper-side max-drift assertion vs TWAP before write |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal threshold is still enforced per-call; reviewed state still has no cross-slot cumulative drift accumulator |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 46) | `microstable/security/audit-attestation.json` still absent; critical-path delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **1 requiring matrix expansion**
+- New attack vectors added: **1** (**A114**)
+- New **CRITICAL/HIGH** findings: **0** beyond **B45 HIGH carry-forward**
+- Blue-team priority remains unchanged:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path
+  3. Move CSP to headers, add SRI, and keep browser-side devnet/test material out of production dashboard assets
+
 ## 2026-04-14 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-07 to 2026-04-14 KST)

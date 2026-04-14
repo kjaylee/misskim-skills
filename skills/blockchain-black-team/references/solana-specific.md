@@ -1124,3 +1124,22 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 59. ☐ Privileged CPI wrapper는 instruction metas와 `invoke[_signed]` account-info slice 일치성을 테스트로 고정하고, extension update 실패를 permissive raw-CPI 우회로 해결하지 말 것
+
+<!-- AUTO-ADDED 2026-04-15 (Black Team Daily Evolution) — A114 signed-amount polarity inversion -->
+
+## 2026-04-15 Signedness / Reserve-Delta Pattern
+
+### A114 — Signed-Amount Donation Polarity Inversion (Solana adaptation note)
+- **Solana context**: Anchor/Solana on-chain business logic는 토큰 수량 자체는 대개 `u64` 로 받지만, perp PnL, funding, insurance-fund offsets, fee rebates, settlement netting에서는 `i64`/`i128` signed delta를 쓰고 싶어지는 순간이 온다. 이때 public 또는 semi-public instruction이 signed delta를 직접 받으면, "적립" 과 "차감" 이 같은 숫자 공간에 섞이면서 polarity inversion attack surface가 열린다.
+- **핵심 패턴**: `donate(delta)`, `settle(offset)`, `insurance_adjust(delta)` 같은 instruction이 `delta < 0` 를 막지 않거나, direction enum 없이 signed value 하나로 회계를 태우면, 입금용 경로가 사실상 인출용 경로로 역전될 수 있다.
+- **Solana에서 특히 주의할 점**:
+  1. SPL Token transfer amount는 unsigned여도, 내부 state accounting은 signed netting으로 흘러가기 쉽다.
+  2. keeper 또는 off-chain signer가 signed delta를 직렬화해 보내는 순간, on-chain program은 "누가 이 방향을 허용했는가" 를 별도로 검증해야 한다.
+  3. insurance fund / fee rebate / PnL settlement가 같은 reserve를 공유하면, polarity bug는 곧 shared-vault drain으로 이어질 수 있다.
+- **Microstable current status**:
+  - `lib.rs` 검토 결과 public amount path는 `u64` 기반이고 public insurance-fund donation instruction도 없다.
+  - 따라서 오늘 기준 active path는 보이지 않는다.
+  - 다만 향후 perp/insurance/funding-rate 정산 레이어가 추가되면 signed delta policy를 별도 설계 규약으로 강제해야 한다.
+
+### Solana-Specific Defense Checklist Update
+60. ☐ Reserve/insurance/PnL settlement instruction은 **direction(credit/debit)** 과 **magnitude(u64)** 를 분리하고, public path에서 signed delta 하나로 자금 이동 의미를 동시에 표현하지 말 것
