@@ -1,5 +1,43 @@
 ---
 
+## 2026-04-16 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-09 to 2026-04-16 KST)
+- Sources checked: rekt.news frontpage/newsletter, hacked.slowmist.io, Solana ecosystem/security page (STRIDE/SIRN launch), Trail of Bits/OtterSec/Neodyme blog indexes, Immunefi blog, GitHub Advisory DB query page, plus local search-fallback checks for X/Immunefi/GHSA
+- Brave Search API quota exhaustion persisted on direct query search → local search-fallback (SearXNG/Scrapling/DDG) used for query-based checks
+- **Confirmed in-window items**:
+  1. **Dango insurance-fund exploit** remains the only fresh code-level incident in-window requiring a recent matrix delta and is already mapped as **A114**
+  2. **Hyperbridge / Polytope** remains an **A32 reinforcement**, not a separate new vector
+  3. **Trust Wallet / HypurrFi-style domain or community-entry hijack cases** remain **D26** reinforcements only
+  4. **Solana Foundation STRIDE/SIRN launch** is a defensive ecosystem response, not a new exploit primitive
+  5. **GitHub Advisory / Solana-specific checks** produced no fresh Solana/Anchor/SPL-specific GHSA hit affecting the current Microstable stack in this window
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **0 reinforcements** requiring a matrix edit today
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A114 Dango-style signed donation polarity inversion** | on-chain public amount paths + keeper amount serialization | ✅ DEFENDED / NOT ACTIVE TODAY | `lib.rs` public amount inputs reviewed today remain `u64`; no public insurance-fund / reserve-top-up instruction accepting a signed delta was found |
+| **A94/B77 durable nonce admin takeover** | keeper tx flow + privileged on-chain paths | ✅ DEFENDED | `keeper/src/utils.rs` still signs fresh transactions using `get_latest_blockhash()` + `Transaction::new_signed_with_payer`; no durable nonce workflow observed |
+| **A109 / META-49 executable config trust drift** | `solana/Anchor.toml` | ✅ SAFE TODAY | Reviewed `Anchor.toml` still has no `[hooks]` section, so the Anchor lifecycle-hook control-plane path is not active in the current tree |
+| **D26 frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | CSP remains meta-only, vendored Solana web3 bundle still has no SRI hash, and `docs/app.js` still embeds a devnet faucet keypair client-side |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual fallback still fetches externally validated prices and writes on-chain through `ix_update_oracle` without explicit keeper-side max-drift assertion vs TWAP before write |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal threshold is still enforced per-call; reviewed state still has no cross-slot cumulative drift accumulator |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 47) | `microstable/security/audit-attestation.json` still absent; critical-path delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **0 requiring matrix expansion**
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0** beyond **B45 HIGH carry-forward**
+- Blue-team priority remains unchanged:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path
+  3. Track cumulative cross-call rebalance drift for large-turnover commit/reveal admission
+  4. Move CSP to headers, add SRI, and keep browser-side devnet/test material out of dashboard assets
+
 ## 2026-04-15 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-08 to 2026-04-15 KST)
