@@ -722,18 +722,19 @@ Exploitation of the gap between "technically correct code" and "economically saf
 ## 2026-03-25 Patterns
 
 ### rustls-webpki CRL Bypass in Keeper TLS (A77)
-**Confirmed Keeper Exposure**: Cargo.lock has `rustls-webpki = "0.103.9"` (fix is `>=0.103.10`).
+**Confirmed Keeper Exposure**: Cargo.lock has `rustls-webpki = "0.103.9"` (new fix floor is `>=0.103.12`; `0.103.10` only addressed the March CRL bug).
 
 Attack scenario:
 1. RPC provider (Helius/QuickNode/Triton) rotates TLS cert; old cert revoked via CRL with multiple distributionPoints
 2. rustls-webpki 0.103.9 only checks first DP → subsequent DPs ignored → revocation status "unknown"
 3. If keeper's rustls uses `UnknownStatusPolicy::Allow` → accepts revoked cert → MITM possible
-4. Attacker intercepts keeper→RPC connection → injects malicious oracle price responses or suppresses circuit breaker TX
+4. 2026-04-15 reinforcement: the same 0.103.9 branch is also below the patch floor for `RUSTSEC-2026-0099`, where wildcard DNS names can be accepted under an invalid permitted-subtree constraint. (`RUSTSEC-2026-0098` exists too, but URI-name constraints are low-relevance for Microstable RPC hostname validation because rustls-webpki does not expose URI assertion APIs.)
+5. Attacker intercepts keeper→RPC connection → injects malicious oracle price responses or suppresses circuit breaker TX
 
 **Remediation**:
 ```bash
 # In microstable/solana/ workspace:
-cargo update -p rustls-webpki --precise 0.103.10
+cargo update -p rustls-webpki --precise 0.103.12
 cargo update -p reqwest  # may pull in updated webpki transitively
 cargo audit  # verify clean
 ```
@@ -1143,3 +1144,30 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 60. ☐ Reserve/insurance/PnL settlement instruction은 **direction(credit/debit)** 과 **magnitude(u64)** 를 분리하고, public path에서 signed delta 하나로 자금 이동 의미를 동시에 표현하지 말 것
+
+---
+<!-- AUTO-ADDED 2026-04-16 (Red Team Daily Evolution) — A115 rustls-webpki name-constraint bypass -->
+
+## 2026-04-16 Keeper TLS Trust-Boundary Pattern
+
+### A115 — Keeper TLS Name-Constraint Escape / Allowlisted Host Impersonation
+- **Solana context**: Solana keeper / oracle / relayer는 대부분 RPC, Hermes, external price API를 `reqwest` + `rustls` 로 붙고, 설정 계층에서는 `https://` 스킴과 hostname allowlist로 outbound trust boundary를 관리한다. 그런데 verifier가 constrained subordinate CA 또는 wildcard certificate의 **name constraints** 를 잘못 검증하면, 공격자는 config를 건드리지 않고도 allowlisted host에 대한 신뢰를 가로챌 수 있다.
+- **핵심 패턴**: `rpc_url` / `secondary_rpc_url` / `hermes_url` / `coingecko_url` / `binance_url` 가 allowlisted host라도, TLS verifier가 misissued constrained cert를 받아들이면 **hostname policy가 certificate namespace policy를 대신하지 못한다**. 즉, “허용된 도메인만 쓴다”는 정책이 실제로는 “허용된 문자열만 본다”가 된다.
+- **왜 Solana keeper에서 특히 위험한가**:
+  1. keeper는 on-chain signer보다 덜 민감해 보이지만, 실제로는 emergency shutdown, rebalance cadence, oracle freshness decision을 좌우한다.
+  2. Solana 운영팀은 종종 RPC host allowlist를 강하게 두기 때문에, 그 바깥의 PKI 제약은 상대적으로 덜 보게 된다.
+  3. 공격자는 즉시 자금 탈취가 안 되더라도, 단일 source impersonation만으로 timeout / stale / failover storm을 유도해 운영팀을 hotfix 모드로 밀어 넣을 수 있다.
+- **Source signals**:
+  - RustSec `RUSTSEC-2026-0098` (issued 2026-04-15)
+  - RustSec `RUSTSEC-2026-0099` (issued 2026-04-15)
+  - `solana-program/token` commit `4c6f8a7` (`deps: Update rustls-webpki`, 2026-04-15)
+- **Microstable current status**:
+  - `keeper/Cargo.toml` uses `reqwest` with `rustls-tls`
+  - `Cargo.lock` contains `rustls-webpki = "0.103.9"` and `"0.101.7"`
+  - `keeper/src/hermes.rs` / `price_feed.rs` create default `reqwest::Client` instances for HTTPS endpoints
+  - `keeper/src/config.rs` enforces HTTPS and RPC host allowlist, but certificate pinning is not present
+  - 따라서 **ACTIVE LATENT**. 무결성 변조는 다중 endpoint compromise가 더 필요하지만, availability degradation과 operator-pressure path는 현실적이다.
+- **Checklist item 61**: ☐ keeper outbound HTTPS는 `https://` + hostname allowlist로 끝내지 말고, `rustls-webpki >= 0.103.12` 업그레이드와 함께 RPC/Hermes/price API에 대해 SPKI pinning 또는 issuer drift 감시를 추가할 것
+
+### Solana-Specific Defense Checklist Update
+61. ☐ Keeper outbound HTTPS는 `https://` + hostname allowlist만으로 신뢰하지 말고, `rustls-webpki >= 0.103.12` 업그레이드와 SPKI pinning/issuer drift monitoring을 병행할 것
