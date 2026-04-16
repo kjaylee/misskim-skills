@@ -6064,6 +6064,8 @@ pub fn process_governance_vote(ctx: Context<Vote>, token_mint: Pubkey) -> Result
 - Raydium liquidity pools have no minimum TVL.
 - Oracles that use AMM spot price without liquidity weighting are vulnerable.
 
+**2026 reinforcement (Rhea Finance, 2026-04-16, NEAR, ~$7.6M)**: Rhea Finance showed the same class can survive an extra “validation layer.” According to SlowMist / CertiK, the attacker created **multiple fake token contracts** and **newly created pools**, then allegedly misled both the protocol’s **oracle** and its **validation layers** before extracting funds. That broadens A98 beyond “oracle reads thin-liquidity spot” into **asset-admission / pool-provenance failure**: checking that a price exists or that a pool has liquidity is insufficient if the protocol still trusts attacker-created assets and attacker-created markets. **Source**: https://hacked.slowmist.io/ | https://x.com/CertiKAlert/status/2044791732575912321
+
 **Why This Is Distinct from A3**:
 - A3 manipulates price of REAL assets with real liquidity.
 - A98 creates the asset itself — no underlying value exists.
@@ -6088,6 +6090,7 @@ let price = get_raydium_spot_price(mint); // $1 with $3k liquidity
 3. **Liquidity-Weighted Price**: weight oracle price by sqrt(TVL).
 4. **Circuit Breaker**: reject collateral deposit if price moves >10% in 1 hour with <1M volume.
 5. **Manual Whitelist**: no automatic oracle onboarding; governance vote required.
+6. **Pool / Provenance Gate**: verify that the quoted pool is tied to an approved mint pair and an approved deployment path; attacker-created pools must not satisfy the same admission check as canonical markets.
 
 **Source**: TRM Labs Drift Protocol post-mortem (2026-04-02) | SpotedCrypto analysis
 

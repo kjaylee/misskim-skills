@@ -947,6 +947,7 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### A98 — Oracle Manipulation via Fake Asset with Minimal Liquidity (Solana-Specific Variant)
 - **Solana context**: SPL token creation is cheap (<0.01 SOL). Raydium and other Solana AMMs have no minimum liquidity requirement for listing. Oracles that use AMM spot price without liquidity weighting are vulnerable.
+- **2026 cross-ecosystem reinforcement (Rhea Finance, 2026-04-16, NEAR)**: Rhea reportedly fell to **multiple fake token contracts + newly created pools** that misled not only price discovery but also internal **validation layers**. Treat this as a warning that `TVL > 0` or `pool exists` checks are not enough — **pool provenance** and **canonical mint-pair admission** must be verified too. **Source**: https://hacked.slowmist.io/ | https://x.com/CertiKAlert/status/2044791732575912321
 - **Attack shape**:
   1. Mint 750M units of fake token (CVT in Drift case).
   2. Seed $3,000 liquidity on Raydium.
@@ -957,7 +958,8 @@ archive_or_forward(tx)?; // delayed execution risk
 - **Solana-specific defense**:
   - Pyth oracle: only lists assets on major exchanges (gatekeeping).
   - Custom oracle: minimum liquidity threshold (>$1M TVL), asset age requirement (30+ days), liquidity-weighted price.
-- **Checklist item 48**: ☐ If protocol accepts custom collateral assets, require: (a) TVL > $1M on primary DEX, (b) asset age > 30 days, (c) liquidity-weighted oracle price, (d) manual governance whitelist.
+  - Pool provenance: only accept prices from approved mint pairs / approved pool factories; attacker-created pools must fail admission even if they have non-zero liquidity.
+- **Checklist item 48**: ☐ If protocol accepts custom collateral assets, require: (a) TVL > $1M on primary DEX, (b) asset age > 30 days, (c) liquidity-weighted oracle price, (d) manual governance whitelist, (e) approved pool-factory + canonical mint-pair provenance.
 
 ### A99 — Zero-Timelock Governance Migration Attack (Solana-Specific Variant)
 - **Solana context**: Solana programs often use PDAs as admin authorities. Migration of admin authority (e.g., Security Council) can change threshold and timelock settings.

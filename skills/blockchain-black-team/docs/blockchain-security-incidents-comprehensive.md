@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-04-16 — Rhea Finance (NEAR — fake-token collateral / oracle + validation-layer admission failure)** — **~$7.6M drained**. SlowMist cites CertiK in reporting that the attacker created **multiple fake token contracts** and added liquidity to **newly created pools**, allegedly misleading both the protocol’s **oracle** and its **validation layers** before extracting assets from related pools.
+  **Root cause**: asset-admission and price-admission logic trusted attacker-created markets strongly enough to treat fabricated assets as valid collateral/value-bearing inventory. The exploit class is not just “thin-liquidity price read” — it is **fake-asset onboarding through insufficient pool / provenance validation**.
+  **Vector mapping**: **A98 Oracle Manipulation via Fake Asset with Minimal Liquidity** (2026-04-17 reinforcement). Secondary: **A3 Oracle Manipulation**.
+  **Source**: https://hacked.slowmist.io/ | https://x.com/CertiKAlert/status/2044791732575912321
+
 - **2026-04-13 — Dango Perps / Insurance Fund (insurance-fund donation sign error → public top-up path became drain path)** — **~$1.9M USDC drained**, later fully returned by the attacker under a bug-bounty resolution. Public incident summaries and Dango's own disclosure state that the protocol's insurance-fund donation logic failed to verify that the donation amount was positive. As reported, a negative donation value inverted the intended transfer direction, allowing USDC collateral to be pulled out of the perpetuals contract rather than deposited into the insurance fund. A bridge rate limit materially reduced realized loss by preventing full exfiltration: about **$410K** reportedly bridged to Ethereum while **~$1.49M** remained on-chain and was recovered after a chain pause.
   **Root cause**: direction and magnitude were encoded in the same externally reachable amount value. A public "donation" path implicitly accepted a signed or polarity-bearing delta, so the reserve-top-up primitive could be turned into a reserve-withdrawal primitive.
   **Vector mapping**: **A114 Signed-Amount Donation Polarity Inversion / Insurance-Fund Drain** (NEW VECTOR, 2026-04-15 daily cycle). Secondary: **A10 Logic Bug**.
