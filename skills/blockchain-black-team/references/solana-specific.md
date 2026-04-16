@@ -1173,3 +1173,27 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 61. ☐ Keeper outbound HTTPS는 `https://` + hostname allowlist만으로 신뢰하지 말고, `rustls-webpki >= 0.103.12` 업그레이드와 SPKI pinning/issuer drift monitoring을 병행할 것
+
+---
+<!-- AUTO-ADDED 2026-04-17 (Red Team Daily Evolution) — A116 Anchor CPI return-data provenance -->
+
+## 2026-04-17 Anchor CPI Return-Data Provenance Pattern
+
+### A116 — Anchor CPI Return-Data Program-ID Confusion / Spoofed View Result
+- **Solana context**: Solana return-data는 instruction-scoped shared buffer다. Anchor의 `Return<T>` / view-like helper를 쓰면 값 deserialize는 편하지만, patched path를 쓰지 않으면 **그 값을 마지막에 쓴 program_id가 기대한 callee인지** 까지 자동으로 보장되지 않을 수 있다.
+- **핵심 패턴**: trusted CPI가 정상 값을 return한 뒤, 이후 attacker-controlled CPI가 같은 직렬화 형태로 `set_return_data` 를 한 번 더 호출하면, caller는 타입은 맞지만 **출처가 다른 값** 을 읽을 수 있다. 즉, typed return value가 authenticity proof는 아니다.
+- **왜 Solana에서 특히 위험한가**:
+  1. return-data는 account graph에 남지 않아 code reviewer가 source-provenance risk를 놓치기 쉽다.
+  2. Anchor view helper는 ergonomics가 좋아서 quote helper, validation helper, permission check helper에 쉽게 퍼질 수 있다.
+  3. Solana CPI는 같은 instruction 내 다수 callee 호출이 자연스러워, "나중 callee overwrite" attack chain이 구조적으로 가능하다.
+- **Source signals**:
+  - Anchor commit `f634129` (`fix(lang): validate program_id in CPI Return<T>::get() (#4411)`, 2026-04-16)
+  - upstream PoC: legitimate return `10` 뒤 malicious overwrite `999`
+- **Microstable current status**:
+  - `programs/microstable/src/lib.rs` 와 `keeper/src/` 에서 `get_return_data`, `set_return_data`, `Return::<T>` 사용 흔적을 찾지 못했다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 quote/view helper를 CPI return-data로 붙이면 provenance 검증이 설계 필수 조건이 된다.
+- **Checklist item 62**: ☐ Anchor CPI return-data는 typed deserialize만 믿지 말고, expected callee `program_id` provenance 검증을 강제하며, access-control/oracle/slippage gate의 단독 근거로 쓰지 말 것
+
+### Solana-Specific Defense Checklist Update
+62. ☐ Anchor CPI return-data는 `Return<T>` 타입 적합성만 믿지 말고, expected callee `program_id` provenance 검증과 malicious overwrite PoC 테스트를 함께 강제할 것
