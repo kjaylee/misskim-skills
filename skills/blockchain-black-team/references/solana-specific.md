@@ -1197,3 +1197,27 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 62. ☐ Anchor CPI return-data는 `Return<T>` 타입 적합성만 믿지 말고, expected callee `program_id` provenance 검증과 malicious overwrite PoC 테스트를 함께 강제할 것
+
+---
+<!-- AUTO-ADDED 2026-04-18 (Red Team Daily Evolution) — D50 build-host persistence + Telegram session theft -->
+
+## 2026-04-18 Builder / Operator Host Persistence Pattern
+
+### D50 — Malicious Crate SSH Authorized-Key Persistence + Telegram Session Exfiltration
+- **Solana context**: Solana keeper/operator 환경은 `~/.config/solana/*.json`, `.env`, SSH-based Git access, Telegram/Discord incident coordination이 한 워크스테이션에 공존하기 쉽다. 따라서 악성 crate가 단순히 secret 하나를 훔치는 수준을 넘어 **builder/operator host 자체에 재진입 수단을 심는 순간**, on-chain exploit 없이도 control-plane takeover로 이어질 수 있다.
+- **핵심 패턴**: 악성 Rust crate가 build/install/runtime 중 `~/.ssh/authorized_keys` 에 공격자 공개키를 추가해 영속 셸 접근을 만들고, 동시에 `.env`, credential-like JSON, 문서형 비밀, Telegram Desktop `tdata` 를 exfiltrate 한다. 이 조합은 "비밀 유출"을 "세션·호스트 지배"로 격상시킨다.
+- **왜 Solana에서 특히 위험한가**:
+  1. keeper keypair JSON, deploy keypair, RPC credential, `.env` 가 같은 홈 디렉터리 계층에 모여 있는 경우가 많다.
+  2. 사고 대응 시 Telegram/Discord로 hotfix 링크·지시를 주고받는 팀이 많아, 메신저 세션 탈취가 운영 권한 탈취로 바로 연결된다.
+  3. Solana 운영자는 로컬 빌드/배포/검증을 빠르게 반복하므로 "작은 유틸 crate" 추가가 incident window에 특히 잘 섞인다.
+- **Source signals**:
+  - RustSec `RUSTSEC-2026-0102` (`microsoftsystem64`, issued 2026-04-15)
+  - related cluster context: `RUSTSEC-2026-0100`, `RUSTSEC-2026-0101`
+- **Microstable current status**:
+  - `microstable/solana/Cargo.lock` 에 해당 crate들은 없다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 keeper는 `.env` 와 keypair 경로를 적극 사용하므로, privileged build host가 오염되면 blast radius는 크다.
+- **Checklist item 63**: ☐ privileged Rust build host에는 운영자 실사용 `$HOME`, `~/.ssh`, Telegram Desktop profile, production `.env` 를 mount하지 말고, `authorized_keys` 변경을 구성관리 + 경보 대상으로 취급할 것
+
+### Solana-Specific Defense Checklist Update
+63. ☐ privileged Rust build host에는 운영자 실사용 `$HOME`, `~/.ssh`, Telegram Desktop profile, production `.env` 를 mount하지 말고, `authorized_keys` 변경을 구성관리 + 경보 대상으로 취급할 것

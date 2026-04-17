@@ -7472,3 +7472,52 @@ if quote >= min_safe_quote {
 | A116 Anchor CPI Return-Data Program-ID Confusion / Spoofed View Result | attacker-controlled later CPI overwrites shared return-data buffer; caller deserializes typed value without validating authoring `program_id` | spoofed quote/boolean/result, wrong privileged branch, unsafe admission or validation bypass in CPI-heavy designs | current codebase does **not** use Solana return-data helpers; **NOT ACTIVE today**, but any future Anchor view/quote helper built on `Return<T>` must validate provenance |
 
 **Matrix state as of 2026-04-17 (red-team daily update)**: prior coverage retained; **A116** added from Anchor upstream CPI return-data provenance fix. Microstable has **no new active CRITICAL/HIGH/MEDIUM finding** in this cycle; new pattern is future-facing unless return-data helpers are introduced.
+
+## 2026-04-18 Supply-Chain Persistence Pattern Addition
+
+### D50. Malicious Crate SSH Authorized-Key Persistence + Telegram Session Exfiltration
+
+**Source signals (2026-04-18 sweep)**:
+- RustSec `RUSTSEC-2026-0102` (`microsoftsystem64`, issued 2026-04-15)
+- Supporting cluster context: `RUSTSEC-2026-0100` (`pretty-changelog-logger`) and `RUSTSEC-2026-0101` (`safe-agent-rs`)
+
+**Key insight**: 기존 2026 공급망 패턴 다수는 “빌드 시 RAT 설치” 또는 “SSH key / `.env` 단순 탈취”에 머물렀다. `microsoftsystem64`는 한 단계 더 간다. 악성 크레이트가 **(1) 공격자 공개키를 `~/.ssh/authorized_keys` 에 심어 영속 원격접속을 확보하고, (2) `.env` / credential-like JSON / 문서형 비밀을 훑고, (3) Telegram Desktop `tdata` 까지 가져가 세션 자체를 탈취** 한다. 즉, 비밀 유출 후 끝나는 것이 아니라, 운영자의 메신저·서버·Git·배포 동선 전체에 장기 재진입권을 남긴다.
+
+**Attack chain**:
+1. attacker publishes a plausibly useful Rust crate or derivative helper in a developer-adjacent namespace.
+2. operator / maintainer adds it during incident response, hotfix, or tooling cleanup.
+3. build/install/runtime path executes malicious payload.
+4. payload appends attacker key to `~/.ssh/authorized_keys`, creating durable shell access that survives ordinary token rotation.
+5. same payload harvests `.env`, credential-like JSONs, keyword-matching docs, and Telegram Desktop `tdata`.
+6. attacker re-enters later through SSH persistence or hijacked Telegram session, then pivots into repo access, keeper keypaths, CI secrets, or production boxes.
+
+**Why this is distinct from existing vectors**:
+- **D43 / A44 / A45** = typosquat / clone-rotation credential theft waves. Primary goal was exfiltration of secrets.
+- **A103 (`logtrace`)** = build-time RAT download. Malware delivery was the story, but persistence model and operator-message hijack were not the center.
+- **D48 (`logprinter`)** = runtime logger-path activation and stage-2 fetch.
+- **D50** = **credential theft + durable SSH persistence + operator messaging-session hijack** in one package. This is not merely “another malicious crate”; it is a workstation-to-control-plane takeover pattern.
+
+**왜 감사가 놓치는가**:
+1. 많은 리뷰가 `Cargo.toml` diff 와 network egress 만 보고, `authorized_keys` 수정이나 desktop-session artifact (`tdata`) 접근은 Rust 생태계 위협 모델 밖으로 취급한다.
+2. build sandbox가 깨끗해 보여도, 운영자 로컬 머신이나 privileged builder의 `$HOME` 이 mount되어 있으면 persistence가 그대로 심어진다.
+3. incident-response 중 "작은 유틸 하나" 를 넣는 행위가 메신저 세션 탈취까지 이어질 거라고 가정하지 않는다.
+4. SSH key rotation만 하면 끝났다고 생각하기 쉽지만, 이미 심어진 `authorized_keys` backdoor나 Telegram 세션 토큰은 남을 수 있다.
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock` 에 `pretty-changelog-logger`, `safe-agent-rs`, `microsoftsystem64` 는 없다.
+- 따라서 **현재 direct dependency exploit path는 미확인**.
+- 다만 keeper는 plaintext `.env` (`keeper/src/main.rs:80`) 와 여러 keypair JSON 경로를 운영하고, 운영자 워크스테이션 / build host가 같은 홈 디렉터리 문맥을 공유할 가능성이 높다.
+- 이 패턴이 한 번 들어오면 `~/.config/solana/*.json`, `/home/spritz/microstable-keeper/.env`, GitHub SSH access, incident-response용 Telegram 세션까지 연쇄적으로 털릴 수 있다.
+
+**Defensive heuristic**:
+- privileged Rust builds는 운영자 실사용 홈 디렉터리를 mount하지 않는 ephemeral container / isolated builder에서만 수행할 것
+- `authorized_keys` 를 구성관리 대상(hash / diff monitored artifact)으로 취급하고, 임의 변경을 즉시 경보할 것
+- build host / keeper host 에 Telegram Desktop 같은 operator-session artifact를 두지 말 것
+- Cargo dependency review에서 `.env` / `authorized_keys` / browser profile / Telegram `tdata` 접근 시그니처를 별도 차단 규칙으로 둘 것
+- 악성 크레이트 IOC를 package-name 단위가 아니라 **행위 단위** (SSH persistence, desktop-session theft, credential sweep) 로 차단할 것
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D50 Malicious Crate SSH Authorized-Key Persistence + Telegram Session Exfiltration | malicious crate modifies `~/.ssh/authorized_keys`, steals `.env` / credential-like JSONs / docs, and exfiltrates Telegram Desktop `tdata` for durable re-entry | long-lived workstation/server persistence, operator-session hijack, repo/CI/keeper lateral movement even after simple key rotation | current `Cargo.lock` is clean, so **NOT ACTIVE today**; but keeper `.env` + Solana keypair paths make the blast radius high if any builder/operator host ingests such a crate |
+
+**Matrix state as of 2026-04-18 (red-team daily update)**: prior coverage retained; **D50** added after reclassifying the `microsoftsystem64` cluster as a distinct persistence-and-session-hijack pattern rather than a mere reinforcement of earlier typosquat families. Microstable has **no new active CRITICAL/HIGH/MEDIUM on-chain finding** in this cycle, but operator/build-host hardening requirements expanded.
