@@ -1,5 +1,51 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-04-18 (KST) — Daily Evolution (#36)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| CybersecurityDive / Sygnia IR readiness survey | 2026-04-13 | formal IR plan 보유와 실제 실행 준비는 다르다. 역할과 책임이 문서에 있어도 실제 권한/행동 경로는 자주 흐리다. |
+| Immunefi `How fragmented security enabled the $100m Balancer exploit` | 최근 7일 sweep fetch | 핵심 계약 외부의 보조 control surface들이 서로 분절되면 exploitability가 커진다. |
+| Hyperbridge exploit coverage | 2026-04-13 | `proof` 로 보인 경로가 실제로는 `ChangeAssetAdmin` 급 권한을 운반했다. |
+| Unit42/Vertex AI `Double Agent` coverage | 2026-04-14 | `assistant/agent` 표면이 과도한 default scope를 물고 있으면 project-wide data plane까지 확장된다. |
+| Foundry releases | 2026-04-15 ~ 2026-04-16 | invariant/assert tooling은 강화되지만, UI/agent/proof surface가 애초에 signer·broad scope를 가져도 되는지는 검증하지 않는다. |
+
+### Phase 2) 갭 분석
+
+**판정: 오늘은 META-54를 새로 만든다.**
+
+#### META-54 — Declared-Role / Effective-Authority Gap (DREAG)
+- **현상**: 팀은 component를 `dashboard=view`, `agent=assistant`, `proof=data`, `runbook=document` 같은 **역할 라벨** 로 분류한다. 그러나 실제 실패는 이 라벨이 아니라 **effective authority graph** 에서 발생한다. read-only처럼 보이는 surface 안에 signer가 숨어 있거나, proof path가 admin verb를 운반하거나, assistant agent가 project-wide scope를 상속하면 방어는 잘못된 곳을 감시하게 된다.
+- **메타 원인**:
+  1. **역할 라벨 편향**: 이름과 UX가 privileged review 범위를 잘못 줄인다.
+  2. **소유권 편향**: UI/demo/docs/agent repo는 핵심 계약·keeper보다 낮은 위험으로 취급된다.
+  3. **demo/devnet 예외의 정규화**: “실가치 없음” 명분으로 signer·secret hygiene 예외가 누적되고, 이후 운영 습관을 오염시킨다.
+  4. **correctness tooling의 맹점**: FV/invariant/CSP hardening은 correctness를 높여도 permission topology audit를 대체하지 못한다.
+- **Purple Team 고유 기여**: META-54는 “왜 방어에 실패했는가”를 proof provenance나 actuator latency가 아니라, **권한이 있어서는 안 되는 표면이 이미 권한을 가진 상태** 에서 설명한다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-18)
+- `skills/blockchain-black-team/SKILL.md`: Daily Evolution Log에 **META-54** 추가.
+- `skills/blockchain-black-team/references/attack-matrix.md`: summary row + 상세 섹션으로 **META-54 DREAG** 추가.
+- `skills/blockchain-black-team/references/attack-matrix.md`: **D26 Frontend Injection** 의 `왜 감사가 놓치는가` 노트를 “read-only/demo surface 권한 오판” 관점으로 강화.
+- Matrix state: **121+ named vectors + META-01~54 + B73~B78 = 176+ total entries**.
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0418-01 (MEDIUM active)**: Dashboard read-only boundary collapse.
+  - `microstable/docs/index.html` 은 dashboard를 **browser-only, zero-backend, direct polling** surface로 소개한다.
+  - `microstable/docs/app.js` 는 `FAUCET_CONFIG.instructionAvailable = true` 와 함께 **64-byte faucet signer secret** 을 브라우저 번들에 포함한다.
+  - 따라서 이 surface는 observability plane처럼 보이지만 실제로는 **write-capable execution plane** 이다.
+  - Blue v15에서 CSP와 RPC quorum은 강화됐지만, **"대시보드는 secret-free read surface여야 한다"** 는 아키텍처 규율은 아직 강제되지 않았다.
+- **CRITICAL 없음.** 다만 Black Team이 오늘 기록한 **D26 HIGH code finding** 의 상위 원인을 Purple Team은 `declared role ≠ effective authority` 로 고정한다.
+
+### Sources
+- https://www.cybersecuritydive.com/news/cisos--gaps-incident-response-playbooks/817323/
+- https://immunefi.com/blog/expert-insights/how-fragmented-security-enabled-balancer-exploit/
+- https://github.com/foundry-rs/foundry/releases
+- https://www.coinlive.com/news/hyperbridge-exploit-exposes-limits-of-proof-based-security-after-237k-bridge
+- https://securitymea.com/2026/04/14/palo-alto-uncovers-double-agent-threat-in-google-cloud-vertex-ai/
+
 ## 2026-04-17 (KST) — Daily Evolution (#35)
 
 ### Phase 1) 수집 소스 요약

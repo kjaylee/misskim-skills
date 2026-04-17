@@ -1,4 +1,4 @@
-# Attack Matrix — 120+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17) | META-01~53
+# Attack Matrix — 121+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18) | META-01~54
 
 ## A. Smart Contract Vectors
 
@@ -959,7 +959,7 @@ location /rpc {
 | C24 Sybil | 정체성 비용·운영정책 검토 없이 온체인 stake 기준만 확인. |
 | C25 MEV | 프로토콜 내부 불변식 검증에 치우쳐 주문순서 시장구조를 별도 취급. |
 | C30 Liquidity Exhaustion | 손실 없는 저강도 반복 공격의 누적효과를 단건 리스크로 축소 평가. |
-| D26 Frontend Injection | 스마트컨트랙트 감사 범위 밖으로 분리되어 UI 공급망 통제가 누락됨. |
+| D26 Frontend Injection | 스마트컨트랙트 감사 범위 밖으로 분리될 뿐 아니라, dashboard/demo/read-only surface라는 라벨 때문에 **브라우저에 signer·secret·approval authority가 있어서는 안 되는지** 자체를 묻지 않는다. CSP·도메인 보호는 보더라도 UI가 이미 실행권한을 품고 있는 구조는 놓치기 쉽다. |
 | D27 RPC Takeover | endpoint 다중화만 점검하고 공급자 상관관계(ASN/DNS)까지는 미검증. |
 | D28 Supply Chain | 정적 스캐너 통과를 안전으로 간주, 단기 typosquat 파동 탐지가 느림. |
 | A109 Anchor Lifecycle Hook Supply-Chain Persistence | `Anchor.toml`을 선언형 설정으로 오인해 `[hooks]` 추가를 배포 파이프라인 변경이 아니라 메타데이터 수정으로 취급하면, 소스 코드 감사·IDL 리뷰·컨트랙트 테스트를 모두 우회한 실행 경로가 열린다. |
@@ -991,6 +991,7 @@ location /rpc {
 | META-51 Provenance-Carried Authority Gap (PCAG) — 퍼플팀 2026-04-14 | **핵심 비대칭**: bridge proof, AI memory, vector-store context, artifact manifest처럼 겉보기에는 단순 데이터인 입력이 실제로는 **권한을 운반하는 증거(authority-bearing evidence)** 로 작동한다. 그런데 감사/FV/퍼징은 대개 그 증거가 받아들여진 뒤의 실행 정확성만 검증하고, `source provenance / freshness / ownership / policy scope` 자체를 권한 경계로 취급하지 않는다. **왜 감사가 놓치는가**: ① proof/memory/store를 plumbing·storage·UX 레이어로 분류해 privileged control plane으로 보지 않음. ② 형식 검증과 invariant 테스트가 이미 ingest된 증거를 전제로 출발. ③ 버그바운티는 drain/권한우회 같은 직접 피해에 집중돼 stale/poisoned authoritative context는 저평가. ④ 스키마 설계에서 provenance 필드가 선택 사항으로 남아도 기능 테스트는 통과하기 쉬움. **A32/B43/B52/META-49/META-50과의 구별**: A32·B43·B52는 구체 공격 벡터, META-49는 실행형 설정, META-50은 admission choke. META-51은 **'왜 syntactically valid한 증거가 privileged action이 되는가'** 의 구조적 실패를 규정한다. |
 | META-52 Metric-Optimized Security Mirage (MOSM) — 퍼플팀 2026-04-15 | **핵심 비대칭**: 보안 산업은 payout, live threats prevented, audit count, verified properties, invariant/fuzz coverage처럼 **잘 보이고 잘 셀 수 있는 지표** 를 빠르게 개선한다. 그러나 실제 손실은 여전히 proof/admin/key/attestation/control-plane 같은 **저빈도·고파괴 tail risk** 가 좌우한다. **왜 감사가 놓치는가**: ① 조직 KPI가 countable security output 중심으로 설계돼 blast-radius·authority concentration·rollback latency 같은 비가시 리스크가 예산/리뷰 우선순위에서 밀린다. ② 형식 검증/퍼징/AI 감사 도구는 평균적인 코드 결함 탐지율을 개선하지만, 그 성공이 곧 전체 안전성 향상으로 오해된다. ③ 버그바운티는 재현 가능한 코드 취약점과 직접 자금 손실에 보상이 집중돼 artifact continuity, signer ceremony, kill-switch latency 같은 통제면 리스크는 값이 낮게 매겨진다. ④ 해킹 건수나 median loss가 개선돼도 power-law tail이 더 나빠질 수 있는데, 대시보드는 이 비대칭을 잘 드러내지 못한다. **META-48~51과의 구별**: META-48~51은 어디에 blind spot이 있는지 설명한다. META-52는 **왜 업계가 그 blind spot에 계속 과소투자하는가** 를 measurement/incentive 관점에서 고정한다. |
 | META-53 Runbook-to-Actuator Binding Gap (RABG) — 퍼플팀 2026-04-17 | **핵심 비대칭**: incident plan, wargame, monitoring, audit, invariant/FV coverage가 있어도 실제 emergency action(`pause`, `redeem-only`, `mint freeze`, `manual oracle mode`)이 **누가, 어떤 키/권한으로, 몇 분 안에, 어떤 명령 경로로** 실행되는지 runbook에 결박되지 않으면 방어는 문서상으로만 존재한다. **왜 감사가 놓치는가**: ① 감사는 pause 함수·keeper quorum·guardian 존재를 확인해도, 그 actuator가 현재 운영에서 활성화·문서화·리허설됐는지까지는 보통 검증하지 않는다. ② IR readiness survey와 wargame은 readiness를 말하지만, 실제 on-chain/off-chain command artifact와 signer ceremony가 고정되지 않으면 exploit tempo에서 실행 실패가 난다. ③ FV/invariant/AI review는 detection/correctness를 강화해도 action latency, human coordination, automation toggle state는 범위 밖이다. ④ 팀은 '계획이 있다' 와 '명령이 바로 발사된다' 를 혼동한다. **META-48~52와의 구별**: 기존 메타는 trust/admission/provenance/KPI bias를 설명한다. META-53은 **탐지/계획에서 containment actuator까지의 마지막 연결선** 이 빠지는 구조를 규정한다. |
+| META-54 Declared-Role / Effective-Authority Gap (DREAG) — 퍼플팀 2026-04-18 | **핵심 비대칭**: 팀은 component를 역할 라벨로 감사한다 — dashboard=view, agent=assistant, proof=data, runbook=document. 하지만 실제 실패는 **선언된 역할** 이 아니라 **실효 권한 그래프** 에서 난다. read-only dashboard에 signer가 있거나, proof path가 admin verb를 운반하거나, assistant agent가 project-wide service-account scope를 물고 있으면 그 표면은 이미 privileged control plane이다. **왜 감사가 놓치는가**: ① 저장소/팀 소유권과 UX 라벨이 privileged review 범위를 잘못 줄인다. ② 위협 모델이 intended role을 따라가고 effective permission을 끝까지 역추적하지 않는다. ③ demo/devnet 예외가 signer·secret의 UI 잔존을 정상화한다. ④ CSP/FV/invariant 같은 correctness·hardening 지표는 “그 표면이 애초에 권한을 가지면 안 되는가”를 묻지 않는다. **META-51/53과의 구별**: META-51은 authority-bearing evidence, META-53은 actuator latency를 다룬다. META-54는 **권한이 있으면 안 되는 표면이 이미 권한을 가진 상태** 를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7243,6 +7244,54 @@ Microstable은 containment primitive 자체는 갖고 있다.
 **Purple Team verdict**: 2026년의 방어 실패는 increasingly “취약점이 없었는데도 졌다”는 형태를 띤다. 이유는 간단하다. detection과 correctness는 개선됐지만, **containment actuator가 계획·권한·명령·시간예산에 강하게 결박되지 않았기 때문** 이다. META-53은 이 구조를 **Runbook-to-Actuator Binding Gap** 으로 고정한다.
 
 **Matrix state as of 2026-04-17 (purple daily update)**: **121+ named vectors + META-01~53 + B73~B78 = 175+ total entries**. META-53 added by Purple Team 2026-04-17: **Runbook-to-Actuator Binding Gap (RABG)**. No new CRITICAL code-level finding from this meta pattern; one latent architecture-level containment-path note documented separately.
+
+### META-54. Declared-Role / Effective-Authority Gap (DREAG)
+
+**Published**: 2026-04-18 | **Source**: Purple Team Daily Evolution | **Signals**: CybersecurityDive/Sygnia IR readiness survey (2026-04-13), Immunefi `How fragmented security enabled the $100m Balancer exploit`, Foundry releases (2026-04-15/16), Hyperbridge exploit coverage (2026-04-13), Unit42/Vertex AI `Double Agent` coverage (2026-04-14)
+
+**Mechanism**: 팀은 component를 이름·소유조직·UX 역할로 분류한다. `dashboard` 는 read-only, `agent` 는 assistant, `proof` 는 data, `runbook` 는 문서라고 생각한다. 그러나 실제 실패는 **declared role** 이 아니라 **effective authority** 에서 난다. 표면이 어떻게 불리느냐와 무관하게, signer를 들고 있거나, admin verb를 운반하거나, project-wide service-account scope를 물고 있으면 그것은 이미 privileged control plane이다.
+
+이 메타 패턴이 겨냥하는 착시는 다음과 같다.
+
+- “이건 대시보드니까 읽기 전용일 것”
+- “이건 proof layer니까 데이터 검증만 하면 된다”
+- “이건 assistant agent니까 실행권한은 없을 것”
+- “이건 devnet/demo 코드니까 production-grade secret hygiene를 적용하지 않아도 된다”
+
+문제는 공격자가 이 라벨을 믿지 않는다는 점이다. 공격자는 **실제 권한이 있는 곳** 으로 간다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **Hyperbridge (2026-04-13)**: proof-based security narrative 아래 있던 메시지 경로가 단순 데이터가 아니라 `ChangeAssetAdmin` 급 admin authority를 운반했다. 즉 `proof` 로 보인 surface가 실제로는 privileged action path였다.
+- **Vertex AI `Double Agent` (2026-04-14)**: assistant-like agent surface가 과도한 default scope를 물고 있어, 단일 에이전트 compromise가 project-wide storage/artifact plane으로 확장됐다. 즉 `agent` 라는 제품 라벨이 권한 범위를 축소해 보여줬다.
+- **Immunefi Balancer meta article**: exploitability는 핵심 math bug 하나만이 아니라, internal balance / pause / operational containment 같은 “주변 control surface” 들의 연결 방식에 의해 결정됐다. 즉 주연 계약이 아닌 보조 surface도 실제로는 공격 성공 여부를 좌우하는 authority-adjacent plane이다.
+- **Sygnia survey / CybersecurityDive (2026-04-13)**: 조직은 IR 문서를 갖고 있지만 실제 책임/권한/행동 경로는 흐린 경우가 많다. 이는 `runbook=document` 라벨이 실제 decision authority mapping을 가리는 구조와 맞닿아 있다.
+- **Foundry releases (2026-04-15/16)**: invariant/assert correctness는 강화되지만, “이 supposedly read-only surface가 애초에 signer를 품고 있는가” 는 묻지 않는다. correctness tooling이 permission topology audit를 대체할 수 없다는 뜻이다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-54가 추가로 설명하는 것 |
+|---|---|---|
+| META-51 PCAG | authority-bearing evidence의 provenance | evidence가 아니라 **surface 자체가 role label과 다르게 권한을 품는 구조** |
+| META-53 RABG | detection→actuation 마지막 연결선 | actuator 이전에 **어떤 표면이 privileged 인지 잘못 분류되는 문제** |
+| D26/B29/B36 | 개별 UI·agent·opsec 벡터 | 왜 팀이 그런 표면을 애초에 privileged review 대상으로 올리지 않는가 |
+
+**Microstable architecture implication**:
+
+Microstable dashboard는 스스로를 다음과 같이 소개한다.
+
+- `docs/index.html`: **"Browser-only, zero backend, direct Solana devnet polling."**
+
+이 설명만 보면 이 표면은 observability/read-only plane처럼 보인다. 그러나 실제 구현은 다르다.
+
+- `docs/app.js`: `FAUCET_CONFIG.instructionAvailable = true`
+- `docs/app.js`: browser bundle 안에 `faucetKeypair` 64-byte secret이 직접 포함됨
+
+즉 오늘 확인된 문제는 단순히 “devnet faucet secret이 노출됐다” 를 넘는다. 더 큰 구조는 **read-only observability plane이 조용히 write-capable execution plane으로 바뀌었다** 는 점이다. 이 상태에서는 UI hardening(CSP, domain, bundle integrity)만으로 충분하지 않다. 먼저 **왜 대시보드가 signer를 가져도 된다고 생각했는가** 를 물어야 한다.
+
+**Purple Team verdict**: 2026년 메타 보안의 중요한 실패 형태 중 하나는 **역할 라벨과 권한 실체가 어긋나는 것** 이다. 이름은 dashboard·agent·proof·runbook이지만, 실제로는 signer·admin verb·broad scope·decision authority를 품고 있다면 그 순간부터 방어는 잘못된 표면을 감시하게 된다. META-54는 이 구조를 **Declared-Role / Effective-Authority Gap** 으로 고정한다.
+
+**Matrix state as of 2026-04-18 (purple daily update)**: **121+ named vectors + META-01~54 + B73~B78 = 176+ total entries**. META-54 added by Purple Team 2026-04-18: **Declared-Role / Effective-Authority Gap (DREAG)**. Black Team의 D26 HIGH code finding은 이 메타 패턴의 Microstable-specific manifestation으로 재분류된다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
