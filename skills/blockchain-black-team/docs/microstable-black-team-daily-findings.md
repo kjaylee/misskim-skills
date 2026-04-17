@@ -1,5 +1,43 @@
 ---
 
+## 2026-04-18 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-11 to 2026-04-18 KST)
+- Sources checked: rekt.news frontpage, hacked.slowmist.io, Immunefi blog index, Trail of Bits / OtterSec / Neodyme blog indexes, GitHub Advisory API spot checks (`solana`, `anchor`, `spl-token`, `spl token 2022`), plus local search-fallback for X/community chatter
+- Brave Search API direct-query quota remained unreliable → local search-fallback used for community-query coverage
+- **Confirmed in-window items**:
+  1. **Rhea Finance** remains the latest code-level incident in-window that materially affects this skill, and it was already absorbed yesterday as an **A98 reinforcement**
+  2. **rekt.news** frontpage still shows already-mapped items (**Hyperbridge / Drift / Resolv**); no fresh Solana-native code-level mechanism was exposed there in this sweep window
+  3. **GitHub Advisory API** returned recent **webpki name-constraints** advisories plus unrelated ecosystem hits, but no fresh Solana/Anchor/SPL-specific advisory requiring a matrix expansion today
+  4. **Trail of Bits / OtterSec / Neodyme / Immunefi** indexes produced no new Solana-specific exploit-research delta requiring a matrix update
+  5. **X/community fallback search** returned no additional Solana exploit signal beyond already-tracked incidents
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **0 reinforcements** requiring a matrix edit today
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A115 TLS / dependency drift exposure** | keeper dependency + lockfile | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still carries `rustls-webpki 0.103.9` and `0.101.7` through the `reqwest` / `hyper-rustls` stack; no exploit path confirmed today, but fresh GHSA noise keeps this dependency lane live for attention |
+| **D26 frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ❌ HIGH NEW | `docs/app.js:43-49` still embeds a full **64-byte devnet faucet signer secret** client-side, while `docs/index.html:6` still relies on **meta-only CSP**. This is no longer just “low frontend hygiene” — the signing material is already publicly exposed to every browser that loads the dashboard |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:743-851` still enables manual oracle mode, fetches externally validated prices, and sends `ix_update_oracle` without an explicit keeper-side TWAP/max-drift assertion before write |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | `lib.rs:1571-1605` still enforces commit/reveal only when **single-call** turnover crosses `LARGE_REBALANCE_THRESHOLD`; reviewed state still shows no cumulative cross-call drift accumulator |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 49) | `microstable/security/audit-attestation.json` is still absent; critical-path deployment delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **0 requiring matrix expansion**
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **1** — **D26 HIGH** (public frontend signer exposure) — plus **B45 HIGH carry-forward**
+- **External alert target (not sent by this cron per reporting rule)**: Discord channel `1468813323662524500`
+- Blue-team priority is now:
+  1. **Remove and rotate the client-side faucet signer immediately**; replace with a rate-limited backend faucet or pre-minted dev balances
+  2. Add `security/audit-attestation.json` + CI/release gate
+  3. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path before `ix_update_oracle`
+  4. Track cumulative cross-call rebalance drift for large-turnover commit/reveal admission
+  5. Move CSP to HTTP headers and add SRI for vendored JS assets
+
 ## 2026-04-16 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-09 to 2026-04-16 KST)
