@@ -1221,3 +1221,27 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 63. ☐ privileged Rust build host에는 운영자 실사용 `$HOME`, `~/.ssh`, Telegram Desktop profile, production `.env` 를 mount하지 말고, `authorized_keys` 변경을 구성관리 + 경보 대상으로 취급할 것
+
+---
+<!-- AUTO-ADDED 2026-04-19 (Red Team Daily Evolution) — D51 Anchor JS lockfile drift -->
+
+## 2026-04-19 Anchor Toolchain Determinism Pattern
+
+### D51 — Anchor JS Lockfile Drift / Semver-Satisfying Supply-Chain Smuggle
+- **Solana context**: Solana 팀은 on-chain Rust 코드만 보는 경향이 강하지만, 실제로는 `Anchor.toml` 의 `package_manager`, generated TS client, test harness, local validator workflow가 같은 개발 문맥에서 함께 움직인다. 따라서 Anchor가 호출하는 JS package-manager install 경계는 그 자체로 중요한 신뢰 경계다.
+- **핵심 패턴**: older/unhardened Anchor workflow가 `yarn`/`yarn install` 을 `--frozen-lockfile` 없이 호출하면, 이미 허용된 semver range 안의 새 transitive 버전이 routine build/test/scaffold 실행 중 조용히 들어올 수 있다. 공격자는 개발자에게 노골적인 새 package를 추가시키지 않아도 된다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Anchor client generation/test가 deploy wallet, local validator, TS SDK, `.env` 와 같은 호스트에서 같이 돈다.
+  2. generated client artifact가 바뀌어도 리뷰 초점이 주로 Rust instruction logic에 쏠려 JS 쪽 drift를 놓치기 쉽다.
+  3. localnet/devnet 운영자는 `anchor test` 를 반복 실행하므로 "한 번의 unfrozen install" 이 반복적 노출면이 된다.
+- **Source signals**:
+  - Anchor commit `4b8f0e0` (`fix: enforce --frozen-lockfile for yarn install calls (#4228)`, 2026-04-16)
+- **Microstable current status**:
+  - `Anchor.toml` 에 `package_manager = "yarn"` 존재
+  - `package.json` 에 `@coral-xyz/anchor = ^0.31.1`, `@solana/spl-token = ^0.4.9`
+  - `yarn.lock` 존재. 즉 lockfile은 있으나, install 경계가 immutable인지가 별도 문제다.
+  - 따라서 **ACTIVE LATENT today** — 직접 compromise 증거는 없지만, toolchain discipline failure가 있으면 builder path가 노출된다.
+- **Checklist item 64**: ☐ Anchor가 호출하는 package-manager 경로(`anchor test`, workspace/client scaffold 포함)는 반드시 immutable install(`--frozen-lockfile` 또는 동등 정책)로 고정하고, build/test 중 `yarn.lock` 변화가 생기면 실패 처리할 것
+
+### Solana-Specific Defense Checklist Update
+64. ☐ Anchor가 호출하는 package-manager 경로(`anchor test`, workspace/client scaffold 포함)는 반드시 immutable install(`--frozen-lockfile` 또는 동등 정책)로 고정하고, build/test 중 `yarn.lock` 변화가 생기면 실패 처리할 것

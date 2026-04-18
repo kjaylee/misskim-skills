@@ -7570,3 +7570,51 @@ if quote >= min_safe_quote {
 | D50 Malicious Crate SSH Authorized-Key Persistence + Telegram Session Exfiltration | malicious crate modifies `~/.ssh/authorized_keys`, steals `.env` / credential-like JSONs / docs, and exfiltrates Telegram Desktop `tdata` for durable re-entry | long-lived workstation/server persistence, operator-session hijack, repo/CI/keeper lateral movement even after simple key rotation | current `Cargo.lock` is clean, so **NOT ACTIVE today**; but keeper `.env` + Solana keypair paths make the blast radius high if any builder/operator host ingests such a crate |
 
 **Matrix state as of 2026-04-18 (red-team daily update)**: prior coverage retained; **D50** added after reclassifying the `microsoftsystem64` cluster as a distinct persistence-and-session-hijack pattern rather than a mere reinforcement of earlier typosquat families. Microstable has **no new active CRITICAL/HIGH/MEDIUM on-chain finding** in this cycle, but operator/build-host hardening requirements expanded.
+
+## 2026-04-19 Toolchain Determinism Boundary Pattern Addition
+
+### D51. Anchor JS Lockfile Drift / Semver-Satisfying Supply-Chain Smuggle
+
+**Source signals (2026-04-19 sweep)**:
+- Anchor commit `4b8f0e0` (`fix: enforce --frozen-lockfile for yarn install calls (#4228)`, 2026-04-16)
+- supporting context: Anchor recent docs/CLI surface still centers `Anchor.toml` `package_manager = "yarn"`, meaning package-manager invocations remain a first-class part of the developer workflow
+
+**Key insight**: 기존 공급망 벡터 다수는 "개발자가 새 악성 패키지를 직접 추가한다"는 전제를 둔다. 이번 신호는 다르다. **도구체인 자체가 `yarn`/`yarn install` 을 lockfile immutability 없이 호출하면, 이미 허용된 semver range 안으로 들어오는 새 transitive 버전만으로도 공격이 성립**한다. 즉 공격자는 maintainer에게 노골적인 악성 dependency를 추가시키지 않아도, 기존 range 안의 새 릴리스를 노리면 된다.
+
+**Attack chain**:
+1. attacker compromises or publishes a malicious JS package version that still satisfies an existing semver range in the Anchor client/tooling dependency graph.
+2. maintainer runs `anchor test`, workspace/client scaffolding, or another Anchor-driven command on an older/unhardened toolchain path.
+3. Anchor shells out to `yarn` without `--frozen-lockfile`, allowing `yarn.lock` refresh or partial re-resolution.
+4. refreshed dependency graph executes `postinstall`, build-time, or runtime side effects inside the developer environment.
+5. attacker steals deploy/devnet wallets, `.env`, SSH material, browser/session tokens, or rewrites generated TS client artifacts before review focuses on the actual Solana code change.
+
+**Why this is distinct from existing vectors**:
+- **D43 / A44 / A45 / D50** = operator가 새 crate/package 또는 clone 계열을 직접 들여오는 경로가 중심이다.
+- **D51** = repo diff에 새 악성 dependency가 없더라도, **toolchain non-determinism** 하나로 이미 허용된 semver 범위 안에서 공격 버전이 스며드는 패턴이다.
+- **A109** = Anchor lifecycle hooks 같은 명시적 실행 훅 문제.
+- **D51** = 훅이 아니라 **lockfile refresh boundary 자체**가 공격면이 된다.
+
+**왜 감사가 놓치는가**:
+1. `anchor test` / client generation / example build를 "그냥 개발 편의 명령"으로 취급하고, 네트워크 기반 dependency refresh 경계로 보지 않는다.
+2. lockfile diff는 원래 noisy해서 workspace version bump, scaffold refresh, docs sync와 함께 쉽게 묻힌다.
+3. Rust on-chain / keeper 코드 리뷰에 비해 JS client/tooling dependency graph는 감시 강도가 낮다.
+4. caret range와 semver-compatible update는 유지보수성 신호처럼 보이지만, 공격자에게는 review friction이 낮은 침투로가 된다.
+
+**Microstable relevance**:
+- `microstable/solana/Anchor.toml` 는 `package_manager = "yarn"` 을 사용한다.
+- `microstable/solana/package.json` 는 `@coral-xyz/anchor` 와 `@solana/spl-token` 을 각각 `^0.31.1`, `^0.4.9` 로 선언한다.
+- `yarn.lock` 는 존재하지만, upstream hardening signal은 **Anchor-invoked install path가 lockfile immutability를 별도 강제하지 않으면 재해석될 수 있었다**는 점을 보여준다.
+- 따라서 현재 Microstable에는 **ACTIVE LATENT** developer/build-path exposure가 있다. 이는 on-chain bug가 아니라 build integrity risk다.
+
+**Defensive heuristic**:
+- Anchor가 호출하는 모든 package-manager 경로에 `--frozen-lockfile` 또는 동등한 immutable-install 정책을 강제할 것
+- build/test 중 `yarn.lock` 변경이 발생하면 즉시 fail 시킬 것
+- security-sensitive repo에서는 JS dependency의 caret range 사용을 축소하거나 review gate를 둘 것
+- Anchor client generation/test는 deploy wallet, SSH key, production `.env` 가 없는 격리 환경에서 수행할 것
+- dependency refresh 직후 generated TS client artifact diff를 필수 검토 대상으로 둘 것
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D51 Anchor JS Lockfile Drift / Semver-Satisfying Supply-Chain Smuggle | Anchor-driven package-manager call runs without immutable lockfile enforcement, allowing semver-satisfying transitive refresh during routine build/test/scaffold flows | silent developer-environment compromise, generated client artifact tampering, wallet / SSH / `.env` exfiltration without explicit new dependency add | `Anchor.toml` uses `package_manager = "yarn"`, package.json uses caret ranges, and `yarn.lock` exists; **ACTIVE LATENT** until immutable-install discipline is guaranteed end-to-end |
+
+**Matrix state as of 2026-04-19 (red-team daily update)**: prior coverage retained; **D51** added from Anchor's upstream `--frozen-lockfile` hardening signal. Microstable has **one new MEDIUM active-latent builder-path finding** in this cycle; no new CRITICAL/HIGH on-chain exploit was confirmed.
