@@ -1,4 +1,4 @@
-# Attack Matrix — 121+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18) | META-01~54
+# Attack Matrix — 122+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19) | META-01~55
 
 ## A. Smart Contract Vectors
 
@@ -962,6 +962,7 @@ location /rpc {
 | D26 Frontend Injection | 스마트컨트랙트 감사 범위 밖으로 분리될 뿐 아니라, dashboard/demo/read-only surface라는 라벨 때문에 **브라우저에 signer·secret·approval authority가 있어서는 안 되는지** 자체를 묻지 않는다. CSP·도메인 보호는 보더라도 UI가 이미 실행권한을 품고 있는 구조는 놓치기 쉽다. |
 | D27 RPC Takeover | endpoint 다중화만 점검하고 공급자 상관관계(ASN/DNS)까지는 미검증. |
 | D28 Supply Chain | 정적 스캐너 통과를 안전으로 간주, 단기 typosquat 파동 탐지가 느림. |
+| D51 Anchor JS Lockfile Drift / Semver-Satisfying Supply-Chain Smuggle | `yarn.lock` 존재 여부만 보고 안심하고, 실제 `anchor test`/scaffold/build 경로가 immutable install을 강제하는지까지는 확인하지 않는다. caret range와 semver-compatible refresh를 유지보수 신호로 오인해 review friction이 낮고, generated client/artifact 변조를 런타임 코드와 분리해 취급한다. |
 | A109 Anchor Lifecycle Hook Supply-Chain Persistence | `Anchor.toml`을 선언형 설정으로 오인해 `[hooks]` 추가를 배포 파이프라인 변경이 아니라 메타데이터 수정으로 취급하면, 소스 코드 감사·IDL 리뷰·컨트랙트 테스트를 모두 우회한 실행 경로가 열린다. |
 | D31 Metadata Confusion | 생성된 IDL/스키마를 사실상 신뢰원으로 취급해 런타임 검증이 생략됨. |
 | A14 Out-of-Scope Composability | 감사 대상 커밋과 실제 배포된 Hook/Proxy 간 런타임 결합 추적 부재로 우회 공격 발생 (Nemo, Cork). |
@@ -992,6 +993,7 @@ location /rpc {
 | META-52 Metric-Optimized Security Mirage (MOSM) — 퍼플팀 2026-04-15 | **핵심 비대칭**: 보안 산업은 payout, live threats prevented, audit count, verified properties, invariant/fuzz coverage처럼 **잘 보이고 잘 셀 수 있는 지표** 를 빠르게 개선한다. 그러나 실제 손실은 여전히 proof/admin/key/attestation/control-plane 같은 **저빈도·고파괴 tail risk** 가 좌우한다. **왜 감사가 놓치는가**: ① 조직 KPI가 countable security output 중심으로 설계돼 blast-radius·authority concentration·rollback latency 같은 비가시 리스크가 예산/리뷰 우선순위에서 밀린다. ② 형식 검증/퍼징/AI 감사 도구는 평균적인 코드 결함 탐지율을 개선하지만, 그 성공이 곧 전체 안전성 향상으로 오해된다. ③ 버그바운티는 재현 가능한 코드 취약점과 직접 자금 손실에 보상이 집중돼 artifact continuity, signer ceremony, kill-switch latency 같은 통제면 리스크는 값이 낮게 매겨진다. ④ 해킹 건수나 median loss가 개선돼도 power-law tail이 더 나빠질 수 있는데, 대시보드는 이 비대칭을 잘 드러내지 못한다. **META-48~51과의 구별**: META-48~51은 어디에 blind spot이 있는지 설명한다. META-52는 **왜 업계가 그 blind spot에 계속 과소투자하는가** 를 measurement/incentive 관점에서 고정한다. |
 | META-53 Runbook-to-Actuator Binding Gap (RABG) — 퍼플팀 2026-04-17 | **핵심 비대칭**: incident plan, wargame, monitoring, audit, invariant/FV coverage가 있어도 실제 emergency action(`pause`, `redeem-only`, `mint freeze`, `manual oracle mode`)이 **누가, 어떤 키/권한으로, 몇 분 안에, 어떤 명령 경로로** 실행되는지 runbook에 결박되지 않으면 방어는 문서상으로만 존재한다. **왜 감사가 놓치는가**: ① 감사는 pause 함수·keeper quorum·guardian 존재를 확인해도, 그 actuator가 현재 운영에서 활성화·문서화·리허설됐는지까지는 보통 검증하지 않는다. ② IR readiness survey와 wargame은 readiness를 말하지만, 실제 on-chain/off-chain command artifact와 signer ceremony가 고정되지 않으면 exploit tempo에서 실행 실패가 난다. ③ FV/invariant/AI review는 detection/correctness를 강화해도 action latency, human coordination, automation toggle state는 범위 밖이다. ④ 팀은 '계획이 있다' 와 '명령이 바로 발사된다' 를 혼동한다. **META-48~52와의 구별**: 기존 메타는 trust/admission/provenance/KPI bias를 설명한다. META-53은 **탐지/계획에서 containment actuator까지의 마지막 연결선** 이 빠지는 구조를 규정한다. |
 | META-54 Declared-Role / Effective-Authority Gap (DREAG) — 퍼플팀 2026-04-18 | **핵심 비대칭**: 팀은 component를 역할 라벨로 감사한다 — dashboard=view, agent=assistant, proof=data, runbook=document. 하지만 실제 실패는 **선언된 역할** 이 아니라 **실효 권한 그래프** 에서 난다. read-only dashboard에 signer가 있거나, proof path가 admin verb를 운반하거나, assistant agent가 project-wide service-account scope를 물고 있으면 그 표면은 이미 privileged control plane이다. **왜 감사가 놓치는가**: ① 저장소/팀 소유권과 UX 라벨이 privileged review 범위를 잘못 줄인다. ② 위협 모델이 intended role을 따라가고 effective permission을 끝까지 역추적하지 않는다. ③ demo/devnet 예외가 signer·secret의 UI 잔존을 정상화한다. ④ CSP/FV/invariant 같은 correctness·hardening 지표는 “그 표면이 애초에 권한을 가지면 안 되는가”를 묻지 않는다. **META-51/53과의 구별**: META-51은 authority-bearing evidence, META-53은 actuator latency를 다룬다. META-54는 **권한이 있으면 안 되는 표면이 이미 권한을 가진 상태** 를 규정한다. |
+| META-55 Declared-Constraint / Resolver-Enforcement Gap (DCREG) — 퍼플팀 2026-04-19 | **핵심 비대칭**: 팀은 lockfile·proof·service-account scope·IR plan처럼 보안 의도가 선언된 artifact가 있으면 제약이 이미 강제된다고 느낀다. 그러나 실제 보안은 build resolver, verification pipeline, cloud default IAM, incident-time decision chain이 그 선언을 **hard constraint로 집행하는지** 에 달려 있다. **왜 감사가 놓치는가**: ① 선언 존재 여부를 enforcement semantics보다 먼저 체크한다. ② 마지막 마일 실행기가 제약을 재해석해도 diff가 작아 보이면 통과시킨다. ③ syntactically correct artifact가 resolved behavior drift를 가린다. ④ lockfile/proof/runbook를 문서로 보고 privileged resolver 자체를 별도 감사하지 않는다. **META-49/53/54와의 구별**: META-49는 executable config, META-53은 actuation binding, META-54는 role-authority mismatch다. META-55는 **선언된 제약이 실제 집행 단계에서 힌트로 강등되는 구조** 를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7292,6 +7294,53 @@ Microstable dashboard는 스스로를 다음과 같이 소개한다.
 **Purple Team verdict**: 2026년 메타 보안의 중요한 실패 형태 중 하나는 **역할 라벨과 권한 실체가 어긋나는 것** 이다. 이름은 dashboard·agent·proof·runbook이지만, 실제로는 signer·admin verb·broad scope·decision authority를 품고 있다면 그 순간부터 방어는 잘못된 표면을 감시하게 된다. META-54는 이 구조를 **Declared-Role / Effective-Authority Gap** 으로 고정한다.
 
 **Matrix state as of 2026-04-18 (purple daily update)**: **121+ named vectors + META-01~54 + B73~B78 = 176+ total entries**. META-54 added by Purple Team 2026-04-18: **Declared-Role / Effective-Authority Gap (DREAG)**. Black Team의 D26 HIGH code finding은 이 메타 패턴의 Microstable-specific manifestation으로 재분류된다.
+
+### META-55. Declared-Constraint / Resolver-Enforcement Gap (DCREG)
+
+**Published**: 2026-04-19 | **Source**: Purple Team Daily Evolution | **Signals**: Sygnia 2026 CISO Survey / IR readiness release (2026-04-13), Unit42 `Double Agents: Exposing Security Blind Spots in GCP Vertex AI` (2026-04-14 coverage), Hyperbridge exploit coverage (2026-04-13), Anchor issue `#4216 Ensure JS lockfiles are respected` + PR `#4228 enforce --frozen-lockfile for yarn install calls` (merged 2026-04-16)
+
+**Mechanism**: 팀은 보안 의도를 artifact로 남긴다. lockfile은 “이 의존성 그래프를 쓰자”, proof는 “이 상태를 신뢰하자”, service-account scope는 “이 정도 권한만 주자”, IR plan은 “이 절차대로 대응하자”는 선언이다. 하지만 실제 보안은 그 선언의 존재가 아니라, **마지막 마일 실행기(resolver/executor)가 그 선언을 hard constraint로 집행하는가** 에 달려 있다. build tool이 lockfile을 advisory로 취급하거나, verification pipeline이 proof를 admin verb로 과잉 승격하거나, cloud default IAM이 assistant agent에 broad scope를 붙이거나, incident-time decision chain이 runbook을 실행하지 못하면 선언은 곧 **hint** 로 강등된다.
+
+이 메타 패턴이 겨냥하는 착시는 다음과 같다.
+
+- “lockfile이 있으니 dependency graph는 고정됐을 것”
+- “proof가 검증됐으니 privileged verb까지 안전하게 위임됐을 것”
+- “agent/service account scope가 문서에 있으니 실제 권한도 그 수준일 것”
+- “IR plan이 있으니 압박 상황에서도 그대로 실행될 것”
+
+문제는 공격자가 선언을 공격하지 않아도 된다는 점이다. 공격자는 **그 선언을 해석·실행하는 resolver** 를 노리면 된다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **Anchor `#4216` / `#4228` (2026-04-16)**: upstream 자체가 `yarn` 호출에 `--frozen-lockfile` 강제가 필요하다고 인정했다. 즉 `yarn.lock` 이 있어도 install path가 immutable하지 않으면 lockfile은 hard guarantee가 아니라 advisory artifact다.
+- **Hyperbridge (2026-04-13)**: forged proof가 단순 data acceptance에서 끝나지 않고 `ChangeAssetAdmin` 으로 이어졌다. proof artifact의 syntactic acceptance와 실제 privileged verb resolution 사이에 gap가 있었다.
+- **Vertex AI `Double Agent` (2026-04-14)**: assistant-like agent는 문서상 narrow helper처럼 보였지만, default permission scoping과 service-agent credential extraction을 통해 consumer/producer project까지 확장됐다. 선언된 scope와 실제 resolved authority가 달랐다.
+- **Sygnia survey (2026-04-13)**: 99%가 formal IR plan을 갖고도 73%가 압박 상황 실행 준비가 안 됐다고 답했다. 즉 runbook이라는 선언 artifact가 있어도, 조직의 실제 decision/coordination resolver가 그 제약을 강제하지 못하면 보안 효과는 사라진다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-55가 추가로 설명하는 것 |
+|---|---|---|
+| META-49 ECTD | 설정 파일이 실행면이 되는 문제 | 설정이 아니어도, **어떤 선언 artifact든 resolver가 강제하지 않으면 hint로 전락** 하는 구조 |
+| META-53 RABG | runbook에서 actuator까지 마지막 연결선 | runbook뿐 아니라 lockfile·proof·scope 전반에서 **선언→집행 간 enforcement semantics** 가 빠지는 문제 |
+| META-54 DREAG | 역할 라벨과 실효 권한의 불일치 | 라벨이 맞더라도, **선언된 constraint 자체가 실행 시점에 보존되지 않는** 문제 |
+| D51 / A32 | 특정 build/bridge 벡터 | 왜 그 벡터들이 서로 다른 레이어인데도 같은 구조적 실패를 공유하는가 |
+
+**Microstable architecture implication**:
+
+Microstable builder path는 오늘 기준 다음 구조를 가진다.
+
+- `solana/Anchor.toml`: `package_manager = "yarn"`
+- `solana/package.json`: `@coral-xyz/anchor`, `@solana/spl-token` 및 다수 devDependency가 caret range(`^`)를 사용
+- `solana/yarn.lock`: 존재함 ✅
+
+겉으로 보면 “lockfile이 있으니 괜찮다”고 느끼기 쉽다. 그러나 오늘 신호가 보여주는 핵심은 **lockfile의 존재만으로는 충분하지 않다** 는 점이다. Anchor-driven workflow나 로컬 maintainer 습관 중 어느 하나라도 immutable install을 보장하지 않으면, build/test/client-generation 경로에서 dependency graph가 재해석될 수 있다. 여기에 기존 **B45 audit-attestation 부재** 가 겹치면, 검토한 source / lockfile / generated TS client artifact 사이의 연속성 증명이 더욱 약해진다.
+
+이 문제는 새 온체인 코드 버그가 아니다. 하지만 **builder-path trust boundary가 선언형 artifact에 과도하게 기대고 있고, enforcement evidence는 약하다** 는 뜻이다.
+
+**Purple Team verdict**: 2026년의 중요한 방어 실패 중 일부는 “보안 제약을 문서와 파일에 적어두었으니 이미 강제됐다고 믿는 것”에서 나온다. lockfile, proof, scope, runbook은 시작점일 뿐이다. 실제로 지켜지는지는 resolver가 정한다. META-55는 이 구조를 **Declared-Constraint / Resolver-Enforcement Gap** 으로 고정한다.
+
+**Matrix state as of 2026-04-19 (purple daily update)**: **122+ named vectors + META-01~55 + B73~B78 = 178+ total entries**. META-55 added by Purple Team 2026-04-19: **Declared-Constraint / Resolver-Enforcement Gap (DCREG)**. Black Team의 D51 MEDIUM builder-path finding은 이 메타 패턴의 Microstable-specific manifestation으로 재분류된다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
