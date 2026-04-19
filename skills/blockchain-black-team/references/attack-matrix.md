@@ -7668,3 +7668,68 @@ if quote >= min_safe_quote {
 | D51 Anchor JS Lockfile Drift / Semver-Satisfying Supply-Chain Smuggle | Anchor-driven package-manager call runs without immutable lockfile enforcement, allowing semver-satisfying transitive refresh during routine build/test/scaffold flows | silent developer-environment compromise, generated client artifact tampering, wallet / SSH / `.env` exfiltration without explicit new dependency add | `Anchor.toml` uses `package_manager = "yarn"`, package.json uses caret ranges, and `yarn.lock` exists; **ACTIVE LATENT** until immutable-install discipline is guaranteed end-to-end |
 
 **Matrix state as of 2026-04-19 (red-team daily update)**: prior coverage retained; **D51** added from Anchor's upstream `--frozen-lockfile` hardening signal. Microstable has **one new MEDIUM active-latent builder-path finding** in this cycle; no new CRITICAL/HIGH on-chain exploit was confirmed.
+
+## 2026-04-20 Anchor Signer-Downgrade Serialization Pattern Addition
+
+### A117. Anchor Composite AccountMeta Signer-Override Drop / Privilege Downgrade Bypass
+
+**Source signals (2026-04-20 sweep)**:
+- `solana-foundation/anchor` commit `55daadb` (`fix: Client is_signer usage in to_account_metas (#3322)`, 2026-04-15)
+- upstream regression test in the same patch shows a `proxy` instruction forwarding nested account metas with `.to_account_metas(Some(false))`, where the old generated path failed to clear signer state on composite accounts
+
+**Key insight**: 많은 팀이 proxy / adapter / router / keeper helper에서 외부 프로그램으로 계정을 넘길 때 `to_account_metas(Some(false))` 같은 명시적 override를 써서 **signer privilege를 의도적으로 제거했다고 믿는다**. 하지만 old Anchor generated code는 composite/nested account struct에 이 override를 끝까지 전파하지 못했다. 결과적으로 호출자는 "signer를 내렸다"고 생각하지만, 중첩 계정에서는 signer bit가 그대로 살아남아 외부 CPI로 새어 나갈 수 있다.
+
+**Attack chain**:
+1. victim proxy/router/off-chain builder constructs forwarded metas for an external instruction and explicitly requests signer downgrade via `to_account_metas(Some(false))` (or equivalent wrapper expectation).
+2. affected Anchor generated code recurses into composite accounts with `None` instead of the requested override, and nested signer-bearing fields fall back to default signer semantics.
+3. forwarded instruction reaches an external program, plugin, adapter, or later CPI hop with signer privilege unexpectedly preserved on an authority/user/PDA-adjacent account.
+4. external program takes a branch that should have been impossible after signer stripping: initialize, approve, mutate, withdraw, delegate, or reconfigure.
+5. team misdiagnoses the incident because the call site visibly asked to disable signer propagation, so reviewers trust the abstraction instead of inspecting the serialized `AccountMeta` vector.
+
+**Why this is distinct from existing vectors**:
+- **A70** = caller가 signer privilege를 실수로 혹은 무심코 외부 CPI에 직접 전달하는 패턴이다.
+- **A117** = caller가 **분명히 signer를 제거하려고 시도했는데**, framework-generated serialization 경계에서 그 downgrade가 중첩 계정에 반영되지 않는 패턴이다. 즉 "권한 전달" 이 아니라 **권한 제거 실패** 가 핵심이다.
+- **A113** = Token-2022 CPI Guard owner pubkey confusion 같은 owner-field wiring 문제.
+- **A117** = owner 값이 아니라 **serialized `AccountMeta.is_signer` provenance** 문제다.
+- **A112** = IDL / tooling metadata trust-boundary confusion.
+- **A117** = generated client/account-meta emission path의 **runtime privilege-shaping bug** 다.
+
+**왜 감사가 놓치는가**:
+1. 감사자는 보통 on-chain instruction logic를 보지, generated `to_account_metas` code path까지 내려가지는 않는다.
+2. 평평한(flat) 계정 구조에서는 override가 정상 동작할 수 있어, **composite/nested accounts** 에서만 드러나는 회귀를 놓치기 쉽다.
+3. 리뷰어는 `Some(false)` 같은 호출 흔적을 보면 이미 signer 제거가 완료됐다고 심리적으로 결론내리기 쉽다.
+4. 테스트가 honest target + direct accounts 조합에 치우치면, proxy/remaining-accounts forwarding 경계의 privilege leak를 재현하지 못한다.
+
+**PoC scenario (future Solana adapter pattern)**:
+```rust
+// team believes signer privilege is stripped before forwarding
+let mut metas = external::client::accounts::Init {
+    authority,
+    vault,
+    system_program,
+}.to_account_metas(Some(false));
+
+// old generated path may preserve signer on nested/composite fields
+invoke(&Instruction { program_id: external_program, accounts: metas, data }, infos)?;
+
+// external program unexpectedly still sees authority as signer
+```
+
+**Defensive heuristic**:
+- Anchor를 `#3322` fix 포함 버전으로 올릴 것
+- external CPI / proxy / adapter 경로에서는 "호출부에서 `Some(false)` 를 줬다" 를 증거로 삼지 말고, **최종 serialized `AccountMeta` list** 에 unexpected signer가 없는지 단위 테스트로 검증할 것
+- composite account struct / nested accounts / remaining-accounts forwarding이 있는 경로는 signer downgrade regression test를 별도로 둘 것
+- privilege downgrading이 중요한 경로에서는 generated helper를 맹신하지 말고, 필요한 경우 `AccountMeta` 를 수동으로 구성할 것
+- 외부 프로그램에 넘기는 authority/user/PDA 계정은 signer 유지가 의도된 경우만 allowlist-style로 허용할 것
+
+**Microstable relevance**:
+- `microstable/solana/programs/microstable/Cargo.toml` 는 `anchor-lang = "0.31.1"`, `anchor-spl = "0.31.1"` 를 사용하고, `keeper/Cargo.toml` 는 `anchor-client = "0.31.1"` 를 사용한다.
+- 그러나 현재 스캔한 `programs/microstable/src/lib.rs` / `keeper/src/` 경로에서는 `declare_program!`, `to_account_metas`, generic proxy forwarding, nested account-meta builder usage를 찾지 못했다.
+- 즉 **dependency signal은 존재하지만 current exploit path는 미확인** 이다.
+- 다만 향후 Microstable이 router/adapter/plugin/proxy instruction이나 generated-client based forwarding을 도입하면 A117은 즉시 활성화될 수 있다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A117 Anchor Composite AccountMeta Signer-Override Drop / Privilege Downgrade Bypass | explicit signer-downgrade request (`to_account_metas(Some(false))`) fails to propagate through composite/nested account serialization, preserving unexpected signer bits on forwarded metas | proxy/adapter privilege leak, impossible-after-downgrade branches become reachable, external CPI authority misuse despite apparent signer stripping | repo is on Anchor `0.31.1`, but current code scan found no direct meta-forwarding path; **NOT ACTIVE today**, future router/adapter/proxy features must regression-test serialized signer bits |
+
+**Matrix state as of 2026-04-20 (red-team daily update)**: prior coverage retained; **A117** added after reclassifying Anchor `#3322` from an adjacent signal into an independent privilege-downgrade-bypass vector. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless meta-forwarding/proxy flows are introduced.

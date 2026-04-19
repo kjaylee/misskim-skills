@@ -1245,3 +1245,28 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 64. ☐ Anchor가 호출하는 package-manager 경로(`anchor test`, workspace/client scaffold 포함)는 반드시 immutable install(`--frozen-lockfile` 또는 동등 정책)로 고정하고, build/test 중 `yarn.lock` 변화가 생기면 실패 처리할 것
+
+---
+<!-- AUTO-ADDED 2026-04-20 (Red Team Daily Evolution) — A117 signer-downgrade serialization -->
+
+## 2026-04-20 Anchor Nested Signer-Downgrade Pattern
+
+### A117 — Anchor Composite AccountMeta Signer-Override Drop / Privilege Downgrade Bypass
+- **Solana context**: Solana에서는 proxy / adapter / aggregator / keeper helper가 외부 instruction을 조립할 때 `AccountMeta.is_signer` 를 의도적으로 낮춰서 권한을 축소하는 경우가 있다. 이때 팀은 `to_account_metas(Some(false))` 같은 helper 호출을 "권한 제거 완료" 의 증거로 오해하기 쉽다.
+- **핵심 패턴**: old Anchor generated code는 composite/nested account struct에 signer override를 끝까지 전파하지 못해, 호출부가 명시적으로 signer를 꺼도 중첩 계정에서는 signer bit가 살아남을 수 있다. 즉, **권한 전달 자체가 아니라 권한 제거가 실패** 한다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Solana CPI는 signer bit가 외부 프로그램 branch 조건에 직접 쓰이므로, 한 번 새면 영향이 즉시 권한 오남용으로 이어진다.
+  2. proxy/remaining-accounts forwarding은 지갑·router·keeper·adapter 패턴에서 자주 생기지만, 감사는 대개 on-chain 비즈니스 로직에 집중해 meta serialization 경계를 얕게 본다.
+  3. nested account struct에서만 드러날 수 있어, 단순 happy-path 테스트로는 놓치기 쉽다.
+- **Source signals**:
+  - Anchor commit `55daadb` (`fix: Client is_signer usage in to_account_metas (#3322)`, 2026-04-15)
+  - upstream regression test added a `proxy` path where `.to_account_metas(Some(false))` should clear signer but old behavior failed on nested forwarding
+- **Microstable current status**:
+  - `programs/microstable/Cargo.toml` = `anchor-lang 0.31.1`, `anchor-spl 0.31.1`
+  - `keeper/Cargo.toml` = `anchor-client 0.31.1`
+  - reviewed `programs/microstable/src/lib.rs` / `keeper/src/` did **not** show `declare_program!`, `to_account_metas`, or generic proxy/meta-forwarding usage
+  - 따라서 **NOT ACTIVE today**. 다만 future router/adapter/proxy path에서는 즉시 재평가해야 한다.
+- **Checklist item 65**: ☐ external CPI / proxy / adapter 경로에서 signer downgrade를 의도한다면 `to_account_metas(Some(false))` 호출 자체를 믿지 말고, composite/nested accounts 포함 최종 `AccountMeta.is_signer` 결과를 regression test로 고정할 것
+
+### Solana-Specific Defense Checklist Update
+65. ☐ external CPI / proxy / adapter 경로에서 signer downgrade를 의도한다면 `to_account_metas(Some(false))` 호출 자체를 믿지 말고, composite/nested accounts 포함 최종 `AccountMeta.is_signer` 결과를 regression test로 고정할 것
