@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-04-14 — CoW Swap / Cow Protocol (frontend DNS hijack on `swap.cow.fi` / canonical domain trust-anchor collapse)** — **~$1.2M reported at disclosure time** across suspicious user interactions, though the protocol itself described the blast radius as frontend-limited and precautionarily paused APIs/backends while investigating. Public reporting says the attacker hijacked DNS/registrar control for `swap.cow.fi` around **14:54 UTC**, causing users who visited the real canonical hostname to face a malicious frontend and prompting immediate approval-revocation guidance.
+  **Root cause**: registrar/DNS-layer compromise of the production frontend hostname. This is not a fake lookalike domain and not a smart-contract exploit; the attacker inherited first-party trust by controlling the canonical web entrypoint itself, which is enough to deliver malicious approval/signature flows.
+  **Vector mapping**: **D26 Frontend XSS/Injection** (DNS/front-end domain hijack reinforcement, 2026-04-20 cycle). Secondary: **Infrastructure Hijacking**.
+  **Source**: https://hacked.slowmist.io/ | https://news.bitcoin.com/cow-protocol-halts-trading-after-frontend-domain-hijack/
+
 - **2026-04-16 — Rhea Finance (NEAR — fake-token collateral / oracle + validation-layer admission failure)** — **~$7.6M drained**. SlowMist cites CertiK in reporting that the attacker created **multiple fake token contracts** and added liquidity to **newly created pools**, allegedly misleading both the protocol’s **oracle** and its **validation layers** before extracting assets from related pools.
   **Root cause**: asset-admission and price-admission logic trusted attacker-created markets strongly enough to treat fabricated assets as valid collateral/value-bearing inventory. The exploit class is not just “thin-liquidity price read” — it is **fake-asset onboarding through insufficient pool / provenance validation**.
   **Vector mapping**: **A98 Oracle Manipulation via Fake Asset with Minimal Liquidity** (2026-04-17 reinforcement). Secondary: **A3 Oracle Manipulation**.
