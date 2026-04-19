@@ -1,4 +1,4 @@
-# Attack Matrix — 122+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19) | META-01~55
+# Attack Matrix — 122+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20) | META-01~56
 
 ## A. Smart Contract Vectors
 
@@ -995,6 +995,7 @@ location /rpc {
 | META-53 Runbook-to-Actuator Binding Gap (RABG) — 퍼플팀 2026-04-17 | **핵심 비대칭**: incident plan, wargame, monitoring, audit, invariant/FV coverage가 있어도 실제 emergency action(`pause`, `redeem-only`, `mint freeze`, `manual oracle mode`)이 **누가, 어떤 키/권한으로, 몇 분 안에, 어떤 명령 경로로** 실행되는지 runbook에 결박되지 않으면 방어는 문서상으로만 존재한다. **왜 감사가 놓치는가**: ① 감사는 pause 함수·keeper quorum·guardian 존재를 확인해도, 그 actuator가 현재 운영에서 활성화·문서화·리허설됐는지까지는 보통 검증하지 않는다. ② IR readiness survey와 wargame은 readiness를 말하지만, 실제 on-chain/off-chain command artifact와 signer ceremony가 고정되지 않으면 exploit tempo에서 실행 실패가 난다. ③ FV/invariant/AI review는 detection/correctness를 강화해도 action latency, human coordination, automation toggle state는 범위 밖이다. ④ 팀은 '계획이 있다' 와 '명령이 바로 발사된다' 를 혼동한다. **META-48~52와의 구별**: 기존 메타는 trust/admission/provenance/KPI bias를 설명한다. META-53은 **탐지/계획에서 containment actuator까지의 마지막 연결선** 이 빠지는 구조를 규정한다. |
 | META-54 Declared-Role / Effective-Authority Gap (DREAG) — 퍼플팀 2026-04-18 | **핵심 비대칭**: 팀은 component를 역할 라벨로 감사한다 — dashboard=view, agent=assistant, proof=data, runbook=document. 하지만 실제 실패는 **선언된 역할** 이 아니라 **실효 권한 그래프** 에서 난다. read-only dashboard에 signer가 있거나, proof path가 admin verb를 운반하거나, assistant agent가 project-wide service-account scope를 물고 있으면 그 표면은 이미 privileged control plane이다. **왜 감사가 놓치는가**: ① 저장소/팀 소유권과 UX 라벨이 privileged review 범위를 잘못 줄인다. ② 위협 모델이 intended role을 따라가고 effective permission을 끝까지 역추적하지 않는다. ③ demo/devnet 예외가 signer·secret의 UI 잔존을 정상화한다. ④ CSP/FV/invariant 같은 correctness·hardening 지표는 “그 표면이 애초에 권한을 가지면 안 되는가”를 묻지 않는다. **META-51/53과의 구별**: META-51은 authority-bearing evidence, META-53은 actuator latency를 다룬다. META-54는 **권한이 있으면 안 되는 표면이 이미 권한을 가진 상태** 를 규정한다. |
 | META-55 Declared-Constraint / Resolver-Enforcement Gap (DCREG) — 퍼플팀 2026-04-19 | **핵심 비대칭**: 팀은 lockfile·proof·service-account scope·IR plan처럼 보안 의도가 선언된 artifact가 있으면 제약이 이미 강제된다고 느낀다. 그러나 실제 보안은 build resolver, verification pipeline, cloud default IAM, incident-time decision chain이 그 선언을 **hard constraint로 집행하는지** 에 달려 있다. **왜 감사가 놓치는가**: ① 선언 존재 여부를 enforcement semantics보다 먼저 체크한다. ② 마지막 마일 실행기가 제약을 재해석해도 diff가 작아 보이면 통과시킨다. ③ syntactically correct artifact가 resolved behavior drift를 가린다. ④ lockfile/proof/runbook를 문서로 보고 privileged resolver 자체를 별도 감사하지 않는다. **META-49/53/54와의 구별**: META-49는 executable config, META-53은 actuation binding, META-54는 role-authority mismatch다. META-55는 **선언된 제약이 실제 집행 단계에서 힌트로 강등되는 구조** 를 규정한다. |
+| META-56 Collateral Listing Trust Import Gap (CLTIG) — 퍼플팀 2026-04-20 | **핵심 비대칭**: 프로토콜은 외부 자산을 collateral/listed asset로 수용할 때 보통 price feed, LTV, liquidity haircut만 검토한다. 하지만 실제로는 그 자산의 bridge·mint·pause·verifier quorum·issuer governance·incident latency 전체를 **자기 대차대조표 안으로 수입** 한다. KelpDAO rsETH 사건에서 core restaking contracts는 정상인데 one-of-one DVN bridge failure가 Aave/Compound/Euler bad debt로 전이된 것이 전형적이다. **왜 감사가 놓치는가**: ① downstream audit scope가 token interface와 local risk params에서 멈춘다. ② invariant/FV는 admitted asset의 supply semantics가 stable하다고 가정한다. ③ collateral review가 시장 품질(A36)과 oracle adapter(A40)는 보더라도 upstream control-plane integrity는 asset due diligence로 낮춰 본다. ④ local pause runbook가 있어도 upstream asset invalidation과 downstream bad-debt allocation까지는 rehearsed하지 않는다. **META-10/17/A36/A40과의 구별**: META-10은 통합 경계 ownership, META-17은 bridge trust cascade, A36/A40은 price·valuation failure다. META-56은 **자산 하나를 받아들이는 행위가 외부 control plane 전체를 자본 구조 안으로 들이는 문제** 를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7341,7 +7342,52 @@ Microstable builder path는 오늘 기준 다음 구조를 가진다.
 
 **Purple Team verdict**: 2026년의 중요한 방어 실패 중 일부는 “보안 제약을 문서와 파일에 적어두었으니 이미 강제됐다고 믿는 것”에서 나온다. lockfile, proof, scope, runbook은 시작점일 뿐이다. 실제로 지켜지는지는 resolver가 정한다. META-55는 이 구조를 **Declared-Constraint / Resolver-Enforcement Gap** 으로 고정한다.
 
-**Matrix state as of 2026-04-19 (purple daily update)**: **122+ named vectors + META-01~55 + B73~B78 = 178+ total entries**. META-55 added by Purple Team 2026-04-19: **Declared-Constraint / Resolver-Enforcement Gap (DCREG)**. Black Team의 D51 MEDIUM builder-path finding은 이 메타 패턴의 Microstable-specific manifestation으로 재분류된다.
+**Matrix state as of 2026-04-20 (purple daily update)**: **122+ named vectors + META-01~56 + B73~B78 = 179+ total entries**. META-56 added by Purple Team 2026-04-20: **Collateral Listing Trust Import Gap (CLTIG)**. A36/A40/META-10/META-17과 구별되는, “외부 자산을 받는 순간 upstream control plane까지 함께 수입된다”는 구조를 별도 고정한다.
+
+### META-56. Collateral Listing Trust Import Gap (CLTIG)
+
+**Published**: 2026-04-20 | **Source**: Purple Team Daily Evolution | **Signals**: KelpDAO rsETH exploit coverage (DefiPrime/CryptoBriefing/Bankless, 2026-04-18~19), Sygnia IR readiness survey coverage (2026-04-13), Ethereum Security Subsidy launch coverage (2026-04-14), Foundry releases (2026-04-15~19), Anchor `#4216` / `#4228` lockfile-enforcement discussion (merged 2026-04-16)
+
+**Mechanism**: 프로토콜은 외부 자산을 담보나 상장 자산으로 받을 때 보통 `price feed / LTV / liquidity haircut / oracle freshness` 를 검토한다. 하지만 실제로는 그 자산의 안전성이 **자산 내부 경제성** 만으로 결정되지 않는다. 그 자산이 wrapped/bridged/issuer-managed 라면, 그 순간 프로토콜은 다음까지 자기 solvency 경계 안으로 들인다.
+
+- 누가 mint/burn 권한을 쥐는가
+- 어떤 bridge / verifier quorum / attestation path가 supply integrity를 보장하는가
+- pause / invalidate / migration authority는 누구에게 있는가
+- incident 때 upstream 팀이 몇 분 안에 어떤 조치를 취할 수 있는가
+- downstream integrator가 upstream invalidation을 어떤 규칙으로 bad debt / collateral freeze / haircut에 반영하는가
+
+즉 자산 하나를 받는 행위는 가격 입력을 받는 것이 아니라, **숨겨진 control plane을 같이 수입하는 행위** 다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **KelpDAO rsETH (2026-04-18~19)**: core restaking contracts는 정상인데, one-of-one DVN bridge 설정 실패 하나가 116,500 rsETH의 무담보 발행으로 이어졌고, 손실은 Kelp 내부를 넘어 Aave/Compound/Euler bad debt로 전이됐다. 로컬 lending protocol contracts는 “설계대로” 동작했지만, 받아들인 자산의 upstream control plane 실패를 대차대조표에 그대로 흡수했다.
+- **Sygnia IR survey (2026-04-13)**: formal plan 보유와 실제 대응 준비는 다르다. 담보 자산 invalidation 상황에서는 local market freeze만으로 끝나지 않고, upstream issuer/bridge/operator와의 시간-민감한 coordination이 필요하다. 대부분의 runbook는 여기까지 리허설되지 않는다.
+- **Ethereum Security Subsidy / audit-market expansion (2026-04-14)**: audit 접근성은 좋아지고 있다. 하지만 audit 공급 확대는 주로 코드·명세·배포 artifact 쪽 coverage를 늘릴 뿐, “상장 자산이 가져오는 외부 control plane”을 자동으로 검증해주지 않는다.
+- **Foundry / Anchor recent changes (2026-04-15~19 / 2026-04-16)**: invariant tooling, supply-chain hardening, lockfile enforcement는 좋아지는 신호다. 그러나 이런 도구는 대부분 **이미 받아들인 자산의 동작 정합성** 을 더 잘 검증할 뿐, 그 자산의 upstream mint integrity와 incident latency까지 모델에 넣어주지는 않는다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-56이 추가로 설명하는 것 |
+|---|---|---|
+| A36 Thin-Liquidity Collateral Admission | 시장 품질/유동성 부족 | 시장이 좋아도 **upstream mint/bridge control plane** 이 깨지면 downstream solvency가 붕괴될 수 있음 |
+| A40 ERC4626 Donation Attack | 외부 share-price/valuation read 의존 | price read가 멀쩡해도 **supply integrity** 가 upstream에서 망가지면 담보가 바로 오염됨 |
+| META-10 Integration Boundary Accountability Diffusion | 공유 경계를 아무도 소유하지 않음 | 그 경계가 특히 **accepted asset** 일 때, downstream balance sheet가 upstream authority graph를 그대로 수입하는 문제 |
+| META-17 Cross-Chain Trust Assumption Cascade | 브릿지 trust path 자체의 다단계 신뢰 붕괴 | 브릿지를 직접 운영하지 않아도, **브릿지된 자산을 받는 것만으로** 그 붕괴를 재무적으로 상속받는 문제 |
+
+**Microstable architecture implication**:
+
+현재 Microstable은 native stablecoin collateral 중심이고, 오늘 구조에는 bridged LST/LRT collateral이나 external wrapped asset admission이 없다. 따라서 **현재 직접 HIGH는 아니다**. 다만 아래 둘 중 하나가 생기면 META-56은 즉시 상승한다.
+
+1. Microstable이 bridged LST/LRT / wrapped collateral을 받기 시작할 때
+2. MSTB 또는 미래 wrapped MSTB가 외부 lending market collateral로 쓰이기 시작할 때
+
+그 시점부터는 `oracle freshness`, `confidence threshold`, `LTV` 만으로 충분하지 않다. 최소한 아래가 필요하다.
+
+- **asset trust manifest**: native/wrapped 구분, mint authority, bridge program, verifier quorum, pause authority, upgrade keys, incident contact/SLA
+- **invalidation runbook**: upstream compromise 시 local `haircut/freeze/redeem-only` 전환 규칙
+- **listing gate**: “시장 품질”과 별도로 “control-plane import review” 필수화
+
+**Purple Team verdict**: KelpDAO는 “브릿지가 깨졌다”에서 끝나는 사건이 아니다. 더 중요한 교훈은 **다른 프로토콜이 rsETH를 받아들이는 순간, rsETH의 숨은 bridge control plane도 함께 받아들였다는 것** 이다. META-56은 이 구조를 **Collateral Listing Trust Import Gap** 으로 고정한다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
