@@ -1,5 +1,46 @@
 ---
 
+## 2026-04-22 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-15 to 2026-04-22 KST)
+- Sources checked: rekt.news frontpage, LayerZero `KelpDAO Incident Statement`, hacked.slowmist.io, Immunefi blog index, Trail of Bits / OtterSec / Neodyme blog indexes, GitHub Advisory spot checks (`solana`, `anchor`, `spl-token`, `rustls-webpki`), plus local search-fallback for community chatter
+- Brave Search API direct query remained rate-limited → local search-fallback and direct `web_fetch` cross-checks used instead
+- **Confirmed in-window items**:
+  1. **KelpDAO rsETH / LayerZero DVN** is now admissible as a **D27 reinforcement**, because the public incident statement exposed a concrete mechanism: **downstream RPC poisoning + DDoS-induced failover concentration**, not just vague “bridge compromise” reporting
+  2. **CoW Swap / Trust Wallet / eth.limo** style domain or entrypoint hijack paths remain **D26 reinforcements only**, not a new named vector today
+  3. **GitHub Advisory / GHSA spot checks** did not produce a fresh Solana / Anchor / SPL-specific issue requiring matrix expansion, but the existing `rustls-webpki` lane remains relevant to keeper outbound TLS trust
+  4. **Trail of Bits / OtterSec / Neodyme / Immunefi** indexes produced no new Solana-specific exploit-research delta requiring a new vector today
+  5. Community-query fallback produced no additional confirmed Solana exploit signal beyond already-tracked incidents
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **1 reinforcement**: **D27 RPC Endpoint Takeover** (KelpDAO-style poisoned-failover / verifier-specific spoofing)
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | keeper config + dashboard RPC bootstrap | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:402-429` enforces distinct RPC hosts, and dashboard bootstrap cross-checks genesis hash, but the system still presents as **primary + secondary endpoint failover**, not provider-independent **N-of-M observation quorum**. A KelpDAO-style poisoned subset plus failover pressure is not structurally ruled out yet |
+| **A115 TLS / dependency drift exposure** | keeper dependency + lockfile | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still carries `rustls-webpki 0.103.9` and `0.101.7`; keeper outbound HTTPS trust remains below the patched floor for the current webpki advisory lane |
+| **D26 frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ❌ HIGH CARRY-FORWARD | `docs/index.html:6` still relies on **meta-only CSP**, and `docs/app.js:43-49` still embeds a full **64-byte devnet faucet signer secret** client-side. Devnet-only intent does not change the fact that every browser receives a reusable signer |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:735-851` still enables manual oracle mode and writes externally validated prices through `ix_update_oracle` without an explicit keeper-side drift gate versus last trusted Pyth/TWAP anchor |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | `lib.rs:1571-1605` still gates commit/reveal only when **single-call** turnover crosses `LARGE_REBALANCE_THRESHOLD`; reviewed state still shows no cumulative cross-call drift accumulator |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 53) | `microstable/security/audit-attestation.json` is still absent; critical-path deployment delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **0 requiring a new named vector**
+- New attack vectors added: **0**
+- Reinforcements applied: **1** (**D27**)
+- New **CRITICAL/HIGH** findings: **0 new**, but **D26 HIGH** and **B45 HIGH** remain active
+- **External alert target (not sent by this cron per reporting rule)**: Discord channel `1468813323662524500`
+- Blue-team priority is now:
+  1. **Remove and rotate the client-side faucet signer immediately**; replace with a rate-limited backend faucet or pre-minted dev balances
+  2. Add `security/audit-attestation.json` + CI/release gate
+  3. Add provider-independent RPC quorum or degraded-mode privileged-action deny logic for keeper/manual paths
+  4. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path before `ix_update_oracle`
+  5. Track cumulative cross-call rebalance drift for large-turnover commit/reveal admission
+  6. Move CSP to HTTP headers and add SRI for vendored JS assets
+
 ## 2026-04-18 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-11 to 2026-04-18 KST)
