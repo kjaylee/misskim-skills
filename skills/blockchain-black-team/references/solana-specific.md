@@ -1299,3 +1299,28 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 65. ☐ external CPI / proxy / adapter 경로에서 signer downgrade를 의도한다면 `to_account_metas(Some(false))` 호출 자체를 믿지 말고, composite/nested accounts 포함 최종 `AccountMeta.is_signer` 결과를 regression test로 고정할 것
+
+---
+<!-- AUTO-ADDED 2026-04-22 (Red Team Daily Evolution) — D52 parser ambiguity collision -->
+
+## 2026-04-22 Anchor Parser Account-Group Collision Pattern
+
+### D52 — Anchor Composite Account-Group Name Collision / Instruction Parser Ambiguity Smuggle
+- **Solana context**: Solana 팀은 IDL / generated account schema / instruction parser 출력을 대개 "툴링 산출물" 로 보고 내부 일관성 검증을 약하게 둔다. 하지만 Anchor의 composite account-group dedup 버그는, 위조 metadata 없이도 **generated parser input 내부에 duplicate group identity** 를 남겨 off-chain parser/client/policy layer를 오도할 수 있음을 보여준다.
+- **핵심 패턴**: vulnerable de-duplicator가 composite group을 이전 composite들과만 비교하고 top-level instruction account entry와는 비교하지 않으면, 같은 generated name 또는 사실상 같은 account-group definition이 최종 출력에 중복으로 남을 수 있다. 이후 instruction parser나 generated client가 이를 first-wins/last-wins 식으로 해석하면, 운영자는 한 계정 스키마를 본다고 생각하지만 실제 도구는 다른 group을 기준으로 parse/validate/sign 할 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Solana는 account ordering, signer, writable semantics가 조금만 바뀌어도 완전히 다른 의미가 된다.
+  2. 많은 팀이 on-chain logic보다 generated client / dashboard / validation helper를 더 자주 직접 만진다.
+  3. 사고가 나도 runtime은 정상이라, parser plane ambiguity를 늦게 발견하기 쉽다.
+- **Source signals**:
+  - Anchor commit `df44381` (`fix name collision in composite account de-duplicator (#4401)`, 2026-04-21)
+  - upstream note: duplicate names / duplicate account-group definitions can cause ambiguous parsing or duplicate generated items in final output
+- **Microstable current status**:
+  - `package.json` = `@coral-xyz/anchor ^0.31.1`
+  - tests use `target/types/microstable` and `anchor.workspace.microstable`
+  - current repo scan did **not** show Anchor 1.0 parser migration or composite parser-heavy client path
+  - 따라서 **NOT ACTIVE today**, but future Anchor parser/client upgrade should treat generated schema diff as a release gate.
+- **Checklist item 66**: ☐ Anchor parser/client migration 시 emitted account-group namespace에 duplicate name/layout alias가 없는지 lint 하고, old/new parser 결과를 동일 instruction corpus로 diff 하여 account ordering·mutability·signer semantics drift를 차단할 것
+
+### Solana-Specific Defense Checklist Update
+66. ☐ Anchor parser/client migration 시 emitted account-group namespace에 duplicate name/layout alias가 없는지 lint 하고, old/new parser 결과를 동일 instruction corpus로 diff 하여 account ordering·mutability·signer semantics drift를 차단할 것
