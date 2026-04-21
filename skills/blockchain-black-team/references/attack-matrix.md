@@ -1,4 +1,4 @@
-# Attack Matrix — 122+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20) | META-01~56
+# Attack Matrix — 122+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22) | META-01~57
 
 ## A. Smart Contract Vectors
 
@@ -1008,6 +1008,7 @@ location /rpc {
 | META-54 Declared-Role / Effective-Authority Gap (DREAG) — 퍼플팀 2026-04-18 | **핵심 비대칭**: 팀은 component를 역할 라벨로 감사한다 — dashboard=view, agent=assistant, proof=data, runbook=document. 하지만 실제 실패는 **선언된 역할** 이 아니라 **실효 권한 그래프** 에서 난다. read-only dashboard에 signer가 있거나, proof path가 admin verb를 운반하거나, assistant agent가 project-wide service-account scope를 물고 있으면 그 표면은 이미 privileged control plane이다. **왜 감사가 놓치는가**: ① 저장소/팀 소유권과 UX 라벨이 privileged review 범위를 잘못 줄인다. ② 위협 모델이 intended role을 따라가고 effective permission을 끝까지 역추적하지 않는다. ③ demo/devnet 예외가 signer·secret의 UI 잔존을 정상화한다. ④ CSP/FV/invariant 같은 correctness·hardening 지표는 “그 표면이 애초에 권한을 가지면 안 되는가”를 묻지 않는다. **META-51/53과의 구별**: META-51은 authority-bearing evidence, META-53은 actuator latency를 다룬다. META-54는 **권한이 있으면 안 되는 표면이 이미 권한을 가진 상태** 를 규정한다. |
 | META-55 Declared-Constraint / Resolver-Enforcement Gap (DCREG) — 퍼플팀 2026-04-19 | **핵심 비대칭**: 팀은 lockfile·proof·service-account scope·IR plan처럼 보안 의도가 선언된 artifact가 있으면 제약이 이미 강제된다고 느낀다. 그러나 실제 보안은 build resolver, verification pipeline, cloud default IAM, incident-time decision chain이 그 선언을 **hard constraint로 집행하는지** 에 달려 있다. **왜 감사가 놓치는가**: ① 선언 존재 여부를 enforcement semantics보다 먼저 체크한다. ② 마지막 마일 실행기가 제약을 재해석해도 diff가 작아 보이면 통과시킨다. ③ syntactically correct artifact가 resolved behavior drift를 가린다. ④ lockfile/proof/runbook를 문서로 보고 privileged resolver 자체를 별도 감사하지 않는다. **META-49/53/54와의 구별**: META-49는 executable config, META-53은 actuation binding, META-54는 role-authority mismatch다. META-55는 **선언된 제약이 실제 집행 단계에서 힌트로 강등되는 구조** 를 규정한다. |
 | META-56 Collateral Listing Trust Import Gap (CLTIG) — 퍼플팀 2026-04-20 | **핵심 비대칭**: 프로토콜은 외부 자산을 collateral/listed asset로 수용할 때 보통 price feed, LTV, liquidity haircut만 검토한다. 하지만 실제로는 그 자산의 bridge·mint·pause·verifier quorum·issuer governance·incident latency 전체를 **자기 대차대조표 안으로 수입** 한다. KelpDAO rsETH 사건에서 core restaking contracts는 정상인데 one-of-one DVN bridge failure가 Aave/Compound/Euler bad debt로 전이된 것이 전형적이다. **왜 감사가 놓치는가**: ① downstream audit scope가 token interface와 local risk params에서 멈춘다. ② invariant/FV는 admitted asset의 supply semantics가 stable하다고 가정한다. ③ collateral review가 시장 품질(A36)과 oracle adapter(A40)는 보더라도 upstream control-plane integrity는 asset due diligence로 낮춰 본다. ④ local pause runbook가 있어도 upstream asset invalidation과 downstream bad-debt allocation까지는 rehearsed하지 않는다. **META-10/17/A36/A40과의 구별**: META-10은 통합 경계 ownership, META-17은 bridge trust cascade, A36/A40은 price·valuation failure다. META-56은 **자산 하나를 받아들이는 행위가 외부 control plane 전체를 자본 구조 안으로 들이는 문제** 를 규정한다. |
+| META-57 Counted-Redundancy / Correlated-Failover Gap (CRCFG) — 퍼플팀 2026-04-22 | **핵심 비대칭**: 팀은 `primary + secondary`, `N-of-M`, `multi-agent`, `multi-DVN` 처럼 **개수로 표현되는 redundancy** 가 있으면 독립성도 확보됐다고 느낀다. 그러나 실제 실패는 공격자가 일부 경로만 오염시킨 뒤 **failover, degraded mode, stateful session continuation** 을 이용해 시스템을 그 오염된 subset으로 몰아넣을 때 발생한다. 즉 redundancy는 있었지만, **선택기(selector)와 관측기(observer)가 같은 상관관계 안** 에 묶여 있으면 위기 시 monoculture로 붕괴된다. **왜 감사가 놓치는가**: ① distinct host / different URL / extra verifier count를 독립 fault-domain 검증으로 오인한다. ② failover를 availability 기능으로만 보고 integrity downgrade 경로로 모델링하지 않는다. ③ monitoring과 verifier가 같은 upstream data plane을 보면 selective-lie 공격을 탐지하기 어렵지만, observability independence는 거의 감사하지 않는다. ④ FV/invariant/fuzz는 대개 "입력된 응답이 honest거나 최소한 동일한 truth set에서 왔다" 는 가정 위에 서 있어, attacker-induced failover나 stateful trust steering을 모델 밖에 둔다. **META-54/55/56과의 구별**: META-54는 역할 대비 권한, META-55는 선언 대비 집행, META-56은 외부 자산 control plane 수입 문제다. META-57은 **redundancy를 세는 것과 독립 failure domain을 확보하는 것이 다르다** 는 구조를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7400,6 +7401,62 @@ Microstable builder path는 오늘 기준 다음 구조를 가진다.
 - **listing gate**: “시장 품질”과 별도로 “control-plane import review” 필수화
 
 **Purple Team verdict**: KelpDAO는 “브릿지가 깨졌다”에서 끝나는 사건이 아니다. 더 중요한 교훈은 **다른 프로토콜이 rsETH를 받아들이는 순간, rsETH의 숨은 bridge control plane도 함께 받아들였다는 것** 이다. META-56은 이 구조를 **Collateral Listing Trust Import Gap** 으로 고정한다.
+
+### META-57. Counted-Redundancy / Correlated-Failover Gap (CRCFG)
+
+**Published**: 2026-04-22 | **Source**: Purple Team Daily Evolution | **Signals**: LayerZero `KelpDAO Incident Statement` (2026-04-18), CoinDesk KelpDAO follow-up (2026-04-20), recent AI-agent trust-boundary research rechecked during 2026-04-22 sweep
+
+**Mechanism**: 팀은 보통 redundancy를 개수로 센다. `primary/secondary RPC`, `1-of-1 vs multi-DVN`, `multiple agents`, `backup endpoint`, `fallback mode` 같은 표현이 대표적이다. 그러나 실제 보안은 **몇 개가 있느냐** 보다, 위기 시 **무엇이 선택되고 무엇이 진실로 취급되는가** 에 달려 있다.
+
+공격자는 이를 정면으로 노린다.
+
+- 일부 경로만 조용히 오염시킨다.
+- 정상 경로는 DDoS, timeout, session steering, state continuation 같은 방식으로 잠시 비가용 상태로 만든다.
+- 시스템이 availability를 위해 자동 failover / fallback / session continuation을 실행하게 유도한다.
+- 그 순간 nominal redundancy는 사라지고, 시스템은 공격자가 준비한 correlated subset 위에서 계속 동작한다.
+
+즉 문제는 “백업이 없었다”가 아니라, **백업 선택 로직과 관측 경로까지 같은 data plane에 묶여 있었다** 는 데 있다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **KelpDAO / LayerZero DVN (2026-04-18, 공표 2026-04-20)**: 두 RPC만 오염된 것으로는 충분하지 않았다. 공격자는 동시에 멀쩡한 RPC들에 DDoS를 걸어 verifier의 failover를 poisoned RPC 쪽으로 강제했다. 더 나쁜 점은 poisoned node가 **DVN에게만 거짓 상태를 보여주고, 다른 IP의 관측자에게는 정상 응답** 을 돌려 observability까지 속였다는 점이다. redundancy는 있었지만, selector와 observer가 독립 truth plane을 갖지 못했다.
+- **최근 AI agent trust-boundary 연구 재검토**: stateful cross-agent session과 indirect prompt injection 계열은 “다른 agent/tool/source가 하나 더 있다”는 사실만으로 독립성이 생기지 않음을 보여준다. 협업 세션이나 fallback tool도 같은 context plane을 공유하면, 공격자는 그 continuation 자체를 hijack한다. 이는 블록체인 운영면에서 `backup verifier`, `secondary RPC`, `assistant agent` 를 세는 것과 **independent trust domain** 을 확보하는 것이 다르다는 점을 보강한다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-57이 추가로 설명하는 것 |
+|---|---|---|
+| D27 RPC Endpoint Takeover | RPC 경로가 악성 상태를 제공하는 직접 벡터 | 그보다 상위에서, **왜 redundancy가 있어도 failover 순간 한쪽 truth set으로 붕괴되는가** |
+| META-53 Runbook-to-Actuator Binding | 탐지 후 실제 조치를 발사하는 결박 문제 | 조치 이전 단계에서, **무슨 데이터를 믿고 어떤 path를 선택하는가** 가 이미 공격자에게 steer되는 문제 |
+| META-55 DCREG | 선언된 constraint가 실행기에서 hint로 강등 | constraint가 잘 집행돼도 여전히 **redundancy 간 독립성 자체가 검증되지 않으면** failover 무결성이 붕괴될 수 있음 |
+| META-56 CLTIG | 외부 자산 상장이 upstream control plane을 수입 | 상장/연동 이후, 그 control plane 내부에서도 **redundancy count와 real independence가 다를 수 있음** |
+
+**왜 감사가 놓치는가**:
+
+1. **count-based comfort**: `primary != secondary`, `two providers`, `multi-DVN` 같은 체크박스를 통과하면 fault-domain independence까지 확보됐다고 오인한다.
+2. **availability bias**: failover를 가용성 개선 기능으로만 보고, integrity downgrade나 attacker-induced path selection으로는 잘 모델링하지 않는다.
+3. **shared-observer blind spot**: verifier와 monitoring이 같은 upstream RPC truth를 보면, selective-lie 공격은 운영 지표상 정상으로 보일 수 있다.
+4. **tooling model limit**: formal verification, invariant testing, fuzzing은 대개 state machine 안의 correctness를 증명한다. 하지만 “fallback이 공격자 유도에 의해 어떤 witness set을 선택하는가”는 대부분 모델 밖이다.
+
+**Microstable architecture implication**:
+
+현재 Microstable은 bridge/DVN 구조는 아니지만, **Keeper ↔ RPC ↔ On-chain**, **Dashboard ↔ RPC ↔ On-chain** 경계에서 같은 메타 패턴이 약하게 보인다.
+
+- `keeper/config.devnet.json` 과 `keeper/src/config.rs` 기준 현재 posture는 **distinct host** 수준이지, provider ownership / ASN / operator independence / N-of-M runtime consensus까지는 올라가지 않았다.
+- `docs/app.js` 의 RPC cross-check는 bootstrap 시 `getGenesisHash` 중심이고, 런타임 주요 read path는 대체로 단일 endpoint 응답을 신뢰한다.
+- 따라서 공격자가 일부 RPC만 오염시키고 다른 경로를 degrade시키는 시나리오에서는, 현재 구조가 **무엇을 redundancy로 세고 무엇을 truth로 채택하는지** 를 더 엄격히 고정해야 한다.
+
+**Minimum defense delta**:
+
+1. RPC / verifier redundancy를 `host count` 가 아니라 **fault-domain manifest** 로 관리: provider, ASN, cloud, operator, auth boundary
+2. failover 조건에 availability뿐 아니라 **integrity disagreement** 를 1급 신호로 포함
+3. privileged path는 degraded mode에서 `continue` 가 아니라 **deny or read-only** 를 기본값으로 재평가
+4. monitoring / observability는 verifier와 가능한 한 **독립 truth source** 를 사용
+5. dashboard/keeper 모두 주요 read path에 대해 `single answer` 가 아니라 **N-of-M observation quorum 또는 disagreement alarm** 설계 검토
+
+**Purple Team verdict**: redundancy를 몇 개 적어놓았는지는 중요하지 않다. 공격자는 항상 **그중 무엇이 선택되는지** 를 노린다. META-57은 이 구조를 **Counted-Redundancy / Correlated-Failover Gap** 으로 고정한다.
+
+**Matrix state as of 2026-04-22 (purple daily update)**: **122+ named vectors + META-01~57 + B73~B78 = 180+ total entries**. META-57 added by Purple Team 2026-04-22: **Counted-Redundancy / Correlated-Failover Gap (CRCFG)**. Black Team의 D27 reinforcement를 퍼플 관점에서 “redundancy count와 independent truth plane의 불일치”로 상위 구조화한다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
