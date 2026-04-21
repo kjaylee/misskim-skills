@@ -1175,6 +1175,35 @@ archive_or_forward(tx)?; // delayed execution risk
 61. ☐ Keeper outbound HTTPS는 `https://` + hostname allowlist만으로 신뢰하지 말고, `rustls-webpki >= 0.103.12` 업그레이드와 SPKI pinning/issuer drift monitoring을 병행할 것
 
 ---
+<!-- AUTO-ADDED 2026-04-22 (Black Team Daily Evolution) — D27 KelpDAO RPC poisoning reinforcement -->
+
+## 2026-04-22 Solana Keeper RPC Independence / Failover Integrity Pattern
+
+### D27 — KelpDAO-style downstream RPC poisoning + failover concentration
+- **Solana context**: Solana keeper / dashboard / relayer는 보통 `primary RPC + secondary RPC` 정도의 다중화와 hostname allowlist를 갖춘다. 하지만 KelpDAO는 이것만으로는 충분하지 않다는 것을 보여줬다. verifier가 직접 해킹되지 않아도, **신뢰 중인 일부 RPC 노드만 오염시키고 나머지 노드를 DDoS로 흔들어 failover를 poisoned set으로 몰아넣으면** 거짓 체인 상태가 legitimate read path로 들어올 수 있다.
+- **핵심 패턴**:
+  1. endpoint URL은 그대로 둔다.
+  2. allowlisted RPC 공급망 내부의 일부 노드를 장악한다.
+  3. poisoned 노드는 특정 verifier / keeper IP에게만 거짓 값을 보여주고, 외부 관측자에게는 정상 응답을 돌려 monitoring을 속인다.
+  4. 정상 노드에는 장애를 유발해 운영 로직이 poisoned 경로를 "healthy fallback" 으로 채택하게 만든다.
+- **왜 Solana keeper에서 특히 위험한가**:
+  1. keeper는 종종 oracle freshness, emergency shutdown, rebalance cadence를 모두 off-chain reads에 의존한다.
+  2. `primary_host != secondary_host` 검증은 해도, provider ownership / ASN / cloud / operator correlation까지는 잘 보지 않는다.
+  3. degraded mode를 availability improvement로만 다루면, 실제로는 integrity downgrade인데도 privileged action이 계속 흘러갈 수 있다.
+- **Microstable current status**:
+  - `keeper/config.devnet.json` 은 `rpc_url` + `secondary_rpc_url` 2개만 둔다.
+  - `keeper/src/config.rs` 는 두 URL이 서로 다르고 allowlist 안에 있는지만 강제한다.
+  - `docs/app.js` 는 bootstrap 시 `getGenesisHash` 만 quorum cross-check 하고, runtime RPC method는 대부분 단일 endpoint 결과를 그대로 채택한다.
+  - 따라서 **PARTIAL DEFENSE**. 단순 endpoint substitution에는 강해졌지만, KelpDAO식 poisoned-failover / verifier-specific spoofing까지 막는 구조는 아직 아니다.
+- **Source signals**:
+  - LayerZero `KelpDAO Incident Statement` (2026-04-20 fetch, incident 2026-04-18)
+  - SlowMist Hacked listing (2026-04-18)
+- **Checklist item 62**: ☐ keeper / dashboard RPC는 `2개 URL` 수준이 아니라 **N-of-M independent observation quorum**, provider-correlation inventory, degraded-mode privileged-action deny, observability-path independence를 함께 설계할 것
+
+### Solana-Specific Defense Checklist Update
+62. ☐ RPC failover는 availability 기능이 아니라 잠재적 integrity downgrade로 취급하고, poisoned-failover를 막기 위해 N-of-M observation quorum + provider correlation inventory + degraded-mode privileged-action deny를 둘 것
+
+---
 <!-- AUTO-ADDED 2026-04-17 (Red Team Daily Evolution) — A116 Anchor CPI return-data provenance -->
 
 ## 2026-04-17 Anchor CPI Return-Data Provenance Pattern

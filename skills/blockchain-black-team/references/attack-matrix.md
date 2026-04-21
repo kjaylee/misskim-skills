@@ -271,6 +271,18 @@ function execute() external {
 **Mechanism**: DNS hijack or BGP hijack redirects RPC traffic → false chain state.
 **Defense**: Multiple independent RPCs, DNSSEC, certificate pinning.
 
+### D27 — 2026-04-22 Reinforcement: KelpDAO / LayerZero DVN Downstream RPC Poisoning + DDoS Failover
+**Historical Reinforcement**: KelpDAO rsETH bridge / LayerZero Labs DVN (2026-04-18, ~$290M).
+**Mechanism**: 공개된 LayerZero incident statement에 따르면 공격자는 DVN 인스턴스나 키를 직접 깨지 않았다. 대신 **DVN이 신뢰하던 downstream RPC 목록** 을 파악한 뒤, 그중 두 노드의 `op-geth` 바이너리를 악성 바이너리로 교체해 **DVN에게만 거짓 체인 상태를 보여주는 RPC-spoofing payload** 를 심었다. 아직 멀쩡한 다른 RPC들이 있었지만, 공격자는 동시에 **정상 RPC들에 DDoS를 가해 failover를 poisoned RPC 쪽으로 강제** 했고, 그 결과 DVN이 실제로 존재하지 않은 트랜잭션을 확인해 forged message를 승인했다.
+**Why this reinforces D27**: 기존 D27은 DNS/BGP 기반 endpoint substitution을 상정했지만, KelpDAO는 더 현실적인 운영형 변종을 보여준다. 즉 공격자는 endpoint URL을 바꾸지 않아도 된다. **검증자가 신뢰하는 RPC 공급망 내부에서 일부 노드만 오염시키고, 나머지 노드의 가용성을 흔들어 failover를 poisoned quorum 쪽으로 몰아넣으면**, verifier는 여전히 allowlisted endpoint를 보고 있다고 믿은 채 거짓 state를 수용할 수 있다.
+**Audit delta**:
+1. `primary != secondary` 정도로는 부족하다. **provider ownership / ASN / cloud / operator correlation** 까지 분리해야 한다.
+2. failover는 availability 기능이지만, 체인 검증 경로에서는 **integrity downgrade** 가 될 수 있다. 따라서 degraded mode에서 privileged action을 계속 허용할지 별도 정책이 필요하다.
+3. bridge / keeper / oracle verifier는 단순 다중 endpoint가 아니라 **N-of-M independent observation quorum** 과 **disagreement alarm** 을 가져야 한다.
+4. "monitoring도 같은 poisoned RPC를 본다"는 시나리오를 가정해야 한다. observability path 역시 verifier와 독립돼야 한다.
+**Microstable relevance**: keeper / dashboard 모두 다중 RPC를 쓰지만, 오늘 기준 `distinct host` 수준에 머물고 있으며 **provider-independence metadata / N-of-M runtime consensus / degraded-mode privileged-action deny** 는 아직 구조적으로 보이지 않는다. 따라서 D27은 `not just DNS/BGP` 로 확장된 active review vector다.
+**Source**: https://layerzero.network/blog/kelpdao-incident-statement | https://hacked.slowmist.io/ | https://www.coindesk.com/tech/2026/04/20/layerzero-blames-kelp-s-setup-for-usd290-million-exploit-attributes-it-to-north-korea-s-lazarus
+
 ### D28. Supply Chain
 **Historical**: event-stream (2018), ua-parser-js (2021), multiple npm attacks
 **Mechanism**: Compromise dependency → inject malicious code into build.
