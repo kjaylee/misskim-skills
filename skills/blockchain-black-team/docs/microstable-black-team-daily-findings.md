@@ -1,5 +1,43 @@
 ---
 
+## 2026-04-24 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-17 to 2026-04-24 KST)
+- Sources checked: Trail of Bits blog, rekt.news frontpage, hacked.slowmist.io, Immunefi blog index, Trail of Bits / OtterSec / Neodyme blog indexes, GitHub Advisory / RustSec search, Solana security/status search results, Anchor / SPL recent commit signals
+- **Confirmed in-window items**:
+  1. **Trail of Bits 2026-04-17** disclosed a **same verification key forged-proof** result caused by **unchecked deserialization + enum jump-table confusion inside a zkVM guest / prover**. This is admissible as a **new vector A118**, because it is not verifier-key drift, not setup collapse, and not Fiat-Shamir claim-binding failure.
+  2. **Volo Vaults** (2026-04-22, Sui) remains admissible as a **B15 reinforcement**, because the publicly cited mechanism is explicitly **Private Key Leakage**, not an unspecified “security incident”.
+  3. **KelpDAO / LayerZero**, **CoW Swap / eth.limo**, **Rhea**, **Dango**, recent **Anchor / SPL / RustSec** signals did not expose a fresher Solana / Anchor / SPL code-mechanism delta requiring another new named vector in this window.
+
+### New Vectors Added Today
+- **1 NEW vector**: **A118 zkVM Guest Unchecked Deserialization / Enum Jump-Table Proof Forgery**
+- **1 reinforcement**: **B15 Key Compromise** (Volo Vaults privileged vault-key leakage)
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A118 zkVM guest parser forgery** | keeper proof handling + future proof-backed subsystems | ℹ️ INFO / NOT ACTIVE | Repo-wide review did **not** find SP1 / RISC0 / Groth16 guest proving code, proof-backed reserve attestation, or zk oracle coprocessor. `keeper/src/hermes.rs` uses `pythnet_sdk::wire::v1::{AccumulatorUpdateData, Proof}` and handles `Proof::WormholeMerkle`, which is a merkle/accumulator proof class, not the same-VK zkVM guest-forgery class |
+| **B15 privileged keeper key compromise** | keeper key loading + config policy | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:432-437,814-845` forces exactly **3 keeper keypairs**, bans ephemeral paths, and requires **three distinct parent directories**. `keeper/src/utils.rs:355-401` securely opens key files and rejects symlink / group-world-readable paths. But the design is still file-key based, not HSM/MPC-attested, and host compromise could still collapse multiple keys at once |
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | keeper config + dashboard RPC bootstrap | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:402-429` still enforces distinct RPC hosts, and dashboard bootstrap still cross-checks genesis hash, but runtime reads remain closer to failover than true provider-independent observation quorum |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:743-851` still writes externally validated prices through `ix_update_oracle` without an explicit keeper-side drift gate versus last trusted Pyth/TWAP anchor |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | `lib.rs:1571-1605` still gates commit/reveal only when **single-call** turnover crosses `LARGE_REBALANCE_THRESHOLD`; reviewed state still shows no cumulative cross-call drift accumulator |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 55) | `microstable/security/audit-attestation.json` is still absent; critical-path deployment delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **1 requiring a new named vector**
+- New attack vectors added: **1** (**A118**)
+- Reinforcements applied: **1** (**B15**)
+- New **CRITICAL/HIGH** findings: **0 new**, but **B45 HIGH** remains active
+- **External alert target (not sent by this cron per reporting rule)**: Discord channel `1468813323662524500`
+- Blue-team priority is now:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Move keeper signing material toward HSM/MPC or host-isolated signer separation instead of multi-file hot keys on one operator plane
+  3. Add provider-independent RPC quorum or degraded-mode privileged-action deny logic for keeper/manual paths
+  4. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path before `ix_update_oracle`
+  5. If zk-backed attestations are ever introduced, ban unchecked witness deserialization in guest code and require forged-same-VK negative tests
+  6. Track cumulative cross-call rebalance drift for large-turnover commit/reveal admission
+
 ## 2026-04-22 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-15 to 2026-04-22 KST)

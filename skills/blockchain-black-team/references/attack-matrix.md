@@ -1,4 +1,4 @@
-# Attack Matrix — 122+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22) | META-01~57
+# Attack Matrix — 123+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24) | META-01~57
 
 ## A. Smart Contract Vectors
 
@@ -154,11 +154,12 @@ pub collateral_mint: Account<'info, Mint>,
 **Defense**: Multi-RPC consensus, TLS pinning, response validation against known state.
 
 ### B15. Key Compromise
-**Historical**: Ronin ($624M), Harmony ($100M), Slope wallet, IoTeX ioTube (2026-02-21, $4.4M), Holdstation DeFAI (2026-02-25, $462K — tentative; root cause under investigation)
-**Mechanism**: Private key stolen from file/memory/HSM → full control of associated accounts. IoTeX ioTube: validator owner private key for the Ethereum-side bridge was compromised; attacker minted two extra tokens on top of the drain. Holdstation: "MFA bypass" in 2 minutes across multi-chain wallet (World Chain, BSC, Berachain, zkSync → ETH → BTC). Both incidents converted stolen funds to ETH/BTC via THORChain.
+**Historical**: Ronin ($624M), Harmony ($100M), Slope wallet, IoTeX ioTube (2026-02-21, $4.4M), Holdstation DeFAI (2026-02-25, $462K — tentative; root cause under investigation), Volo Vaults (2026-04-22, ~$3.5M)
+**Mechanism**: Private key stolen from file/memory/HSM → full control of associated accounts. IoTeX ioTube: validator owner private key for the Ethereum-side bridge was compromised; attacker minted two extra tokens on top of the drain. Holdstation: "MFA bypass" in 2 minutes across multi-chain wallet (World Chain, BSC, Berachain, zkSync → ETH → BTC). Both incidents converted stolen funds to ETH/BTC via THORChain. Volo Vaults: protocol disclosed a vault-side security incident and SlowMist classified the public root cause as **Private Key Leakage**, meaning no smart-contract bug was needed once the privileged signer was exposed.
 **DeFAI amplification note (2026-02-25)**: AI-integrated wallets (DeFAI = DeFi + AI intent layer) introduce a compounded surface: session credential theft or AI prompt-injection (B29) can bypass the AI's intent-parsing layer, gaining direct signing authority. If the AI orchestration component and the signing key share the same runtime context, a single compromise gives full autonomous-fund-access without human approval.
 **Defense**: HSM, threshold signatures, key rotation, file encryption, memory zeroization. For AI-integrated wallets: strict separation of AI intent context from signing authority; require human-gated MFA that cannot be bypassed by AI session continuity.
-**Source**: https://hacked.slowmist.io/ | https://x.com/HoldstationW/status/2026487570751008932
+**2026 reinforcement (Volo Vaults)**: This incident reinforces that a vault protocol can lose treasury assets without any on-chain invariant failure if a single privileged vault/operator key remains hot or centrally reachable. The control-plane lesson is the same across chains: key compromise is often the terminal event, but the real design question is whether one key can still authorize irreversible treasury movement.
+**Source**: https://hacked.slowmist.io/ | https://x.com/HoldstationW/status/2026487570751008932 | https://x.com/volo_sui/status/2046715584201511351
 
 ### B16. Race Condition
 **Mechanism**: Multiple keepers submit conflicting TXs → inconsistent state.
@@ -7911,3 +7912,80 @@ sign_or_validate(parsed)?;
 | D52 Anchor Composite Account-Group Name Collision / Instruction Parser Ambiguity Smuggle | composite-account de-duplicator fails to compare composite groups against top-level instruction account entries, leaving duplicate generated names or duplicate group definitions in parser input | ambiguous client/parser binding, wrong account-schema validation, signing/policy checks applied to unintended account ordering or semantics | repo is still on Anchor `0.31.1` and current code scan found no Anchor 1.0 parser migration path; **NOT ACTIVE today**, but future parser/client upgrades must lint duplicate group identities and diff generated schemas |
 
 **Matrix state as of 2026-04-22 (red-team daily update)**: prior coverage retained; **D52** added from Anchor `#4401` after classifying it as a parser-plane ambiguity vector rather than a mere metadata hygiene bug. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless parser/client migration is introduced.
+
+## 2026-04-24 zkVM Guest-Parser Forgery Pattern Addition
+
+### A118. zkVM Guest Unchecked Deserialization / Enum Jump-Table Proof Forgery
+
+**Source signals (2026-04-24 sweep)**:
+- Trail of Bits, `We beat Google’s zero-knowledge proof of quantum cryptanalysis` (2026-04-17)
+- Google patch reference in updated paper / disclosure trail
+
+**Key insight**: 많은 팀이 zk 보안 점검을 할 때 verifying key, public input binding, ceremony transcript 같은 **암호학적 verifier 경계** 만 본다. 하지만 이 사례는 verifier와 verification key가 그대로여도, **proof를 만드는 guest program / simulator / parser 쪽에서 unsafe deserialization과 enum dispatch confusion이 있으면 동일 verification key 아래서도 forged proof가 만들어질 수 있음** 을 보여준다.
+
+**Attack chain**:
+1. protocol or research system accepts attacker-controlled private bytes that are meant to deserialize into guest-program instructions / operation vectors.
+2. guest code uses unchecked deserialization (`access_unchecked`, unsafe casts, unchecked archive access, or equivalent) because proof cost or runtime cost makes validation look expensive.
+3. malformed bytes inject an out-of-range enum / opcode / variant tag that survives into the simulator or prover execution path.
+4. compiled jump table / dispatch logic takes an unintended branch, so accounting, bounds, or semantic checks are skipped while the execution result still looks acceptable enough to satisfy the final statement.
+5. prover emits a proof that verifies under the **same verification key** as the honest proof, so downstream verifiers cannot distinguish forged execution from a legitimate optimization.
+
+**Why this is distinct from existing vectors**:
+- **A49 / A87** = trusted setup or verifier-constant collapse다.
+- **A50** = Fiat-Shamir transcript에서 public claim binding이 빠진 패턴이다.
+- **A118** = verifier math나 VK drift가 아니라, **guest/prover implementation itself** 가 malformed private bytes를 잘못 받아들여 proof를 위조하는 패턴이다.
+- 즉 A118의 핵심은 **same-VK proof forgery via unsafe guest parsing / dispatch confusion** 이다.
+
+**왜 감사가 놓치는가**:
+1. 많은 감사 범위가 verifier contract / proof system spec / setup ceremony에 치우쳐 있고, proving guest나 simulator 코드는 성능 코드로 취급되어 얕게 본다.
+2. unsafe deserialization은 "proof generation cost 절감" 이라는 명분으로 합리화되기 쉽다.
+3. enum discriminant / jump-table UB는 언어 수준 undefined behavior와 proving semantics가 겹쳐 재현이 어렵다.
+4. 사고 후에도 팀은 "verification key도 같고 verifier도 안 바뀌었는데 왜 위조가 되지" 라는 심리적 함정에 빠지기 쉽다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE: attacker-controlled private bytes trusted as a valid archived structure
+let private_bytes = zkvm::io::read_vec();
+let ops = unsafe {
+    rkyv::access_unchecked::<rkyv::Archived<Vec<Op>>>(&private_bytes)
+};
+
+for op in ops.iter() {
+    match op.kind {
+        OpKind::CriticalGate => stats.critical += 1,
+        OpKind::CheapGate => stats.cheap += 1,
+        _ => {}
+    }
+
+    // second dispatch can jump to unintended branch when enum tag is invalid
+    execute(op);
+}
+
+// SAFER: validate untrusted bytes before guest execution, reject invalid enum tags,
+// and keep counting / execution over the same checked representation
+let private_bytes = zkvm::io::read_vec();
+let ops = rkyv::from_bytes::<Vec<Op>>(&private_bytes)?;
+for op in &ops {
+    op.validate()?;
+    execute_checked(op, &mut stats)?;
+}
+```
+
+**Defensive heuristic**:
+- proving guest / simulator도 verifier와 같은 수준의 보안 감사 범위에 포함할 것
+- private witness bytes에 대해 unchecked deserialization을 금지하거나, 최소한 enum tag / length / pointer-offset validation을 별도 선행할 것
+- cost accounting과 semantic execution을 서로 다른 unchecked dispatch에 나누지 말고, **validated IR** 한 벌로 공유할 것
+- 동일 verification key 아래서 forged proof가 가능한지 보는 negative test를 둘 것 (false low-cost / false bounded-resource / false state-transition proof)
+- `unsafe` 를 proof-cost 절감 사유로 사용할 경우, UB가 proof statement로 전이되지 않는지 별도 증명 또는 adversarial fuzz를 요구할 것
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 에는 SP1/RISC0/Groth16 guest verifier나 zkVM proving path가 없다.
+- `keeper/src/hermes.rs` 의 `Proof::WormholeMerkle` 는 accumulator / merkle proof 처리로, 이번 A118의 zkVM guest-forgery 패턴과는 다르다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 proof-backed reserve attestations, zk oracle attestations, zk coprocessor, privacy-preserving solvency proofs를 붙이면 A118은 즉시 relevant 해진다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A118 zkVM Guest Unchecked Deserialization / Enum Jump-Table Proof Forgery | attacker-controlled private bytes are deserialized without validation inside a zkVM guest/prover; invalid enum/opcode tags trigger unintended dispatch so accounting or semantic checks are skipped, yet the emitted proof still verifies under the same verification key | same-VK forged proof, false resource bounds, false execution attestations, proof-backed mint/oracle/reserve fraud without VK drift | current Microstable code has no zkVM proving path; **NOT ACTIVE today**, but any future zk-backed attestation / proof coprocessor design must audit guest parser safety as a first-class trust boundary |
+
+**Matrix state as of 2026-04-24 (red-team daily update)**: prior coverage retained; **A118** added after classifying the Trail of Bits same-VK forged-proof result as a guest/prover implementation vector, not a verifier-key or transcript-binding bug. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless zk-backed proving components are introduced.
