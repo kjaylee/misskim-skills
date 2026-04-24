@@ -1,4 +1,4 @@
-# Attack Matrix — 123+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25) | META-01~58
+# Attack Matrix — 123+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25) | META-01~59
 
 ## A. Smart Contract Vectors
 
@@ -1029,6 +1029,7 @@ location /rpc {
 | META-56 Collateral Listing Trust Import Gap (CLTIG) — 퍼플팀 2026-04-20 | **핵심 비대칭**: 프로토콜은 외부 자산을 collateral/listed asset로 수용할 때 보통 price feed, LTV, liquidity haircut만 검토한다. 하지만 실제로는 그 자산의 bridge·mint·pause·verifier quorum·issuer governance·incident latency 전체를 **자기 대차대조표 안으로 수입** 한다. KelpDAO rsETH 사건에서 core restaking contracts는 정상인데 one-of-one DVN bridge failure가 Aave/Compound/Euler bad debt로 전이된 것이 전형적이다. **왜 감사가 놓치는가**: ① downstream audit scope가 token interface와 local risk params에서 멈춘다. ② invariant/FV는 admitted asset의 supply semantics가 stable하다고 가정한다. ③ collateral review가 시장 품질(A36)과 oracle adapter(A40)는 보더라도 upstream control-plane integrity는 asset due diligence로 낮춰 본다. ④ local pause runbook가 있어도 upstream asset invalidation과 downstream bad-debt allocation까지는 rehearsed하지 않는다. **META-10/17/A36/A40과의 구별**: META-10은 통합 경계 ownership, META-17은 bridge trust cascade, A36/A40은 price·valuation failure다. META-56은 **자산 하나를 받아들이는 행위가 외부 control plane 전체를 자본 구조 안으로 들이는 문제** 를 규정한다. |
 | META-57 Counted-Redundancy / Correlated-Failover Gap (CRCFG) — 퍼플팀 2026-04-22 | **핵심 비대칭**: 팀은 `primary + secondary`, `N-of-M`, `multi-agent`, `multi-DVN` 처럼 **개수로 표현되는 redundancy** 가 있으면 독립성도 확보됐다고 느낀다. 그러나 실제 실패는 공격자가 일부 경로만 오염시킨 뒤 **failover, degraded mode, stateful session continuation** 을 이용해 시스템을 그 오염된 subset으로 몰아넣을 때 발생한다. 즉 redundancy는 있었지만, **선택기(selector)와 관측기(observer)가 같은 상관관계 안** 에 묶여 있으면 위기 시 monoculture로 붕괴된다. **왜 감사가 놓치는가**: ① distinct host / different URL / extra verifier count를 독립 fault-domain 검증으로 오인한다. ② failover를 availability 기능으로만 보고 integrity downgrade 경로로 모델링하지 않는다. ③ monitoring과 verifier가 같은 upstream data plane을 보면 selective-lie 공격을 탐지하기 어렵지만, observability independence는 거의 감사하지 않는다. ④ FV/invariant/fuzz는 대개 "입력된 응답이 honest거나 최소한 동일한 truth set에서 왔다" 는 가정 위에 서 있어, attacker-induced failover나 stateful trust steering을 모델 밖에 둔다. **META-54/55/56과의 구별**: META-54는 역할 대비 권한, META-55는 선언 대비 집행, META-56은 외부 자산 control plane 수입 문제다. META-57은 **redundancy를 세는 것과 독립 failure domain을 확보하는 것이 다르다** 는 구조를 규정한다. |
 | META-58 Default-Path / Scope-Carveout Responsibility Gap (DSCRG) — 퍼플팀 2026-04-24 | **핵심 비대칭**: 팀은 vendor quickstart, official sample config, provider-managed verifier/RPC, emergency council 같은 요소를 **기본 경로** 로 채택하지만, 감사/바운티 scope는 corporate infra, KMS, deployment pipeline, prover/TEE, manual dispute/restart/freeze 가정을 자주 바깥으로 민다. 그 결과 실제 control plane은 모두가 쓰지만 아무도 끝까지 소유하지 않는 orphan boundary가 된다. **왜 감사가 놓치는가**: ① documented default를 secure baseline처럼 받아들여 별도 ownership review를 생략한다. ② provider-managed infra를 non-protocol 또는 external dependency로 분류해 핵심 threat model에서 밀어낸다. ③ "문제 생기면 blacklist/dispute/restart/freeze 하겠다" 같은 수동 개입 가정이 valid report downgrade 근거로 쓰이며 structural risk를 희석한다. ④ 사고 후에는 provider가 integrator misconfiguration을 지적하고 integrator가 official default를 근거로 들어, 사전 책임 경계가 끝내 문서화되지 않는다. **META-54/55/57과의 구별**: META-54는 role-authority mismatch, META-55는 선언-집행 불일치, META-57은 redundancy independence 문제다. META-58은 **기본값과 scope carve-out 사이에서 shared-responsibility 자체가 orphaned boundary가 되는 구조** 를 규정한다. |
+| META-59 Nominal-Path / Exception-Path Assurance Asymmetry (NPEAA) — 퍼플팀 2026-04-25 | **핵심 비대칭**: audit, formal verification, invariant testing, bug bounty, competition은 mostly **정상 경로(nominal path)** 의 correctness를 강화한다. 하지만 실제 사고가 나면 시스템은 `blacklist`, `dispute`, `manual restart`, `security-council freeze`, `manual oracle mode`, `redeem-only` 같은 **예외 경로(exception path)** 로 전환되고, 이 경로는 종종 downgrade assumption 또는 emergency governance power로만 취급된다. 즉 위기 순간 더 강한 권한과 더 큰 blast radius를 가진 경로가 활성화되지만, 정작 그 경로는 정상 경로만큼의 명세·불변식·잔고 보전·공정성 검증을 받지 못한다. **왜 감사가 놓치는가**: ① 감사/FV/fuzz는 정상 호출과 모델링된 상태 전이 중심이라, blacklist/dispute/restart/freeze 후의 recovery semantics를 거의 증명하지 않는다. ② 예외 경로를 protocol semantics가 아니라 IR/governance/ops 부록으로 분류한다. ③ "필요하면 수동 개입한다" 는 가정이 safety backstop으로 쓰이며, 그 개입이 사용자별 손실 배분·상환 순서·복구 시점에 미치는 영향은 범위 밖으로 남는다. ④ 위기 시 시스템이 사실상 다른 프로토콜로 전환된다는 점, 즉 emergency lane 자체가 별도 assurance 대상이라는 인식이 약하다. **META-53/54/58과의 구별**: META-53은 actuator를 제때 발사할 수 있는가, META-54는 누가 실제 권한을 가지는가, META-58은 그 권한/기본 경로를 누가 소유하는가를 다룬다. META-59는 **발사된 이후의 예외 프로토콜이 무엇을 보장하는가** 를 별도 구조 문제로 고정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7534,6 +7535,77 @@ Microstable builder path는 오늘 기준 다음 구조를 가진다.
 **Purple Team verdict**: 많은 사고는 code bug보다 먼저 **ownership bug** 에서 시작한다. 기본 경로와 scope carve-out이 만나는 지점에서, control plane이 모두의 것처럼 보이지만 아무의 것도 아니게 되는 순간 방어는 약해진다. META-58은 이 구조를 **Default-Path / Scope-Carveout Responsibility Gap** 으로 고정한다.
 
 **Matrix state as of 2026-04-24 (purple daily update)**: **123+ named vectors + META-01~58 + B73~B78 = 182+ total entries**. META-58 added by Purple Team 2026-04-24: **Default-Path / Scope-Carveout Responsibility Gap (DSCRG)**. LayerZero/Kelp, Base audit scope, Arbitrum emergency authority를 하나의 "ownership orphan boundary" 로 상위 구조화한다.
+
+### META-59. Nominal-Path / Exception-Path Assurance Asymmetry (NPEAA)
+
+**Published**: 2026-04-25 | **Source**: Purple Team Daily Evolution | **Signals**: Chainalysis `Inside the KelpDAO Bridge Exploit` (2026-04-24 fetched, incident 2026-04-18), Immunefi/Base audit competition scope (2026-04-21), CoinDesk `Arbitrum freezes $71 million in ether tied to Kelp DAO exploit` (2026-04-21), CoinDesk `AI agents are set to power crypto payments, but a hidden flaw could expose wallets` (2026-04-13, in-window), CoinDesk `Hack at Vercel sends crypto developers scrambling to lock down API keys` (2026-04-20), recent Foundry release checks (2026-04-18~23), invariant/FV channel recheck
+
+**Mechanism**: 업계는 정상 경로의 correctness를 빠르게 강화한다. audit competition은 main path code review를 촘촘히 하고, FV/invariant/fuzz는 명시된 상태 전이를 더 많이 덮고, 운영팀은 incident 때 쓸 emergency power를 문서에 적는다. 그런데 사고가 실제로 터지는 순간, decisive control plane은 곧바로 다른 곳으로 이동한다.
+
+- invalid proof는 `dispute` / `blacklist` / `retire proposal` 로 처리된다.
+- verifier/RPC compromise는 `manual restart` / `failover` / `pause` 로 처리된다.
+- stolen funds는 `security council freeze` / intermediary wallet / governance recovery path로 이동한다.
+- oracle stress나 liveness failure는 `manual oracle mode`, `redeem-only`, `emergency shutdown` 으로 넘어간다.
+
+즉 시스템은 nominal protocol에서 **exception protocol** 로 전환된다. 문제는 이 예외 프로토콜이 대개 정상 경로만큼의 assurance를 받지 못한다는 점이다.
+
+- 정상 경로는 spec, invariant, audit scope, bounty economics, FV/fuzz coverage를 가진다.
+- 예외 경로는 종종 "필요하면 개입한다" 는 가정, governance emergency power, downgrade clause, incident runbook 부록으로만 남는다.
+
+결과적으로 **가장 권한이 강하고 blast radius가 큰 순간에, 가장 얕게 검증된 경로가 활성화** 된다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **Base / Immunefi scope (2026-04-21)**: invalid proposal은 dispute/blacklist/retire 가능성이 있으면 downgrade 근거가 되고, service/program이 manual restart with different configuration 될 수 있으면 valid bug도 낮춰 볼 수 있다고 적는다. 이는 exception path가 이미 실질적 safety claim으로 쓰이지만, 그 path 자체가 formal assurance 대상으로 다뤄지지는 않음을 보여준다.
+- **Arbitrum Security Council freeze (2026-04-21)**: council은 실제로 30,766 ETH를 intermediary wallet로 이동시켰다. 이것은 단순한 runbook 존재가 아니라, **예외 경로가 자산 소유권과 회수 가능성을 직접 재배열하는 별도 프로토콜** 임을 뜻한다.
+- **KelpDAO post-mortem (Chainalysis, fetched 2026-04-24)**: 온체인 calldata는 정상처럼 보였고, 손실 상한과 후속 회수 가능성은 결국 pause, blacklist, external security-council action에 의해 결정됐다. 즉 crisis outcome은 nominal bridge correctness만으로 설명되지 않는다.
+- **AI router / Vercel signals (2026-04-13, 2026-04-20)**: 이 둘은 이미 B29/D26/META-54/58을 강화했지만, 동시에 중요한 보조 증거를 준다. 공격은 주로 nominal path 밖의 transport/support plane에서 시작되고, 방어 역시 code path보다 exception handling과 credential rotation path로 넘어간다. 그런데 이 recovery/containment lane은 정상 경로처럼 잘 모델링되지 않는다.
+- **Foundry / invariant / FV 채널 재점검**: 최근 신호는 정상 경로 correctness와 stateful sequence coverage를 더 잘 다루지만, `blacklist`, `manual restart`, `freeze`, `manual oracle write`, `recovery socialization` 같은 exception semantics를 1급 대상으로 다루는 공개 delta는 약했다. 즉 오늘 신규 메타는 "도구가 나쁘다" 가 아니라, **도구가 주로 nominal lane에 최적화돼 있다** 는 비대칭이다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-59가 추가로 설명하는 것 |
+|---|---|---|
+| META-53 RABG | emergency actuator를 제때 발사할 수 있는가 | 발사된 뒤 **그 예외 경로가 어떤 안전성/공정성/잔고 보전 규칙을 보장하는가** 를 다룬다 |
+| META-54 DREAG | 누가 실제 권한을 가지는가 | 권한 보유는 설명하지만, **고권한 예외 경로가 얼마나 깊게 검증됐는지** 는 다루지 않는다 |
+| META-58 DSCRG | default path와 scope carve-out의 ownership 부재 | ownership이 있어도, **예외 프로토콜 자체의 assurance 부재** 는 별도 문제다 |
+| META-25 FVSC / META-50 ASG | 명세 불완전성, admissibility 이전 경계 | 정상 경로의 spec/admission 문제를 넘어, **위기 시 전환되는 alternate protocol semantics** 의 얕은 검증을 다룬다 |
+
+**왜 감사가 놓치는가**:
+
+1. **nominal-path bias**: audit/FV/fuzz/competition은 코드의 정상 상태 전이와 명시된 함수 경로를 우선 다룬다.
+2. **governance/IR appendix treatment**: blacklist, dispute, freeze, manual restart, loss socialization은 protocol semantics가 아니라 운영/거버넌스 부록처럼 분류된다.
+3. **backstop-as-proof 착시**: "필요하면 사람이 개입할 수 있다" 는 사실이 곧 safety guarantee처럼 취급된다.
+4. **recovery fairness blind spot**: 예외 경로가 어떤 사용자에게 어떤 순서로 손실/회수를 배분하는지, 언제 정상 경로로 복귀하는지, 복귀 전에 어떤 상태 화해(reconciliation)가 필요한지는 잘 모델링되지 않는다.
+
+**Microstable architecture implication**:
+
+현재 Microstable은 Arbitrum-style council이나 bridge recovery wallet은 없다. 하지만 exception lane 자체는 이미 존재한다.
+
+- `emergency_shutdown`
+- degraded safe mode
+- `manual oracle mode`
+- 향후 governance/parameter recovery 경로
+
+Blue v14/v15는 degraded에서도 write path를 막고 auto emergency shutdown 방어선을 유지하는 쪽으로 개선했다. 이것은 중요하다. 다만 오늘 시그널은 그 다음 질문을 요구한다.
+
+- manual oracle mode에서 허용되는 **price deviation / source precedence / expiry / rollback 조건** 이 충분히 명세됐는가
+- emergency shutdown 이후 **re-enable 조건 / signer ceremony / 잔고·가격 상태 reconciliation** 이 고정돼 있는가
+- exception mode일 때 dashboard, keeper, operator가 **어떤 semantic guarantees** 를 사용자에게 제공하는지 문서화돼 있는가
+
+현재 공개 문서 기준으로는 이 예외 경로들이 하나의 **exception-lane invariant set** 으로 묶여 있지 않다. 따라서 today active exploit은 아니지만, MEDIUM latent architecture watch로 승격할 만하다.
+
+**Minimum defense delta**:
+
+1. nominal path와 별도로 **exception-path spec** 를 작성: allowed verbs, signer set, latency budget, exit criteria, reconciliation rule
+2. `manual oracle mode`, `redeem-only`, `emergency_shutdown`, `freeze/recovery` 각각에 대해 **preserved invariants** 명시: max drift, no preferential unlock, user-balance conservation, recovery ordering
+3. FV/invariant/fuzz 또는 최소한 table-top simulation을 **exception transitions** 에도 적용
+4. `문제 생기면 수동 개입` 문장을 risk downgrade 근거로 쓰기 전에, 그 개입이 **무엇을 보장하지 못하는지** 까지 적시
+5. emergency path 종료 후 정상 복귀까지의 **state reconciliation checklist** 를 운영 runbook이 아니라 protocol artifact로 승격
+
+**Purple Team verdict**: 많은 팀은 위기 대응 권한이 있다는 사실을 안전성의 일부로 계산하지만, 실제로는 그 순간 시스템이 다른 프로토콜로 바뀐다. META-59는 이 구조, 즉 **정상 경로는 정교하게 검증되고 예외 경로는 가정으로 남는 비대칭** 을 **Nominal-Path / Exception-Path Assurance Asymmetry** 로 고정한다.
+
+**Matrix state as of 2026-04-25 (purple daily update)**: **123+ named vectors + META-01~59 + B73~B78 = 183+ total entries**. META-59 added by Purple Team 2026-04-25: **Nominal-Path / Exception-Path Assurance Asymmetry (NPEAA)**. Base scope의 downgrade assumptions, Arbitrum의 emergency freeze, KelpDAO recovery reality를 하나의 "exception protocol under-assurance" 패턴으로 상위 구조화한다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
