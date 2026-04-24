@@ -729,7 +729,8 @@ Attack scenario:
 2. rustls-webpki 0.103.9 only checks first DP → subsequent DPs ignored → revocation status "unknown"
 3. If keeper's rustls uses `UnknownStatusPolicy::Allow` → accepts revoked cert → MITM possible
 4. 2026-04-15 reinforcement: the same 0.103.9 branch is also below the patch floor for `RUSTSEC-2026-0099`, where wildcard DNS names can be accepted under an invalid permitted-subtree constraint. (`RUSTSEC-2026-0098` exists too, but URI-name constraints are low-relevance for Microstable RPC hostname validation because rustls-webpki does not expose URI assertion APIs.)
-5. Attacker intercepts keeper→RPC connection → injects malicious oracle price responses or suppresses circuit breaker TX
+5. 2026-04-25 reinforcement: `RUSTSEC-2026-0104` / `GHSA-82j2-j2ch-gfr8` adds a CRL-path availability failure mode. A syntactically valid empty BIT STRING in `onlySomeReasons` can panic inside `bit_string_flags()` before CRL signature verification. If a future custom verifier enables CRL checking, malformed CRLs can become keeper connectivity kill-switches even without successful MITM trust persistence.
+6. Attacker intercepts keeper→RPC connection → injects malicious oracle price responses or suppresses circuit breaker TX
 
 **Remediation**:
 ```bash
