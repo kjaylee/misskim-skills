@@ -722,7 +722,7 @@ Exploitation of the gap between "technically correct code" and "economically saf
 ## 2026-03-25 Patterns
 
 ### rustls-webpki CRL Bypass in Keeper TLS (A77)
-**Confirmed Keeper Exposure**: Cargo.lock has `rustls-webpki = "0.103.9"` (new fix floor is `>=0.103.12`; `0.103.10` only addressed the March CRL bug).
+**Confirmed Keeper Exposure**: Cargo.lock has `rustls-webpki = "0.103.9"` (new combined fix floor is `>=0.103.13`; `0.103.10` only addressed the March CRL bug, and `0.103.12` still predates `RUSTSEC-2026-0104`).
 
 Attack scenario:
 1. RPC provider (Helius/QuickNode/Triton) rotates TLS cert; old cert revoked via CRL with multiple distributionPoints
@@ -735,7 +735,7 @@ Attack scenario:
 **Remediation**:
 ```bash
 # In microstable/solana/ workspace:
-cargo update -p rustls-webpki --precise 0.103.12
+cargo update -p rustls-webpki --precise 0.103.13
 cargo update -p reqwest  # may pull in updated webpki transitively
 cargo audit  # verify clean
 ```
