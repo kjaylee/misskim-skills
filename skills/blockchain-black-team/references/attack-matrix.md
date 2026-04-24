@@ -1,4 +1,4 @@
-# Attack Matrix — 123+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24) | META-01~58
+# Attack Matrix — 123+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7 reinforce 2026-04-25) | META-01~58
 
 ## A. Smart Contract Vectors
 
@@ -111,8 +111,22 @@ pub collateral_mint: Account<'info, Mint>,
 
 ### A7. Signature Replay
 **Historical**: Wintermute ($160M), multiple
-**Mechanism**: Reuse a valid signed transaction or message in a different context (chain, nonce, program).
-**Defense**: Nonce accounts, domain separators, one-time-use flags.
+**Mechanism**: Reuse a valid signed transaction or message in a different context (chain, nonce, program). The 2026 GiddyVaultV3 case shows a stricter sub-pattern: the protocol *did* verify an EIP-712 signature, but only over a subset of the execution parameters. Unsigned fields such as `aggregator`, `fromToken`, `toToken`, and `amount` remained attacker-controlled, so a legitimately obtained signature became replayable against materially different execution semantics.
+**2026 reinforcement (giddydefi / GiddyVaultV3, ~$1.3M)**: partial `SwapInfo` coverage let the attacker preserve a valid authorization while swapping in attacker-controlled router, token, and amount fields.
+**Code pattern to find**:
+```solidity
+// VULNERABLE: signature covers only part of the execution struct
+bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
+    SWAP_TYPEHASH,
+    swap.nonce,
+    swap.deadline
+    // aggregator, fromToken, toToken, amount omitted
+)));
+require(SignatureChecker.isValidSignatureNow(user, digest, sig), "bad sig");
+_executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
+```
+**Defense**: Nonce accounts, domain separators, one-time-use flags, and **full parameter binding**. Every execution-critical field must be inside the signed digest/hash; reject any unsigned router/token/amount field that can change asset flow.
+**Source**: https://hacked.slowmist.io/ | https://x.com/DefimonAlerts/status/2047334517535642024
 
 ### A8. Front-running / Sandwich
 **Historical**: MEV ecosystem ($B+ annually)
