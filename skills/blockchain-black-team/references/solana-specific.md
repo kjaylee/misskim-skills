@@ -1325,3 +1325,27 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 66. ☐ Anchor parser/client migration 시 emitted account-group namespace에 duplicate name/layout alias가 없는지 lint 하고, old/new parser 결과를 동일 instruction corpus로 diff 하여 account ordering·mutability·signer semantics drift를 차단할 것
+
+---
+<!-- AUTO-ADDED 2026-04-26 (Red Team Daily Evolution) — D53 recursive DNS sibling-zone cache poisoning -->
+
+## 2026-04-26 Recursive DNS Resolver Trust-Boundary Pattern
+
+### D53 — Recursive DNS Sibling-Zone NS Cache Poisoning / Parent-Pool Zone-Context Elevation
+- **Solana context**: Solana keeper / oracle fetcher / bridge watcher / dashboard backend는 `rpc_url`, `secondary_rpc_url`, `hermes_url`, 가격 API host allowlist를 두면 충분하다고 느끼기 쉽다. 하지만 hostname allowlist 앞단의 recursive resolver가 authority delegation을 잘못 cache하면, 팀이 같은 URL을 계속 쓰더라도 실제 질의는 공격자 authoritative nameserver로 흘러갈 수 있다.
+- **핵심 패턴**: 취약한 Hickory recursor 계열은 AUTHORITY section NS record를 record owner key 기준으로 cache하면서, 그 유효성 검사를 실제 query zone이 아니라 parent NS-pool zone context에 걸었다. 그 결과 `attacker.poc.` 응답 하나로 `victim.poc.` 의 NS cache를 오염시켜 이후 victim zone 질의를 공격자 nameserver로 유도할 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. RPC / oracle / attestation host는 대개 allowlist로만 관리되고, DNS authority drift 자체는 runtime에서 거의 보지 않는다.
+  2. 많은 팀이 multi-RPC를 구성해도 resolver plane은 단일 로컬 DNS path를 공유해, failover가 있어도 같은 poisoned resolution plane에 묶일 수 있다.
+  3. 사고가 나면 endpoint config는 바뀌지 않았기 때문에 운영자는 provider outage나 TLS 문제로 오진하기 쉽다.
+- **Source signals**:
+  - RustSec `RUSTSEC-2026-0106` / `GHSA-83hf-93m4-rgwq` (2026-04-22)
+- **Microstable current status**:
+  - `solana/Cargo.lock` / keeper 의존성 스캔에서 `hickory`, `hickory-recursor`, `trust-dns` 미발견
+  - 현재 keeper는 `reqwest`, `solana-client`, 시스템 DNS 해석 경로를 쓰며 custom recursive resolver / local DNS sidecar 흔적이 없다
+  - 따라서 **NOT ACTIVE today**
+  - 다만 향후 RPC/oracle failover 앞단에 Rust-native resolver 또는 sidecar recursor를 붙이면 즉시 재평가해야 한다
+- **Checklist item 67**: ☐ keeper / dashboard / bridge watcher가 local recursive DNS resolver를 쓰면 sibling-zone AUTHORITY poisoning 회귀 테스트를 넣고, security-critical hostname의 authoritative NS drift를 모니터링하며, multi-RPC도 resolver monoculture 없이 독립 해석 경로를 둘 것
+
+### Solana-Specific Defense Checklist Update
+67. ☐ keeper / dashboard / bridge watcher가 local recursive DNS resolver를 쓰면 sibling-zone AUTHORITY poisoning 회귀 테스트를 넣고, security-critical hostname의 authoritative NS drift를 모니터링하며, multi-RPC도 resolver monoculture 없이 독립 해석 경로를 둘 것

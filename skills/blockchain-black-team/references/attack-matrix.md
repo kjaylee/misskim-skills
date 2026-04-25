@@ -1,4 +1,4 @@
-# Attack Matrix — 123+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25) | META-01~59
+# Attack Matrix — 124+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26) | META-01~59
 
 ## A. Smart Contract Vectors
 
@@ -8133,3 +8133,67 @@ for op in &ops {
 | A118 zkVM Guest Unchecked Deserialization / Enum Jump-Table Proof Forgery | attacker-controlled private bytes are deserialized without validation inside a zkVM guest/prover; invalid enum/opcode tags trigger unintended dispatch so accounting or semantic checks are skipped, yet the emitted proof still verifies under the same verification key | same-VK forged proof, false resource bounds, false execution attestations, proof-backed mint/oracle/reserve fraud without VK drift | current Microstable code has no zkVM proving path; **NOT ACTIVE today**, but any future zk-backed attestation / proof coprocessor design must audit guest parser safety as a first-class trust boundary |
 
 **Matrix state as of 2026-04-24 (red-team daily update)**: prior coverage retained; **A118** added after classifying the Trail of Bits same-VK forged-proof result as a guest/prover implementation vector, not a verifier-key or transcript-binding bug. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless zk-backed proving components are introduced.
+
+## 2026-04-26 Recursive DNS Resolver Cache-Poisoning Pattern Addition
+
+### D53. Recursive DNS Sibling-Zone NS Cache Poisoning / Parent-Pool Zone-Context Elevation
+
+**Source signals (2026-04-26 sweep)**:
+- RustSec `RUSTSEC-2026-0106` / `GHSA-83hf-93m4-rgwq` (issued 2026-04-22)
+
+**Key insight**: 많은 팀이 keeper / relayer / price fetcher / verifier에서 `https://allowlisted-host` 만 강제하면 DNS 단계는 이미 끝난 문제라고 본다. 하지만 이번 신호는 다르다. **취약한 recursive resolver가 sibling zone의 AUTHORITY 섹션 NS 레코드를 parent-zone context로 통과시키면, 공격자는 네트워크 경로를 탈취하지 않고도 다른 allowlisted zone의 authoritative NS cache를 오염** 시킬 수 있다. 즉 공격면은 DNS/BGP hijack이 아니라 **resolver 내부의 query-to-cache trust binding** 이다.
+
+**Attack chain**:
+1. victim keeper / bot / gateway uses a vulnerable Hickory recursive resolver path for outbound hostname resolution.
+2. attacker controls or can answer for a sibling child zone under the same parent delegation boundary.
+3. attacker returns an AUTHORITY-section NS record for `victim.poc.` while servicing a lookup for `attacker.poc.`.
+4. resolver validates the record against the parent pool zone (`poc.`) instead of the originally queried child zone, so the bailiwick-style check passes and caches `(victim.poc., NS) -> ns.evil.poc.`.
+5. subsequent lookups for the victim zone are routed to attacker-controlled authority, enabling false endpoint resolution, service-discovery poisoning, or staged pairing with TLS / verifier weaknesses.
+
+**Why this is distinct from existing vectors**:
+- **D27** = DNS/BGP or provider-level endpoint takeover that redirects traffic on the network path.
+- **D53** = the victim can keep the same hostname, same config, and same upstream allowlist, yet a **recursive resolver cache entry** is poisoned from a sibling-zone response path.
+- **A115 / A77** = certificate / revocation verification failures after resolution.
+- **D53** = the earlier **authority-discovery cache** is corrupted first, and may later be paired with TLS bugs or misissuance.
+
+**왜 감사가 놓치는가**:
+1. custom recursive resolver는 performance / availability component로만 보이고, authority-binding boundary로 잘 모델링되지 않는다.
+2. bailiwick-style check가 코드에 존재하면, zone context가 잘못된 채 적용돼도 superficially safe해 보인다.
+3. hostname allowlist, TLS, and RPC quorum review가 보통 더 눈에 띄어, resolver cache key semantics는 깊게 보지 않는다.
+4. exploit은 registrar takeover나 obvious config diff 없이 일어나므로 incident triage가 upstream DNS compromise로만 좁혀지기 쉽다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: cache keys records by their own owner name/type and
+// evaluates AUTHORITY records against the parent NS-pool zone, not the
+// originating query tuple.
+for rr in answer.iter().chain(authority.iter()).chain(additional.iter()) {
+    if rr.name().is_subzone(ns_pool.zone()) {
+        cache.insert((rr.name().clone(), rr.record_type()), rr.clone());
+    }
+}
+
+// SAFER SHAPE: cache the full response under the originating query, or enforce
+// that AUTHORITY data can only populate cache entries scoped to the query zone.
+cache.insert((query.name().clone(), query.record_type()), response.clone());
+validate_authority_scope(&response, query.name())?;
+```
+
+**Defensive heuristic**:
+- `hickory-recursor` 를 production에 쓰지 말고, `hickory-resolver >= 0.26.0` 의 response-keyed recursor path 또는 동등한 수정 경로로 이행할 것
+- security-sensitive RPC / oracle / attestation hostname에 대해 **authoritative NS set drift** 를 별도 감시할 것
+- local recursive resolver를 쓸 때 sibling-zone poisoning regression test를 넣을 것
+- hostname allowlist를 DNS trust boundary 전체의 대체재로 취급하지 말 것
+- failover / multi-RPC 설계에서도 resolver monoculture를 피하고 independent resolution plane을 둘 것
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock` 와 keeper 의존성 스캔에서 `hickory`, `hickory-recursor`, `trust-dns` 는 확인되지 않았다.
+- 현재 keeper는 `reqwest`, `solana-client`, 시스템 해석 경로를 쓰며, 레포 내 custom recursive resolver / DNS sidecar 구성 흔적도 보이지 않았다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 로컬 recursor, service-discovery sidecar, Rust-native DNS resolution layer를 RPC/oracle failover 앞단에 도입하면 D53은 즉시 relevant 해진다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D53 Recursive DNS Sibling-Zone NS Cache Poisoning / Parent-Pool Zone-Context Elevation | vulnerable recursive resolver caches AUTHORITY-section NS records for a sibling zone under parent-pool context, poisoning authoritative delegation for later lookups | false endpoint resolution, service-discovery poisoning, allowlisted-host trust bypass precursor, potential pairing with TLS/verifier bugs | current Microstable dependency scan found no `hickory` / `trust-dns` path and no custom recursive resolver; **NOT ACTIVE today**, but any future local recursor or DNS sidecar would make this immediately relevant |
+
+**Matrix state as of 2026-04-26 (red-team daily update)**: prior coverage retained; **D53** added after classifying `RUSTSEC-2026-0106` as a resolver-cache authority-binding bug distinct from D27 routing takeover and A115 certificate validation failures. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless a custom recursive resolver layer is introduced.
