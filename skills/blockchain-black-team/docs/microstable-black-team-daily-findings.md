@@ -1,5 +1,39 @@
 ---
 
+## 2026-04-26 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-19 to 2026-04-26 KST)
+- Sources checked: rekt.news frontpage/newsletter, hacked.slowmist.io front page, Immunefi blog index, GitHub Advisory query page, Solana official pages, Trail of Bits / OtterSec / Neodyme blog indexes, plus search-fallback query checks where direct search remained rate-limited
+- **Confirmed in-window items**:
+  1. No fresher public **code-level** incident/research delta required a new matrix entry today; the latest admissible items (**GiddyVaultV3 partial signature coverage**, **rustls-webpki CRL-path panic**, **KelpDAO poisoned-failover**, **Volo key leakage**, **Trail of Bits same-VK zkVM guest forgery**) were already absorbed.
+  2. Official Solana / Anchor / SPL-facing sources did not expose a new advisory or exploit primitive requiring matrix expansion.
+  3. The daily task therefore advanced via **fresh verification + Microstable re-sweep**, not by adding another named vector.
+
+### New Vectors Added Today
+- **0 NEW vectors**
+- **0 reinforcements**
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | keeper config + dashboard RPC runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:402-429` still enforces only distinct RPC hosts, and `docs/app.js:212-323` keeps strict cross-checking only for bootstrap `getGenesisHash`, not provider-independent runtime observation quorum |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:736-836` still enables manual oracle mode and writes externally validated prices through `ix_update_oracle` without an explicit keeper-side drift gate versus last trusted Pyth/TWAP anchor |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | `lib.rs:1546-1605` still gates commit/reveal only when **single-call** turnover crosses `LARGE_REBALANCE_THRESHOLD`; reviewed state still shows no cumulative cross-call drift accumulator |
+| **D26 canonical frontend/domain hijack blast radius** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on meta-only CSP, and `docs/app.js:43-49` still embeds a client-side devnet faucet signer |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 57) | `microstable/security/audit-attestation.json` is still absent; critical-path deployment delta remains unattested |
+
+### Today's Verdict
+- New incidents found: **0 requiring a new named vector**
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0 new**, but **B45 HIGH** remains active
+- Blue-team priority remains unchanged:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Add provider-independent RPC quorum for keeper/dashboard read paths
+  3. Add explicit manual-price-vs-TWAP drift guard to fallback oracle path before `ix_update_oracle`
+  4. Track cumulative cross-call rebalance drift for large-turnover commit/reveal admission
+  5. Move CSP to headers, add SRI, and remove browser-side faucet signing material
+
 ## 2026-04-24 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-17 to 2026-04-24 KST)
