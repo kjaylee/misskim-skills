@@ -1,5 +1,61 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-04-26 (KST) — Daily Evolution (#42)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Immunefi/Base `Audit Comp | Base Azul Bug Bounties` scope | 2026-04-21 | invalid proposal을 `dispute/blacklist/retire` 할 수 있거나 service를 `manual restart with different configurations` 할 수 있으면 otherwise valid report도 downgrade될 수 있다고 적는다. 즉 **recoverability가 triage economics에 직접 들어간다.** |
+| CoinDesk `Kelp DAO claims LayerZero’s 'default' settings...` | 2026-04-20 | provider default와 provider-operated verifier 인프라가 root cause dispute의 중심이 됐지만, 동시에 emergency pause가 후속 대형 유출을 막았다. **위험한 기본 경계 + 사후 backstop** 조합이다. |
+| CoinDesk `Hack at Vercel sends crypto developers scrambling to lock down API keys` | 2026-04-20 | support surface compromise의 핵심 대응은 code fix보다 credential rotation과 deployment-plane inspection이었다. 그런데 실제 손실이 제한적이면 이런 privileged adjacency가 저평가되기 쉽다. |
+| CoinDesk `Arbitrum freezes $71 million...` | 2026-04-21 | Security Council은 실제로 30,766 ETH를 intermediary wallet로 이동시켰다. emergency authority는 추상적 backstop이 아니라 **실제 회수 수단** 이다. |
+| CoinDesk `Inside the $71 million freeze on Arbitrum...` | 2026-04-23 | freeze는 containment에 성공했지만 동시에 governance-level override precedent를 남겼다. 사후 회수 성공이 사전 severity를 다시 낮게 쓰게 만드는 위험한 심리적 근거가 된다. |
+| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | 온체인 calldata는 정상처럼 보였고, 실제 손실 상한은 pause와 downstream freeze에 의해 바뀌었다. recovery lane 존재가 다음 threat-model iteration에서 control-plane compromise를 덜 긴급하게 취급하게 만들 수 있다. |
+| Foundry recent releases page | 2026-04-18~23 | 최근 공개 툴링은 nominal-path correctness를 계속 밀어 올리지만, recoverability가 severity 판단을 왜곡하는 조직 인센티브 자체를 다루는 공개 delta는 약했다. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 퍼플팀: **META-58**(Default-Path / Scope-Carveout Responsibility Gap), **META-59**(Nominal-Path / Exception-Path Assurance Asymmetry)
+- 블랙/레드: **B15**(Key Compromise), **D26**(Frontend Injection), **D27**(RPC Takeover), **B45**(Audit Attestation Drift), **A75**(manual oracle fallback semantic gap)
+- 블루: `docs/microstable-blue-v14-report.md`, `docs/microstable-blue-v15-report.md` 는 degraded write 차단과 auto emergency shutdown 유지에 집중
+
+**오늘 신규 식별 갭**:
+
+#### META-60 — Recoverability-Collateralized Security Gap (RCSG)
+- **현상**: 업계는 `freeze`, `blacklist`, `manual restart`, `credential rotation`, `recovery fund`, `loss socialization` 같은 **회수 가능성** 을 사후 containment 수단이 아니라 사전 severity discount처럼 사용한다.
+- **메타 원인**:
+  1. **recoverability-as-mitigation bias**: 회수 가능성을 exploitability 감소와 혼동한다.
+  2. **severity economics distortion**: bug bounty / audit competition이 manual restart, dispute, blacklist 가능성을 downgrade 근거로 명시한다.
+  3. **hindsight recovery halo**: 사후 freeze 성공이 예방 실패를 가리고, 다음 설계 주기에서 같은 경계를 다시 낮게 보게 만든다.
+  4. **control-plane discounting**: support surface, deployment infra, verifier/RPC plane처럼 직접 custody가 아닌 privilege surface를 구조적으로 저평가한다.
+- **기존 패턴과 구별**:
+  - **META-58** = 그 경계를 누가 소유하는가
+  - **META-59** = 예외 경로가 켜진 뒤 무엇을 보장하는가
+  - **META-60** = 왜 조직이 애초에 그 경계의 severity를 낮게 책정하는가
+- **Purple Team 고유 기여**: 이번 신호는 "예외 경로가 약하다" 를 넘어서, **예외 경로가 존재한다는 사실 자체가 예방 투자와 severity triage를 왜곡한다** 는 점을 보여준다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-26)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-60 추가** + Why-Audits-Miss 표에 `META-60` 행 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Recoverability-Collateralized Security Gap`) 강화
+- **Matrix state updated**: **123+ named vectors + META-01~60 + B73~B78 = 184+ total entries**
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0426-01 (MEDIUM latent)**: `emergency_shutdown`, degraded safe mode, `manual oracle mode` 같은 backstop이 존재한다는 이유로 dashboard / keeper key path / RPC trust / deploy control-plane의 raw blast radius를 낮게 보는 **recoverability bias** 가 생길 수 있다.
+- Blue v14/v15의 개선은 유효하다. 다만 그 성공이 곧 privileged control-plane risk의 severity downscore 근거가 되어서는 안 된다.
+- 따라서 Microstable은 severity triage에서 **backstop 없는 raw blast radius** 를 먼저 계산하고, pause/recovery 가능성은 별도 후순위 메모로만 남겨야 한다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://immunefi.com/audit-competition/audit-comp-base-azul/scope/
+- https://www.coindesk.com/tech/2026/04/20/kelp-dao-claims-layerzero-s-default-settings-are-what-actually-caused-the-usd290-million-disaster
+- https://www.coindesk.com/tech/2026/04/20/hack-at-vercel-sends-crypto-developers-scrambling-to-lock-down-api-keys
+- https://www.coindesk.com/markets/2026/04/21/arbitrum-freezes-usd71-million-in-ether-tied-to-kelp-dao-exploit
+- https://www.coindesk.com/tech/2026/04/22/inside-the-usd71-million-freeze-on-arbitrum-that-has-the-crypto-world-questioning-what-decentralization-really-means
+- https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
+- https://github.com/foundry-rs/foundry/releases
+
 ## 2026-04-18 (KST) — Daily Evolution (#36)
 
 ### Phase 1) 수집 소스 요약
