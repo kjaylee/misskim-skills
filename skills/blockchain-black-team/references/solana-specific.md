@@ -1252,6 +1252,19 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 63. ☐ privileged Rust build host에는 운영자 실사용 `$HOME`, `~/.ssh`, Telegram Desktop profile, production `.env` 를 mount하지 말고, `authorized_keys` 변경을 구성관리 + 경보 대상으로 취급할 것
 
+### 2026-04-27 Reinforcement — Ecosystem-Native Build-Script Exfiltration Cluster (D28)
+- **Signal**: RustSec `RUSTSEC-2026-0107` (`mysten-metrics`) and `RUSTSEC-2026-0108` (`sui-execution-cut`) both say the malicious crate shipped a **build script that attempted to exfiltrate data from the build machine**.
+- **Why Solana teams should care**:
+  1. crate names no longer need to look fake, Windows-only, or obviously typosquatted.
+  2. ecosystem-native names that sound like internal metrics/execution tooling are enough to win a rushed PR review.
+  3. compile-time exfil means the compromise happens before runtime behavior or integration tests give defenders any signal.
+- **Solana-specific translation**: expect the same pattern under names resembling `solana-metrics`, `anchor-execution`, `pyth-cut`, `jito-profiler`, protocol-specific `*-metrics` helpers, or emergency incident tooling.
+- **Microstable current status**:
+  - `microstable/solana/Cargo.lock`, `keeper/Cargo.toml`, and keeper/docs scans show **no `mysten-metrics` / `sui-execution-cut` match**.
+  - Therefore **NOT ACTIVE today**.
+  - But keeper builds still happen on a host that resolves outbound dependencies and reads secret-adjacent config, so the class remains **LATENT and high-blast-radius**.
+- **Source**: https://rustsec.org/advisories/RUSTSEC-2026-0107.html | https://rustsec.org/advisories/RUSTSEC-2026-0108.html
+
 ---
 <!-- AUTO-ADDED 2026-04-19 (Red Team Daily Evolution) — D51 Anchor JS lockfile drift -->
 

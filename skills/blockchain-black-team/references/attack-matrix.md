@@ -1,4 +1,4 @@
-# Attack Matrix — 124+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26) | META-01~60
+# Attack Matrix — 124+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | D28 reinforce 2026-04-27) | META-01~60
 
 ## A. Smart Contract Vectors
 
@@ -307,6 +307,7 @@ function execute() external {
 **Mechanism**: Compromise dependency → inject malicious code into build.
 **2026 reinforcement (RustSec)**: short-lived typosquat waves (`rpc-check`, `tracing-check`) targeted a specific ecosystem to steal credentials before package takedown.
 **2026 reinforcement (GHSA-8f57-hh49-gmqf, 2026-03-26): `@solana-ipfs/sdk` (npm) malware with `vulnerable_version_range: >=0` and no patched version. Any machine with the package installed/running should be treated as fully compromised; all secrets and keys should be rotated from a separate machine, and package removal alone is insufficient. Maps to D28 as confirmed direct package compromise with universal scope via tooling trust chain, not registry typo.
+**2026 reinforcement (RUSTSEC-2026-0107 / RUSTSEC-2026-0108, issued 2026-04-24)**: `mysten-metrics` and `sui-execution-cut` were removed from crates.io after both were found to ship **build scripts that attempted to exfiltrate data from the build machine**. Key lesson: the attacker no longer needs an obvious typosquat or a Windows-utility disguise. Plausible **chain-native / infra-native crate names** can target developers who are trying to add metrics, execution, or ecosystem-adjacent helpers during incident pressure.
 **Defense**: Lock files, audit dependencies, minimal dependency tree, vendoring, Cargo.lock attestation, registry-source allowlists, and two-person review for new deps.
 
 ### D31. Protocol-Metadata Confusion (IDL/Schema Trust)
@@ -4577,6 +4578,29 @@ META-23 is PRE-RUNTIME: keeper agent's instructions are rewritten before it runs
 4. Developer machine hygiene: crypto wallet files and deploy keypairs must NOT be on the same machine as general cargo install experiments
 
 **Source**: https://rustsec.org/advisories/ (March 26, 2026 batch); crates.io removal notices
+
+### D28 Reinforcement: April 2026 Ecosystem-Native Build-Script Exfiltration Cluster (`mysten-metrics`, `sui-execution-cut`)
+
+**Date**: 2026-04-24 (advisories issued; malicious versions published 2026-04-20) | **Severity**: HIGH (supply chain) | **Microstable impact**: ✅ NOT AFFECTED (cargo.lock verified)
+
+**Signal**: RustSec issued **RUSTSEC-2026-0107** and **RUSTSEC-2026-0108** for two fresh-named crates, `mysten-metrics` and `sui-execution-cut`, both removed from crates.io for malicious code. Both advisories state the crates included a **build script** that attempted to **exfiltrate data from the build machine**.
+
+**Why this matters beyond prior D28 entries**:
+- This is **not** a classic typo of a popular package name.
+- This is **not** the D50 persistence class, because the public advisories stop at build-machine exfiltration and do not show SSH persistence or Telegram-session theft.
+- The naming pattern is the novelty: the crates impersonate **ecosystem-native internals** that sound like plausible Sui infrastructure components. The transferable lesson for Solana is obvious: expect the same tactic with names that smell like `solana-*`, `anchor-*`, `pyth-*`, `jito-*`, `helius-*`, `raydium-*`, or protocol-internal metrics/execution helpers.
+
+**Attack mechanism**: malicious `build.rs` or equivalent compile-time hook runs during dependency resolution/build, enumerates developer-machine data, and attempts exfiltration before any runtime code review path is exercised. This makes the build host itself the blast radius, not just the compiled binary.
+
+**Microstable Cargo.lock verification (2026-04-27)**: repo-wide scan across `microstable/solana/Cargo.lock`, `keeper/Cargo.toml`, keeper source, and docs found **ZERO matches** for `mysten-metrics` or `sui-execution-cut`.
+
+**Defense (D28 additions)**:
+1. Treat new chain-native infra crates with the same distrust as obvious typosquats, especially when added during urgent incident windows.
+2. Add CI policy to fail on any newly introduced dependency whose crates.io publication date is inside a quarantine window unless manually waived.
+3. Review `build.rs` and install-time hooks for every new Rust dependency, not just runtime source files.
+4. Keep privileged build hosts isolated from production `.env`, deploy keypairs, SSH agent sockets, and operator messaging sessions.
+
+**Source**: https://rustsec.org/advisories/RUSTSEC-2026-0107.html | https://rustsec.org/advisories/RUSTSEC-2026-0108.html
 
 ---
 <!-- AUTO-ADDED BY PURPLETEAM DAILY EVOLUTION 2026-03-28 (04:00 KST) -->
