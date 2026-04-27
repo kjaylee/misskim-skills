@@ -1386,3 +1386,26 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 68. ☐ program migration을 새 program ID로 수행할 때는 shared PDA / vault / mint authority에 `active_program_id` 또는 동등한 version gate를 두고, retired program의 write 권한을 revoke or migrate 완료하기 전에는 "deprecated" 로 분류하지 말 것
+
+---
+<!-- AUTO-ADDED 2026-04-28 (Red Team Daily Evolution) — D54 multi-round bundle simulation -->
+
+## 2026-04-28 Bundle Simulator / Private Relay Cost-Asymmetry Pattern
+
+### D54 — Multi-Round Transaction Simulation Dependency-Bomb / Bundle-Service Asymmetric DoS
+- **Solana context**: Solana keeper가 향후 anti-MEV 목적으로 Jito bundle, private relay, local bundle simulator, 또는 multi-leg rebalance pre-simulation을 도입하면, 그 경로는 단순한 "빠른 비공개 제출" 이 아니라 **상태를 이어받아 여러 tx를 순차 시뮬레이션하는 off-chain execution plane** 이 된다. 이때 공격자는 state dependency가 많은 번들을 던져 simulator 비용을 비대칭적으로 키울 수 있다.
+- **핵심 패턴**: later tx가 earlier tx state mutation에 의존하도록 묶인 bundle을 반복 제출해, builder/relay가 full sequential simulation을 수행하게 만든다. 공격자는 실제 체인 포함이나 큰 자본 노출 없이도 상대의 simulation budget, queue time, failover behavior를 소모시킨다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Jito / private relay를 도입하는 주된 이유가 anti-MEV라서, 팀이 ordering/privacy는 보지만 **simulator-plane availability** 는 덜 본다.
+  2. Solana는 빠른 슬롯과 낮은 지연을 전제로 하므로, bundle simulation queue가 밀리면 실제 keeper execution window가 쉽게 사라진다.
+  3. 과부하 시 public RPC 제출로 자동 fallback하면, 원래 MEV 방어 경로가 오히려 weaker-public-path fail-open으로 이어질 수 있다.
+- **Source signals**:
+  - arXiv `2604.21169` (submitted 2026-04-23), *Position Paper: Denial-of-Service Against Multi-Round Transaction Simulation*
+- **Microstable current status**:
+  - `programs/microstable/src/lib.rs`, `keeper/src/`, `Anchor.toml` 스캔에서 `Jito`, `bundle`, `sendBundle`, `dontfront`, block engine, private relay 흔적 미발견
+  - 따라서 **NOT ACTIVE today**
+  - 다만 향후 keeper가 Jito/private bundle path를 채택하면 바로 재평가 필요
+- **Checklist item 69**: ☐ Jito/private relay/bundle simulator를 도입할 때는 per-origin simulation budget, bundle round cap, state-dependency depth cap, late-fail penalty, public-path fail-open 금지를 함께 설계하고 chaos test로 검증할 것
+
+### Solana-Specific Defense Checklist Update
+69. ☐ Jito/private relay/bundle simulator를 도입할 때는 per-origin simulation budget, bundle round cap, state-dependency depth cap, late-fail penalty, public-path fail-open 금지를 함께 설계하고 chaos test로 검증할 것

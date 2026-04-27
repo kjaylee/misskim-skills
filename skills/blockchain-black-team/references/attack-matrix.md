@@ -1,4 +1,4 @@
-# Attack Matrix — 125+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 Red 2026-04-28) | META-01~61
+# Attack Matrix — 126+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28) | META-01~61
 
 ## A. Smart Contract Vectors
 
@@ -8343,6 +8343,73 @@ public entry fun claim_rewards(pool: &mut RewardsPool, user: &mut UserSpool) {
 | A119 Immutable Legacy Package / Shared-State Version-Gate Bypass | deprecated immutable package/program remains callable and still has authority over current shared state, so an old latent bug can drain live rewards/assets despite current SDK/UI using a newer path | legacy-path drain, reward inflation, stale-auth bypass, post-migration false sense of safety | current Microstable scan shows a single upgradeable Solana program path and no parallel retired write-capable package; **NOT ACTIVE today**, but any future multi-program migration must bind shared PDAs/vaults to the active version |
 
 **Matrix state as of 2026-04-28 (red-team daily update)**: prior coverage retained; **A119** added after Scallop made the mechanism public enough to separate **legacy-package reachability + shared-state authority persistence** from a generic logic bug. Microstable has **no new CRITICAL/HIGH active finding from A119 itself**; the open **B45 audit-attestation gap** remains the top current HIGH continuity issue.
+
+## 2026-04-28 Multi-Round Bundle Simulation Pattern Addition
+
+### D54. Multi-Round Transaction Simulation Dependency-Bomb / Bundle-Service Asymmetric DoS
+
+**Source signals (2026-04-28 sweep)**:
+- arXiv `2604.21169` (submitted 2026-04-23), *Position Paper: Denial-of-Service Against Multi-Round Transaction Simulation*
+
+**Key insight**: 많은 팀이 block builder / private relay / bundle endpoint를 단순한 "빠른 사설 mempool" 정도로 취급한다. 하지만 bundling service는 보통 **여러 transaction을 순차 시뮬레이션하면서 이전 tx가 만든 state를 다음 tx에 반영하는 multi-round execution engine** 이다. 이때 공격자는 실제 자본 위험 없이도 **state dependency를 고의로 얽은 bundle** 을 던져 simulator가 round-by-round로 비싼 계산을 반복하게 만들 수 있다. 핵심은 네트워크 spam이 아니라, **bundle semantics 자체를 이용한 off-chain simulation-cost asymmetry** 다.
+
+**Attack chain**:
+1. attacker identifies a builder / relay / bundle API that simulates candidate bundles before inclusion.
+2. attacker crafts a bundle whose later transactions depend on storage/state mutated by earlier transactions, forcing full sequential simulation rather than cheap stateless validation.
+3. bundle is designed so failure appears late, or succeeds only under narrow state combinations, keeping simulator work high while attacker capital at risk stays low.
+4. atomic inclusion guarantees and bundle-specific admission rules are abused to avoid ordinary capital or mempool exposure costs.
+5. repeated submissions consume builder simulation capacity, degrade searcher QoS, reduce builder revenue, or slow block production / bundle servicing.
+
+**Why this is distinct from existing vectors**:
+- **D20 Denial of Service** 는 대개 네트워크 flood, tx spam, validator/path saturation 같은 broad availability attack을 다룬다. **D54** 는 **stateful multi-round bundle simulator** 라는 더 좁고 새로운 off-chain execution surface를 겨냥한다.
+- **C25 MEV Extraction / A91 / A92** 는 ordering을 이용해 profit을 뽑는 공격이다. **D54** 는 ordering edge가 아니라 **admission/simulation cost curve 자체** 를 공격한다.
+- 핵심은 chain congestion이 아니라 **builder-side sequential simulation semantics** 다.
+
+**왜 감사가 놓치는가**:
+1. 온체인 감사는 contract correctness에 집중하고, bundle simulator / block-builder pipeline은 infra 또는 performance concern으로 분리된다.
+2. 많은 팀이 private orderflow를 anti-MEV defense로 도입하면서, 그 경로의 **admission fairness / simulation budget** 은 별도 위협모델링하지 않는다.
+3. 번들 서비스는 공개 mempool보다 폐쇄적이라 재현·관측이 어렵고, 공격 cost model도 일반 gas economics와 다르다.
+4. simulator는 correctness 테스트는 있어도 **adversarial cost asymmetry** 테스트가 거의 없다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: bundle service simulates an attacker-controlled sequence
+// with full state carry-over and no strict per-origin simulation budget.
+fn evaluate_bundle(bundle: &[Tx]) -> SimResult {
+    let mut state = load_head_state();
+    for tx in bundle {
+        state = simulate_with_state_carry(state, tx)?;
+    }
+    Ok(commit_candidate(state))
+}
+
+// SAFER SHAPE: cap multi-round depth/cost and reject dependency-heavy bundles
+// before full sequential execution becomes attacker-amplifiable.
+fn evaluate_bundle(bundle: &[Tx], budget: &mut Budget) -> SimResult {
+    enforce_bundle_size_limit(bundle)?;
+    reject_excessive_state_dependency(bundle)?;
+    budget.charge_precheck(bundle)?;
+    ...
+}
+```
+
+**Defensive heuristic**:
+- bundle / private-relay path에 **per-origin simulation budget, round cap, dependency-depth cap** 을 둘 것
+- 실패가 늦게 발생할수록 비용이 커지는 late-fail bundle을 별도 점수화할 것
+- "private orderflow = safer" 가정과 별개로 **simulator-plane DoS** 를 독립 항목으로 위협모델링할 것
+- precheck 단계에서 state-carry dependency가 과도한 bundle을 조기 거절하고, admission cost를 attacker에게 전가할 장치를 둘 것
+- public RPC fallback이 있더라도 bundle endpoint overload 시 자동 fail-open으로 더 약한 경로에 떨어지지 않게 할 것
+
+**Microstable relevance**:
+- 현재 `programs/microstable/src/lib.rs` 및 `keeper/src/` 스캔에서 `Jito`, `bundle`, `sendBundle`, `dontfront`, private relay, local multi-round bundle simulator 흔적은 확인되지 않았다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 keeper rebalances / oracle writes / hedge legs를 **Jito bundle 또는 private relay** 로 보내기 시작하면 D54는 즉시 재평가해야 한다. 특히 anti-MEV 목적으로 private orderflow를 붙이는 순간, **MEV 방어 경로가 새 DoS control plane** 으로 바뀔 수 있다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D54 Multi-Round Transaction Simulation Dependency-Bomb / Bundle-Service Asymmetric DoS | attacker submits state-dependent bundles that force expensive sequential simulator work while keeping own capital/risk low, degrading bundle-service throughput and builder revenue | private-relay slowdown, searcher QoS degradation, builder revenue loss, delayed bundle execution, fail-open risk into weaker public path | current Microstable repo shows **no Jito/private bundle path today**, so **NOT ACTIVE**; future bundle-based keeper routing must treat simulation-budget abuse as a first-class security invariant |
+
+**Matrix state as of 2026-04-28 (red-team daily update)**: prior coverage retained; **D54** added after the new arXiv work made **bundle-service simulation-cost asymmetry** concrete enough to separate from generic DoS. Microstable has **no new CRITICAL/HIGH active finding from D54 itself**; the open **B45 audit-attestation gap** remains the top current HIGH continuity issue.
 
 ## 2026-04-26 Recursive DNS Resolver Cache-Poisoning Pattern Addition
 
