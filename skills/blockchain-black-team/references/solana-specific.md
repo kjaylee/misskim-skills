@@ -1362,3 +1362,27 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 67. ☐ keeper / dashboard / bridge watcher가 local recursive DNS resolver를 쓰면 sibling-zone AUTHORITY poisoning 회귀 테스트를 넣고, security-critical hostname의 authoritative NS drift를 모니터링하며, multi-RPC도 resolver monoculture 없이 독립 해석 경로를 둘 것
+
+---
+<!-- AUTO-ADDED 2026-04-28 (Red Team Daily Evolution) — A119 immutable legacy package -->
+
+## 2026-04-28 Legacy Program Migration / Shared-PDA Version-Gate Pattern
+
+### A119 — Immutable Legacy Package / Shared-State Version-Gate Bypass
+- **Solana context**: Solana는 같은 program ID 업그레이드라면 예전 바이너리를 직접 다시 호출하는 Scallop형 surface가 상대적으로 작다. 그러나 팀이 rewards / bridge / sidecar / migration을 **새 program ID** 로 분리하고, old/new program이 같은 PDA, vault ATA, mint authority, reward state를 계속 공유하면 문제가 다시 생긴다. 예전 program ID는 여전히 callable인데, 운영팀은 UI/SDK가 새 program만 쓰니 retired 되었다고 착각할 수 있다.
+- **핵심 패턴**: deprecated program / sidecar / helper가 live shared PDA나 vault authority에 대한 write 권한을 유지한 채 남아 있고, 그 legacy path 안의 오래된 invariant bug나 약한 auth check가 현재 자산 상태에 그대로 영향을 준다. 즉 retire된 것은 사용자 경로뿐이고, **권한은 retire되지 않은 상태** 다.
+- **왜 Solana에서 특히 위험한가**:
+  1. migration 과정에서 "새 program 배포 + old UI 차단" 을 완료로 착각하기 쉽지만, old program authority revoke / PDA rebind / vault owner migration은 별도 작업이다.
+  2. Solana는 PDA, token account authority, upgrade authority가 분리돼 있어, 새 코드로 갈아탔어도 shared state write-capability가 남을 수 있다.
+  3. reward sidecar / bridge helper / attestation program은 core program보다 감사 강도가 낮기 쉬워 legacy surface가 오래 남는다.
+- **Source signals**:
+  - Scallop / sSUI rewards incident write-ups (incident 2026-04-26, mechanism public 2026-04-27)
+- **Microstable current status**:
+  - `programs/microstable/src/lib.rs` 에서 단일 `declare_id!` program path 확인
+  - 현재 repo scan에서 retired parallel program ID, 별도 rewards sidecar, old program that still writes the same live shared state 흔적은 확인되지 않음
+  - 따라서 **NOT ACTIVE today**
+  - 다만 향후 auxiliary program migration이 생기면 shared PDA/vault authority가 반드시 active program binding을 갖는지 재평가 필요
+- **Checklist item 68**: ☐ program migration을 새 program ID로 수행할 때는 shared PDA / vault / mint authority에 `active_program_id` 또는 동등한 version gate를 두고, retired program의 write 권한을 revoke or migrate 완료하기 전에는 "deprecated" 로 분류하지 말 것
+
+### Solana-Specific Defense Checklist Update
+68. ☐ program migration을 새 program ID로 수행할 때는 shared PDA / vault / mint authority에 `active_program_id` 또는 동등한 version gate를 두고, retired program의 write 권한을 revoke or migrate 완료하기 전에는 "deprecated" 로 분류하지 말 것

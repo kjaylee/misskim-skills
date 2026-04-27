@@ -1,4 +1,4 @@
-# Attack Matrix — 124+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | D28 reinforce 2026-04-27) | META-01~60
+# Attack Matrix — 125+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 Red 2026-04-28) | META-01~61
 
 ## A. Smart Contract Vectors
 
@@ -1032,6 +1032,7 @@ location /rpc {
 | META-58 Default-Path / Scope-Carveout Responsibility Gap (DSCRG) — 퍼플팀 2026-04-24 | **핵심 비대칭**: 팀은 vendor quickstart, official sample config, provider-managed verifier/RPC, emergency council 같은 요소를 **기본 경로** 로 채택하지만, 감사/바운티 scope는 corporate infra, KMS, deployment pipeline, prover/TEE, manual dispute/restart/freeze 가정을 자주 바깥으로 민다. 그 결과 실제 control plane은 모두가 쓰지만 아무도 끝까지 소유하지 않는 orphan boundary가 된다. **왜 감사가 놓치는가**: ① documented default를 secure baseline처럼 받아들여 별도 ownership review를 생략한다. ② provider-managed infra를 non-protocol 또는 external dependency로 분류해 핵심 threat model에서 밀어낸다. ③ "문제 생기면 blacklist/dispute/restart/freeze 하겠다" 같은 수동 개입 가정이 valid report downgrade 근거로 쓰이며 structural risk를 희석한다. ④ 사고 후에는 provider가 integrator misconfiguration을 지적하고 integrator가 official default를 근거로 들어, 사전 책임 경계가 끝내 문서화되지 않는다. **META-54/55/57과의 구별**: META-54는 role-authority mismatch, META-55는 선언-집행 불일치, META-57은 redundancy independence 문제다. META-58은 **기본값과 scope carve-out 사이에서 shared-responsibility 자체가 orphaned boundary가 되는 구조** 를 규정한다. |
 | META-59 Nominal-Path / Exception-Path Assurance Asymmetry (NPEAA) — 퍼플팀 2026-04-25 | **핵심 비대칭**: audit, formal verification, invariant testing, bug bounty, competition은 mostly **정상 경로(nominal path)** 의 correctness를 강화한다. 하지만 실제 사고가 나면 시스템은 `blacklist`, `dispute`, `manual restart`, `security-council freeze`, `manual oracle mode`, `redeem-only` 같은 **예외 경로(exception path)** 로 전환되고, 이 경로는 종종 downgrade assumption 또는 emergency governance power로만 취급된다. 즉 위기 순간 더 강한 권한과 더 큰 blast radius를 가진 경로가 활성화되지만, 정작 그 경로는 정상 경로만큼의 명세·불변식·잔고 보전·공정성 검증을 받지 못한다. **왜 감사가 놓치는가**: ① 감사/FV/fuzz는 정상 호출과 모델링된 상태 전이 중심이라, blacklist/dispute/restart/freeze 후의 recovery semantics를 거의 증명하지 않는다. ② 예외 경로를 protocol semantics가 아니라 IR/governance/ops 부록으로 분류한다. ③ "필요하면 수동 개입한다" 는 가정이 safety backstop으로 쓰이며, 그 개입이 사용자별 손실 배분·상환 순서·복구 시점에 미치는 영향은 범위 밖으로 남는다. ④ 위기 시 시스템이 사실상 다른 프로토콜로 전환된다는 점, 즉 emergency lane 자체가 별도 assurance 대상이라는 인식이 약하다. **META-53/54/58과의 구별**: META-53은 actuator를 제때 발사할 수 있는가, META-54는 누가 실제 권한을 가지는가, META-58은 그 권한/기본 경로를 누가 소유하는가를 다룬다. META-59는 **발사된 이후의 예외 프로토콜이 무엇을 보장하는가** 를 별도 구조 문제로 고정한다. |
 | META-60 Recoverability-Collateralized Security Gap (RCSG) — 퍼플팀 2026-04-26 | **핵심 비대칭**: 팀은 `freeze`, `blacklist`, `manual restart`, `credential rotation`, `loss socialization`, `recovery fund` 같은 **회수·완화 가능성(recoverability)** 을 ex-post containment가 아니라 ex-ante severity discount처럼 사용한다. 그 결과 실제 blast radius는 privilege/control-plane compromise 쪽에 크게 남아 있는데도, audit scope, bounty economics, severity triage는 "어차피 사람이 막거나 되돌릴 수 있다" 는 이유로 그 경계를 과소투자한다. **왜 감사가 놓치는가**: ① 바운티/competition scope가 manual restart, dispute, blacklist 가능성을 valid report downgrade 근거로 명시하면서 연구자와 팀 모두에게 recoverability bias를 학습시킨다. ② 사후 freeze/recovery 성공 사례가 hindsight bias를 만들어, 예방 실패보다 회수 성공이 더 큰 통제처럼 보이게 만든다. ③ FV/invariant/fuzz coverage가 nominal-path correctness를 개선할수록, 남은 residual risk를 operator backstop이 덮을 수 있다는 과신이 강화된다. ④ severity가 "무엇이 털릴 수 있는가" 보다 "얼마나 되찾을 수 있었는가" 에 의해 재평가되면, privileged support surface와 deployment/ops plane이 구조적으로 저평가된다. **META-58/59와의 구별**: META-58은 ownership 부재, META-59는 예외 경로 assurance 부족을 다룬다. META-60은 **왜 조직이 애초에 그 경계를 낮은 우선순위로 분류하는가, 즉 recoverability를 담보처럼 잡고 예방 투자를 깎는 인센티브 구조** 를 규정한다. |
+| META-61 Assurance-Halo Transitivity Gap (AHTG) — 퍼플팀 2026-04-27 | **핵심 비대칭**: 팀은 audit, formal verification, invariant/fuzz, test hardening이 **코어 코드** 에 대해 강해질수록 그 assurance가 build/deploy/RPC/frontend/support/AI-tooling 같은 **인접 plane** 에도 자동으로 전이된다고 느끼기 쉽다. 그러나 실제 사고는 바로 그 out-of-scope plane에서 발생한다. 즉 공격은 바깥으로 이동했는데, 신뢰는 안쪽에서 바깥으로 번진다. **왜 감사가 놓치는가**: ① in-scope 코드에 대한 강한 assurance가 adjacent infra까지 커버하는 것처럼 보이는 coverage-transitivity illusion이 생긴다. ② 코드 hardening이 성공할수록 residual risk가 build host, verifier/RPC, deployment SaaS, support OAuth 같은 경계로 이동하지만 review budget은 그만큼 따라가지 않는다. ③ 온체인 calldata가 모두 정상(Kelp) 이거나 core contract/user funds가 직접 영향 없다고 발표(Vercel) 되면, 팀은 support/control plane compromise를 protocol-security가 아닌 주변 사고로 분류하기 쉽다. ④ "traditional audits never touch infrastructure" 라는 분류가 굳어지면, 검증된 코어와 미검증 주변부 사이의 assurance 단절이 정상으로 받아들여진다. **META-49/51/52/58/60과의 구별**: META-49는 실행형 설정, META-51은 권한을 운반하는 증거, META-52는 측정 인센티브, META-58은 ownership seam, META-60은 recoverability bias를 다룬다. META-61은 **한 레이어에서 얻은 assurance 신호가 왜 다른 레이어의 미검증 위험까지 덮어버리는가** 를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7690,6 +7691,66 @@ Microstable은 이미 `emergency_shutdown`, degraded safe mode, `manual oracle m
 
 **Matrix state as of 2026-04-26 (purple daily update)**: **123+ named vectors + META-01~60 + B73~B78 = 184+ total entries**. META-60 added by Purple Team 2026-04-26: **Recoverability-Collateralized Security Gap (RCSG)**. Base scope의 downgrade logic, Kelp/LayerZero default-path dispute, Vercel credential-rotation response, Arbitrum emergency freeze를 하나의 "recoverability distorts severity" 패턴으로 상위 구조화한다.
 
+### META-61. Assurance-Halo Transitivity Gap (AHTG)
+
+**Published**: 2026-04-27 | **Source**: Purple Team Daily Evolution | **Signals**: Chainalysis `Inside the KelpDAO Bridge Exploit` (2026-04-25 fetched, incident 2026-04-18), CoinDesk `Hack at Vercel sends crypto developers scrambling to lock down API keys` (2026-04-20), RustSec `RUSTSEC-2026-0107` / `RUSTSEC-2026-0108` (issued 2026-04-24), CoinDesk `How Anthropic’s Mythos model is forcing the crypto industry to rethink everything about security` (2026-04-25), Nomos Labs `Fuzz Testing Smart Contracts: Complete Guide for 2026`, Foundry recent releases page (2026-04-19~26)
+
+**Mechanism**: audit, formal verification, invariant testing, fuzzing, release hardening은 분명 코어 코드의 assurance를 높인다. 문제는 그 다음이다. 팀은 이 강한 assurance 신호를 무의식적으로 **인접한 비코드 control plane** 으로 전이시킨다.
+
+- audited contract니까 bridge verifier / RPC ingestion도 충분히 안전할 것처럼 느낀다.
+- invariant/fuzz coverage가 넓으니 build/deploy path는 상대적으로 덜 위험해 보인다.
+- core protocol이 직접 안 뚫렸으면 frontend/deployment credential 사고는 protocol-security보다 IT incident처럼 분리한다.
+
+즉 **검증은 안쪽에서 이루어졌는데, 신뢰는 바깥까지 번진다.** 공격자는 바로 그 바깥 경계로 이동한다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **Nomos fuzz guide + Foundry recent cadence**: 최근 공개 신호는 unit test를 넘어 fuzz / invariant / sequence coverage를 더 촘촘히 만드는 데 집중한다. 이는 유효하다. 그러나 coverage의 중심은 여전히 **계약 내부 상태 전이와 함수 호출 시퀀스** 다.
+- **KelpDAO / Chainalysis (2026-04-25 fetched)**: 온체인 calldata, validator signature, release function은 모두 정상처럼 보였다. 실제 실패는 contract가 아니라 **off-chain verifier / RPC truth plane** 에 있었다. 즉 코어 로직 assurance는 유지됐지만, 인접 truth plane이 무너지며 시스템이 붕괴했다.
+- **Vercel / Context.ai breach (CoinDesk, 2026-04-20)**: on-chain protocol과 user funds는 직접 영향 없다고 설명됐지만, 실제 대응은 credential rotation과 deployment-plane inspection으로 이동했다. 이는 **frontend/support/deploy plane이 자산 직접 custody가 없어도 privileged control plane** 임을 보여준다.
+- **RustSec `RUSTSEC-2026-0107` / `0108` (issued 2026-04-24)**: `mysten-metrics`, `sui-execution-cut` 는 build machine에서 data exfiltration을 시도한 악성 crate였다. 코어 비즈니스 로직을 한 줄도 건드리지 않아도, **build host** 를 장악하면 assurance chain 바깥에서 비밀이 빠져나갈 수 있다.
+- **Mythos / CoinDesk (2026-04-25)**: 기사 자체가 "the bigger risks sit in infrastructure" 이고, traditional audits never touch those layers라고 지적한다. 즉 industry discourse도 이미 **공격은 compositional infrastructure layer로 이동** 했음을 인정한다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-61이 추가로 설명하는 것 |
+|---|---|---|
+| META-49 ECTD | 설정 파일이 실행면이 되는 구조 | config가 아니어도, **검증된 코어의 신뢰 후광이 미검증 주변부까지 번지는 구조** 를 다룬다 |
+| META-51 PCAG | 증거/provenance가 권한을 운반 | authority-bearing evidence가 아니어도, **assurance 신호 자체가 trust boundary를 흐리는 현상** 을 다룬다 |
+| META-52 MOSM | 측정 가능한 보안지표 최적화 편향 | 지표가 아니라, **한 레이어의 검증이 다른 레이어의 검증을 대체해버리는 인지적 transitivity** 를 다룬다 |
+| META-58 DSCRG | default path와 scope carve-out ownership 부재 | ownership이 명확해도, **그 경계가 코어 assurance halo에 가려 review intensity를 잃는 구조** 는 별도 문제다 |
+| META-60 RCSG | recoverability 때문에 severity를 낮춤 | recoverability와 무관하게, **already-verified core가 주변 위험을 심리적으로 덮는 효과** 를 다룬다 |
+
+**왜 감사가 놓치는가**:
+
+1. **coverage-transitivity illusion**: audit/FV/fuzz가 통과한 in-scope 코드의 신뢰를 adjacent infra까지 자동 전이한다.
+2. **residual-risk migration blindness**: 코드가 강해질수록 공격자는 build host, verifier/RPC, deployment OAuth, support SaaS, AI tooling으로 이동하지만 리뷰 예산과 체크리스트는 같은 속도로 이동하지 않는다.
+3. **clean-calldata / unaffected-contract fallacy**: core contract가 직접 뚫리지 않았거나 calldata가 정상처럼 보이면, 사건을 protocol-security가 아닌 주변 인프라 사고로 축소한다.
+4. **scope-normalized blind spot**: "전통 감사는 인프라를 안 본다" 는 사실이 예외가 아니라 정상으로 받아들여지면서, assurance chain의 단절이 고착된다.
+
+**Microstable architecture implication**:
+
+Microstable은 최근 blue/black/red 사이클을 통해 on-chain rule, keeper policy, degraded safe mode 쪽 hardening이 실제로 좋아졌다. 이건 좋은 일이다. 다만 퍼플팀의 오늘 경고는 그 성공이 **잘못된 안정감** 으로 바뀌지 않게 하라는 것이다.
+
+- Blue v14/v15의 hardening은 nominal / exception path 일부를 강화했다.
+- Black/Red matrix도 on-chain / keeper exploit class를 촘촘히 커버하고 있다.
+- 그러나 바로 그 이유로, `dashboard / build / deploy / RPC / attestation` plane이 **이미 충분히 커버됐다고 착각** 하기 쉬워진다.
+- 특히 **B45 audit-attestation gap** (`microstable/security/audit-attestation.json` absent) 은 "검토한 소스" 와 "실제 배포/운영 artifact" 사이의 assurance continuity가 아직 약함을 보여준다.
+
+따라서 오늘 Microstable 관점의 핵심 질문은 "우리가 무엇을 잘 검증했는가" 가 아니라, **"그 검증이 끝나는 경계를 어디에 그어 두었는가"** 다.
+
+**Minimum defense delta**:
+
+1. audit / FV / fuzz / code-review artifact마다 **coverage boundary manifest** 작성: 무엇을 커버하고 무엇을 커버하지 않는지 명시
+2. `on-chain passed` 와 `deploy/build/runtime provenance assured` 를 같은 체크로 합치지 말고 별도 승인을 요구
+3. dashboard / RPC / build / deploy / support SaaS / AI tooling을 **derived-risk plane** 이 아니라 **independent privileged plane** 으로 분류
+4. incident write-up에서 `contract unaffected` / `calldata valid` 문장을 risk downscore 근거로 쓰지 말고, 오히려 **adjacent-plane compromise 분류** 를 강제
+5. B45 carry-forward를 purple follow-up 우선순위로 연결해, attestation absence를 nominal-path hardening의 성공과 분리된 **독립 HIGH continuity gap** 으로 유지
+
+**Purple Team verdict**: 검증된 코어는 중요하다. 하지만 최신 공격은 그 코어가 아니라, **그 코어의 신뢰가 너무 멀리 번지는 지점** 을 노린다. META-61은 이 구조, 즉 **assurance가 한 레이어에서 다른 레이어로 부당하게 전이되는 보안 판단 왜곡** 을 **Assurance-Halo Transitivity Gap** 으로 고정한다.
+
+**Matrix state as of 2026-04-27 (purple daily update)**: **124+ named vectors + META-01~61 + B73~B78 = 185+ total entries**. META-61 added by Purple Team 2026-04-27: **Assurance-Halo Transitivity Gap (AHTG)**. KelpDAO의 valid-calldata / off-chain verifier failure, Vercel의 support-surface credential adjacency, RustSec build-script exfiltration, Mythos의 infra-layer exploit framing을 하나의 "verified core, unverified perimeter" 패턴으로 상위 구조화한다.
+
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
 ### A113. Token-2022 Extension Authority-Meta Elision / Control-Plane Freeze
@@ -8216,6 +8277,72 @@ for op in &ops {
 | A118 zkVM Guest Unchecked Deserialization / Enum Jump-Table Proof Forgery | attacker-controlled private bytes are deserialized without validation inside a zkVM guest/prover; invalid enum/opcode tags trigger unintended dispatch so accounting or semantic checks are skipped, yet the emitted proof still verifies under the same verification key | same-VK forged proof, false resource bounds, false execution attestations, proof-backed mint/oracle/reserve fraud without VK drift | current Microstable code has no zkVM proving path; **NOT ACTIVE today**, but any future zk-backed attestation / proof coprocessor design must audit guest parser safety as a first-class trust boundary |
 
 **Matrix state as of 2026-04-24 (red-team daily update)**: prior coverage retained; **A118** added after classifying the Trail of Bits same-VK forged-proof result as a guest/prover implementation vector, not a verifier-key or transcript-binding bug. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless zk-backed proving components are introduced.
+
+## 2026-04-28 Immutable Legacy Package Pattern Addition
+
+### A119. Immutable Legacy Package / Shared-State Version-Gate Bypass
+
+**Source signals (2026-04-28 sweep)**:
+- Scallop / sSUI rewards incident coverage (incident 2026-04-26, public mechanism write-ups 2026-04-27)
+
+**Key insight**: 많은 팀이 새 UI, 새 SDK, 새 package/version으로 사용자를 옮기면 예전 경로는 사실상 죽었다고 느낀다. 하지만 **예전 배포본이 체인 위에 그대로 남고, 같은 shared object / shared state / rewards pool / vault authority를 계속 만질 수 있다면, deprecated path는 여전히 live privileged code** 다. 이번 Scallop 사례의 핵심은 단순한 `last_index` 초기화 버그만이 아니라, **그 버그가 남아 있는 옛 package가 여전히 현재 rewards state에 쓰기 권한을 가진 채 호출 가능했다** 는 점이다.
+
+**Attack chain**:
+1. protocol migrates users to a newer package / contract / module and assumes routing through the new path is sufficient retirement.
+2. old package remains immutable and callable on-chain.
+3. shared objects / shared pools / shared PDAs / shared mint authority are not version-gated to the current package only.
+4. attacker calls the deprecated path directly, bypassing current SDK/UI restrictions.
+5. latent bug in the old path (uninitialized accumulator/index, weaker auth, stale invariant, outdated math) mutates live shared state or extracts current rewards/assets.
+
+**Why this is distinct from existing vectors**:
+- **A10 Logic Bug** 는 특정 함수 내부 결함 자체를 말한다. **A119** 는 그 결함이 **retired 되었어야 할 legacy execution path가 아직 live authority를 유지** 하기 때문에 실제 손실로 이어지는 구조를 다룬다.
+- **B69 Upgrade Asynchrony** 는 프로토콜 A와 외부 파트너/통합 경계의 비동기 업그레이드 책임 공백이다. **A119** 는 **같은 프로토콜 내부의 구버전 package / sidecar / module** 이 shared state를 계속 건드릴 수 있는 구조다.
+- **A119의 핵심은 stale code 자체보다 stale code의 권한 지속성** 이다.
+
+**왜 감사가 놓치는가**:
+1. 감사 범위가 current package / current entrypoint / current SDK에 집중되고, 과거 배포본은 "unused" 라는 운영 가정으로 밀려난다.
+2. immutable-chain 환경에서는 old code를 지우지 못하지만, many teams mentally treat UI migration as decommission.
+3. shared object or shared-state 권한이 version field 없이 남아 있어도 happy-path testing은 최신 경로만 타므로 놓치기 쉽다.
+4. 사고 후에도 팀은 "core contracts are safe" 라고 말하기 쉬워, 실제 privileged legacy surface가 늦게 재분류된다.
+
+**Code pattern to find**:
+```move
+// VULNERABLE SHAPE: deprecated package can still mutate live shared state.
+public entry fun claim_legacy_rewards(pool: &mut RewardsPool, user: &mut UserSpool) {
+    // MISSING: assert!(pool.active_package == CURRENT_PACKAGE_ID, E_DEPRECATED_PATH);
+    // MISSING: assert!(user.last_index_initialized, E_UNINITIALIZED_INDEX);
+
+    let delta = pool.spool_index - user.last_index;
+    let reward = delta * user.staked_amount;
+    transfer_rewards(pool, reward);
+}
+
+// SAFER SHAPE: bind shared state to the active version/package and reject retired paths.
+public entry fun claim_rewards(pool: &mut RewardsPool, user: &mut UserSpool) {
+    assert!(pool.active_package == CURRENT_PACKAGE_ID, E_DEPRECATED_PATH);
+    assert!(user.last_index_initialized, E_UNINITIALIZED_INDEX);
+    ...
+}
+```
+
+**Defensive heuristic**:
+- migration 후에도 old package / old program / old sidecar가 live shared state에 접근 가능한지 별도 inventory를 둘 것
+- shared object / PDA / vault authority에 **active version / active program binding** 을 두고, retired path는 hard reject할 것
+- "SDK no longer routes there" 를 retirement 증거로 취급하지 말 것
+- 이전 배포본에 latent bug가 있어도 current state를 못 만지게 **authority migration / state migration / access revocation** 을 함께 완료할 것
+- audit checklist에 **historical live entrypoint reachability** 를 별도 항목으로 추가할 것
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 는 단일 `declare_id!` 기반 업그레이드형 Solana program 경로를 사용한다.
+- repo scan 기준, 현재 코드베이스에는 **parallel retired program ID**, legacy rewards sidecar, or old module that still writes the same live shared state under a different on-chain package path가 확인되지 않았다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 rewards / bridge / attestation / auxiliary program을 **새 program ID로 분리 마이그레이션** 하면서 shared PDA/vault authority를 재사용하면, A119는 즉시 재평가 대상이 된다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A119 Immutable Legacy Package / Shared-State Version-Gate Bypass | deprecated immutable package/program remains callable and still has authority over current shared state, so an old latent bug can drain live rewards/assets despite current SDK/UI using a newer path | legacy-path drain, reward inflation, stale-auth bypass, post-migration false sense of safety | current Microstable scan shows a single upgradeable Solana program path and no parallel retired write-capable package; **NOT ACTIVE today**, but any future multi-program migration must bind shared PDAs/vaults to the active version |
+
+**Matrix state as of 2026-04-28 (red-team daily update)**: prior coverage retained; **A119** added after Scallop made the mechanism public enough to separate **legacy-package reachability + shared-state authority persistence** from a generic logic bug. Microstable has **no new CRITICAL/HIGH active finding from A119 itself**; the open **B45 audit-attestation gap** remains the top current HIGH continuity issue.
 
 ## 2026-04-26 Recursive DNS Resolver Cache-Poisoning Pattern Addition
 

@@ -1,5 +1,51 @@
 ---
 
+## 2026-04-28 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-21 to 2026-04-28 KST)
+- Sources checked: rekt.news frontpage, hacked.slowmist.io front page, Immunefi blog index, GitHub Advisory fallback queries, Solana official security/media pages, Trail of Bits / OtterSec / Neodyme blog indexes, plus search-fallback cross-checks because direct Brave queries remained rate-limited
+- **Confirmed in-window items**:
+  1. **Scallop / sSUI rewards** is now **admissible as a new named vector**. Public mechanism write-ups make clear this was not merely an unspecified side-contract bug: a **deprecated V2 rewards package** remained callable on-chain, still touched live shared spool/rewards state, and exposed an **uninitialized `last_index`** path that let the attacker harvest historical rewards from the active pool.
+  2. The right abstraction is therefore not just A10 logic bug, but **A119 Immutable Legacy Package / Shared-State Version-Gate Bypass**.
+  3. GitHub Advisory fallback results did surface `solana-web3` malware entries, but the fetched advisory was **published in 2025**, so it was excluded from today's 24h~7d admission window. Solana's ecosystem-security page was a defensive-program announcement, not a new exploit primitive.
+
+### New Vectors Added Today
+- **1 NEW vector**: **A119 Immutable Legacy Package / Shared-State Version-Gate Bypass**
+- **0 reinforcements**
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent, so the current on-chain / keeper / dashboard deployment set has no machine-checkable binding to the audited commit/artifact set
+- **Bypass / abuse path**: an attacker or insider does not need to break a reviewed invariant directly if an unaudited code delta can still ride the normal build/release path. The security boundary is bypassed by **continuity failure** between audited source and live artifact.
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, and CI/release verification that fails on absence or mismatch
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A119 legacy-package / shared-state version-gate bypass** | on-chain program architecture + migration surface | ℹ️ INFO / NOT ACTIVE | `solana/programs/microstable/src/lib.rs` exposes a single `declare_id!` upgrade path, and repo scan did **not** find a parallel retired program / rewards sidecar still writing the same live shared state |
+| **D51 Anchor JS lockfile drift / semver-smuggle** | `solana/Anchor.toml`, `solana/package.json`, `solana/yarn.lock` | ⚠️ MEDIUM ACTIVE-LATENT | `Anchor.toml` still uses `package_manager = "yarn"`, `package.json` keeps caret ranges, and review still found **no end-to-end immutable-install proof** (`--frozen-lockfile` or equivalent gate) |
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | keeper config + dashboard RPC runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:402-429` still enforces only distinct RPC hosts, and `docs/app.js:55-94,209-243` keeps strict cross-checking mainly at bootstrap `getGenesisHash`, not provider-independent runtime observation quorum |
+| **A115 constrained-CA / allowlisted-host impersonation** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves `rustls-webpki 0.101.7` and `0.103.9` below the patched floor tracked in the matrix |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:736-873` still enables manual oracle mode and writes externally validated prices through `ix_update_oracle`; `lib.rs:675-736` still accepts the write path without a last-trusted-Pyth/TWAP drift cap |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | `lib.rs:1571-1605` still gates commit/reveal only when **single-call** turnover crosses `LARGE_REBALANCE_THRESHOLD`; reviewed state still shows no cumulative cross-call drift accumulator |
+| **D26 canonical frontend / auxiliary client-surface risk** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6,994` still relies on meta-only CSP and no SRI on the vendored `solana-web3` bundle, while `docs/app.js:46,1645` still embeds a client-side devnet faucet signer |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` is still absent |
+
+### Today's Verdict
+- New incidents found: **1 requiring a new named vector**
+- New attack vectors added: **1** (**A119**)
+- New **CRITICAL/HIGH** findings: **0 new**, but **B45 HIGH** remains active
+- Active latent / carry-forward priorities remain:
+  1. Add `security/audit-attestation.json` + CI/release gate
+  2. Enforce immutable JS installs (`--frozen-lockfile` or equivalent) for all Anchor-driven package-manager paths
+  3. Upgrade or pin away vulnerable `rustls-webpki` resolution in keeper TLS stack
+  4. Add provider-independent RPC quorum for keeper/dashboard read paths
+  5. Add explicit manual-price-vs-last-trusted-Pyth/TWAP drift guard before `ix_update_oracle`
+  6. Track cumulative cross-call rebalance drift for large-turnover commit/reveal admission
+  7. Move CSP to headers, add SRI, and remove browser-side faucet signing material
+
 ## 2026-04-26 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-19 to 2026-04-26 KST)
