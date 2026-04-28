@@ -1,5 +1,46 @@
 ---
 
+## 2026-04-29 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-22 to 2026-04-29 KST)
+- Sources checked: rekt.news frontpage and full **Rhea Finance / Burrowland** write-up, Immunefi blog index, Trail of Bits / OtterSec / Neodyme blog indexes, GitHub advisory spot checks, and direct Burrowland source cross-read for `get_token_out`, `is_min_amount_out_reasonable`, `on_open_trade_return`
+- **Confirmed in-window items**:
+  1. **Rhea / Burrowland** is admissible as a **new named vector**, not just an A98 fake-asset reinforcement.
+  2. The reusable primitive is that the protocol **summed repeated intermediate-hop `min_amount_out` values as if they were final terminal guarantees**, then let settlement succeed without rechecking actual terminal output against the validated minimum.
+  3. The right abstraction is therefore **A120 Multi-Hop Route Minimum Aggregation / Terminal-Settlement Mismatch**.
+
+### New Vectors Added Today
+- **1 NEW vector**: **A120 Multi-Hop Route Minimum Aggregation / Terminal-Settlement Mismatch**
+- **0 reinforcements**
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent, so the current on-chain / keeper / dashboard deployment set has no machine-checkable binding to the audited commit/artifact set
+- **Bypass / abuse path**: an attacker or insider does not need to break a reviewed invariant directly if an unaudited code delta can still ride the normal build/release path. The security boundary is bypassed by **continuity failure** between audited source and live artifact.
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, and CI/release verification that fails on absence or mismatch
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A120 multi-hop route minimum aggregation / terminal-settlement mismatch** | keeper rebalance path + any future swap-integrated routing | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:1540-1605` `rebalance()` only updates weights and turnover limits. `solana/keeper/src/rebalance.rs:245-274` builds and sends only `ix_rebalance`, and `solana/keeper/src/wire.rs:305-338` encodes `new_weights`, `max_slippage_bps`, `batch_slot`, `reveal_salt` only. Repo scan found no Jupiter/Orca/Raydium route parser, `min_amount_out`, or swap settlement callback path to replay the Rhea primitive today. |
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | keeper config + dashboard RPC runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs` still enforces only distinct RPC hosts, and dashboard runtime quorum remains weaker than true provider-independent observation consensus. |
+| **A115 / A77 rustls-webpki trust-floor exposure** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves `rustls-webpki 0.101.7` and `0.103.9` below the patched floor tracked in the matrix. |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual oracle fallback still writes externally validated prices without an explicit keeper-side drift gate versus the last trusted Pyth/TWAP anchor before write. |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal still keys off single-call turnover only; reviewed state still shows no cumulative cross-call drift accumulator. |
+| **D26 canonical frontend / auxiliary client-surface risk** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | `docs/index.html` still relies on meta-only CSP, and `docs/app.js` still embeds a client-side devnet faucet signer. |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` is still absent. |
+
+### Today's Verdict
+- New incidents found: **1 requiring a new named vector**
+- New attack vectors added: **1** (**A120**)
+- New **CRITICAL/HIGH** findings: **0 new**, but **B45 HIGH** remains active
+- Highest-priority blue-team actions today:
+  1. Add and enforce `security/audit-attestation.json`
+  2. If swap-integrated routing is ever added, validate terminal-only minimums and recheck settlement output before finalization
+  3. Add manual-oracle drift guard and cumulative rebalance drift accounting
+
 ## 2026-04-28 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-21 to 2026-04-28 KST)

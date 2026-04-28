@@ -1,4 +1,4 @@
-# Attack Matrix — 126+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28) | META-01~61
+# Attack Matrix — 127+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29) | META-01~61
 
 ## A. Smart Contract Vectors
 
@@ -8346,6 +8346,84 @@ public entry fun claim_rewards(pool: &mut RewardsPool, user: &mut UserSpool) {
 | A119 Immutable Legacy Package / Shared-State Version-Gate Bypass | deprecated immutable package/program remains callable and still has authority over current shared state, so an old latent bug can drain live rewards/assets despite current SDK/UI using a newer path | legacy-path drain, reward inflation, stale-auth bypass, post-migration false sense of safety | current Microstable scan shows a single upgradeable Solana program path and no parallel retired write-capable package; **NOT ACTIVE today**, but any future multi-program migration must bind shared PDAs/vaults to the active version |
 
 **Matrix state as of 2026-04-28 (red-team daily update)**: prior coverage retained; **A119** added after Scallop made the mechanism public enough to separate **legacy-package reachability + shared-state authority persistence** from a generic logic bug. Microstable has **no new CRITICAL/HIGH active finding from A119 itself**; the open **B45 audit-attestation gap** remains the top current HIGH continuity issue.
+
+## 2026-04-29 Multi-Hop Route Minimum Aggregation Pattern Addition
+
+### A120. Multi-Hop Route Minimum Aggregation / Terminal-Settlement Mismatch
+
+**Source signals (2026-04-29 sweep)**:
+- Rhea Finance / Burrowland postmortem coverage (incident 2026-04-16, fuller public mechanism synthesized by 2026-04-28)
+- Burrowland source links referenced in the postmortem:
+  - `margin_trading.rs#get_token_out()` `#L101-L113`
+  - `margin_position.rs#is_min_amount_out_reasonable()` `#L268-L456`
+  - `margin_trading.rs#on_open_trade_return()` `#L328-L398`
+
+**Key insight**: 많은 프로토콜이 multi-hop swap route의 `min_amount_out` 를 "최종 산출 보장값"처럼 다룬다. 하지만 route parser가 **중간 hop의 minimum까지 모두 최종 output처럼 합산** 하거나, execution callback에서 **실제 terminal output이 그 minimum을 만족했는지 다시 검증하지 않으면**, slippage/health checks는 존재해도 전부 가짜 안전장치가 된다. 이번 Rhea 사례의 핵심은 가짜 자산만이 아니라, **route semantics를 잘못 읽은 admission logic + settlement-time recheck 부재** 였다.
+
+**Attack chain**:
+1. attacker creates or controls a multi-hop route whose intermediate asset appears repeatedly.
+2. route parser derives the "minimum expected output" by summing `min_amount_out` values from each hop instead of isolating the true terminal output.
+3. protocol compares that inflated figure against endpoint-asset oracle checks and declares the route reasonable.
+4. DEX executes faithfully and returns only a tiny real terminal amount.
+5. settlement callback credits whatever arrived, but does **not** recheck `actual_terminal_output >= validated_minimum` and does not recompute health/solvency before finalizing success.
+6. attacker opens an undercollateralized position or receives real assets against effectively worthless output, then liquidation / reserve depletion magnifies losses.
+
+**Why this is distinct from existing vectors**:
+- **A98** 는 fake asset / attacker-created market가 oracle or admission layer를 속이는 문제다. **A120** 은 자산이 무엇이든 상관없이, **multi-hop route semantics와 final settlement accounting이 어긋나는 것 자체** 가 핵심이다.
+- **B35 / A63** 는 slippage parameter가 0이거나 지나치게 느슨한 misconfiguration을 다룬다. **A120** 은 slippage checks가 존재해도 **무엇을 minimum으로 계산했는지** 가 틀리면 그대로 무력화된다는 점이 다르다.
+- **A10 Logic Bug** 보다 더 좁고 재현 가능한 패턴이다. 핵심 primitive는 **intermediate-hop minimum aggregation + post-execution terminal-settlement mismatch** 다.
+
+**왜 감사가 놓치는가**:
+1. happy-path tests는 보통 single-hop 또는 정상 multi-hop route만 검증하고, **같은 intermediate asset이 반복되는 route** 를 adversarial하게 만들지 않는다.
+2. admission check와 execution callback가 서로 다른 함수/모듈에 나뉘어 있어, auditor가 "validated before swap" 와 "settled after swap" 사이의 semantic continuity를 놓치기 쉽다.
+3. oracle reasonableness check가 있으면 팀이 그 위에 과신하기 쉽지만, **입력된 minimum 자체가 inflated** 되어 있으면 oracle check는 안전을 증명하지 못한다.
+4. post-swap callback는 종종 "success/failure bookkeeping" 으로 취급되어, 실제 output-vs-promised-output 재검증이 빠져도 severity가 늦게 드러난다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: sums intermediate minima and never rechecks terminal output.
+fn parse_route_minimum(route: &[SwapAction]) -> u128 {
+    route.iter().map(|step| step.min_amount_out as u128).sum()
+}
+
+fn on_swap_return(actual_out: u128, validated_minimum: u128) {
+    // MISSING: require!(actual_out >= validated_minimum);
+    credit_position(actual_out);
+    finalize_success();
+}
+
+// SAFER SHAPE: derive terminal-only minimum and recheck after execution.
+fn parse_terminal_minimum(route: &[SwapAction]) -> u128 {
+    route.last().map(|step| step.min_amount_out as u128).unwrap_or(0)
+}
+
+fn on_swap_return(actual_out: u128, validated_minimum: u128) {
+    require!(actual_out >= validated_minimum, Error::SettlementShortfall);
+    recompute_health_factor()?;
+    finalize_success();
+}
+```
+
+**Defensive heuristic**:
+- route parser는 intermediate-hop minima를 합산하지 말고 **terminal asset 기준** 으로 normalize 할 것
+- route validation 후 execution callback에서 **actual output vs validated minimum** 을 반드시 재검증할 것
+- swap 완료 후 position open / borrow finalize 전에 **health factor / collateral sufficiency** 를 다시 계산할 것
+- multi-hop route fuzzing에 repeated intermediate asset, fake pools, and late-settlement shortfall cases를 포함할 것
+- attacker-created pools 차단은 여전히 중요하지만, **trusted pools만으로도 A120은 발생할 수 있음** 을 별도 인식할 것
+
+**Sources**: https://rekt.news/rhea-finance-rekt | https://github.com/ref-finance/burrowland/blob/2110c7047f2d72a9189abcbaad5eafb4e4a87f9e/contracts/contract/src/margin_trading.rs#L101-L113 | https://github.com/ref-finance/burrowland/blob/2110c7047f2d72a9189abcbaad5eafb4e4a87f9e/contracts/contract/src/margin_position.rs#L268-L456 | https://github.com/ref-finance/burrowland/blob/2110c7047f2d72a9189abcbaad5eafb4e4a87f9e/contracts/contract/src/margin_trading.rs#L328-L398
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 의 `rebalance()` 는 DEX route, multi-hop swap, callback settlement를 수행하지 않고 **weight parameter update only** 를 처리한다.
+- `keeper/src/rebalance.rs` 와 `keeper/src/wire.rs` 도 `ix_rebalance(..., max_slippage_bps, ...)` 로 on-chain weight update instruction만 전송하며, route path / `min_amount_out` / DEX aggregator calldata를 싣지 않는다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 keeper가 Jupiter/Orca/Raydium multi-hop swap을 직접 조립하거나 margin-like delayed settlement flow를 붙이면 A120은 즉시 재평가 대상이다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A120 Multi-Hop Route Minimum Aggregation / Terminal-Settlement Mismatch | protocol mis-parses multi-hop route minima by counting intermediate hops as terminal guarantees, then finalizes execution without rechecking actual terminal output against the validated minimum | undercollateralized position open, borrow against worthless output, reserve depletion, liquidation cascade despite nominal slippage/oracle checks | current Microstable code has no multi-hop route parser, no DEX callback settlement path, and `rebalance` only updates weights; **NOT ACTIVE today**, but any future swap-integrated keeper path must treat this as first-class |
+
+**Matrix state as of 2026-04-29 (red-team daily update)**: prior coverage retained; **A120** added after the fuller Rhea/Burrowland mechanism showed a reusable exploit class beyond generic fake-asset admission. Matrix is now **127+ named vectors + META-01~61 + B73~B78 = 188+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from A120 itself**; **B45 audit-attestation gap** remains the top current HIGH continuity issue.
 
 ## 2026-04-28 Multi-Round Bundle Simulation Pattern Addition
 

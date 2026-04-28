@@ -1388,6 +1388,32 @@ archive_or_forward(tx)?; // delayed execution risk
 68. ☐ program migration을 새 program ID로 수행할 때는 shared PDA / vault / mint authority에 `active_program_id` 또는 동등한 version gate를 두고, retired program의 write 권한을 revoke or migrate 완료하기 전에는 "deprecated" 로 분류하지 말 것
 
 ---
+<!-- AUTO-ADDED 2026-04-29 (Red Team Daily Evolution) — A120 route minimum aggregation -->
+
+## 2026-04-29 Multi-Hop Route Accounting / Settlement Continuity Pattern
+
+### A120 — Multi-Hop Route Minimum Aggregation / Terminal-Settlement Mismatch
+- **Solana context**: Solana keeper가 향후 Jupiter / Orca / Raydium multi-hop swap path, collateral conversion, liquidation router, 또는 margin-like delayed settlement flow를 붙이면, "swap 전에 계산한 minimum" 과 "swap 후 실제 받은 terminal asset" 사이의 semantic continuity가 핵심 trust boundary가 된다. Rhea는 바로 이 continuity가 깨지면, oracle/slippage checks가 있어도 거의 무의미해질 수 있음을 보여줬다.
+- **핵심 패턴**: route parser가 반복 intermediate hop의 `min_amount_out` 를 terminal guarantee처럼 합산하거나 잘못 해석하고, callback settlement path가 **실제 final output이 그 validated minimum을 만족했는지** 다시 보지 않은 채 success 처리한다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Jupiter-style route는 multi-leg path가 일반적이라, parser가 "last hop minimum" 대신 여러 hop minima를 잘못 합칠 여지가 생긴다.
+  2. keeper가 swap intent / quote / route planning은 off-chain에서 하고 final settle만 on-chain에 반영하면, admission logic과 settlement logic이 분리돼 continuity bug가 더 숨기 쉽다.
+  3. commit/reveal, slippage cap, oracle sanity check가 있어도 **무엇을 sanity-check했는지** 가 틀리면 방어가 전부 허상일 수 있다.
+- **Source signals**:
+  - Rhea Finance / Burrowland route-parser postmortem (`rekt.news`, incident 2026-04-16, fuller mechanism public by 2026-04-28)
+  - Burrowland source links for `get_token_out`, `is_min_amount_out_reasonable`, `on_open_trade_return`
+- **Microstable current status**:
+  - `programs/microstable/src/lib.rs` 의 `rebalance()` 는 multi-hop route parse나 swap settlement callback 없이 **weight parameter update** 만 수행
+  - `keeper/src/rebalance.rs` / `keeper/src/wire.rs` 도 route calldata 대신 `new_weights`, `max_slippage_bps`, `batch_slot`, `reveal_salt` 만 실어 보냄
+  - repo scan에서 Jupiter/Orca/Raydium route parser, `min_amount_out`, swap callback, margin open/settle path 미확인
+  - 따라서 **NOT ACTIVE today**
+  - 다만 향후 keeper가 swap-integrated rebalance나 collateral conversion path를 직접 구현하면, route parser fuzzing + post-settlement recheck invariant를 즉시 추가해야 함
+- **Checklist item 70**: ☐ multi-hop swap / liquidation / collateral conversion을 도입할 때는 route minimum을 terminal asset 기준으로만 계산하고, callback settlement에서 `actual_terminal_output >= validated_minimum` 및 post-settlement health factor 재검증을 강제할 것
+
+### Solana-Specific Defense Checklist Update
+70. ☐ multi-hop swap / liquidation / collateral conversion을 도입할 때는 route minimum을 terminal asset 기준으로만 계산하고, callback settlement에서 `actual_terminal_output >= validated_minimum` 및 post-settlement health factor 재검증을 강제할 것
+
+---
 <!-- AUTO-ADDED 2026-04-28 (Red Team Daily Evolution) — D54 multi-round bundle simulation -->
 
 ## 2026-04-28 Bundle Simulator / Private Relay Cost-Asymmetry Pattern
