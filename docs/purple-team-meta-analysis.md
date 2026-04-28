@@ -1,5 +1,56 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-04-29 (KST) — Daily Evolution (#43)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| OWASP `Incident Response Playbook` | 2026-04-28 fetched | 심각도별 response time과 containment 순서를 먼저 고정한다. 즉 incident 대응은 root-cause 보고서보다 `언제 끊을 것인가` 를 먼저 결정해야 한다. |
+| OpenSourceMalware `Vercel April 2026 incident-response` | 2026-04-20 update | `Rotate first, then investigate.` 로그 retention이 짧고 UI가 불완전하므로, 영향 범위 확정 전이라도 deploy freeze, integration disable, secret rotation을 먼저 하라고 권한다. |
+| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | 첫 forged release는 되돌릴 수 없었지만, anomaly 인지 직후 pause와 downstream freeze가 후속 ~$95M 시도를 막았다. 핵심은 첫 완전한 확증이 아니라 **두 번째 손실 이전의 첫 조치** 였다. |
+| Google Cloud `Next '26...` | 2026-04-22 | M-Trends 2026 기준 attacker hand-off가 8시간에서 22초로 축소됐다. defender approval/forensics cadence가 공격자 tempo를 못 따라가면 확증 대기 자체가 취약점이 된다. |
+| Nomos Labs `Smart Contract Testing Guide 2026` | 2026-04 window | unit/integration/fuzz/invariant/FV를 계속 강화하라고 권하지만, 이 툴링의 성공이 incident-time containment threshold 문제를 자동으로 해결해주지는 않는다. |
+| arXiv `2604.18395` (FAUDITOR) / `2604.13611` (V2E) | 2026-04-20 submission/update | exploitable bug detection과 PoC validation은 발전 중이다. 그러나 adjacent-plane 사고는 `무엇이 exploitable인가` 만큼이나 `언제 incomplete evidence로 끊을 것인가` 가 중요함을 드러낸다. |
+
+### Phase 2) 갭 분석
+
+**오늘 신규 식별 갭**:
+
+#### META-62 — Certainty-Seeking Containment Gap (CSCG)
+- **현상**: 실제 사고에서는 `pause`, `rotate`, `revoke`, `freeze deploy`, `disable integration` 같은 containment가 **완전한 root cause/영향 범위 확정 이전** 에 발사되어야 한다. 그런데 많은 팀은 forensic certainty를 기다리다가 대응을 늦춘다.
+- **메타 원인**:
+  1. **certainty-first bias**: `영향받았는지 정확히 안다` 와 `지금 끊어야 할 secret/integration이 무엇인지 안다` 를 혼동한다.
+  2. **evidence shelf-life mismatch**: control-plane audit log, OAuth 기록, SaaS telemetry는 retention이 짧고 exportability가 낮아, 확증을 기다릴수록 오히려 증거가 사라진다.
+  3. **tempo asymmetry**: attacker hand-off와 privilege pivot는 22초급으로 빨라지는데, defender는 여전히 승인 체인과 forensic 완성본을 기다린다.
+  4. **tooling overhang**: fuzz/FV/PoC validation이 좋아질수록 팀은 "더 잘 증명한 뒤 움직이자" 는 확증 편향을 강화할 수 있다.
+- **기존 패턴과 구별**:
+  - **META-53** = actuator를 실제로 발사할 수 있는가
+  - **META-55** = 선언된 제약이 집행에서 힌트로 강등되는가
+  - **META-61** = 코어 assurance가 주변 plane까지 번지는가
+  - **META-62** = **완전한 확증이 오기 전에 언제 containment threshold를 넘길 것인가**
+- **Purple Team 고유 기여**: 오늘 신호는 detection 품질 자체보다, **확실성을 기다리는 문화가 containment를 구조적으로 늦춘다** 는 점을 보여준다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-29)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-62 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~62 / 189+ total entries** 로 갱신
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0429-01 (MEDIUM latent)**: certainty-seeking containment gap.
+- 현재 carry-forward인 **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap), **B45**(audit attestation continuity gap) 는 모두 root cause 확정 전에 조치해야 할 수 있는 클래스다.
+- 그러나 공개 artifact 기준으로는 dashboard / RPC / build / deploy plane에 대해 **uncertainty-triggered action threshold** 를 하나의 explicit rubric으로 고정했다는 증거가 약하다.
+- 따라서 Microstable은 `무엇이 확정됐는가` 보다, **`어떤 불완전한 신호가 보이면 언제 pause / failover / signer rotation / deploy freeze를 먼저 발사할 것인가`** 를 분리 문서화해야 한다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://owasp.org/www-project-agentic-skills-top-10/incident-response
+- https://github.com/OpenSourceMalware/vercel-april2026-incident-response
+- https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
+- https://cloud.google.com/blog/products/identity-security/next26-redefining-security-for-the-ai-era-with-google-cloud-and-wiz
+- https://nomoslabs.io/blog/smart-contract-testing-guide-tools-tips-2026
+- https://arxiv.org/abs/2604.18395
+- https://arxiv.org/abs/2604.13611
+
 ## 2026-04-26 (KST) — Daily Evolution (#42)
 
 ### Phase 1) 수집 소스 요약
