@@ -15,6 +15,33 @@ let amount = u64::from_le_bytes(data[0..8]);
 pub data_account: Account<'info, MyData>,
 ```
 
+### Function Authorization ≠ Asset Ownership / Target Authority
+Solana programs often verify that a caller is *a* valid signer or keeper, but still fail to prove that the **specific position, vault, ATA, or CPI target being touched belongs to that authority**. This is the Solana form of the broader A4 lesson from Gondi, YieldCore, and ZetaChain: being allowed to enter a helper path does **not** automatically mean being allowed to operate on this asset or emit this privileged side effect.
+
+```rust
+// VULNERABLE: keeper role is checked, but target position ownership is never rebound
+pub fn liquidate_position(ctx: Context<LiquidatePosition>, position_id: u64) -> Result<()> {
+    require!(ctx.accounts.keeper.is_signer, ErrorCode::Unauthorized);
+    // MISSING: require_keys_eq!(ctx.accounts.position.owner, ctx.accounts.user.key());
+    // MISSING: verify the vault / ATA / CPI target belongs to the expected authority
+    Ok(())
+}
+
+// SAFE: caller authority AND asset/target authority are both bound explicitly
+pub fn liquidate_position(ctx: Context<LiquidatePosition>, position_id: u64) -> Result<()> {
+    require!(ctx.accounts.keeper.is_signer, ErrorCode::Unauthorized);
+    require_keys_eq!(ctx.accounts.position.owner, ctx.accounts.user.key(), ErrorCode::WrongOwner);
+    require_keys_eq!(ctx.accounts.vault.authority, ctx.accounts.protocol_state.key(), ErrorCode::WrongOwner);
+    Ok(())
+}
+```
+
+- **Solana review checklist**:
+  1. signer/keeper/admin 검증과 **대상 자산 소유권 검증** 이 분리돼 있는지 본다.
+  2. ATA, vault PDA, position account, escrow account 각각이 **예상 owner / authority / seeds** 와 다시 결박되는지 본다.
+  3. helper instruction이 CPI 또는 privileged event를 내보낼 때, **"내부 flow에서만 호출될 것"** 이라는 가정을 access control로 착각하지 않는지 본다.
+  4. user-provided account가 privileged CPI target, transfer destination, write authority로 승격되지 않는지 본다.
+
 ### Missing Discriminator Check
 Anchor uses an 8-byte discriminator (SHA256 hash of account type name) to prevent account type confusion. Raw Solana programs or non-Anchor accounts may lack this.
 
