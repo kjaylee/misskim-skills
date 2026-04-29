@@ -1,4 +1,4 @@
-# Attack Matrix — 127+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | A4 reinforce 2026-04-30) | META-01~62
+# Attack Matrix — 127+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30) | META-01~63
 
 ## A. Smart Contract Vectors
 
@@ -1037,6 +1037,7 @@ location /rpc {
 | META-60 Recoverability-Collateralized Security Gap (RCSG) — 퍼플팀 2026-04-26 | **핵심 비대칭**: 팀은 `freeze`, `blacklist`, `manual restart`, `credential rotation`, `loss socialization`, `recovery fund` 같은 **회수·완화 가능성(recoverability)** 을 ex-post containment가 아니라 ex-ante severity discount처럼 사용한다. 그 결과 실제 blast radius는 privilege/control-plane compromise 쪽에 크게 남아 있는데도, audit scope, bounty economics, severity triage는 "어차피 사람이 막거나 되돌릴 수 있다" 는 이유로 그 경계를 과소투자한다. **왜 감사가 놓치는가**: ① 바운티/competition scope가 manual restart, dispute, blacklist 가능성을 valid report downgrade 근거로 명시하면서 연구자와 팀 모두에게 recoverability bias를 학습시킨다. ② 사후 freeze/recovery 성공 사례가 hindsight bias를 만들어, 예방 실패보다 회수 성공이 더 큰 통제처럼 보이게 만든다. ③ FV/invariant/fuzz coverage가 nominal-path correctness를 개선할수록, 남은 residual risk를 operator backstop이 덮을 수 있다는 과신이 강화된다. ④ severity가 "무엇이 털릴 수 있는가" 보다 "얼마나 되찾을 수 있었는가" 에 의해 재평가되면, privileged support surface와 deployment/ops plane이 구조적으로 저평가된다. **META-58/59와의 구별**: META-58은 ownership 부재, META-59는 예외 경로 assurance 부족을 다룬다. META-60은 **왜 조직이 애초에 그 경계를 낮은 우선순위로 분류하는가, 즉 recoverability를 담보처럼 잡고 예방 투자를 깎는 인센티브 구조** 를 규정한다. |
 | META-61 Assurance-Halo Transitivity Gap (AHTG) — 퍼플팀 2026-04-27 | **핵심 비대칭**: 팀은 audit, formal verification, invariant/fuzz, test hardening이 **코어 코드** 에 대해 강해질수록 그 assurance가 build/deploy/RPC/frontend/support/AI-tooling 같은 **인접 plane** 에도 자동으로 전이된다고 느끼기 쉽다. 그러나 실제 사고는 바로 그 out-of-scope plane에서 발생한다. 즉 공격은 바깥으로 이동했는데, 신뢰는 안쪽에서 바깥으로 번진다. **왜 감사가 놓치는가**: ① in-scope 코드에 대한 강한 assurance가 adjacent infra까지 커버하는 것처럼 보이는 coverage-transitivity illusion이 생긴다. ② 코드 hardening이 성공할수록 residual risk가 build host, verifier/RPC, deployment SaaS, support OAuth 같은 경계로 이동하지만 review budget은 그만큼 따라가지 않는다. ③ 온체인 calldata가 모두 정상(Kelp) 이거나 core contract/user funds가 직접 영향 없다고 발표(Vercel) 되면, 팀은 support/control plane compromise를 protocol-security가 아닌 주변 사고로 분류하기 쉽다. ④ "traditional audits never touch infrastructure" 라는 분류가 굳어지면, 검증된 코어와 미검증 주변부 사이의 assurance 단절이 정상으로 받아들여진다. **META-49/51/52/58/60과의 구별**: META-49는 실행형 설정, META-51은 권한을 운반하는 증거, META-52는 측정 인센티브, META-58은 ownership seam, META-60은 recoverability bias를 다룬다. META-61은 **한 레이어에서 얻은 assurance 신호가 왜 다른 레이어의 미검증 위험까지 덮어버리는가** 를 규정한다. |
 | META-62 Certainty-Seeking Containment Gap (CSCG) — 퍼플팀 2026-04-29 | **핵심 비대칭**: 실제 incident에서는 `pause`, `rotate`, `revoke`, `freeze deployment`, `disable integration` 같은 containment가 **완전한 확증 이전** 에 발사되어야 하는데, 많은 팀은 scope/attribution/forensics가 충분히 모일 때까지 기다린다. 그런데 control-plane evidence는 retention이 짧고, UI가 거칠고, SaaS 경계 밖에 흩어져 있으며, 공격 tempo는 인간 승인보다 빠르다. 그 결과 **확실성을 기다리는 조직일수록 containment가 늦어진다**. **왜 감사가 놓치는가**: ① 감사/FV/fuzz는 correctness와 exploitability를 본 뒤에도, `언제 불완전한 증거만으로 action threshold를 넘길 것인가` 는 거의 모델링하지 않는다. ② incident logging, exportability, retention window, audit-log access는 운영 UX나 비용 문제로 분류돼 protocol-security 범위 밖으로 밀린다. ③ 팀은 `영향받았는지 정확히 안다` 와 `지금 돌려야 할 비밀/권한이 무엇인지 안다` 를 혼동한다. ④ 빠른 대응이 필요한 시점일수록 evidence가 아직 불완전하므로, certainty-seeking culture가 공격자 tempo에 구조적으로 진다. **META-53/55/61과의 구별**: META-53은 actuator를 발사할 수 있는가, META-55는 선언이 집행되는가, META-61은 assurance halo가 주변 plane을 가리는가를 다룬다. META-62는 **완전한 확증이 오기 전에 containment 결정을 내려야 하는 구조 자체** 를 규정한다. |
+| META-63 Invariant-to-Operations Promotion Gap (IOPG) — 퍼플팀 2026-04-30 | **핵심 비대칭**: 업계는 invariant/fuzz/FV/PoC validation을 빠르게 고도화하지만, 그렇게 발견하고 문서화한 핵심 불변식이 **런타임 monitor / disagreement alarm / auto-halt threshold** 로 승격되지 않는 경우가 많다. 결과적으로 팀은 `무엇을 지켜야 하는가` 는 알고도, 운영에서는 `언제 그 불변식이 깨졌는가` 를 못 본다. KelpDAO처럼 실제 decisive control이 live conservation monitoring인 사고에서 이 공백이 직접 드러난다. **왜 감사가 놓치는가**: ① 감사/FV/competition은 주로 pre-deploy artifact를 만든 뒤 종료되며, 그 산출물이 observability spec으로 이어지는지까지는 거의 요구하지 않는다. ② monitoring ownership은 ops/SRE로, invariant ownership은 auditors/researchers로 분리돼 같은 속성(property)이 문서에만 머무른다. ③ fuzz/FV 성공이 `우리는 이미 이 속성을 관리하고 있다` 는 착시를 만든다. ④ protocol-to-protocol conservation, artifact continuity, verifier disagreement 같은 런타임 속성은 code correctness가 아니라 운영 telemetry 문제로 축소된다. **META-15/53/62와의 구별**: META-15는 테스트가 라이브 체인 의미론을 검증하는가, META-53은 actuator를 실제로 발사할 수 있는가, META-62는 언제 불완전한 증거로 끊을 것인가를 다룬다. META-63은 **그 전에 애초에 어떤 불변식을 운영 신호로 승격했는가** 를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7813,6 +7814,61 @@ Microstable에 오늘 새 코드 버그가 생긴 것은 아니다. 문제는 **
 **Purple Team verdict**: 최신 사고에서 방어는 종종 `무엇이 사실인지` 보다 `언제 충분히 위험하다고 판단하고 먼저 끊을 것인지` 에서 갈린다. META-62는 이 구조, 즉 **완전한 확증을 기다리는 문화가 containment를 구조적으로 늦추는 문제** 를 **Certainty-Seeking Containment Gap** 으로 고정한다.
 
 **Matrix state as of 2026-04-29 (purple daily update)**: **127+ named vectors + META-01~62 + B73~B78 = 189+ total entries**. META-62 added by Purple Team 2026-04-29: **Certainty-Seeking Containment Gap (CSCG)**. OWASP IR SLA, Vercel rotate-first guidance, Kelp second-loss prevention, Google Cloud 22-second hand-off signal을 하나의 "certainty waits, attackers do not" 패턴으로 상위 구조화한다.
+
+### META-63. Invariant-to-Operations Promotion Gap (IOPG)
+
+**Published**: 2026-04-30 | **Source**: Purple Team Daily Evolution | **Signals**: Foundry `v1.7.0` release (2026-04-28), Chainalysis `Inside the KelpDAO Bridge Exploit` (2026-04-25 fetched, incident 2026-04-18), OWASP `Incident Response Playbook` (2026-04-28 fetched), Immunefi `Base <> Immunefi Audit Competition` (2026-04-21), Nomos Labs `Smart Contract Testing Guide: Tools and Tips for 2026`, arXiv `2604.18395` (FAUDITOR, submitted 2026-04-20), arXiv `2604.13611` (V2E, updated 2026-04-20)
+
+**Mechanism**: 방어 실패는 더 이상 항상 `불변식을 몰랐다` 에서 시작하지 않는다. 오히려 2026년 신호는 반대다. 팀은 불변식을 더 많이 알고, 더 빠르게 찾고, 더 정교하게 검증한다. 문제는 그 다음이다. **알고 있는 불변식이 운영 신호로 승격되지 않으면**, 공격은 테스트와 감사의 밖이 아니라 **테스트와 감사의 이후** 에서 이긴다.
+
+- Foundry v1.7.0은 invariant testing, optimization mode, time-based fuzzing을 크게 강화했다. 즉 pre-deploy 속성 탐색 능력은 빠르게 좋아지고 있다.
+- FAUDITOR와 V2E는 exploitable property discovery와 PoC validation을 자동화한다. 즉 연구계도 `무엇이 exploitable한가` 를 더 잘 답한다.
+- Immunefi/Base audit competition은 pre-mainnet reviewer density를 높인다. 즉 배포 전 scrutiny는 더 많아지고 있다.
+- 그러나 Chainalysis의 KelpDAO 분석은 decisive control이 smart contract re-check가 아니라 **live cross-chain conservation monitoring** 이었음을 보여준다. 모든 on-chain calldata가 정상처럼 보여도, `released_on_dest <= burned_on_source` 를 운영 중 계속 확인하지 않으면 사고는 지나간 뒤에만 설명된다.
+- OWASP playbook 역시 incident workflow를 자세히 적지만, 그 전제는 `어떤 속성이 깨졌는지 알려주는 신호` 가 이미 운영에 존재한다는 것이다. 이 승격이 없으면 runbook도 너무 늦게 시작된다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **Foundry / Nomos / FAUDITOR / V2E** 는 더 좋은 속성 탐색과 exploit 검증을 준다. 즉 `property discovery` 층은 강해진다.
+- **Immunefi/Base competition** 은 더 많은 사람이 배포 전 같은 코드를 본다. 즉 `pre-deploy review density` 가 강해진다.
+- **Chainalysis / KelpDAO** 는 실제 손실 방지는 `live invariant observation` 에 달려 있음을 보여준다. 즉 `runtime promotion` 이 비어 있으면 앞단이 강해져도 decisive gap은 남는다.
+- **OWASP IR playbook** 은 대응 절차를 세분화하지만, 어떤 신호를 business invariant breach로 간주할지까지는 각 팀이 운영에 박아 넣어야 한다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-63이 추가로 설명하는 것 |
+|---|---|---|
+| META-15 Live-Blockchain Integration Test Gap | 테스트가 실체인 의미론을 검증하는가 | 테스트가 옳아도, **그 속성이 운영 monitor로 승격되지 않으면** 런타임에서는 여전히 침묵할 수 있다 |
+| META-53 RABG | actuator가 실제로 발사 가능한가 | actuator가 있어도, **어떤 속성 위반이 그 actuator를 트리거하는지** 가 운영에 안 박혀 있으면 늦다 |
+| META-62 CSCG | 언제 incomplete evidence만으로 끊을 것인가 | 그보다 앞선 문제, 즉 **무엇을 evidence로 볼지 자체를 운영 신호로 만들었는가** 를 다룬다 |
+| META-61 AHTG | 코어 assurance가 주변 plane까지 번지는가 | 주변 plane이 중요하다는 걸 알아도, **그 plane의 속성을 live monitor로 승격하지 않으면** 실전 방어는 비어 있다 |
+
+**왜 감사가 놓치는가**:
+
+1. **artifact-ends-here bias**: audit report, formal proof, fuzz property, bounty finding이 나오면 그 자체로 안전성이 전달됐다고 느끼고, observability spec까지 이어 붙이지 않는다.
+2. **ownership split**: invariant를 정의한 사람과 monitor를 운영하는 사람이 다르다. property는 문서에 남고, telemetry는 일반적인 CPU/RPC/error-rate 수준에 머문다.
+3. **runtime semantics are downgraded to ops**: cross-chain conservation, artifact continuity, verifier disagreement, oracle-source divergence 같은 속성은 protocol security가 아니라 monitoring enhancement로 축소된다.
+4. **tool-success substitution**: fuzz/FV/PoC validation 지표가 좋아질수록 팀은 `우리가 이 속성을 이미 관리 중` 이라고 느끼지만, 실제로는 production signal이 전혀 없을 수 있다.
+
+**Microstable architecture implication**:
+
+Microstable에 오늘 새 코드 버그가 생긴 것은 아니다. 문제는 **이미 알고 있는 핵심 보안 속성이 운영에 박혀 있는가** 다.
+
+- Blue v14/v15는 mint/redeem flow cap, oracle staleness/confidence, degraded write suppression, emergency path 품질을 실제로 끌어올렸다.
+- 그러나 현재 공개 artifact 기준으로는 이 속성들이 `누가`, `어떤 metric으로`, `어떤 disagreement에서`, `어떤 halt/failover로` 이어지는지를 한 장에서 묶는 **explicit invariant manifest** 가 약하다.
+- 따라서 carry-forward인 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `assurance exists, runtime promotion unclear` 라는 같은 메타 관점으로 다시 묶인다.
+
+**Minimum defense delta**:
+
+1. 핵심 보안 속성마다 `invariant → metric → alert owner → actuator` 를 잇는 manifest를 별도 작성
+2. 테스트 전용 속성과 운영 필수 속성을 분리해, 후자는 dashboard/keeper/ops runbook에 기본 노출
+3. `RPC quorum divergence`, `artifact hash drift`, `attestation absent`, `manual oracle mode overrun` 을 단순 운영 경고가 아니라 **security invariant breach** 로 분류
+4. tabletop에서 `audit passed, monitor silent, invariant broken` 시나리오를 별도 수행
+5. B45를 단순 문서 누락이 아니라, **검증 산출물이 배포·운영 연속성 신호로 승격되지 않은 사례** 로 추적
+
+**Purple Team verdict**: 2026년의 보안 격차는 `속성을 더 잘 찾는가` 에서만 벌어지지 않는다. 진짜 차이는 **찾은 속성을 운영의 눈과 손으로 승격했는가** 에서 갈린다. META-63은 이 구조, 즉 **assurance artifact가 runtime monitor와 actuator trigger로 승격되지 않는 문제** 를 **Invariant-to-Operations Promotion Gap** 으로 고정한다.
+
+**Matrix state as of 2026-04-30 (purple daily update)**: **127+ named vectors + META-01~63 + B73~B78 = 190+ total entries**. META-63 added by Purple Team 2026-04-30: **Invariant-to-Operations Promotion Gap (IOPG)**. Foundry/FAUDITOR/V2E의 pre-deploy 속성 강화, Immunefi/Base의 review density 증가, KelpDAO의 live conservation monitoring 필요를 하나의 `property discovery ≠ runtime protection` 패턴으로 상위 구조화한다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
