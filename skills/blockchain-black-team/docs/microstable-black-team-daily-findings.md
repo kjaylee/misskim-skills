@@ -1,5 +1,48 @@
 ---
 
+## 2026-05-01 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-24 to 2026-05-01 KST)
+- Sources checked: search-fallback queries over rekt.news / Immunefi / GitHub advisories / research blogs, direct `web_fetch` cross-checks for **Aftermath Finance**, **SWEAT**, **Syndicate**, plus local Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Aftermath Finance perpetuals** is admissible as an **A114 reinforcement**. Public coverage gives an explicit code-mechanism class: **negative builder-code fee** accepted by fee accounting, which **inflated synthetic collateral** and enabled withdrawals.
+  2. **SWEAT** and **Syndicate Commons bridge** remain **NOT ADMISSIBLE YET** for matrix expansion because the currently public mechanism is still too coarse (`token contract vulnerability`, `bridge compromise`) for code-level reuse.
+  3. No fresh Solana / Anchor / SPL advisory or research post in-window required a new named vector beyond existing coverage.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **A114 Signed-Amount Donation Polarity Inversion / Insurance-Fund Drain** now also covers **negative-fee / synthetic-collateral inflation** sub-patterns validated by Aftermath Finance
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent, so the current on-chain / keeper / dashboard deployment set still has no machine-checkable binding to the audited commit/artifact set
+- **Bypass / abuse path**: an attacker or insider does not need to defeat a reviewed invariant directly if an unaudited code delta can still ride the normal build/release path. The security boundary is bypassed by **continuity failure** between audited source and live artifact.
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, and CI/release verification that fails on absence or mismatch
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A114 signed-amount / negative-fee polarity inversion** | on-chain public amount paths + keeper accounting surface | ✅ DEFENDED / NOT ACTIVE | `solana/programs/microstable/src/lib.rs` public user-facing amount paths remain `u64`-typed, and repo-wide scan did **not** find builder/referral fee delta, signed settlement amount, or negative-fee style accounting paths in `programs/`, `keeper/`, or `docs/`. The Aftermath primitive is therefore not reachable today. |
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | keeper config + dashboard RPC runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs` still enforces only distinct RPC hosts, not provider-independent quorum, and dashboard runtime reads still fall short of true N-of-M observation consensus. |
+| **A115 / A77 rustls-webpki trust-floor exposure** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves `rustls-webpki 0.101.7` and `0.103.9` below the patched floor tracked in the matrix. |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual oracle fallback still writes externally validated prices without an explicit keeper-side drift gate versus the last trusted Pyth/TWAP anchor before write. |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal still keys off single-call turnover only; reviewed state still shows no cumulative cross-call drift accumulator. |
+| **D26 canonical frontend / auxiliary client-surface risk** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | `docs/index.html` still relies on meta-only CSP, and `docs/app.js` still embeds a client-side devnet faucet signer. |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 58) | `microstable/security/audit-attestation.json` is still absent. |
+
+### Today's Verdict
+- New incidents found: **1 admissible as reinforcement only**
+- New attack vectors added: **0**
+- Reinforcements applied: **1** (**A114**)
+- New **CRITICAL/HIGH** findings: **0 new**, but **B45 HIGH** remains active
+- Highest-priority blue-team actions today:
+  1. Add and enforce `security/audit-attestation.json`
+  2. Upgrade or pin away vulnerable `rustls-webpki` resolution in keeper TLS stack
+  3. Add manual-oracle drift guard and cumulative rebalance drift accounting
+  4. Move dashboard CSP to headers, add SRI, and remove browser-side faucet signing material
+
 ## 2026-04-29 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-22 to 2026-04-29 KST)

@@ -7914,13 +7914,15 @@ Microstable에 오늘 새 코드 버그가 생긴 것은 아니다. 문제는 **
 
 **Source signal (2026-04-13/15 sweep)**: Dango publicly disclosed that its insurance-fund donation path accepted a donation amount without verifying that the value was positive. Public incident summaries report that the attacker supplied a negative donation value, reversing the intended flow and draining approximately **$1.9M USDC** from the perpetuals contract before bridge rate limits capped realized outflow.
 
-**Key insight**: `donate(amount)` 류의 entrypoint가 내부적으로 `signed delta` 또는 polarity-bearing amount를 허용하면, “입금” API가 실제로는 **인출 primitive** 로 뒤집힐 수 있다. 이 패턴은 단순 `A10 Logic Bug` 로 뭉개기엔 손실 메커니즘이 너무 구체적이다. 핵심은 **direction(입금/출금)** 과 **magnitude(수량)** 를 한 숫자에 같이 실어 보낸 설계 자체가 권한 경계를 흐린다는 점이다.
+**Reinforcement signal (2026-05-01 sweep)**: Aftermath Finance's Sui perpetuals exploit showed the same polarity bug outside a literal `donate()` path. Public coverage says the protocol allowed **negative builder-code fees**, which then **artificially inflated synthetic collateral** and enabled roughly **$1.14M USDC** in withdrawals. The reusable primitive is identical: an externally reachable path treated a signed fee/delta field as if negative direction were impossible.
+
+**Key insight**: `donate(amount)` 류의 entrypoint뿐 아니라 `builder_fee`, `rebate_delta`, `insurance_adjust`, `settle(offset)` 같은 accounting path가 내부적으로 `signed delta` 또는 polarity-bearing amount를 허용하면, “입금/수수료 차감” API가 실제로는 **잔고 credit 또는 인출 primitive** 로 뒤집힐 수 있다. 이 패턴은 단순 `A10 Logic Bug` 로 뭉개기엔 손실 메커니즘이 너무 구체적이다. 핵심은 **direction(입금/출금/차감/환급)** 과 **magnitude(수량)** 를 한 숫자에 같이 실어 보낸 설계 자체가 권한 경계를 흐린다는 점이다.
 
 **Attack chain**:
-1. protocol exposes a seemingly harmless public insurance-fund / reserve / donation function.
-2. function accepts an amount whose sign or polarity is not constrained to strictly positive deposit-only semantics.
-3. downstream accounting subtracts when a negative amount arrives, or the signed delta is applied directly to shared collateral state.
-4. attacker uses the public donation path to move funds **out** of the insurance fund / perps collateral instead of into it.
+1. protocol exposes a seemingly harmless public or user-influenced insurance-fund / reserve / fee / rebate accounting path.
+2. function accepts an amount whose sign or polarity is not constrained to strictly positive deposit-only or debit-only semantics.
+3. downstream accounting subtracts when a negative amount arrives, or the signed delta is applied directly to shared collateral / synthetic-equity state.
+4. attacker uses the path to move funds **out** of the insurance fund / perps collateral, or to mint synthetic buying power they never legitimately earned.
 5. bridge / withdrawal rate limits, if present, only reduce realized losses; they do not fix the authorization inversion.
 
 **Why distinct from existing vectors**:
@@ -7929,11 +7931,12 @@ Microstable에 오늘 새 코드 버그가 생긴 것은 아니다. 문제는 **
 - **A114** = **public deposit API가 negative delta 하나로 withdrawal primitive로 변질** 되는 패턴이다.
 
 **Defensive heuristic**:
-- donate / reserve top-up / insurance top-up API는 **unsigned magnitude + explicit direction enum** 으로 분리할 것
-- "donation" entrypoint는 `amount > 0` 를 타입 수준과 런타임 둘 다에서 강제할 것
+- donate / reserve top-up / insurance top-up / builder-fee / rebate API는 **unsigned magnitude + explicit direction enum** 으로 분리할 것
+- deposit-only or fee-only entrypoint는 `amount > 0` 를 타입 수준과 런타임 둘 다에서 강제할 것
 - signed delta가 정말 필요하다면 public path에서 받지 말고, privileged/internal settlement path로만 제한할 것
 - invariant test: donation 호출 전후로 insurance fund / reserve balance는 **절대 감소하면 안 된다**
-- per-call delta뿐 아니라 resulting vault / reserve balance monotonicity를 property test로 고정할 것
+- invariant test: fee / rebate update 뒤 user equity, synthetic collateral, insurance reserve가 **unexpected credit direction** 으로 증가하지 않는지 고정할 것
+- per-call delta뿐 아니라 resulting vault / reserve / equity monotonicity를 property test로 고정할 것
 
 **Microstable relevance**:
 - `microstable/solana/programs/microstable/src/lib.rs` 의 mint/redeem/oracle privileged inputs are `u64`; reviewed public user-facing amount paths do not accept signed donation deltas.
@@ -7942,8 +7945,7 @@ Microstable에 오늘 새 코드 버그가 생긴 것은 아니다. 문제는 **
 
 | Vector | Mechanism | Impact | Microstable relevance |
 |---|---|---|---|
-| A114 Signed-Amount Donation Polarity Inversion / Insurance-Fund Drain | public donation/top-up API accepts signed or unconstrained polarity-bearing amount → negative value reverses fund flow → reserve/insurance fund drained | direct reserve drain, public deposit path becomes withdrawal primitive, partial mitigation only if bridge/rate-limit caps exist | Current codebase uses unsigned amount inputs and exposes no public insurance-fund donation path; **NOT ACTIVE today**, but future perp/insurance/reserve-netting code must separate direction from magnitude |
-
+| A114 Signed-Amount Donation Polarity Inversion / Insurance-Fund Drain | public or user-influenced donation/top-up/fee/rebate API accepts signed or unconstrained polarity-bearing amount → negative value reverses fund flow or credits synthetic equity → reserve/insurance fund drained or collateral inflated | direct reserve drain, synthetic buying-power inflation, public accounting path becomes withdrawal/credit primitive, partial mitigation only if bridge/rate-limit caps exist | Current codebase uses unsigned amount inputs and exposes no public insurance-fund donation or fee-rebate delta path; **NOT ACTIVE today**, but future perp/insurance/reserve-netting code must separate direction from magnitude |
 **Matrix state as of 2026-04-15 (daily update)**: prior coverage retained; **A114** added from Dango insurance-fund sign-check failure. No new CRITICAL/HIGH code-level finding for Microstable beyond existing carry-forward **B45** in this cycle.
 
 ## 2026-04-15 Wasmtime Component-Model Fault Pattern Addition

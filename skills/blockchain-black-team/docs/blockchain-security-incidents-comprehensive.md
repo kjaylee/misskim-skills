@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-04-29 — Aftermath Finance perpetuals (Sui — negative builder-code fee accepted by fee accounting, synthetic collateral inflated)** — **~$1.14M USDC** drained. Public incident coverage says the protocol allowed **negative builder fees** to be set in its perpetuals module. That negative fee value flowed through collateral/equity accounting as a credit instead of a debit, artificially inflating the attacker's synthetic collateral and enabling withdrawals over roughly 36 minutes before the protocol paused.
+  **Root cause**: a user-influenced accounting field carried both **direction and magnitude** without enforcing positive-only fee semantics. A fee lane that should only subtract value became a collateral-credit primitive when a negative value was accepted.
+  **Vector mapping**: **A114 Signed-Amount Donation Polarity Inversion / Insurance-Fund Drain** (2026-05-01 reinforcement, negative-fee / synthetic-collateral sub-pattern). Distinct from a generic A10 because the reusable smell is **polarity-bearing accounting input on a public or user-controlled path**.
+  **Source**: https://ambcrypto.com/aftermath-exploit-adds-to-aprils-growing-list-of-defi-security-incidents/ | https://www.edgen.tech/news/post/aftermath-finance-loses-114-million-in-sui-defi-exploit
+
 - **2026-04-29 — YieldCore-3rd-deal / Trading Protocol vault (EVM vault helper path — missing caller authorization on fund-moving entrypoint)** — **~$398,000** drained. Public incident summaries say the vault was exploitable because the contract failed to verify **which caller** was allowed to invoke the withdrawal / transfer path. The attacker called the exposed entrypoint directly and moved all funds out of the vault.
   **Root cause**: the protocol treated a fund-moving helper path as if "internal workflow" were equivalent to access control. No on-chain caller allowlist was enforced at the point where assets actually moved.
   **Vector mapping**: **A4 Access Control** (2026-04-30 reinforcement, missing caller-authorization / internal-helper-assumption sub-pattern).
