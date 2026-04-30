@@ -29,6 +29,7 @@
 | **A115 / A77 rustls-webpki trust-floor exposure** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves `rustls-webpki 0.101.7` and `0.103.9` below the patched floor tracked in the matrix. |
 | **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle` path | ⚠️ MEDIUM CARRY-FORWARD | Manual oracle fallback still writes externally validated prices without an explicit keeper-side drift gate versus the last trusted Pyth/TWAP anchor before write. |
 | **A43 cumulative sub-threshold rebalance drift** | `lib.rs` `rebalance()` + `ProtocolState` | ⚠️ MEDIUM CARRY-FORWARD | Commit/reveal still keys off single-call turnover only; reviewed state still shows no cumulative cross-call drift accumulator. |
+| **B44 SPL delegate persistence / user ATA drain conduit** | on-chain `mint()` collateral intake | ⚠️ MEDIUM CARRY-FORWARD | Repo-wide scan still found no `delegate.is_none()` style guard in `solana/programs/microstable/src/lib.rs`. Protocol vaults are safe, but a pre-delegated user collateral ATA can remain a silent drain conduit outside protocol intent. |
 | **D26 canonical frontend / auxiliary client-surface risk** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | `docs/index.html` still relies on meta-only CSP, and `docs/app.js` still embeds a client-side devnet faucet signer. |
 | **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD (DAY 58) | `microstable/security/audit-attestation.json` is still absent. |
 
@@ -40,7 +41,7 @@
 - Highest-priority blue-team actions today:
   1. Add and enforce `security/audit-attestation.json`
   2. Upgrade or pin away vulnerable `rustls-webpki` resolution in keeper TLS stack
-  3. Add manual-oracle drift guard and cumulative rebalance drift accounting
+  3. Add manual-oracle drift guard, cumulative rebalance drift accounting, and `delegate.is_none()` validation on collateral intake
   4. Move dashboard CSP to headers, add SRI, and remove browser-side faucet signing material
 
 ## 2026-04-29 Daily Check
