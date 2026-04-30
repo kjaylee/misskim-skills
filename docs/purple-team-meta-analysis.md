@@ -1,5 +1,51 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-05-01 (KST) — Daily Evolution (#44)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Chainalysis `The Resolv Hack: How One Compromised Key Printed $23 Million` | 2026-04-30 fetched | `SERVICE_ROLE` 서명 하나가 곧 mint upper bound 전체를 대체했다. 문제는 키 한 개보다, **그 키가 대표하는 서명 환경 전체를 얼마나 빨리 봉쇄·교체할 수 있는가** 다. |
+| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | 첫 손실 뒤 대응은 단일 스위치가 아니었다. Ethereum/L2 pause, blacklist, downstream freeze처럼 **여러 control surface를 함께 끊어야 containment가 성립** 했다. |
+| OWASP `Incident Response Playbook` | 2026-04-28 fetched | incident response는 remove, reset credentials, clear caches, support coordination처럼 **행동 목록 이전에 영향 자산 목록** 이 있어야 제대로 굴러간다. |
+| Foundry `v1.7.0` | 2026-04-28 | invariant/time fuzz는 더 좋아졌지만, 그것만으로 `무엇을 rotate/revoke/freeze 해야 하는가` 의 **권한 그래프 인벤토리** 를 만들어주지는 않는다. |
+
+### Phase 2) 갭 분석
+
+**오늘 신규 식별 갭**:
+
+#### META-64 — Revocation-Surface Completeness Gap (RSCG)
+- **현상**: 팀이 incident에서 `pause`, `rotate`, `revoke`, `freeze`, `blacklist` 를 하기로 결정해도, 실제로 같은 권한을 운반하는 **전체 revocation surface** 를 다 세지 못해 containment가 부분적으로만 끝난다. 키 하나는 교체했지만 sibling token, deploy integration, OAuth grant, legacy signer, pending rotation set, downstream approval, sidecar attestation 같은 **동등 권한 표면** 이 남는다.
+- **메타 원인**:
+  1. **principal-list bias**: 팀은 권한을 graph가 아니라 `키 1개`, `역할 1개`, `서비스 1개` 처럼 단일 principal로 요약한다.
+  2. **action-first / inventory-late**: runbook는 `무엇을 할지` 는 적지만, `무엇을 함께 끊어야 닫히는지` 의 완전한 목록은 약하다.
+  3. **audit-scope truncation**: 감사와 바운티는 대개 exploit precondition이나 direct drain path까지만 본다. 같은 authority를 공유하는 sibling surface의 **완전한 revoke set** 까지는 모델링하지 않는다.
+  4. **containment false-closure**: 일부 rotation/pause가 성공하면 팀은 incident가 닫혔다고 느끼지만, 남은 equivalent authority가 재진입 통로가 된다.
+- **기존 패턴과 구별**:
+  - **META-54** = 어떤 표면이 실효 권한을 갖는가
+  - **META-58** = 그 기본 경계를 누가 소유하는가
+  - **META-62** = 언제 incomplete evidence로 끊을 것인가
+  - **META-63** = 어떤 속성을 런타임 신호로 승격할 것인가
+  - **META-64** = **이제 끊기로 했을 때, 무엇을 전부 끊어야 닫히는가**
+- **Purple Team 고유 기여**: 오늘 신호는 빠른 대응의 중요성만이 아니라, **빠른 대응도 revocation set이 불완전하면 구조적으로 새어 나간다** 는 점을 보여준다.
+
+### Phase 3) 스킬 강화 델타 (2026-05-01)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-64 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~64 / 192+ total entries** 로 갱신
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0501-01 (MEDIUM latent)**: revocation-surface completeness gap.
+- `docs/ops-runbook.md` 는 emergency shutdown, key rotation, quorum 유지 절차를 갖고 있다. 다만 현재 공개 artifact 기준으로는 **keeper current/next set, expected upgrade authority, RPC/provider ownership, attestation artifact, deploy freeze 대상** 을 하나의 authority inventory로 묶은 증거가 약하다.
+- 그 결과 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `무엇을 rotate/revoke/freeze 해야 incident가 실제로 닫히는가` 관점의 같은 구조 문제로 재묶인다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://www.chainalysis.com/blog/lessons-from-the-resolv-hack/
+- https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
+- https://owasp.org/www-project-agentic-skills-top-10/incident-response
+- https://github.com/foundry-rs/foundry/releases
+
 ## 2026-04-29 (KST) — Daily Evolution (#43)
 
 ### Phase 1) 수집 소스 요약
