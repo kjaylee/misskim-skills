@@ -1,4 +1,4 @@
-# Attack Matrix — 127+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30) | META-01~63
+# Attack Matrix — 128+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01) | META-01~63
 
 ## A. Smart Contract Vectors
 
@@ -8542,6 +8542,79 @@ fn on_swap_return(actual_out: u128, validated_minimum: u128) {
 | A120 Multi-Hop Route Minimum Aggregation / Terminal-Settlement Mismatch | protocol mis-parses multi-hop route minima by counting intermediate hops as terminal guarantees, then finalizes execution without rechecking actual terminal output against the validated minimum | undercollateralized position open, borrow against worthless output, reserve depletion, liquidation cascade despite nominal slippage/oracle checks | current Microstable code has no multi-hop route parser, no DEX callback settlement path, and `rebalance` only updates weights; **NOT ACTIVE today**, but any future swap-integrated keeper path must treat this as first-class |
 
 **Matrix state as of 2026-04-29 (red-team daily update)**: prior coverage retained; **A120** added after the fuller Rhea/Burrowland mechanism showed a reusable exploit class beyond generic fake-asset admission. Matrix is now **127+ named vectors + META-01~61 + B73~B78 = 188+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from A120 itself**; **B45 audit-attestation gap** remains the top current HIGH continuity issue.
+
+## 2026-05-01 Fixed-Polynomial Opening Omission Pattern Addition
+
+### A121. Fixed-Polynomial Evaluation Opening Omission / Same-VK Proof Forgery
+
+**Source signals (2026-05-01 KST sweep)**:
+- OtterSec, `Unverified Evaluations in Dusk's PLONK` (published 2026-04-30)
+- Dusk / Rusk public code links referenced in the write-up
+
+**Key insight**: 많은 팀이 zk verifier를 볼 때 transcript binding, setup ceremony, public input hashing까지만 본다. 하지만 PLONK류 시스템에서는 verifier가 최종 방정식에 넣는 각 scalar가 반드시 (a) verifier가 직접 계산했거나, (b) 이미 committed polynomial에 대해 **opening proof로 묶였거나**, (c) verifier key commitment를 직접 사용해야 한다. Dusk 사례의 핵심은 prover가 **fixed/public selector polynomial의 evaluation 값** 을 proof struct에 실어 보냈고, verifier가 그것을 final equation에 사용하면서도 **그 값이 verifier-key commitment와 일치하는지 전혀 열어보지 않았다** 는 점이다. 그 순간 해당 scalar는 transcript에 묶인 값이 아니라 **attacker-controlled free variable** 로 돌아온다.
+
+**Attack chain**:
+1. protocol uses a PLONK-like verifier with fixed/public polynomials (selectors, lookup tables, verifier-key-backed polynomials) committed during preprocessing.
+2. prover includes claimed evaluations of those fixed polynomials at challenge point `zeta` inside the proof payload.
+3. verifier uses those scalars in linearization / quotient / final pairing equations.
+4. however, verifier never checks an opening proof tying those evaluations back to the trusted commitments in the verifier key.
+5. attacker chooses evaluation values that make the final equation pass, forging a proof for a false statement under the **same verification key**.
+6. downstream application accepts a syntactically valid proof and releases value, admits invalid state transitions, or validates forged privacy actions.
+
+**Why this is distinct from existing vectors**:
+- **A49** 는 trusted setup / verifying key constants 자체가 잘못된 경우다. **A121** 은 setup constants가 정상이더라도, verifier가 **proof 안의 evaluation scalar를 commitment-bound value로 검증하지 않는** 구현 결함이다.
+- **A50** 은 Fiat-Shamir transcript에 public claim이 제때 흡수되지 않아 statement가 free variable이 되는 패턴이다. **A121** 은 transcript ordering이 맞아도, **opening proof가 빠진 fixed-polynomial evaluation** 이 free variable이 된다는 점이 다르다.
+- **A118** 은 guest/prover parser의 unsafe deserialization로 same-VK forgery가 생기는 패턴이다. **A121** 은 prover가 아니라 **verifier-side commitment-binding omission** 이다.
+
+**왜 감사가 놓치는가**:
+1. 많은 감사가 witness polynomial opening은 꼼꼼히 보지만, selector / fixed polynomial은 "어차피 public circuit data" 라고 보고 prover-supplied evaluation을 덜 의심한다.
+2. verifier code가 linearization / MSM / pairing check로 길어지면, 어떤 scalar가 locally derived인지, 어떤 scalar가 opening-bound인지 추적하기가 급격히 어려워진다.
+3. transcript binding이 맞는지만 확인하고, **final equation에 들어가는 모든 외부 scalar가 실제 commitment-bound인지** 까지는 체크리스트에 없는 경우가 많다.
+4. implementation이 gnark 같은 안전한 구조를 "비슷하게" 따르는 것처럼 보여도, custom widget / batched opening 최적화가 들어가면 이 경계가 무너지기 쉽다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE: verifier consumes prover-supplied fixed/selectors evaluations
+// without opening them against verifier-key commitments.
+let q_l_eval = proof.q_l_eval;
+let q_r_eval = proof.q_r_eval;
+let q_m_eval = proof.q_m_eval;
+let q_o_eval = proof.q_o_eval;
+
+let gate_term = q_m_eval * a_eval * b_eval
+    + q_l_eval * a_eval
+    + q_r_eval * b_eval
+    + q_o_eval * c_eval;
+
+verify_pairing(gate_term, witness_openings, quotient_opening)?; // MISSING: open(q_*, zeta)
+
+// SAFER: every prover-supplied fixed/public evaluation must be commitment-bound.
+verify_opening(vk.q_l_commitment, zeta, proof.q_l_eval, proof.q_l_opening)?;
+verify_opening(vk.q_r_commitment, zeta, proof.q_r_eval, proof.q_r_opening)?;
+verify_opening(vk.q_m_commitment, zeta, proof.q_m_eval, proof.q_m_opening)?;
+verify_opening(vk.q_o_commitment, zeta, proof.q_o_eval, proof.q_o_opening)?;
+```
+
+**Defensive heuristic**:
+- final verifier equation에 들어가는 prover-supplied scalar를 전부 분류해 `local / opening-bound / commitment-direct` 셋 중 하나가 아니면 즉시 경고할 것
+- fixed/selectors/lookup-table evaluations 도 witness evaluations 와 동일한 수준으로 opening-proof 검증을 요구할 것
+- custom widget / batched opening / linearization optimization을 넣을 때 **"proof에서 읽었지만 열어보지 않은 field"** diff를 CI에서 검사할 것
+- same verification key 아래서 false statement proof를 시도하는 negative test를 둘 것
+- verifier 리뷰에서 "public polynomial이니 안전" 이라는 직관을 금지하고, 실제 binding path를 표로 추적할 것
+
+**Sources**: https://osec.io/blog/2026-04-30-unverified-evaluations-dusk-plonk/ | https://github.com/dusk-network/plonk | https://github.com/dusk-network/rusk
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 에는 PLONK/Groth16/STARK verifier, proof-backed reserve attestation, zk coprocessor, or same-VK proof acceptance path가 없다.
+- `keeper/src/hermes.rs` 의 `Proof::WormholeMerkle` 는 Wormhole/Pyth accumulator-merkle verification 경계로, 이번 A121의 **fixed-polynomial opening omission** 과는 다른 클래스다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 zk-backed collateral attestations, proof-based solvency, privacy-preserving reserve statements를 붙이면 A121은 즉시 relevant 해진다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A121 Fixed-Polynomial Evaluation Opening Omission / Same-VK Proof Forgery | verifier consumes prover-supplied evaluations of selector/fixed/public polynomials in the final proof equation without opening them against trusted commitments, turning those scalars into attacker-controlled free variables under the same verification key | forged proof for false statements, unbacked mint/withdraw, invalid shielded transfer admission, value release despite intact setup/transcript ordering | current Microstable code has no zk verifier or proof-acceptance path; **NOT ACTIVE today**, but any future zk-attestation integration must audit commitment-binding completeness as a first-class boundary |
+
+**Matrix state as of 2026-05-01 (red-team daily update)**: prior coverage retained; **A121** added after the Dusk PLONK disclosure separated **verifier-side opening omission** from setup failures (A49), transcript-binding failures (A50), and guest-parser forgeries (A118). Matrix is now **128+ named vectors + META-01~63 + B73~B78 = 191+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from A121 itself**; current result is future-facing only.
 
 ## 2026-04-28 Multi-Round Bundle Simulation Pattern Addition
 
