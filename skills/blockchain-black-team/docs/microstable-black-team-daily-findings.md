@@ -1,5 +1,51 @@
 ---
 
+## 2026-05-03 Daily Check
+
+### Source Sweep (24h~7d window: 2026-04-26 to 2026-05-03 KST)
+- Sources checked: `rekt.news` frontpage + **Volo / KelpDAO** deep pages, `hacked.slowmist.io`, GitHub advisory fallback queries + direct `web_fetch` for **rustls-webpki** advisories, `solana.com/news/solana-ecosystem-security`, `osec.io` **Dusk PLONK** post, plus local Microstable code re-read
+- **Confirmed in-window items**:
+  1. **OtterSec 2026-04-30 Dusk PLONK** is still admissible only as an **already-absorbed A121 reinforcement**, not a new vector. The mechanism remains: verifier consumed prover-supplied fixed/selector polynomial evaluations without binding them back to trusted commitments.
+  2. **KelpDAO** and **Volo** remain **already-mapped** signals, not new matrix deltas today. They continue to reinforce **D27 RPC poisoned-failover / trust-layer takeover** and **B15 key compromise / privileged signer collapse** respectively.
+  3. GitHub advisory spot checks did surface recent **rustls-webpki** trust-floor issues, but for this run they only reinforce the existing **A115** lane. No fresh **Solana / Anchor / SPL** code-mechanism advisory in the 24h~7d window required a new named vector.
+  4. Solana Foundation's **ecosystem security / STRIDE / SIRN** announcement is a defensive-program update, not a reusable exploit primitive.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 new reinforcements requiring matrix edits**
+- Result: **daily findings only**, no `attack-matrix.md` / `solana-specific.md` delta justified by the public code-level evidence window
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent, so the current on-chain / keeper / dashboard deployment set still has no machine-checkable binding to the audited commit/artifact set
+- **Bypass / abuse path**: an attacker or insider does not need to defeat a reviewed invariant directly if an unaudited code delta can still ride the normal build/release path. The security boundary is bypassed by **continuity failure** between audited source and live artifact.
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, and CI/release verification that fails on absence or mismatch
+
+### Microstable Code Sweep
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A121 fixed-polynomial / selector-eval omission** | on-chain + keeper + dashboard proof-acceptance surface | ✅ NOT ACTIVE | Current Microstable repo still has **no zk verifier / proof-acceptance path** analogous to Dusk PLONK. Today's Dusk research is relevant only as a future integration guardrail. |
+| **D27 RPC poisoned-failover / verifier-specific spoofing** | dashboard RPC runtime reads + keeper secondary RPC model | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:208-335` cross-checks only `getGenesisHash`; runtime methods generally accept a single endpoint result, and `initSolanaContext()` binds `Connection` to a single `CFG.RPC_URL` (`docs/app.js:1270-1278`). This is still failover-oriented availability, not provider-independent integrity quorum. |
+| **A115 constrained-CA / allowlisted-host impersonation** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/keeper/Cargo.toml:23` still uses `reqwest` + `rustls-tls`, and `solana/Cargo.lock` still resolves `rustls-webpki 0.101.7` and `0.103.9`, both below the patched floor for the current advisory lane. |
+| **A75 MANUAL_ORACLE_MODE drift guard** | keeper `oracle.rs` + on-chain `update_oracle()` | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/price_feed.rs` does cross-source validate CoinGecko/Binance, but `keeper/src/oracle.rs:743-873` still enables manual mode and writes externally validated prices without an explicit keeper-side drift cap versus the last trusted on-chain anchor before `ix_update_oracle`. |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` rebalance admission logic | ⚠️ MEDIUM CARRY-FORWARD | Reviewed state still shows large-rebalance gating keyed to **single-call** turnover thresholding rather than a cumulative cross-call drift accumulator. |
+| **B44 SPL delegate persistence / user ATA drain conduit** | on-chain collateral intake | ⚠️ MEDIUM CARRY-FORWARD | Current repo scan still does not show an explicit `delegate.is_none()` style intake guard on user collateral token accounts before protocol-side transfer assumptions. |
+| **D26 canonical frontend / auxiliary client-surface risk** | `docs/index.html`, `docs/app.js` | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on **meta-only CSP**, and `docs/app.js:43-48,1643-1688` still ships a browser-side devnet faucet signer. Devnet-only intent lowers impact, but not the architectural smell. |
+| **B45 Audit Attestation Gap** | all code | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` is still absent. |
+
+### Today's Verdict
+- New incidents found: **0 requiring a new named vector**
+- New attack vectors added: **0**
+- New **CRITICAL/HIGH** findings: **0 new**, but **B45 HIGH** remains active
+- Highest-priority blue-team actions today:
+  1. Add and enforce `security/audit-attestation.json`
+  2. Upgrade or pin away vulnerable `rustls-webpki` resolution in keeper TLS stack
+  3. Add provider-independent RPC observation quorum or degraded-mode privileged-action deny for keeper/dashboard reads
+  4. Add a manual-price-vs-last-trusted-anchor drift gate before fallback `ix_update_oracle`
+  5. Remove browser-side faucet signing material and move CSP from meta tag to HTTP headers
+
 ## 2026-05-01 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-24 to 2026-05-01 KST)
