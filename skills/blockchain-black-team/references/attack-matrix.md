@@ -1,4 +1,4 @@
-# Attack Matrix — 129+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06) | META-01~65
+# Attack Matrix — 129+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06) | META-01~66
 
 ## A. Smart Contract Vectors
 
@@ -1040,6 +1040,7 @@ location /rpc {
 | META-63 Invariant-to-Operations Promotion Gap (IOPG) — 퍼플팀 2026-04-30 | **핵심 비대칭**: 업계는 invariant/fuzz/FV/PoC validation을 빠르게 고도화하지만, 그렇게 발견하고 문서화한 핵심 불변식이 **런타임 monitor / disagreement alarm / auto-halt threshold** 로 승격되지 않는 경우가 많다. 결과적으로 팀은 `무엇을 지켜야 하는가` 는 알고도, 운영에서는 `언제 그 불변식이 깨졌는가` 를 못 본다. KelpDAO처럼 실제 decisive control이 live conservation monitoring인 사고에서 이 공백이 직접 드러난다. **왜 감사가 놓치는가**: ① 감사/FV/competition은 주로 pre-deploy artifact를 만든 뒤 종료되며, 그 산출물이 observability spec으로 이어지는지까지는 거의 요구하지 않는다. ② monitoring ownership은 ops/SRE로, invariant ownership은 auditors/researchers로 분리돼 같은 속성(property)이 문서에만 머무른다. ③ fuzz/FV 성공이 `우리는 이미 이 속성을 관리하고 있다` 는 착시를 만든다. ④ protocol-to-protocol conservation, artifact continuity, verifier disagreement 같은 런타임 속성은 code correctness가 아니라 운영 telemetry 문제로 축소된다. **META-15/53/62와의 구별**: META-15는 테스트가 라이브 체인 의미론을 검증하는가, META-53은 actuator를 실제로 발사할 수 있는가, META-62는 언제 불완전한 증거로 끊을 것인가를 다룬다. META-63은 **그 전에 애초에 어떤 불변식을 운영 신호로 승격했는가** 를 규정한다. |
 | META-64 Revocation-Surface Completeness Gap (RSCG) — 퍼플팀 2026-05-01 | **핵심 비대칭**: 팀이 `pause`, `rotate`, `revoke`, `freeze`, `blacklist` 를 하기로 결정해도, 실제로 같은 권한을 운반하는 **전체 revocation surface** 를 다 세지 못하면 containment는 부분적으로만 끝난다. 키 하나는 교체했지만 sibling token, deploy integration, OAuth grant, legacy signer, pending rotation set, downstream approval, sidecar attestation 같은 **동등 권한 표면** 이 남는다. **왜 감사가 놓치는가**: ① 위협 모델이 authority를 graph가 아니라 principal list로 축약한다. ② 감사와 바운티는 direct exploit path는 보지만, 같은 authority를 공유하는 sibling surface의 **완전한 revoke set** 까지는 잘 모델링하지 않는다. ③ runbook는 `무엇을 할지` 는 적어도 `무엇을 함께 끊어야 닫히는지` 의 inventory는 약한 경우가 많다. ④ 일부 rotation/pause 성공이 곧 incident closure라는 착시를 만들어 equivalent authority 잔존을 가린다. **META-54/58/62/63과의 구별**: META-54는 어떤 표면이 실효 권한을 갖는가, META-58은 그 경계를 누가 소유하는가, META-62는 언제 끊을 것인가, META-63은 무엇을 런타임 신호로 볼 것인가를 다룬다. META-64는 **끊기로 한 뒤 실제로 무엇을 전부 끊어야 닫히는가** 를 규정한다. |
 | META-65 Assurance-Commoditization / Response-Scarcity Gap (ACRSG) — 퍼플팀 2026-05-03 | **핵심 비대칭**: Foundry invariant/fuzz, 공개 FV 도구, AI bug bounty autopilot 같은 흐름으로 **취약점 탐색·시퀀스 생성·검증 보고서 작성 노동은 점점 싸고 병렬적이며 기억을 가진 자동화 작업** 이 된다. 반면 실제 incident 대응에 필요한 authority inventory, actuator binding, freeze/rotate evidence, owner escalation은 여전히 **소수 인간이 수동으로 유지하는 희소 자산** 이다. 그 결과 방어는 `취약점을 아느냐` 가 아니라 **닫을 산출물을 항상 최신으로 유지하느냐** 에서 밀린다. **왜 감사가 놓치는가**: ① 감사는 보통 “전문가가 한 번 깊게 보면 찾을 수 있는가”를 묻지, 다수의 저비용 자동화가 계속 훑는 세계를 전제하지 않는다. ② runbook, authority manifest, command artifact를 보안 핵심 산출물이 아니라 운영 문서로 낮게 본다. ③ 취약점 발견 도구의 발전이 곧 방어 우위라고 착각해 response artifact의 최신성 비용을 과소평가한다. ④ memory-backed autonomous hunting은 공격 가설을 세션 간 축적하지만, defender 쪽 inventory와 actuator는 자주 사람 머릿속이나 산발적 문서에 남는다. **META-40/41/63/64와의 구별**: META-40은 AI 도구의 양면성, META-41은 disclosure 이후 copycat tempo, META-63은 발견한 속성을 운영 신호로 승격하는 문제, META-64는 끊기로 한 뒤 revoke set 완전성을 다룬다. META-65는 **그 모든 전 단계에서 공격 탐색 노동이 대중화되는 속도와 방어 대응 산출물이 희소한 속도의 차이** 를 규정한다. |
+| META-66 Assurance-Plane Failure Semantics Gap (APFSG) — 퍼플팀 2026-05-06 | **핵심 비대칭**: 팀은 validator, prover, invariant engine, attestation check, RPC cross-check 같은 assurance plane을 계속 추가하지만, 대개 `무엇이 유효한가` 는 정교하게 쓰면서도 **그 plane이 hang / diverge / under-detect / timeout 할 때 시스템이 fail-stop 해야 하는지, 제한적 fail-open 으로 갈 수 있는지, 어떤 override 와 사후 검증이 필요한지** 는 느슨하게 남긴다. RustSec D55는 검증 경로 자체가 원격 OOM kill-switch가 될 수 있음을, recent Foundry gap signal은 널리 쓰는 invariant engine도 실전 버그를 놓칠 수 있음을 보여준다. **왜 감사가 놓치는가**: ① assurance component를 benign safeguard로 보고 availability / degraded-mode semantics를 별도 trust boundary로 취급하지 않는다. ② pass 조건은 테스트해도 validation-cost ceiling, hang path, disagreement contract는 잘 고정하지 않는다. ③ 여러 assurance layer가 생겨도 `누가 언제 override 하는가` 와 post-override evidence 요건은 ops 관행으로 밀린다. ④ 더 많은 검증층이 곧 더 안전하다는 직관이 failure semantics 부재를 가린다. **META-57/63/65와의 구별**: META-57은 redundancy와 failover 독립성, META-63은 속성을 운영 신호로 승격하는 문제, META-65는 탐색 노동 상품화와 대응 희소성을 다룬다. META-66은 **그 신호·검증면 자체가 실패할 때 시스템이 어떤 보안 의미론으로 전환되는가** 를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -7984,6 +7985,82 @@ Microstable에 오늘 새 code exploit path가 열린 것은 아니다. 다만 *
 **Purple Team verdict**: 2026년의 문제는 단지 공격이 더 영리해졌다는 것이 아니다. **탐색은 상품화되고, 대응은 아직 희소하다.** META-65는 이 구조, 즉 **assurance tooling의 대중화 속도보다 response artifact 유지 능력이 더 느린 문제** 를 **Assurance-Commoditization / Response-Scarcity Gap** 으로 고정한다.
 
 **Matrix state as of 2026-05-03 (purple daily update)**: **128+ named vectors + META-01~65 + B73~B78 = 193+ total entries**. META-65 added by Purple Team 2026-05-03: **Assurance-Commoditization / Response-Scarcity Gap (ACRSG)**. Foundry의 저비용 invariant search, AI bug bounty autopilot의 memory-backed hunt loop, Resolv의 signer-environment compromise, OWASP의 사람 중심 IR, Stingrai의 operator-side loss concentration을 하나의 `cheap search ≠ cheap closure` 패턴으로 상위 구조화한다.
+
+### META-66. Assurance-Plane Failure Semantics Gap (APFSG)
+
+**Published**: 2026-05-06 | **Source**: Purple Team Daily Evolution | **Signals**: RustSec `RUSTSEC-2026-0118` / `RUSTSEC-2026-0120` (issued 2026-05-01), GitHub `foundry-rs/foundry` issue `#14437` (surfaced 4 days ago in evidence sweep), Immunefi bug bounty surface (updated 1 day ago), current operational-guidance surfaces cross-read during 2026-05-06 sweep
+
+**Mechanism**: 팀은 2026년에 validator, prover, invariant engine, attestation check, RPC cross-check, proof-verifier sidecar처럼 **더 많은 assurance plane** 을 붙이고 있다. 그런데 대부분의 설계는 `success semantics` 에 치우친다.
+
+- 어떤 입력이 유효한가
+- 어떤 proof 가 참인가
+- 어떤 invariant 가 깨졌는가
+- 어떤 attestation hash 가 expected value 와 일치하는가
+
+반면 **failure semantics** 는 자주 비어 있다.
+
+- validator가 hang 하면 즉시 fail-stop 인가, retry 인가, weaker path fallback 인가
+- cross-check disagreement가 나면 write 금지인가, read-only 인가, operator override 인가
+- invariant engine이 blind spot을 가진 것이 드러나면 기존 green build를 얼마나 downgrade 할 것인가
+- attestation / proof plane이 unavailable 할 때 emergency lane은 어떤 추가 증거를 요구하는가
+
+이 공백이 생기면 assurance plane은 두 방향으로 모두 위험해진다.
+
+1. **fail-stop collapse**: RustSec D55처럼 검증 경로 자체가 root-stall / OOM kill-switch가 되어 시스템을 멈춘다.
+2. **fail-open drift**: 검증기가 느리거나 자주 틀린다고 느끼는 순간, 운영자는 pressure 아래서 fallback / bypass / primary-only / manual override를 넓히고 그 상태가 반영구화된다.
+3. **false-assurance carryover**: Foundry #14437 신호처럼 널리 쓰는 invariant engine도 실전 벤치에서 gap을 보이는데, 조직은 여전히 "검증층이 있으니 괜찮다" 는 green signal을 유지하기 쉽다.
+
+즉 문제는 `검증층이 있는가` 자체보다, **그 검증층이 실패할 때 시스템이 어떤 보안 의미론으로 전환되는가** 다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- **RustSec D55** 는 validation strictness가 그 자체로 availability kill-switch가 될 수 있음을 보여준다.
+- **Foundry #14437** 는 popular invariant tooling도 실전 버그 탐지 completeness가 자동으로 보장되지 않음을 보여준다.
+- **Immunefi의 계속 열려 있는 bounty surface** 는 공격자 쪽에서 assurance blind spot을 상시 찾는 경제적 유인이 살아 있음을 보여준다.
+- **운영 가이드 계열 신호** 는 결국 incident 시 누가 override 하고 어떻게 검증을 복구할지까지 정해야 함을 암시한다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-66이 추가로 설명하는 것 |
+|---|---|---|
+| META-57 CRCFG | redundancy가 있어도 failover가 같은 truth plane으로 몰릴 수 있다 | assurance plane이 **하나만 있어도** hang / timeout / under-detect / divergence 시 의미론이 비어 있으면 위험하다 |
+| META-63 IOPG | 찾은 속성을 운영 신호로 승격했는가 | 그 신호를 내는 **검증면이 실패할 때** 무엇을 할지까지 고정했는가 |
+| META-65 ACRSG | cheap search vs scarce response artifact | response artifact가 있더라도, **검증면 실패 시 override 정책 자체가 모호** 하면 closure가 흔들린다 |
+
+**왜 감사가 놓치는가**:
+
+1. **guardian-benign assumption**: validator / prover / attestation checker를 보통 방어 장치로만 보고, 자체 failure semantics를 별도 threat boundary로 두지 않는다.
+2. **pass-centric testing**: 테스트와 리뷰가 pass/fail correctness에는 집중해도, hang path / validation-cost ceiling / disagreement contract는 잘 고정하지 않는다.
+3. **override informalism**: 어떤 assurance layer를 누가 언제 우회할 수 있는지, 그리고 우회 후 어떤 추가 evidence가 필요한지 문서보다 운영자 관행에 남는다.
+4. **more-checks-equals-safer bias**: 검증층 숫자가 늘수록, 그 층이 실패할 때의 blast radius는 오히려 가려진다.
+
+**Microstable architecture implication**:
+
+Microstable은 이 메타 패턴에 대해 **부분적으로는 이미 좋은 대응** 을 가지고 있다.
+
+- secondary RPC degraded mode가 있다.
+- degraded mode에서도 emergency shutdown path를 유지한다.
+- Cargo.lock / binary attestation continuity check가 있다.
+
+하지만 현재 공개 artifact 기준으로는 아래를 한 장으로 묶은 **failure-semantics manifest** 가 약하다.
+
+- RPC divergence / timeout 시 read, write, emergency action이 각각 어떤 정책으로 전환되는가
+- attestation absence나 hash drift 시 즉시 중단인지, 수동 override인지, 증빙 요건이 무엇인지
+- manual oracle override가 허용되는 조건과 종료 검증이 무엇인지
+- future proof / validator / local security sidecar를 붙일 때 fail-stop vs fail-open 경계가 어디인지
+
+따라서 carry-forward인 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `assurance plane failure semantics` 관점에서 다시 한 묶음이 된다.
+
+**Minimum defense delta**:
+
+1. assurance layer마다 `success semantics / failure semantics / override owner / max validation latency-cost / post-override evidence` 표를 만든다.
+2. degraded mode를 availability 기능이 아니라 **integrity-mode transition** 으로 명시한다.
+3. validator/prover/attestation plane이 unavailable 한 상황의 tabletop을 별도로 돌린다.
+4. 미래 DNSSEC / proof / local validation sidecar 도입 시에는 correctness review와 별개로 **failure-mode review** 를 릴리스 게이트에 넣는다.
+
+**Purple Team verdict**: 검증층이 많다는 사실만으로는 안전하지 않다. **위험은 그 층이 통과할 때가 아니라, 멈추거나 갈라지거나 믿을 수 없게 되었을 때 어떤 의미론으로 전환되는가** 에 숨어 있다. META-66은 이 구조, 즉 **assurance plane의 실패 의미론이 비정형으로 남는 문제** 를 **Assurance-Plane Failure Semantics Gap** 으로 고정한다.
+
+**Matrix state as of 2026-05-06 (purple daily update)**: **129+ named vectors + META-01~66 + B73~B78 = 195+ total entries**. META-66 added by Purple Team 2026-05-06: **Assurance-Plane Failure Semantics Gap (APFSG)**. RustSec D55의 validation-loop kill-switch, Foundry #14437의 invariant-engine completeness gap, recent bounty-search pressure, Microstable의 degraded/attestation/manual-override seams를 하나의 `success semantics ≠ failure semantics` 패턴으로 상위 구조화한다.
 
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
