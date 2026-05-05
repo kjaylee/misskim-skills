@@ -1464,3 +1464,27 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 69. ☐ Jito/private relay/bundle simulator를 도입할 때는 per-origin simulation budget, bundle round cap, state-dependency depth cap, late-fail penalty, public-path fail-open 금지를 함께 설계하고 chaos test로 검증할 것
+
+---
+<!-- AUTO-ADDED 2026-05-06 (Red Team Daily Evolution) — D55 DNSSEC closest-encloser root-stall loop -->
+
+## 2026-05-06 DNSSEC Validator Availability Trust-Boundary Pattern
+
+### D55 — DNSSEC Closest-Encloser Root-Stall Loop / Cross-Zone Validation OOM
+- **Solana context**: Solana keeper / oracle fetcher / bridge watcher가 향후 RPC/oracle hostname resolution 신뢰도를 높이겠다며 Rust-native DNSSEC-validating resolver나 sidecar를 붙이면, 그 경로는 단순한 "더 안전한 DNS" 가 아니라 **proof-validation state machine** 이 된다. 이번 Hickory 신호는 그 state machine 자체가 cross-zone 응답 하나로 멈춰 OOM까지 갈 수 있음을 보여준다.
+- **핵심 패턴**: closest-encloser proof validator가 `SOA owner` 가 `QNAME` 의 ancestor일 것이라 가정하고 `base_name()` 으로 root까지 올라가는데, 실제 응답의 SOA owner가 다른 zone이면 종료 조건이 영원히 성립하지 않는다. debug build는 panic, release build는 root에서 candidate/hash allocation을 계속 반복하며 메모리를 태운다.
+- **왜 Solana에서 특히 위험한가**:
+  1. 팀은 DNSSEC를 poisoning 방어로만 보지, resolver availability 자체를 새로운 trust boundary로 잘 모델링하지 않는다.
+  2. keeper의 RPC / price API / attestation URL resolution이 막히면 on-chain code가 멀쩡해도 oracle update와 rebalance window가 조용히 사라진다.
+  3. multi-RPC failover를 넣어도 validating resolver plane이 단일이면, 모든 failover가 같은 root-stall validator에 묶일 수 있다.
+- **Source signals**:
+  - RustSec `RUSTSEC-2026-0118` (`hickory-proto`), `RUSTSEC-2026-0120` (`hickory-net`) — 2026-05-01
+- **Microstable current status**:
+  - `solana/Cargo.lock`, `keeper/Cargo.toml`, `keeper/src/price_feed.rs` 스캔에서 `hickory`, `hickory-net`, `hickory-proto`, `trust-dns`, custom DNSSEC validator 미발견
+  - 현재 keeper는 `reqwest`, `solana-client`, 시스템 DNS 해석 경로를 사용하며 local validating resolver / DNSSEC sidecar 흔적이 없다
+  - 따라서 **NOT ACTIVE today**
+  - 다만 향후 RPC/oracle failover 앞단에 Rust-native validating resolver를 붙이면 즉시 재평가해야 한다
+- **Checklist item 71**: ☐ Rust-native validating resolver / DNSSEC sidecar를 도입할 때는 closest-encloser validation에 root-break, ancestor-proof, allocation-cap regression test를 넣고, resolver failure가 public-path fail-open으로 이어지지 않게 분리된 fallback policy를 둘 것
+
+### Solana-Specific Defense Checklist Update
+71. ☐ Rust-native validating resolver / DNSSEC sidecar를 도입할 때는 closest-encloser validation에 root-break, ancestor-proof, allocation-cap regression test를 넣고, resolver failure가 public-path fail-open으로 이어지지 않게 분리된 fallback policy를 둘 것

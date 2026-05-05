@@ -1,4 +1,4 @@
-# Attack Matrix — 128+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03) | META-01~65
+# Attack Matrix — 129+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06) | META-01~65
 
 ## A. Smart Contract Vectors
 
@@ -8797,6 +8797,82 @@ fn evaluate_bundle(bundle: &[Tx], budget: &mut Budget) -> SimResult {
 | D54 Multi-Round Transaction Simulation Dependency-Bomb / Bundle-Service Asymmetric DoS | attacker submits state-dependent bundles that force expensive sequential simulator work while keeping own capital/risk low, degrading bundle-service throughput and builder revenue | private-relay slowdown, searcher QoS degradation, builder revenue loss, delayed bundle execution, fail-open risk into weaker public path | current Microstable repo shows **no Jito/private bundle path today**, so **NOT ACTIVE**; future bundle-based keeper routing must treat simulation-budget abuse as a first-class security invariant |
 
 **Matrix state as of 2026-04-28 (red-team daily update)**: prior coverage retained; **D54** added after the new arXiv work made **bundle-service simulation-cost asymmetry** concrete enough to separate from generic DoS. Microstable has **no new CRITICAL/HIGH active finding from D54 itself**; the open **B45 audit-attestation gap** remains the top current HIGH continuity issue.
+
+## 2026-05-06 DNSSEC Closest-Encloser Root-Stall Validation-Loop Pattern Addition
+
+### D55. DNSSEC Closest-Encloser Root-Stall Loop / Cross-Zone Validation OOM
+
+**Source signals (2026-05-06 sweep)**:
+- RustSec `RUSTSEC-2026-0118` (`hickory-proto`) and `RUSTSEC-2026-0120` (`hickory-net`) — issued 2026-05-01
+
+**Key insight**: 많은 팀이 DNSSEC validator를 붙이면 "cache poisoning은 줄고 안전해진다" 고 생각한다. 하지만 이번 신호의 핵심은 **검증을 더 엄격하게 한 경로 자체가 새로운 liveness kill-switch** 가 될 수 있다는 점이다. `QNAME` 이 `SOA owner` 의 자손일 것이라는 가정이 깨진 cross-zone 응답 하나만으로, closest-encloser proof 검증 루프가 **DNS root에서 멈춘 채 계속 `base_name()` 과 hash candidate allocation을 반복** 한다. 즉 문제는 단순 parser panic이 아니라, **proof-validation state machine이 trust-boundary 위반을 종료 조건 없이 흡수** 한다는 데 있다.
+
+**Attack chain**:
+1. victim keeper / bridge watcher / oracle fetcher uses a Hickory DNSSEC-validating path (`DnssecDnsHandle`) for endpoint resolution.
+2. attacker can return or influence a NoData / NXDomain response requiring NSEC3 closest-encloser proof, often via insecure CNAME crossing into a DNSSEC-signed zone.
+3. authority section carries an SOA whose owner is **not an ancestor** of the queried name.
+4. validator walks `QNAME -> parent -> ... -> root`, but the termination condition is `current == soa_name`; because `soa_name` is never reached, the loop stalls at root.
+5. debug builds panic at the root assertion; release builds allocate candidate names / hashes unbounded until memory exhaustion, stalling or killing resolution for downstream RPC / oracle traffic.
+
+**Why this is distinct from existing vectors**:
+- **D20** = generic resource-exhaustion DoS.
+- **D55** = a **DNSSEC proof-validation loop** whose stopping condition silently assumes zone ancestry and therefore becomes attacker-triggerable through cross-zone response semantics.
+- **D53** = resolver cache-poisoning via wrong authority-binding context.
+- **D55** = no cache poisoning is required; the validator dies while trying to prove non-existence.
+- **B58** = QUIC transport-layer panic / liveness loss after name resolution.
+- **D55** = resolution itself becomes the kill plane before transport is even reached.
+
+**왜 감사가 놓치는가**:
+1. DNSSEC validation path는 "보안 강화 옵션" 으로 보이기 쉬워 availability threat-model을 별도로 세우지 않는다.
+2. loop body가 `base_name()` progression을 하므로 superficially terminating해 보이지만, root 도달 후 invariant가 깨질 때 release build에서는 계속 할당만 반복한다.
+3. resolver / recursor / client가 같은 `DnssecDnsHandle` primitive를 공유해 blast radius가 넓은데, 리뷰는 특정 binary 단위로만 이뤄지기 쉽다.
+4. 운영자는 DNS 장애를 upstream outage로 오진하기 쉽고, root cause가 cross-zone NSEC3 validation path라는 점을 늦게 본다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: loop terminates only when current candidate == soa owner,
+// implicitly assuming soa_name is an ancestor of qname.
+let mut name = qname.clone();
+while name != soa_name {
+    candidates.push(name.clone());
+    hashed.push(hash_name(&name)?);
+    name = name.base_name(); // stalls at root if soa_name is not an ancestor
+}
+
+// SAFER SHAPE: explicitly break on root / non-ancestor condition before
+// allocating more candidates.
+let mut name = qname.clone();
+loop {
+    if name == soa_name {
+        break;
+    }
+    if name.is_root() || !qname.zone_of(&soa_name) {
+        return Err(Error::InvalidCrossZoneClosestEncloser);
+    }
+    candidates.push(name.clone());
+    hashed.push(hash_name(&name)?);
+    name = name.base_name();
+}
+```
+
+**Defensive heuristic**:
+- `hickory-net >= 0.26.1` 또는 동등 패치 경로로 이행할 것
+- closest-encloser candidate walk에 **root break / ancestor proof / allocation cap** 을 동시에 둘 것
+- DNSSEC validation을 켜는 경우 insecure CNAME → signed-zone NoData/NXDomain 교차 경로를 regression test에 넣을 것
+- security-critical RPC/oracle hostname resolution에서 DNSSEC validator failure를 단순 retry loop로 묻지 말고 circuit-breaker + fallback policy로 분리할 것
+- local validating resolver / sidecar를 붙일 때는 "validation strictness 증가 = availability risk 증가" 를 별도 SLO로 모델링할 것
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock`, `keeper/Cargo.toml`, `keeper/src/price_feed.rs` 스캔에서 `hickory`, `hickory-net`, `hickory-proto`, `trust-dns`, custom DNSSEC validator 경로는 확인되지 않았다.
+- 현재 keeper는 `reqwest`, `solana-client`, 시스템 DNS 해석 경로를 사용하며, 레포 내 local DNSSEC-validating resolver / recursor 흔적도 보이지 않았다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 RPC/oracle failover 앞단에 Rust-native validating resolver나 DNSSEC sidecar를 붙이면 D55는 즉시 relevant 해진다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D55 DNSSEC Closest-Encloser Root-Stall Loop / Cross-Zone Validation OOM | DNSSEC validator assumes SOA owner is an ancestor of QNAME during closest-encloser proof construction; cross-zone response stalls at root and allocates unbounded candidates until panic/OOM | endpoint-resolution halt, keeper/oracle liveness loss, debug panic or release OOM, possible fail-open into weaker resolver path | current Microstable dependency scan found no Hickory / DNSSEC validator path, so **NOT ACTIVE today**; future local validating resolver adoption must treat validation-loop availability as a first-class trust boundary |
+
+**Matrix state as of 2026-05-06 (red-team daily update)**: prior coverage retained; **D55** added after classifying `RUSTSEC-2026-0118` / `0120` as a **DNSSEC validation-state-machine liveness failure** distinct from D53 resolver cache poisoning and generic D20 resource DoS. Matrix is now **129+ named vectors + META-01~65 + B73~B78 = 194+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from D55 itself**; current result is future-facing unless a validating resolver layer is introduced.
 
 ## 2026-04-26 Recursive DNS Resolver Cache-Poisoning Pattern Addition
 
