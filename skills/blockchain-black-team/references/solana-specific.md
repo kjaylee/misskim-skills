@@ -1488,3 +1488,30 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 71. ☐ Rust-native validating resolver / DNSSEC sidecar를 도입할 때는 closest-encloser validation에 root-break, ancestor-proof, allocation-cap regression test를 넣고, resolver failure가 public-path fail-open으로 이어지지 않게 분리된 fallback policy를 둘 것
+
+---
+<!-- AUTO-ADDED 2026-05-14 (Red Team Daily Evolution) — A122 zero-copy validation opt-out -->
+
+## 2026-05-14 Anchor Zero-Copy Trust-Boundary Pattern
+
+### A122 — Anchor Zero-Copy Validation Opt-Out / AccountLoader Trust Collapse
+- **Solana context**: Solana 팀은 성능이나 migration 편의 때문에 `AccountLoader<T>` / zero-copy path를 도입할 때, raw `UncheckedAccount` 보다 더 안전하다고 느끼기 쉽다. 그러나 Anchor upstream commit `9d452e3` / PR `#4162` 는 initialized zero-copy account path에서도 owner/discriminator 검증을 우회하는 공식 진입점을 더 드러냈다.
+- **핵심 패턴**: 코드가 `AccountLoader::new_unchecked` 또는 동급 opt-out helper로 계정을 감싼 뒤, 조금 뒤에서 `load()` / `load_mut()` 결과를 이미 검증된 typed state처럼 사용한다. 그러면 zero-copy가 “빠른 deserialization” 이 아니라 **공격자 바이트를 trusted state로 재해석하는 지름길** 이 된다.
+- **왜 Solana에서 특히 위험한가**:
+  1. zero-copy는 vault, oracle cache, strategy state, large book/queue 등 고가치 hot state에 붙기 쉽다.
+  2. PDA/owner/discriminator 검증이 outer layer에 있다고 믿는 순간, 실제 invariant establishment 지점이 흐려진다.
+  3. migration / CPI / sidecar plumbing에서는 unchecked path가 “일시적 예외” 로 들어왔다가 상시 hot path로 굳기 쉽다.
+  4. Solana account model에서는 같은 길이/유사 layout 바이트만 맞아도 review 상 눈속임이 가능해, typed wrapper가 오히려 경계 감각을 무디게 할 수 있다.
+- **Source signals**:
+  - Anchor commit `9d452e3` (`feat: allow bypassing owner/disc checks on zero copy accounts (#4162)`, merged 2026-05-13)
+  - Anchor PR `#4162`
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `AccountLoader`, `#[account(zero_copy)]`, `bytemuck`, `new_unchecked`, `try_from_unchecked` 사용 흔적을 찾지 못했다.
+  - raw-account 사용처는 `UncheckedAccount` 기반이지만, `read_pyth_price_update()` 와 migration 경로에서 owner/discriminator/PDA를 수동 검증한다.
+  - keeper도 `wire::decode_account()` 로 discriminator를 강제하고, oracle path에서 owner를 별도 검증한다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 성능 최적화나 state migration refactor로 zero-copy를 들이면 즉시 재평가 대상이다.
+- **Checklist item 72**: ☐ initialized zero-copy state에서는 `AccountLoader::try_from` 를 기본값으로 고정하고, `new_unchecked` / `try_from_unchecked` 는 creation-only or one-shot migration 경로로만 허용하며 owner/PDA/discriminator 재검증 테스트를 필수화할 것
+
+### Solana-Specific Defense Checklist Update
+72. ☐ initialized zero-copy state에서는 `AccountLoader::try_from` 를 기본값으로 고정하고, `new_unchecked` / `try_from_unchecked` 는 creation-only or one-shot migration 경로로만 허용하며 owner/PDA/discriminator 재검증 테스트를 필수화할 것

@@ -8874,6 +8874,77 @@ verify_opening(vk.q_o_commitment, zeta, proof.q_o_eval, proof.q_o_opening)?;
 
 **Matrix state as of 2026-05-01 (red-team daily update)**: prior coverage retained; **A121** added after the Dusk PLONK disclosure separated **verifier-side opening omission** from setup failures (A49), transcript-binding failures (A50), and guest-parser forgeries (A118). Matrix is now **128+ named vectors + META-01~63 + B73~B78 = 191+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from A121 itself**; current result is future-facing only.
 
+## 2026-05-14 Anchor Zero-Copy Validation Opt-Out Pattern Addition
+
+### A122. Anchor Zero-Copy Validation Opt-Out / AccountLoader Trust Collapse
+
+**Source signals (2026-05-14 KST sweep)**:
+- Anchor commit `9d452e3` (`feat: allow bypassing owner/disc checks on zero copy accounts (#4162)`, merged 2026-05-13)
+- Anchor PR `#4162` title history explicitly broadened from bypassing owner/discriminator checks to a supported API surface
+
+**Key insight**: 많은 Solana 팀이 `AccountLoader<T>` 를 보면 “zero-copy라서 빠르지만 Anchor account와 비슷하게 안전하다”는 인상을 받는다. 그런데 이번 upstream change는 initialized account path에서도 **owner/discriminator 검증을 우회하는 공식 진입점** 을 더 노출했다. 이 순간 위험은 단순한 `unsafe` 사용이 아니라, **프레임워크가 허용한 convenience API가 검증 완료 객체처럼 보이기 시작한다** 는 데 있다. 리뷰어가 “이미 Anchor loader 타입이니까 괜찮다”고 지나가면, 실제로는 arbitrary same-layout bytes를 privileged state처럼 읽거나 쓰는 trust collapse가 생긴다.
+
+**Attack chain**:
+1. protocol introduces a zero-copy account path for hot state (`vault`, `config`, `oracle cache`, `strategy state`, `position sidecar`, etc.).
+2. developer reaches for `AccountLoader::new_unchecked` or a similar owner/discriminator-bypass helper because the account is “already constrained elsewhere”, is part of a migration path, or is sourced from CPI / sidecar plumbing.
+3. one call-site later, code performs `load()` / `load_mut()` and treats the returned struct as trusted initialized state.
+4. attacker supplies an account that matches expected byte layout or passes a weaker outer constraint, but is not actually the intended typed account instance.
+5. business logic now runs on forged/stale/aliased state: authority fields, limits, debt, weights, oracle metadata, or replay guards are read from attacker-controlled bytes.
+6. result can be state confusion, policy bypass, stale-state replay, or mutation of the wrong logical object without any explicit signature failure.
+
+**Why this is distinct from existing vectors**:
+- **A96** 는 duplicate mutable aliasing이다. **A122** 는 aliasing이 아니라 **typed-state validation 자체를 framework-level opt-out으로 무너뜨리는 패턴** 이다.
+- **A112** 는 raw IDL / metadata trust-boundary confusion이다. **A122** 는 IDL이 아니라 **runtime account loading path** 의 owner/discriminator invariants가 무너지는 문제다.
+- 기존 generic “account owner/discriminator check 누락” 냄새와도 다르다. **A122의 새 요소는 공식 zero-copy loader API가 opt-out을 정당화하면서 코드리뷰 경계가 약해진다** 는 점이다.
+
+**왜 감사가 놓치는가**:
+1. `AccountLoader<T>` 자체가 typed wrapper라서 raw `UncheckedAccount` 보다 훨씬 안전해 보인다.
+2. migration / CPI / plugin sidecar / performance optimization 문맥에서 “여기서는 이미 검증했다” 는 주석이 쉽게 합리화된다.
+3. zero-copy 코드는 bytes ↔ struct 경계가 짧아 보여도, 실제 trust boundary는 **누가 owner/discriminator를 보증했는가** 에 달려 있다.
+4. framework upstream change가 feature 형태로 들어오면, 팀은 그것을 보안 완화가 아니라 정상 확장으로 받아들이기 쉽다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: initialized account path uses unchecked zero-copy loader
+// and later treats the bytes as fully validated state.
+let loader = AccountLoader::<VaultState>::new_unchecked(vault_info);
+let mut vault = loader.load_mut()?;
+require!(vault.status == STATUS_ACTIVE, ErrorCode::VaultPaused);
+vault.total_debt = vault.total_debt.checked_add(delta).unwrap();
+
+// SAFER SHAPE: initialized state must keep owner + discriminator binding.
+let loader = AccountLoader::<VaultState>::try_from(vault_info)?;
+let mut vault = loader.load_mut()?;
+
+// If an unchecked path is truly unavoidable, constrain it to creation-only
+// or one-shot migration code and re-establish explicit owner/PDA/type checks.
+require_keys_eq!(*vault_info.owner, program_id, ErrorCode::InvalidOwner);
+require_keys_eq!(vault_info.key(), expected_pda, ErrorCode::InvalidPda);
+assert_disc(vault_info, VaultState::DISCRIMINATOR)?;
+```
+
+**Defensive heuristic**:
+- initialized zero-copy state에서는 `AccountLoader::try_from` 를 기본값으로 고정하고, `new_unchecked` / `try_from_unchecked` 는 **creation-only or one-shot migration** 경로로 한정할 것
+- unchecked loader 사용 시 owner / PDA / discriminator / version field를 같은 함수 안에서 재검증하고, 그 검증이 끝나기 전에는 business field를 읽지 말 것
+- code review에서 “typed wrapper니까 안전” 추론을 금지하고, zero-copy loader call-site마다 **who established owner+type invariants?** 를 주석이 아니라 테스트로 증명할 것
+- fuzz / property test에 same-layout forged account, stale migrated account, wrong discriminator with valid size, wrong owner with valid bytes 케이스를 추가할 것
+- performance 최적화나 migration 편의 때문에 unchecked path를 상시 hot path로 승격하지 말 것
+
+**Sources**: https://github.com/solana-foundation/anchor/commit/9d452e3aa450590bafd1e16590952ec64c9d8df7 | https://github.com/solana-foundation/anchor/pull/4162
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `AccountLoader`, `#[account(zero_copy)]`, `bytemuck`, `new_unchecked`, `try_from_unchecked` 사용 흔적은 확인되지 않았다.
+- 온체인 경로의 `UncheckedAccount` 사용처(`MigrateLegacyState`, `UpdateOraclePyth`, `DevnetForceReinit`)는 zero-copy loader가 아니라 **수동 owner/discriminator/PDA 검증** 으로 방어하고 있다.
+- keeper 측도 `wire::decode_account()` 와 `oracle.rs` 에서 discriminator/owner를 수동 검증한다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 keeper hot path 또는 on-chain state migration을 zero-copy convenience path로 바꾸면 A122는 즉시 relevant 해진다. 특히 지금처럼 Anchor `0.31.1` 을 쓰는 코드베이스가 향후 upstream API를 흡수할 때 “성능 최적화 겸 refactor” 로 들어오면 review miss가 나기 쉽다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A122 Anchor Zero-Copy Validation Opt-Out / AccountLoader Trust Collapse | framework-supported unchecked zero-copy loader is used on initialized state, collapsing owner/discriminator/type invariants and turning typed-state reads into attacker-controlled or stale-byte interpretation | state confusion, forged authority/limit reads, stale-state replay, mutation of unintended logical object, policy bypass without explicit signer failure | current Microstable repo shows no `AccountLoader`/zero-copy usage and keeps manual owner/discriminator checks on raw-account paths; **NOT ACTIVE today**, but any future zero-copy refactor should treat unchecked loaders as a first-class red flag |
+
+**Matrix state as of 2026-05-14 (red-team daily update)**: prior coverage retained; **A122** added after Anchor upstream formally exposed an owner/discriminator validation opt-out for zero-copy loaders. Matrix is now **129+ named vectors + META-01~63 + B73~B78 = 192+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from A122 itself**; result is future-facing unless the codebase adopts zero-copy loaders.
+
 ## 2026-04-28 Multi-Round Bundle Simulation Pattern Addition
 
 ### D54. Multi-Round Transaction Simulation Dependency-Bomb / Bundle-Service Asymmetric DoS
