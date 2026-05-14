@@ -1,5 +1,51 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-05-15 (KST) — Daily Evolution (#49)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| SlowMist Hacked front page | 2026-05-10 ~ 2026-05-13 incidents | Renegade V1, Huma V1, Aurellion, Transit legacy TRON 사례가 모두 `deprecated/current-safe` 선언과 `실제 live authority 제거` 가 다른 문제임을 보여준다. |
+| Runtime Verification `KelpDAO Audit Passed. $292M Left Anyway.` | 2026-05-15 KST fetched | hidden assumption을 명시적 trust model로 올리지 않으면 보안 posture가 ad-hoc service assembly가 된다고 지적한다. decommission 역시 같은 수준의 explicit security contract가 필요하다. |
+
+### Phase 2) 갭 분석
+
+**오늘 신규 식별 갭**:
+
+#### META-68 — Decommission-Semantics / Legacy-Liveness Gap (DSLLG)
+- **현상**: 팀은 새 UI, 새 SDK, V2 론치, deprecated 라벨, sunset 공지로 어떤 surface가 은퇴했다고 느낀다. 하지만 실제 보안은 **old path가 여전히 live authority, standing approval, residual fee balance, reinitializer, version counter, shared vault/state write 권한을 갖는가** 로 결정된다.
+- **정황**:
+  1. **Renegade V1 (2026-05-10)** — legacy Arbitrum V1이 faulty migration으로 version counter가 어긋난 채 남았고, unprotected initializer가 다시 열리며 deprecated surface가 곧 drain path가 됐다.
+  2. **Huma Finance V1 (2026-05-11)** — 팀은 V1을 sunset 중이고 V2는 안전하다고 했지만, deprecated V1 fee pool은 계속 value-bearing surface였다.
+  3. **Aurellion Labs (2026-05-12)** — 당일 ownership 탈취는 re-initialization이었지만, 실제 사용자 손실은 **예전 approvals** 가 그대로 살아 있었기 때문에 발생했다.
+  4. **Transit Finance legacy TRON (2026-05-13)** — 현재 계약과 별도로 살아 있던 2022-era deprecated contract만으로 $1.88M 손실이 났다.
+- **왜 메타인가**:
+  1. **retirement-as-routing illusion**: UI/SDK가 더 이상 보내지 않으면 체인 위 경로도 사실상 죽었다고 느낀다.
+  2. **migration completion under-specification**: 새 경로 activation은 확인하지만 old approval revoke, old fee bucket drain, old initializer disable, old binary disable은 종료 조건으로 약하게 남는다.
+  3. **residual privilege minimization**: deprecated fee bucket, stale allowance, legacy sidecar, old config를 작은 residue로 보고 privileged control plane으로 늦게 재분류한다.
+  4. **current-safe narrative bias**: 사고 후 `current contracts are secure` 라는 표현이 실제 legacy privileged surface를 늦게 드러나게 만든다.
+- **기존 패턴과 구별**:
+  - **A119** 는 immutable legacy package가 shared state를 계속 쓰는 기술 벡터다.
+  - **META-64** 는 incident 시 revoke set completeness를 다룬다.
+  - **META-68** 은 그보다 앞서 **애초에 은퇴했어야 할 old surface가 왜 계속 live였는가** 를 다룬다. 즉 `deprecated ≠ dead` 를 조직적 종료 조건 문제로 고정한다.
+
+### Phase 3) 스킬 강화 델타 (2026-05-15)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-68 추가** + **A119** 최근 7일 legacy-live 사례로 강화
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~68 / 197+ total entries** 로 갱신
+- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-68** 반영
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0515-01 (MEDIUM latent)**: decommission-semantics / legacy-liveness gap.
+- 좋은 신호도 있다. Blue v15는 **legacy unsigned checkpoint load 제거**, **기본 HMAC key 제거**, **filename-based unsigned config 예외 제거**, **manual oracle mode 재활성 cooldown** 으로 stale compatibility path를 실제로 줄였다.
+- 그러나 현재 공개 artifact 기준으로는 **retired checkpoint/config/binary/RPC/manual-override surface가 전부 죽었는지** 한 장에서 증명하는 decommission manifest가 약하다.
+- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `legacy trust surface may still be live` 관점의 같은 구조 문제로 재묶인다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://hacked.slowmist.io/
+- https://www.runtimeverification.com/blog/kelp-dao-audit-passed-292-m-left-anyway
+
 ## 2026-05-11 (KST) — Daily Evolution (#48)
 
 ### Phase 1) 수집 소스 요약

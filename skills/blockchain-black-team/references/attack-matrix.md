@@ -1,4 +1,4 @@
-# Attack Matrix — 129+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12) | META-01~67
+# Attack Matrix — 129+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15) | META-01~68
 
 ## A. Smart Contract Vectors
 
@@ -1045,6 +1045,7 @@ location /rpc {
 | META-65 Assurance-Commoditization / Response-Scarcity Gap (ACRSG) — 퍼플팀 2026-05-03 | **핵심 비대칭**: Foundry invariant/fuzz, 공개 FV 도구, AI bug bounty autopilot 같은 흐름으로 **취약점 탐색·시퀀스 생성·검증 보고서 작성 노동은 점점 싸고 병렬적이며 기억을 가진 자동화 작업** 이 된다. 반면 실제 incident 대응에 필요한 authority inventory, actuator binding, freeze/rotate evidence, owner escalation은 여전히 **소수 인간이 수동으로 유지하는 희소 자산** 이다. 그 결과 방어는 `취약점을 아느냐` 가 아니라 **닫을 산출물을 항상 최신으로 유지하느냐** 에서 밀린다. **왜 감사가 놓치는가**: ① 감사는 보통 “전문가가 한 번 깊게 보면 찾을 수 있는가”를 묻지, 다수의 저비용 자동화가 계속 훑는 세계를 전제하지 않는다. ② runbook, authority manifest, command artifact를 보안 핵심 산출물이 아니라 운영 문서로 낮게 본다. ③ 취약점 발견 도구의 발전이 곧 방어 우위라고 착각해 response artifact의 최신성 비용을 과소평가한다. ④ memory-backed autonomous hunting은 공격 가설을 세션 간 축적하지만, defender 쪽 inventory와 actuator는 자주 사람 머릿속이나 산발적 문서에 남는다. **META-40/41/63/64와의 구별**: META-40은 AI 도구의 양면성, META-41은 disclosure 이후 copycat tempo, META-63은 발견한 속성을 운영 신호로 승격하는 문제, META-64는 끊기로 한 뒤 revoke set 완전성을 다룬다. META-65는 **그 모든 전 단계에서 공격 탐색 노동이 대중화되는 속도와 방어 대응 산출물이 희소한 속도의 차이** 를 규정한다. |
 | META-66 Assurance-Plane Failure Semantics Gap (APFSG) — 퍼플팀 2026-05-06 | **핵심 비대칭**: 팀은 validator, prover, invariant engine, attestation check, RPC cross-check 같은 assurance plane을 계속 추가하지만, 대개 `무엇이 유효한가` 는 정교하게 쓰면서도 **그 plane이 hang / diverge / under-detect / timeout 할 때 시스템이 fail-stop 해야 하는지, 제한적 fail-open 으로 갈 수 있는지, 어떤 override 와 사후 검증이 필요한지** 는 느슨하게 남긴다. RustSec D55는 검증 경로 자체가 원격 OOM kill-switch가 될 수 있음을, recent Foundry gap signal은 널리 쓰는 invariant engine도 실전 버그를 놓칠 수 있음을 보여준다. **왜 감사가 놓치는가**: ① assurance component를 benign safeguard로 보고 availability / degraded-mode semantics를 별도 trust boundary로 취급하지 않는다. ② pass 조건은 테스트해도 validation-cost ceiling, hang path, disagreement contract는 잘 고정하지 않는다. ③ 여러 assurance layer가 생겨도 `누가 언제 override 하는가` 와 post-override evidence 요건은 ops 관행으로 밀린다. ④ 더 많은 검증층이 곧 더 안전하다는 직관이 failure semantics 부재를 가린다. **META-57/63/65와의 구별**: META-57은 redundancy와 failover 독립성, META-63은 속성을 운영 신호로 승격하는 문제, META-65는 탐색 노동 상품화와 대응 희소성을 다룬다. META-66은 **그 신호·검증면 자체가 실패할 때 시스템이 어떤 보안 의미론으로 전환되는가** 를 규정한다. |
 | META-67 Validation Cost-Ceiling Gap (VCCG) — 퍼플팀 2026-05-07 | **핵심 비대칭**: 팀은 validator, encoder, parser, attestation check, dependency verifier 같은 assurance layer에 대해 `정답을 맞게 판별하는가` 는 묻지만, **공격자가 입력 형태를 비틀어 CPU·메모리·시간 비용을 비정상적으로 키울 수 있는가** 는 별도 보안 경계로 잘 다루지 않는다. 그 결과 검증층은 fail-open/fail-stop을 논하기도 전에 **cheap-to-trigger, expensive-to-process resource-exhaustion actuator** 가 된다. RustSec `RUSTSEC-2026-0118`/`0120` 은 NSEC3 closest-encloser validation이 root-stall/OOM으로 이어질 수 있음을, `RUSTSEC-2026-0119` 는 name-compression encoder가 O(n²) CPU sink가 될 수 있음을 보여준다. **왜 감사가 놓치는가**: ① validator/encoder를 보호막으로만 보고 adversarial work-factor surface로는 잘 보지 않는다. ② correctness·soundness 명세는 써도 `input bound / allocation ceiling / timeout budget` 은 보안 요구로 잘 승격하지 않는다. ③ threat model이 actor·asset·assumption까지만 적고 검증 단계별 비용 상한은 빠뜨린다. ④ 반복적인 slow-path 압박이 결국 operator bypass를 부르는 운영 유인을 과소평가한다. **META-65/66과의 구별**: META-65는 cheap search vs scarce closure, META-66은 검증면 실패 시 의미론을 다룬다. META-67은 **그 이전 단계, 즉 검증면 자체의 계산비용 상한을 설계했는가** 를 규정한다. |
+| META-68 Decommission-Semantics / Legacy-Liveness Gap (DSLLG) — 퍼플팀 2026-05-15 | **핵심 비대칭**: 팀은 새 UI, 새 SDK, 새 배포본, V2 전환, deprecated 라벨, sunset 공지로 어떤 surface가 `은퇴했다` 고 느낀다. 그러나 실제 보안은 라벨이 아니라 **old path가 여전히 live authority, standing approval, residual fee balance, reinitializer, version counter, shared vault/state write 권한을 갖는가** 에 달려 있다. 최근 Renegade V1, Huma V1, Transit legacy TRON, Aurellion Diamond Proxy 사례는 모두 `현재 버전은 안전하다` 와 `옛 표면이 더 이상 자금을 움직일 수 없다` 가 다르다는 점을 보여준다. **왜 감사가 놓치는가**: ① 감사 범위가 current package / current entrypoint / current deployment 중심으로 좁아지고 deprecated surface는 운영상 미사용 가정으로 밀린다. ② migration check가 새 경로 활성화 여부에 집중하고, old allowance·fee pot·version slot·shared authority 제거는 별도 종료 조건으로 고정되지 않는다. ③ 팀은 UI/SDK routing 제거를 decommission 증거로 오인하고 on-chain reachability와 residual approval을 충분히 다시 세지 않는다. ④ 사고 후 `legacy contract only`, `user funds not affected`, `current contracts are secure` 같은 표현이 실제 privileged residue를 늦게 재분류하게 만든다. **META-58/64/A119와의 구별**: META-58은 default ownership seam, META-64는 incident 시 revoke set completeness, A119는 immutable legacy package가 shared state를 쓰는 기술 벡터다. META-68은 **retirement 선언 자체가 보안 종료 조건이 아니라, live authority 제거와 reachability 증빙까지 포함한 decommission semantics여야 한다** 는 구조를 규정한다. |
 | D34 WASI Hostcall Exhaustion + Async Drop Panic Chain | 온체인 로직 중심 감사가 오프체인 Wasm 임베딩(keeper/simulator/plugin) 자원 한계 설정과 async future lifecycle 안전성까지 검증하지 못해, 게스트 유도 메모리 고갈/패닉 DoS를 운영 이슈로 분리해 놓침 (Wasmtime 2026-0020/21/22). |
 | A39 Inherited Fork Vulnerability Blindspot | 포크된 코드의 상위(upstream) 취약점을 "이미 검토된 코드"로 간주해 감사 범위에서 제외. EVM precompile·브릿지 로직 등 상속된 프레임워크 계층의 신규 취약점이 프로토콜에 그대로 전이됨 (SagaEVM, $7M, Jan 2026 — Ethermint precompile 상속). |
 | B39 AI Code Reviewer False-Negative Trust Cascade | AI PR 리뷰 도구(예: Immunefi Code Review Agent)의 '승인' 결과를 인간 감사 동치로 취급해, 도구가 다루지 못하는 언어·환경·경제 로직 층을 심리적으로 안전 처리. AI 리뷰 통과 이력이 쌓일수록 팀의 수동 검토 임계치가 높아져 blind spot이 구조화됨. |
@@ -8128,6 +8129,61 @@ Microstable에 오늘 새 code exploit이 열린 것은 아니다. 다만 앞으
 
 **Matrix state as of 2026-05-07 (purple daily update)**: **129+ named vectors + META-01~67 + B73~B78 = 196+ total entries**. META-67 added by Purple Team 2026-05-07: **Validation Cost-Ceiling Gap (VCCG)**. RustSec `0118/0119/0120` 의 validator/encoder resource blowup, Certora의 living threat-model guidance, Immunefi의 daily-updated bounty pressure를 하나의 `correctness ≠ bounded-cost safety` 패턴으로 상위 구조화한다.
 
+### META-68. Decommission-Semantics / Legacy-Liveness Gap (DSLLG)
+
+**Published**: 2026-05-15 | **Source**: Purple Team Daily Evolution | **Signals**: SlowMist Hacked front page incidents `Renegade` (2026-05-10), `Huma Finance` (2026-05-11), `Aurellion Labs` (2026-05-12), `Transit Finance` (2026-05-13), Runtime Verification `KelpDAO Audit Passed. $292M Left Anyway.` (fetched 2026-05-15 KST)
+
+**Mechanism**: 많은 팀은 migration, V2 launch, deprecated label, SDK routing 제거, sunset announcement 같은 변화가 곧 **은퇴 완료** 라고 느낀다. 하지만 실제 보안은 문구가 아니라 **live authority가 제거됐는가** 로 결정된다. old contract/program, legacy fee pool, residual token approval, stale initializer/version slot, retained shared authority, forgotten sidecar/binary/config가 남아 있으면 그 surface는 여전히 privileged control plane이다.
+
+- **Renegade V1** 은 migration이 끝난 것처럼 보였지만, faulty migration으로 version counter가 어긋난 legacy V1이 여전히 callable했고 unprotected initializer가 다시 열렸다.
+- **Huma Finance V1** 은 팀이 이미 V2로 이동 중이었어도 deprecated V1 fee balances는 계속 value-bearing surface였다.
+- **Transit Finance** 는 current contracts와 별도로 살아 있던 deprecated 2022-era TRON contract 하나만으로도 손실이 났다.
+- **Aurellion Labs** 는 ownership 탈취가 당일 트리거였지만, 실제 사용자 손실은 **예전에 남아 있던 approvals** 가 계속 live authority였기 때문에 가능했다.
+- **Runtime Verification / Kelp framing** 은 assumptions를 explicit하게 쓰지 않으면 보안 posture가 ad-hoc service assembly가 된다고 지적한다. 같은 논리로 decommission도 `경로를 새로 열었다` 가 아니라 **무엇을 완전히 죽였는지 명시하는 security contract** 여야 한다.
+
+**Cross-source synthesis (최근 신호의 공통점)**:
+
+- `deprecated` 와 `unreachable` 는 다르다.
+- `current contracts are safe` 와 `legacy surface has no remaining authority` 도 다르다.
+- migration은 새 경로 activation만으로 끝나지 않고, **old approvals / old fee pots / old version gates / old binaries / old configs** 제거까지 포함해야 닫힌다.
+- 사고 보고서가 현재 버전 안전성을 강조할수록, residual privileged legacy surface는 오히려 늦게 드러날 수 있다.
+
+**왜 퍼플팀 관점에서 새 메타 패턴인가**:
+
+| 기존 분류 | 설명하는 것 | META-68이 추가로 설명하는 것 |
+|---|---|---|
+| A119 Immutable Legacy Package | old immutable package가 shared state를 계속 쓸 수 있는 기술 벡터 | 그보다 상위에서 **deprecation/sunset 선언이 왜 실제 authority retirement로 이어지지 않는가** 를 본다 |
+| META-58 DSCRG | default/scope ownership seam | ownership이 정해져도 **retirement completion criteria가 없으면 legacy surface가 orphaned privilege로 남는다** |
+| META-64 RSCG | incident 때 revoke set를 다 끊었는가 | incident 전부터 **애초에 끊겼어야 할 old surface가 왜 계속 live였는가** 를 본다 |
+
+**왜 감사가 놓치는가**:
+
+1. **current-path bias**: 감사와 코드리뷰가 현재 entrypoint / 현재 UI / 현재 config 중심으로 좁아진다.
+2. **retirement-as-routing illusion**: SDK/UI가 더 이상 안 쓰면 체인 위 경로도 사실상 죽었다고 느낀다.
+3. **migration completion under-specification**: 새 배포 성공 여부는 체크해도 old approval revoke, old balance drain, old initializer disable, old binary disable은 종료 조건으로 약하게 남는다.
+4. **residual-value minimization**: deprecated fee bucket, stale allowance, legacy vault balance, cached sidecar를 "작은 잔여물" 로 보고 privileged surface로 재분류하지 않는다.
+
+**Microstable architecture implication**:
+
+Microstable은 오늘 새 live exploit이 확인된 것은 아니다. 다만 blue v14/v15가 바로 이 문제를 일부 선제적으로 줄였다는 점이 중요하다.
+
+- v15는 **legacy unsigned checkpoint load 제거**, **기본 HMAC key 제거**, **filename-based unsigned config 예외 제거** 로 stale compatibility path를 실제로 죽였다.
+- manual oracle mode도 **중복 활성화 금지 + 재활성 cooldown + circuit-breaker 전제** 로 emergency lane의 상시화 가능성을 줄였다.
+- 그러나 현재 공개 artifact 기준으로는 **retired checkpoint/config/binary/RPC/override surface가 전부 비활성화됐는지** 한 장에서 증명하는 decommission manifest는 아직 약하다.
+- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `legacy trust surface may still be live` 관점으로 다시 묶인다.
+
+**Minimum defense delta**:
+
+1. `surface → retirement action → residual authority removed → verification evidence → owner` 형태의 **decommission manifest** 를 둔다.
+2. checkpoint/config/schema migration 때 `new path works` 뿐 아니라 **old path hard-fails** 를 검증 게이트로 넣는다.
+3. old approvals, fee buckets, stale sidecars, legacy binaries, deprecated RPC endpoints를 **잔여 자산이 아니라 privileged residue** 로 분류한다.
+4. tabletop에 `deprecated path still callable`, `old approval still live`, `legacy binary restarted`, `migration version slot drift` 시나리오를 추가한다.
+5. B45, D27, A115, A75를 개별 carry-forward가 아니라 **decommission-completeness checklist** 로 재묶는다.
+
+**Purple Team verdict**: 2026년의 많은 사고는 새 코드가 아니라 **죽었어야 할 표면이 실제로는 안 죽었다** 는 사실에서 난다. META-68은 이 구조, 즉 **deprecation/sunset이 보안 종료 조건이 아니라 live authority 제거와 reachability 증빙까지 포함한 decommission semantics여야 한다는 문제** 를 **Decommission-Semantics / Legacy-Liveness Gap** 으로 고정한다.
+
+**Matrix state as of 2026-05-15 (purple daily update)**: **129+ named vectors + META-01~68 + B73~B78 = 197+ total entries**. META-68 added by Purple Team 2026-05-15: **Decommission-Semantics / Legacy-Liveness Gap (DSLLG)**. Renegade/Huma/Transit/Aurellion의 legacy-live incidents와 Microstable blue v15의 compatibility-path removals를 하나의 `deprecated ≠ dead` 패턴으로 상위 구조화한다.
+
 ## 2026-04-14 Token-2022 / Anchor Wrapper Pattern Additions
 
 ### A113. Token-2022 Extension Authority-Meta Elision / Control-Plane Freeze
@@ -8672,6 +8728,14 @@ for op in &ops {
 3. shared objects / shared pools / shared PDAs / shared mint authority are not version-gated to the current package only.
 4. attacker calls the deprecated path directly, bypassing current SDK/UI restrictions.
 5. latent bug in the old path (uninitialized accumulator/index, weaker auth, stale invariant, outdated math) mutates live shared state or extracts current rewards/assets.
+
+**2026-05 reinforcement (Renegade + Huma + Transit + Aurellion)**:
+- **Renegade V1 (2026-05-10)**: legacy Arbitrum deployment가 faulty migration으로 version counter가 어긋난 채 남아 있었고, unprotected initializer가 다시 열리면서 deprecated V1 자체가 live drain path가 됐다.
+- **Huma Finance V1 (2026-05-11)**: 팀은 이미 V2로 넘어가고 V1을 sunset 중이었지만, deprecated BaseCreditPool에 남은 protocol/pool-owner fee balance는 계속 value-bearing surface였다.
+- **Transit Finance legacy TRON contract (2026-05-13)**: 현재 계약이 아니라 **2022-era deprecated contract** 가 별도로 살아 있었고, 그 잔여 경로만으로도 $1.88M이 빠져나갔다.
+- **Aurellion Labs Diamond Proxy (2026-05-12)**: re-initialization 자체는 현재 권한 탈취 벡터였지만, 실제 사용자 손실은 **예전에 남아 있던 ERC-20 approvals** 가 계속 live authority였기 때문에 발생했다.
+
+공통점은 `old surface is no longer the intended path` 와 `old surface can no longer move value` 가 다르다는 점이다. 즉 A119는 immutable package만의 특수 사례가 아니라, **legacy execution path + residual authority persistence** 일반 구조의 대표 기술 벡터다.
 
 **Why this is distinct from existing vectors**:
 - **A10 Logic Bug** 는 특정 함수 내부 결함 자체를 말한다. **A119** 는 그 결함이 **retired 되었어야 할 legacy execution path가 아직 live authority를 유지** 하기 때문에 실제 손실로 이어지는 구조를 다룬다.
