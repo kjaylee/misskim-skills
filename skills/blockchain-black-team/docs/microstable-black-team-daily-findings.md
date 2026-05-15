@@ -1,5 +1,44 @@
 ---
 
+## 2026-05-16 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-09 to 2026-05-16 KST)
+- Sources checked: `https://rekt.news/` deep pages + `https://rekt.news/trustedvolumes-rekt`, `https://hacked.slowmist.io/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, plus direct incident/article fetches for **TrustedVolumes**, **Ink Finance**, **Aurellion Labs**, and local Microstable code re-read
+- **Confirmed in-window items**:
+  1. **TrustedVolumes RFQ proxy (2026-05-07)** and **Ink Finance Workspace Treasury Proxy (2026-05-11)** do add fresh real-world evidence for the already-absorbed **A4 Access Control** sub-pattern: the protocol authenticates principal A, but value is actually taken from principal B or released without entitlement binding.
+  2. **Renegade / Huma / Transit / Aurellion** were already absorbed yesterday into **META-68** and **A119**. Today’s public window did not justify another named-vector expansion beyond that existing reinforcement.
+  3. GitHub/Solana/Trail-of-Bits/OtterSec spot checks did **not** surface a new 24h~7d **Solana / Anchor / SPL** code-mechanism advisory that required a matrix delta for this run.
+  4. Solana Foundation’s ecosystem-security announcement remains a defensive-program update, not a reusable exploit primitive.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 additional matrix edits justified today**
+- Result: existing `attack-matrix.md`, `solana-specific.md`, `SKILL.md`, and incident timeline already cover the mechanisms confirmed in this window
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can be bypassed operationally if unaudited delta ships through the normal release path with no machine-checkable binding between audited commit and deployed artifact
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today’s reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A4 Access Control** (TrustedVolumes / Ink Finance reinforcement) | on-chain mint/redeem + keeper privileged ops | ✅ NOT ACTIVE | Mint path binds `user_collateral_ata` to the signing `user` via ATA constraints and uses `authority: ctx.accounts.user` for the actual debit (`solana/programs/microstable/src/lib.rs:1099-1111`, `2288-2318`). Redeem path likewise binds payout ATAs to the same user principal (`lib.rs:1269-1366`). Keeper-only privileged paths (`update_oracle`, `enable_manual_oracle_mode`, `rebalance`, shutdown/rotation) still require explicit 2-of-3 keeper quorum (`lib.rs:496-500`, `1494-1498`, `1542-1546`, `1852-1904`, `3380-3389`). I did **not** find a “authorize A, charge B” or “whitelist caller, skip entitlement binding” analogue in the current code. |
+| **META-68 / A119** (legacy-live surface) | migration + compatibility paths | ✅ NOT ACTIVE | The visible legacy migration surface is still gated to `TRUSTED_INITIALIZER`, verifies canonical PDAs/owners, and rejects rerun on already-initialized state (`lib.rs:268-352`). Current on-chain agent escrow accounts are hard-pinned to `v2:agent_escrow` seeds (`lib.rs:2412-2427`). `docs/app.js:2488-2524` still contains client-side compatibility retries for legacy escrow PDAs, but I found no matching public on-chain legacy-value path that would let an attacker revive deprecated authority. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard RPC runtime | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:208-213` only cross-checks `getGenesisHash`; runtime reads generally accept a single endpoint result, and `initSolanaContext()` binds the live `Connection` to one selected RPC endpoint (`docs/app.js:1271-1276`). This is availability-friendly failover, not integrity-grade quorum. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on meta-only CSP, and `docs/app.js:43-48,1645-1688` still ships a devnet faucet mint-authority keypair in browser code. Devnet-only intent lowers severity, but a canonical-site compromise would still inherit signer authority inside the demo path. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent. |
+
+### Today’s Verdict
+- New incidents found: **0 requiring a new named vector**
+- New attack vectors added: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today’s real-world A4 / META-68 reinforcements are already reflected in the black-team matrix, and current Microstable code does **not** expose the same principal-binding or legacy-live drain path. The only HIGH I could reconfirm from direct code/path evidence remains the audit-attestation continuity gap.
+
 ## 2026-05-03 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-04-26 to 2026-05-03 KST)
