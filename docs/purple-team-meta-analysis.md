@@ -1,5 +1,51 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-05-17 (KST) — Daily Evolution (#50)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| arXiv `2605.11781` *Five Attacks on x402 Agentic Payment Protocol* | submitted 2026-05-12 | HTTP authorization과 asynchronous settlement를 접합한 x402에서 **grant-before-finality, settlement preemption, replay/idempotency collapse, header/proxy confusion, agent server-selection manipulation** 이 모두 재현됐다. 핵심은 intermediate state를 settlement-grade entitlement threshold로 오인한 점이다. |
+| SlowMist Hacked front page re-scan | 2026-05-17 KST fetched | 최근 7일 incident 재확인 결과, META-68을 뒤집을 더 강한 decommission 계열 신규 패턴은 없었다. 오늘 창에서 새로 admission 가능한 메타 신호는 x402 쪽이 유일했다. |
+
+### Phase 2) 갭 분석
+
+**오늘 신규 식별 갭**:
+
+#### META-69 — Provisional-State / Irreversible-Entitlement Gap (PSIEG)
+- **현상**: 팀은 `payment seen`, `confirmed`, facilitator ack, local verify-pass 같은 **중간 상태** 를 사용자 경험상 충분한 신호로 보고, 그 위에서 API 응답·유료 데이터·도구 실행·premium content 같은 **되돌릴 수 없는 entitlement** 를 먼저 연다. 하지만 provisional state는 settlement-grade authority가 아니다.
+- **정황**:
+  1. x402 논문은 live endpoints / SDK audit / testbed에서 **grant-before-finality** 와 **settlement preemption** 을 재현했다. 즉 payment validity가 아니라 **언제 grant 하는가** 가 직접 공격면이었다.
+  2. 같은 논문은 **replay/idempotency collapse** 와 **header/proxy confusion** 도 함께 보여줬다. 즉 이 문제는 단일 버그가 아니라 payment-service correspondence 전체가 흔들리는 구조다.
+  3. 한 번 열린 리소스, 캐시된 응답, 실행된 도구는 나중 settlement failure·reorg·timeout이 와도 자연 rollback 되지 않는다.
+- **왜 메타인가**:
+  1. **UX-state equivalence bias**: `confirmed`/receipt/ack를 “사용자 경험상 충분”에서 “보안상 irreversible”로 잘못 승격한다.
+  2. **domain-split auditing**: smart contract audit는 settlement validity를, backend review는 API/cache/idempotency를, infra review는 proxy/CDN을 보지만 **grant threshold** 는 빈칸이 되기 쉽다.
+  3. **rollback fantasy**: dispute/refund가 가능하다는 이유로 once-delivered resource의 irreversibility를 과소평가한다.
+  4. **happy-path spec halo**: integration guide와 SDK는 quote→pay→grant happy path를 강조하고, finality depth·binding·cache hygiene·one-shot burn은 부차 옵션처럼 남긴다.
+- **기존 패턴과 구별**:
+  - **META-10** 은 통합 경계 ownership diffusion을 다룬다.
+  - **META-66** 은 assurance plane이 fail/hang/diverge 할 때의 semantics를 다룬다.
+  - **B79** 는 x402 계열의 구체 exploit primitive다.
+  - **META-69** 는 그보다 상위에서, **조직이 왜 intermediate state를 settlement-grade entitlement threshold로 오인해 그런 primitive를 shipping 하는가** 를 규정한다.
+
+### Phase 3) 스킬 강화 델타 (2026-05-17)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-69 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~69 / 199+ total entries** 로 갱신
+- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-69** 반영
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **새 active finding 없음.** 현재 공개 Microstable artifact에는 x402 / paid API / facilitator settlement path가 없다.
+- keeper의 `confirmed()` / `processed()` 사용은 외부 entitlement grant가 아니라 on-chain tx 확인 및 readiness 판단에 한정된다.
+- 따라서 오늘은 `docs/microstable-purple-team-daily-findings.md` 에 추가할 새 CRITICAL/HIGH/MEDIUM architecture finding은 없었다.
+- 다만 향후 dashboard/keeper가 **premium off-chain data, execution credit, agent-to-agent paid tooling** 을 붙이면 `confirmed()`·receipt·local verify를 곧바로 irreversible grant threshold로 승격하지 않는 규칙을 선행 점검해야 한다.
+
+### Sources
+- https://arxiv.org/abs/2605.11781
+- https://arxiv.org/html/2605.11781v1
+- https://hacked.slowmist.io/
+
 ## 2026-05-15 (KST) — Daily Evolution (#49)
 
 ### Phase 1) 수집 소스 요약
