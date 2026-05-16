@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-05-12 — SQ Protocol staking contract (BSC / EVM — hidden hardcoded owner backdoor + `authorizationList` ownership seize)** — public loss amount not independently confirmed in the source used for this sweep. SlowMist's public mechanism summary says the verified staking contract still contained a **hardcoded owner backdoor**. The attacker used the modern **type-0x4 / `authorizationList`** transaction path to take effective ownership, generated fake staking-claim state, redeemed those claims for USDT, and sold the protocol token.
+  **Root cause**: a nominally verified staking contract still exposed a **hidden privileged ownership path** that reviewers or integrators could miss if they only checked ordinary admin entrypoints. Once ownership fell, reward-claim and redemption logic became attacker-controlled value extraction.
+  **Vector mapping**: **A4 Access Control** (2026-05-17 reinforcement, hidden privileged path / alternate transaction-authorization ownership seize sub-pattern).
+  **Source**: https://hacked.slowmist.io/
+
 - **2026-05-11 — Ink Finance Workspace Treasury Proxy (Polygon — whitelist-gated claimer path trusted identity without binding entitlement/value source)** — **~$140,000 USDT** drained. Public incident coverage says the attacker deployed or controlled an address that passed the workspace controller's whitelisted claimer check, invoked `claim(claimId)`, and let the downstream treasury transfer path trust that whitelist pass as sufficient authorization. The treasury proxy then released funds without re-validating what that caller was actually entitled to receive, while a flash loan temporarily satisfied the balance condition that amplified payout size.
   **Root cause**: the protocol authenticated **who reached the claim path** but did not separately bind **what value that caller was allowed to consume** from the treasury. A whitelisted helper/claimer identity was treated as if it implied asset-level entitlement.
   **Vector mapping**: **A4 Access Control** (2026-05-12 reinforcement, whitelisted-caller / entitlement-binding sub-pattern). Secondary amplifier: **A2 Flash Loan** only as capital amplification, not as root cause.

@@ -1,5 +1,46 @@
 ---
 
+## 2026-05-17 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-10 to 2026-05-17 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, fallback search evidence, and the completed research subagent note merge
+- **Confirmed in-window items**:
+  1. **SQ Protocol staking contract (2026-05-12)** is admissible as an **A4 Access Control** reinforcement: the public mechanism summary says a **hardcoded owner backdoor** remained in the verified staking contract, the attacker used the modern `authorizationList` / type-0x4 transaction path to seize ownership, created fake staking claims, redeemed them into USDT, and sold the token.
+  2. **Aurellion / Huma / Transit / Renegade** remain already-absorbed **A4 / A119 / META-68** evidence. Today's public window did **not** justify another named-vector expansion beyond the existing matrix.
+  3. **TAC Cross-Chain Layer (TON side)** is still **NOT ADMISSIBLE YET** for matrix expansion because the currently public explanation remains too coarse (`Contract Vulnerability`) for code-level reuse.
+  4. GitHub / Solana / Trail-of-Bits / OtterSec / Neodyme spot checks did **not** surface a fresh **Solana / Anchor / SPL** code-mechanism advisory requiring a new matrix delta for this run.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **A4 Access Control** now explicitly covers **hidden privileged owner path + alternate transaction-authorization ownership seize** via the **SQ Protocol** incident
+- `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, and `SKILL.md` were updated; `references/solana-specific.md` did **not** need a delta today
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A4 Access Control** (SQ / Ink / TrustedVolumes reinforcement) | on-chain mint/redeem + privileged keeper ops | ✅ NOT ACTIVE | `mint()` binds the payer ATA and vault ATA to canonical addresses derived from the signing `user`, then debits collateral with `authority: ctx.accounts.user` (`solana/programs/microstable/src/lib.rs:1099-1111`). `redeem()` re-binds each payout ATA back to the same `user` principal before burn + payout (`lib.rs:1269-1366`). Privileged writes (`update_oracle`, `rebalance`, shutdown/manual-mode activation) still require explicit 2-of-3 keeper quorum (`lib.rs:496-500`, `679-707`, `1494-1498`, `1852-1999`). I did **not** find an analogue where caller authorization succeeds but value is charged or released for a different principal. |
+| **A119 / META-68** (legacy-live surface) | migration + compatibility paths | ✅ NOT ACTIVE | The visible migration path is still one-shot, restricted to `TRUSTED_INITIALIZER`, and checks canonical PDA + owner before writing state (`solana/programs/microstable/src/lib.rs:268-352`). I did **not** find a live legacy vault/escrow path in the currently visible on-chain code that can still move value after deprecation. |
+| **A75 manual-oracle drift guard** | keeper fallback + on-chain manual update path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:735-865` cross-validates external prices and confidence, then enables manual mode and sends `ix_update_oracle`; `update_oracle()` in `lib.rs:679-707` time-boxes writes and checks bounds/staleness, but the keeper path still does **not** show an explicit `last trusted on-chain anchor` drift clamp before publishing fallback prices. Partial defense exists; anchor-relative drift ceiling is still not explicit. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard RPC runtime | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:206-214` keeps strict cross-RPC validation only for `getGenesisHash`, and `initSolanaContext()` then binds live reads to a single selected `Connection(CFG.RPC_URL)` (`docs/app.js:1271-1276`). This is availability-oriented bootstrap verification, not integrity-grade runtime quorum. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on meta-only CSP, and `docs/app.js:43-48` still ships a devnet faucet mint-authority keypair in browser code. Devnet-only intent lowers severity, but a canonical-site compromise would still inherit signer authority inside the demo surface. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent. |
+
+### Today's Verdict
+- New incidents found: **1 admissible as reinforcement only**
+- New attack vectors added: **0**
+- Reinforcements applied: **1** (**A4**, SQ Protocol)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today's public window adds one useful A4 reinforcement, but current Microstable code still does **not** expose the same principal-binding or legacy-live drain path. The only reconfirmed HIGH from direct code/path evidence remains the audit-attestation continuity gap.
+
 ## 2026-05-16 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-09 to 2026-05-16 KST)
