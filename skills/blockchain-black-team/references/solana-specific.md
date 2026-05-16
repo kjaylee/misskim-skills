@@ -1515,3 +1515,28 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 72. ☐ initialized zero-copy state에서는 `AccountLoader::try_from` 를 기본값으로 고정하고, `new_unchecked` / `try_from_unchecked` 는 creation-only or one-shot migration 경로로만 허용하며 owner/PDA/discriminator 재검증 테스트를 필수화할 것
+
+---
+<!-- AUTO-ADDED 2026-05-17 (Red Team Daily Evolution) — B79 x402 payment-service correspondence -->
+
+## 2026-05-17 Paid API / Facilitator Settlement Continuity Pattern
+
+### B79 — x402 Grant-Before-Settlement / Payment-Service Correspondence Collapse
+- **Solana context**: Solana는 `processed`/`confirmed` 응답이 빠르고 UX가 좋아서, keeper나 off-chain service가 이를 사실상의 결제 완료로 오인하기 쉽다. 그러나 Solana 결제 tx를 근거로 유료 API, keeper execution credit, premium oracle feed, relay slot, 또는 agentic commerce resource를 열어주는 순간 보안 경계는 `tx observed` 가 아니라 **settlement와 service entitlement의 대응 관계** 가 된다.
+- **핵심 패턴**: HTTP/API grant가 finalized settlement, unique requester/resource binding, one-shot idempotency burn보다 먼저 일어난다. 그러면 `grant-before-finality`, facilitator/resource binding 약화, replay, header/cache confusion이 합쳐져 unpaid service, paid-but-denied, stolen premium response가 발생한다.
+- **왜 Solana에서 특히 위험한가**:
+  1. 빠른 슬롯과 `confirmed` 사용 습관 때문에 팀이 irreversible grant threshold를 과소설계하기 쉽다.
+  2. keeper/relay/data API는 온체인 결제 확인과 off-chain 서비스 집행이 서로 다른 프로세스에 있어 correspondence bug가 숨기 쉽다.
+  3. `x-payment` 같은 헤더 기반 흐름은 CDN/proxy/cache 계층과 부딪히며, 체인 쪽에는 없는 웹 캐시 누출면이 생긴다.
+  4. facilitator/recipient/resource binding이 약하면 같은 Solana 결제를 다른 요청이나 다른 소비자에게 재사용·가로채기 쉽다.
+- **Source signals**:
+  - arXiv `2605.11781`, *Five Attacks on x402 Agentic Payment Protocol* (submitted 2026-05-12)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 에서 x402/HTTP 402/Permit2/facilitator settlement/paid API path는 확인되지 않았다.
+  - keeper의 `confirmed()` / `processed()` 사용은 agent registration readiness와 tx confirmation 용도이며, 현재 **외부 유료 리소스 grant** 경계에는 연결되지 않는다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 keeper가 유료 oracle feed, off-chain execution marketplace, paid API, facilitator-backed credit path를 붙이면 즉시 재평가해야 한다.
+- **Checklist item 73**: ☐ Solana 결제를 근거로 off-chain 유료 서비스/API를 열 경우, `processed`/`confirmed` 만으로 비가역 grant를 하지 말고 `finalized settlement + requester/resource/facilitator/nonce/expiry binding + one-shot idempotency burn + no-store cache policy` 를 같은 상태 머신으로 강제할 것
+
+### Solana-Specific Defense Checklist Update
+73. ☐ Solana 결제를 근거로 off-chain 유료 서비스/API를 열 경우, `processed`/`confirmed` 만으로 비가역 grant를 하지 말고 `finalized settlement + requester/resource/facilitator/nonce/expiry binding + one-shot idempotency burn + no-store cache policy` 를 같은 상태 머신으로 강제할 것

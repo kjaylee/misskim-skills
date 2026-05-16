@@ -1063,6 +1063,7 @@ location /rpc {
 | A83 libcrux-ml-dsa Signature Verification Faults (RustSec 2026-0076) | A83은 `libcrux` 서명 경계의 malformed 입력에 대한 실패 동작/오류 코드 동작이 핵심인데, 감사가 API 성공경로 테스트에 집중해 크립토 라이브러리 내부 경계와 panic/fault 시의 fail-open/Fail-hard 동작을 누락할 수 있음. |
 | A84 libcrux-sha3 Incremental SHAKE Edge-Case (RustSec 2026-0074) | A84는 바이트 바운더리 상태 머신 결함으로, off-chain 프로세스(keeper/RPC/bridge adaptor)가 같은 크립토 스택을 공유할 경우 운영 경로에서 드문 입력으로 비정상 상태를 만드는 취약점으로 이어짐. 경제적/상태 기계 검토가 없는 감사가 놓치기 쉬움. |
 | B77 Durable Nonce Approval Laundering / Pre-Signed Multisig Admin Takeover | 멀티시그 정족수 충족과 서명 유효성만 확인하면 안전하다고 보고, 승인 시점과 실행 시점 사이의 의도 보존 여부, nonce 무효화 절차, 서명자에게 보이는 인간 가독형 변경 요약을 테스트하지 않음. 결과적으로 "정상 서명"이 "지연 실행된 권한 탈취"로 전환될 수 있음. |
+| B79 x402 Grant-Before-Settlement / Payment-Service Correspondence Collapse | HTTP/API 서비스 grant와 온체인 결제 settlement를 분리한 채 `tx seen`/`confirmed`/facilitator ack만으로 접근을 먼저 열어주면, finality 이전 선지급 서비스, facilitator/resource binding 약화, replay/idempotency 붕괴, CDN/header cache 누출이 한 묶음으로 터질 수 있음. 즉 결제-서비스 대응 관계 자체가 무너져 unpaid service / paid-but-denied / stolen grant가 발생함. |
 | A95 Anchor Reload Owner-Drift Bypass | `.reload()` 호출을 안전한 복구 동작으로 가정해 프레임워크 버전별 owner 재검증 의미 차이를 대조하지 않음. CPI 이후 fresh bytes를 다시 읽는 순간의 신뢰 경계가 앱 코드가 아니라 프레임워크 구현에 있다는 점을 놓침. |
 | A96 Duplicate Mutable Account Aliasing | signer, owner, PDA seed 검증이 모두 통과하면 안전하다고 판단해 "두 mutable 역할이 반드시 다른 키여야 한다"는 독립성 불변량을 명시적으로 테스트하지 않음. nested 계정과 `remaining_accounts` 경로는 프레임워크가 막아줄 것이라 가정하기 쉬움. |
 
@@ -6508,6 +6509,78 @@ Slot N+2 (Attacker-Controlled Validator): tx[0] = back-run sell order
 **Checklist item 52**: ☐ Wide cross-slot MEV: keeper TX uses Jito dontfront where possible; irrevocable operations use Finalized commitment; monitor for multi-slot MEV extraction patterns
 
 **Source**: https://dev.to/ohmygod/solana-mev-defense-in-2026-how-sandwich-bots-extracted-500m-and-the-6-protocol-level-defenses-16d9
+
+---
+
+### B79. x402 Grant-Before-Settlement / Payment-Service Correspondence Collapse
+
+**Published**: 2026-05-17 | **Severity**: HIGH | **Red Team**
+
+**Signal**: arXiv `2605.11781`, *Five Attacks on x402 Agentic Payment Protocol* (submitted 2026-05-12)
+
+**Key insight**: 많은 팀이 paid API / agentic commerce / facilitator-based settlement를 붙일 때, HTTP authorization은 동기식이고 blockchain settlement는 비동기식이라는 사실을 단순 UX 지연 문제로 취급한다. 그러나 이 구조는 **결제가 실제로 확정되었는가**, **누가 그 결제로 어떤 리소스를 받을 자격이 있는가**, **같은 payment proof가 한 번만 쓰였는가**, **paid response가 중간 캐시에 새지 않는가** 를 하나의 보안 경계로 묶어야 한다. 그 묶음이 없으면 protocol은 “결제 시스템”이 아니라 **grant-before-settlement 서비스 노출기** 가 된다.
+
+**Attack chain**:
+1. protocol exposes an HTTP/API/resource grant path keyed off a payment header, facilitator quote, signed intent, or observed on-chain payment transaction.
+2. service is granted when the payment is merely seen, locally confirmed, facilitator-acknowledged, or otherwise not yet irrevocably settled.
+3. attacker exploits one or more binding gaps:
+   - **grant-before-finality**: resource opens before final settlement and chain reorg/revert/timeout leaves unpaid service behind.
+   - **settlement preemption**: requester, facilitator, recipient, or resource binding is weak, so another party can front-run, substitute, or steal the payment-to-service entitlement.
+   - **replay/idempotency collapse**: a single valid payment proof or header can unlock multiple service grants.
+   - **cache/header confusion**: intermediaries cache or replay paid responses because authorization semantics are carried in ordinary headers or insufficiently partitioned URLs.
+4. result is unpaid resource consumption, paid-but-denied disputes, stolen service entitlement, or leakage of premium responses to unauthorized callers.
+
+**Why distinct from existing vectors**:
+- **A7 Signature Replay** 는 동일 승인/서명 재사용 자체가 핵심이다. **B79** 는 replay를 포함하되, 더 넓게 **payment settlement와 service grant의 correspondence 전체** 가 무너지는 패턴이다.
+- **B16 Race Condition** 은 일반적인 keeper 타이밍 경쟁이다. **B79** 는 off-chain service plane이 on-chain 결제 plane보다 먼저 열리는 **cross-layer authorization split** 이 핵심이다.
+- **B50/B78 계열 finality/ordering 이슈** 는 체인 의미론 자체를 다룬다. **B79** 는 체인 의미론을 HTTP/API/cache/facilitator plane에 잘못 사상한 결과를 다룬다.
+
+**Why audits miss this**:
+1. smart-contract 감사는 결제 트랜잭션의 유효성은 보지만, off-chain API가 **언제 grant 하는지** 는 종종 범위 밖으로 밀린다.
+2. backend/API 리뷰는 cache, header, idempotency를 일반 웹 보안으로 보며 **온체인 settlement semantics** 와 연결하지 않는다.
+3. 팀은 `confirmed` 나 facilitator receipt를 UX-acceptable state로 보고, 그것이 **irreversible entitlement grant** 와 같은 임계값이 아니라는 점을 흐리기 쉽다.
+4. 결제/권한/리소스/응답 캐시가 서로 다른 컴포넌트에 분리돼 있어, 각 컴포넌트는 맞아도 **end-to-end payment-service correspondence** 가 깨질 수 있다.
+
+**Code pattern to find**:
+
+```ts
+// VULNERABLE: granting service before irreversible settlement and without
+// single-use binding to requester/resource.
+const proof = parsePaymentHeader(req.headers["x-payment"]);
+const seen = await chain.seesPayment(proof.txHash); // or facilitator ack / confirmed only
+if (!seen) throw new Error("payment missing");
+
+// Missing: finalized settlement, recipient/resource binding, single-use nonce,
+// cache isolation, and one-shot idempotency burn.
+return servePremiumResource(req.query.resourceId);
+
+// SAFER
+const payment = await ledger.verifyFinalizedPayment({
+  txHash: proof.txHash,
+  payer: req.user,
+  facilitator: expectedFacilitator,
+  resourceId,
+  nonce: proof.nonce,
+  minFinality: "finalized",
+});
+await idempotencyStore.consumeOnce(payment.uniqueGrantId);
+return serveUncacheablePremiumResource(resourceId, payment.uniqueGrantId);
+```
+
+**Defensive heuristic**:
+- `payment accepted` 와 `service granted` 를 같은 상태 머신에 넣고, irreversible grant는 **finalized settlement + unique requester/resource/facilitator binding + one-shot idempotency burn** 이후에만 허용할 것
+- `confirmed`, mempool-seen, facilitator-ack 같은 중간 상태에서는 revocable quota/capability만 열고, 비가역 리소스 제공은 금지할 것
+- paid response는 cache key partition, `Cache-Control: no-store`, signed resource binding 없이 CDN/proxy를 통과시키지 말 것
+- payment proof마다 `resource`, `requester`, `recipient`, `chain`, `nonce`, `expiry`, `facilitator` 를 모두 binding 범위에 넣을 것
+- disputes를 줄이려면 service ledger가 `paid`, `granted`, `consumed`, `refunded` 를 분리 기록해야 하며, 체인 settlement 재조정(reorg/timeout) 시 revoke/compensate path를 명시할 것
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `microstable/solana/keeper/src/` 에는 x402/HTTP 402/Permit2/facilitator settlement/paid API path가 없다.
+- keeper는 `confirm_signature_with_window()` 에서 `CommitmentConfig::confirmed()` 를 쓰고, 일부 agent-record readiness 조회에 `processed()` 를 쓰지만, 이는 **온체인 트랜잭션 제출/등록 상태 판단** 이지 외부 유료 서비스 grant 경계가 아니다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 keeper가 유료 데이터/API, off-chain execution credit, facilitator-backed settlement를 붙이면 B79는 즉시 1급 재검토 대상이다.
+
+**Source**: https://arxiv.org/abs/2605.11781
 
 ---
 
