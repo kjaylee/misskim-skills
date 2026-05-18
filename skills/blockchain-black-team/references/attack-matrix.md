@@ -6585,6 +6585,71 @@ return serveUncacheablePremiumResource(resourceId, payment.uniqueGrantId);
 
 ---
 
+### B80. Deniable Covert Asset Transfer / MEV-Indistinguishable Loss Staging
+
+**Published**: 2026-05-19 | **Severity**: HIGH | **Red Team**
+
+**Signal**: arXiv `2605.13132`, *Extending Blockchain Untraceability with Plausible Deniability* (submitted 2026-05-13)
+
+**Key insight**: 많은 팀은 sandwich, arbitrage, 라우팅 손실, 대형 슬리피지 이벤트를 “그냥 MEV/실행 리스크” 로 분류한다. 그러나 최신 연구가 보여준 것은, 공격자 둘이 공모하면 **의도적으로 손실이 나는 거래를 연출해 그 손실 자체를 수취인에게 넘기고도**, 온체인에서는 단순한 MEV 피해·차익거래·재균형 비용처럼 보이게 만들 수 있다는 점이다. 즉 명시적 송금 없이도 **평범한 손실 이벤트가 covert transfer channel** 이 될 수 있다.
+
+**Attack chain**:
+1. attacker controls or influences an execution path that can legitimately incur loss: large swap, treasury rebalance, liquidation unwind, arbitrage leg, or routing fallback.
+2. sender and receiver collude on venue, timing, liquidity conditions, or counter-position so the sender's apparent execution loss predictably becomes the receiver's profit.
+3. on-chain flow is shaped to resemble ordinary sandwich/arbitrage/MEV activity rather than an explicit transfer.
+4. monitoring and forensic tooling classify the event as normal extraction or bad execution, not as a payment from sender to receiver.
+5. repeated staged-loss events create a covert payout, bribery, laundering, or treasury-exfil path with plausible deniability.
+
+**Why distinct from existing vectors**:
+- **C25 MEV Extraction** 은 제3자 공격자가 victim orderflow에서 가치를 뽑는 일반 패턴이다. **B80** 은 sender/receiver의 **공모된 가치 이전** 이 핵심이다.
+- **A59 thin-pool routing / price-impact loss** 는 잘못된 라우팅으로 인한 파괴적 실행 손실 자체를 다룬다. **B80** 은 그 손실을 **의도적으로 특정 수취인에게 전달** 해 covert payment로 쓰는 점이 다르다.
+- **B79** 가 payment-service correspondence 붕괴라면, **B80** 은 explicit payment가 없어도 ordinary loss envelope 안에 **value transfer를 숨기는 것** 이다.
+
+**Why audits miss this**:
+1. 감사는 보통 “사용자가 최선의 실행을 받는가” 또는 “누군가 앞에서 뺏어가는가” 를 보지, **손실이 의도적 송금 수단인지** 는 잘 모델링하지 않는다.
+2. treasury/keeper/operator 거래는 슬리피지·price impact·fallback venue를 주로 risk/UX 문제로 보고, exfiltration primitive로 분류하지 않는다.
+3. 포렌식은 explicit transfer edge를 찾기 쉽지만, staged loss + unrelated-looking profit pair는 ordinary MEV noise에 묻히기 쉽다.
+4. large-loss outlier도 실제 시장에서 존재하므로 고정 threshold 기반 탐지는 false positive가 많아 조직이 그냥 넘기기 쉽다.
+
+**Code pattern to find**:
+
+```rust
+// VULNERABLE SHAPE: operator/keeper can execute economically extreme trades
+// whose loss beneficiary is invisible to protocol accounting.
+fn execute_rebalance(route: Route, max_slippage_bps: u16) {
+    // Missing: hard price-impact ceiling, venue allowlist, beneficiary correlation,
+    // repeated-counterparty anomaly detection, dual approval for override.
+    dex.swap(route, max_slippage_bps);
+}
+
+// SAFER SHAPE
+fn execute_rebalance(route: Route, policy: &Policy) {
+    enforce_price_impact_cap(route, policy)?;
+    enforce_venue_allowlist(route, policy)?;
+    bind_override_to_dual_approval(route, policy)?;
+    record_expected_vs_realized_loss(route)?;
+    alert_on_repeated_same_beneficiary_profit(route)?;
+}
+```
+
+**Defensive heuristic**:
+- keeper/treasury/solver path에 **hard max price-impact / slippage / fallback venue** 상한을 둘 것
+- route override, emergency execution, manual rebalance는 **dual approval + beneficiary logging** 을 남길 것
+- 반복적으로 같은 상대방·같은 venue·같은 block neighborhood에서 이익이 귀속되면 ordinary MEV가 아니라 **covert transfer suspicion** 으로 승격할 것
+- “large loss but protocol still succeeded” 를 단순 운영 KPI가 아니라 **자금 유출 가능성** 으로 triage 할 것
+- explicit transfer monitoring 외에 **loss-profit correspondence graph** 를 따로 만들 것
+
+**Microstable relevance**:
+- 현재 `programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서는 `jupiter`, `raydium`, `orca`, `amm`, `dex`, `swap`, `bundle`, `jito` 기반의 **실제 실행/라우팅 경로** 가 확인되지 않았다.
+- 현재 `rebalance` 는 route settlement가 아니라 weight/commit coordination 중심이므로, 오늘 기준 B80의 staged-loss transfer surface는 **NOT ACTIVE** 다.
+- 다만 향후 keeper가 DEX-based collateral rebalance, treasury unwind, hedge execution, off-chain solver route를 붙이면 **ordinary MEV-looking loss가 covert payout channel** 로 바뀔 수 있으므로 즉시 재평가해야 한다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B80 Deniable Covert Asset Transfer / MEV-Indistinguishable Loss Staging | attacker colludes to stage an apparently ordinary MEV/arbitrage/slippage loss so the sender's economic loss becomes the receiver's profit without an explicit transfer edge | covert payout, bribery, laundering, treasury exfiltration disguised as bad execution, false-negative forensic classification | current Microstable repo shows **no DEX/solver execution path today**, so **NOT ACTIVE**; future keeper/treasury market execution must treat repeated “ordinary loss” as possible covert transfer |
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**

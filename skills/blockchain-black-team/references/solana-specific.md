@@ -1540,3 +1540,28 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 73. ☐ Solana 결제를 근거로 off-chain 유료 서비스/API를 열 경우, `processed`/`confirmed` 만으로 비가역 grant를 하지 말고 `finalized settlement + requester/resource/facilitator/nonce/expiry binding + one-shot idempotency burn + no-store cache policy` 를 같은 상태 머신으로 강제할 것
+
+---
+<!-- AUTO-ADDED 2026-05-19 (Red Team Daily Evolution) — B80 DCAT -->
+
+## 2026-05-19 MEV-위장 가치이전(DCAT) 패턴
+
+### B80 — Deniable Covert Asset Transfer / MEV-Indistinguishable Loss Staging
+- **Solana context**: Solana는 빠른 체결과 Jito/aggregator/keeper 생태계 때문에, 대형 손실 거래가 있으면 팀이 이를 곧바로 “평범한 슬리피지” 나 “MEV에 얻어맞은 실행” 으로 분류하기 쉽다. 그러나 DCAT는 바로 그 **평범해 보이는 손실 이벤트** 를 covert payout channel로 바꾼다. 즉 treasury, keeper, rebalancer, solver가 의도적으로 불리한 실행을 만들고, 공모 수취인이 그 손실을 차익으로 흡수하면 **명시적 transfer 없이도 값 이전** 이 가능하다.
+- **핵심 패턴**: ordinary-looking sandwich/arbitrage/loss event가 사실은 sender→receiver value transfer다. 포렌식은 explicit transfer edge를 못 보고, 기존 MEV detector는 ordinary extraction으로 분류한다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Jito bundle, routing aggregator, keeper rebalance, treasury unwind처럼 **누가 어느 venue에서 어떤 가격 한도로 실행했는지** 가 분산된 경우가 많다.
+  2. 빠른 슬롯과 복수 venue 구조 때문에 나쁜 체결을 “시장 소음” 으로 넘기기 쉽다.
+  3. `manual override`, `emergency unwind`, `fallback route` 는 합법적 예외처럼 보이지만 covert transfer의 은닉 껍데기로 쓰기 좋다.
+  4. explicit token transfer 모니터링만으로는 sender loss ↔ receiver gain correspondence를 놓친다.
+- **Source signals**:
+  - arXiv `2605.13132`, *Extending Blockchain Untraceability with Plausible Deniability* (submitted 2026-05-13)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `jupiter`, `raydium`, `orca`, `amm`, `dex`, `swap`, `bundle`, `jito` 기반 **실제 체결 경로** 는 확인되지 않았다.
+  - `rebalance` 는 현재 route execution이 아니라 weight/commit coordination 의미가 강하고, keeper에도 solver/venue adapter가 없다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 DEX 기반 collateral rebalance, treasury unwind, hedge leg, external solver를 붙이면 즉시 재평가해야 한다.
+- **Checklist item 74**: ☐ keeper/treasury가 시장 체결을 수행하게 되면 `max price impact + venue allowlist + override dual approval + realized-loss logging + repeated same-beneficiary profit correlation` 을 같은 통제 묶음으로 강제하고, ordinary MEV-looking loss도 covert transfer 가능성으로 triage 할 것
+
+### Solana-Specific Defense Checklist Update
+74. ☐ keeper/treasury가 시장 체결을 수행하게 되면 `max price impact + venue allowlist + override dual approval + realized-loss logging + repeated same-beneficiary profit correlation` 을 같은 통제 묶음으로 강제하고, ordinary MEV-looking loss도 covert transfer 가능성으로 triage 할 것
