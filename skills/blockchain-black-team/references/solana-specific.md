@@ -1565,3 +1565,46 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 74. ☐ keeper/treasury가 시장 체결을 수행하게 되면 `max price impact + venue allowlist + override dual approval + realized-loss logging + repeated same-beneficiary profit correlation` 을 같은 통제 묶음으로 강제하고, ordinary MEV-looking loss도 covert transfer 가능성으로 triage 할 것
+
+---
+<!-- AUTO-ADDED 2026-05-20 (Red Team Daily Evolution) — A123/A124 Anchor typed validation collapse -->
+
+## 2026-05-20 Anchor Typed Validation Collapse Patterns
+
+### A123 — Anchor System Program Identity Collapse / Arbitrary Executable CPI Surrogate
+- **Solana context**: `Program<'info, System>` 는 거의 모든 Solana 코드에서 boilerplate처럼 보이기 때문에, 팀이 이를 별도 보안 경계로 잘 보지 않는다. 하지만 Anchor 1.0 계열의 이번 신호는 그 typed wrapper가 실제로는 **임의 executable program acceptance** 로 붕괴할 수 있음을 보여준다.
+- **핵심 패턴**: `Program<'info, System>` 가 untyped executable sentinel 경로와 충돌해, 공격자가 다른 executable program을 system program 대신 주입한다. 그러면 downstream CPI/account-creation/payment logic는 **정상 system semantics가 보장된다고 착각한 채** 진행된다.
+- **왜 Solana에서 특히 위험한가**:
+  1. `system_program` 은 거의 모든 instruction 계정 집합에 있어, surface area가 넓다.
+  2. 계정 생성, lamport transfer, rent, PDA bootstrap처럼 “체인 기본 의미” 를 기대하는 곳에 쓰여 피해가 미묘하게 숨을 수 있다.
+  3. 리뷰어는 보통 `Program<'info, System>` 자체를 증거로 보고, 별도의 explicit key check를 생략한다.
+- **Source signals**:
+  - RustSec `RUSTSEC-2026-0144` (published 2026-05-14)
+  - GitHub advisory `GHSA-c6rc-8jpp-2fgc`
+- **Microstable current status**:
+  - `programs/microstable/src/lib.rs` 에 `Program<'info, System>` 사용처가 존재한다 (`:2129`, `:2196`, `:2334`, `:2429`, `:2624`, `:2995`).
+  - 그러나 `programs/microstable/Cargo.toml` / `solana/Cargo.lock` 기준 실제 버전은 `anchor-lang = 0.31.1` 이고, RustSec는 `< 1.0.0` 을 unaffected 로 명시한다.
+  - 따라서 **NOT AFFECTED today**.
+  - 다만 Anchor `1.0.0` / `1.0.1` 구간으로 올라가면, 현재 이미 존재하는 모든 `system_program` call-site가 즉시 재감사 대상이다.
+- **Checklist item 75**: ☐ `Program<'info, System>` 를 사용하는 경로는 Anchor major upgrade 시 `actual key == system_program::ID` negative test를 반드시 돌리고, 다른 executable program 주입 케이스를 회귀 테스트로 고정할 것
+
+### A124 — Anchor Interface Owner-Only Type Confusion / `InterfaceAccount` Cross-Type Substitution
+- **Solana context**: Solana 프로그램은 같은 owner 아래 여러 account type을 두는 경우가 흔하고, `InterfaceAccount<T>` 는 이런 다중 프로그램/다중 타입 환경에서 추상화 편의 때문에 매력적이다. 이번 신호는 그 wrapper가 잘못 구현되면 **owner는 맞지만 type은 틀린 account** 를 trusted typed state처럼 통과시킬 수 있음을 보여준다.
+- **핵심 패턴**: `InterfaceAccount` 가 owner allowlist만 확인하고 discriminator/type binding을 놓친다. 결과적으로 공격자는 **같은 accepted owner 아래의 다른 타입** 을 기대 타입처럼 밀어 넣을 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. owner check가 통과하면 팀이 type check도 됐다고 착각하기 쉽다.
+  2. Token-2022, plugin abstraction, cross-program interface wrapper처럼 interface-based 설계가 늘수록 blast radius가 커진다.
+  3. same-owner wrong-type 케이스는 정상 happy-path 테스트로는 거의 드러나지 않는다.
+- **Source signals**:
+  - RustSec `RUSTSEC-2026-0146` (published 2026-05-18)
+  - GitHub advisory `GHSA-429q-fhh4-r6hj`
+- **Microstable current status**:
+  - `programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `InterfaceAccount` 사용 흔적이 없다.
+  - 코드베이스는 unaffected `anchor-lang 0.31.1` 을 사용 중이다.
+  - 따라서 **NOT ACTIVE / NOT AFFECTED today**.
+  - 다만 향후 interface-wrapper abstraction을 도입하면 same-owner wrong-type negative test를 릴리스 게이트에 올려야 한다.
+- **Checklist item 76**: ☐ `InterfaceAccount<T>` 또는 동급 interface wrapper를 도입할 때는 same-owner / wrong-discriminator substitution negative test를 필수화하고, owner allowlist만으로 type binding이 증명됐다고 간주하지 말 것
+
+### Solana-Specific Defense Checklist Update
+75. ☐ `Program<'info, System>` 를 사용하는 경로는 Anchor major upgrade 시 `actual key == system_program::ID` negative test를 반드시 돌리고, 다른 executable program 주입 케이스를 회귀 테스트로 고정할 것
+76. ☐ `InterfaceAccount<T>` 또는 동급 interface wrapper를 도입할 때는 same-owner / wrong-discriminator substitution negative test를 필수화하고, owner allowlist만으로 type binding이 증명됐다고 간주하지 말 것

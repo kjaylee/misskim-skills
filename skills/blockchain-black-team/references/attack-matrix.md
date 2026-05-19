@@ -1,4 +1,4 @@
-# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17) | META-01~69
+# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20) | META-01~69
 
 ## A. Smart Contract Vectors
 
@@ -6647,6 +6647,151 @@ fn execute_rebalance(route: Route, policy: &Policy) {
 | Vector | Mechanism | Impact | Microstable relevance |
 |---|---|---|---|
 | B80 Deniable Covert Asset Transfer / MEV-Indistinguishable Loss Staging | attacker colludes to stage an apparently ordinary MEV/arbitrage/slippage loss so the sender's economic loss becomes the receiver's profit without an explicit transfer edge | covert payout, bribery, laundering, treasury exfiltration disguised as bad execution, false-negative forensic classification | current Microstable repo shows **no DEX/solver execution path today**, so **NOT ACTIVE**; future keeper/treasury market execution must treat repeated “ordinary loss” as possible covert transfer |
+
+---
+
+### A123. Anchor System Program Identity Collapse / Arbitrary Executable CPI Surrogate
+
+**Published**: 2026-05-20 | **Severity**: HIGH | **Red Team**
+
+**Signal**: RustSec `RUSTSEC-2026-0144` (published 2026-05-14) + GitHub advisory `GHSA-c6rc-8jpp-2fgc`
+
+**Key insight**: 많은 Solana 팀은 `Program<'info, System>` 를 보면 “이 계정은 당연히 system program 으로 검증된다” 고 생각한다. 그런데 이번 Anchor 1.0 계열 신호는 typed wrapper 자체가 그 보장을 무너뜨릴 수 있음을 보여준다. `System::id()` 가 `Pubkey::default()` 이라서 untyped `Program<()>` sentinel 경로와 충돌하면, 코드상으로는 “시스템 프로그램 전용 CPI” 처럼 보이는데 실제 런타임에서는 **임의 실행 프로그램을 system program 대리인처럼 주입** 할 수 있다.
+
+**Attack chain**:
+1. victim program declares a required account as `Program<'info, System>` and assumes Anchor enforces the real system program id.
+2. downstream logic builds or invokes a CPI whose `program_id` or semantic trust is derived from the passed `system_program` account.
+3. because the vulnerable validation path treats `Program<'info, System>` like the untyped executable-program case, attacker supplies another executable program instead of the real system program.
+4. victim business logic proceeds under the false belief that transfer/account-creation/payment semantics are backed by the canonical system program.
+5. arbitrary CPI, payment bypass, or fake-success state transitions become reachable without breaking signer checks.
+
+**Why distinct from existing vectors**:
+- generic “arbitrary CPI target injection” 문제와 비슷해 보여도, **A123의 핵심은 framework typed wrapper가 바로 그 신뢰를 잘못 부여한다는 점** 이다.
+- **A117** 은 nested/composite meta serialization에서 signer downgrade가 되살아나는 privilege-shaping bug다. **A123** 은 meta forwarding이 아니라 **program identity validation 자체가 `System` special-case 때문에 collapse** 하는 패턴이다.
+- 기존 generic account substitution과도 다르다. **A123은 executable owner mismatch가 아니라 `Program<'info, System>` 라는 supposedly-safe type이 wrong program id를 합법처럼 통과시킨다**.
+
+**Why audits miss this**:
+1. `Program<'info, System>` 는 Solana/Anchor codebase에서 거의 boilerplate처럼 반복되므로, 감사자가 보안 경계로 다시 읽지 않는다.
+2. `Pubkey::default()` sentinel은 framework internals에 숨어 있어, 애플리케이션 리뷰만으로는 `System` 과 untyped case의 충돌을 떠올리기 어렵다.
+3. 많은 테스트는 “정상 system program을 넣었을 때 동작하는가” 만 보고, **다른 executable program을 넣었을 때도 accepted 되는가** 는 negative test로 잘 만들지 않는다.
+4. CPI 결과를 명시적으로 검증하지 않는 로직에서는 “호출은 됐다” 와 “원래 의도한 system effect가 일어났다” 가 분리될 수 있다.
+
+**Code pattern to find**:
+
+```rust
+// VULNERABLE SHAPE: typed System wrapper is assumed to pin the canonical
+// system program, and downstream CPI trusts the passed account identity.
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut)]
+    pub vault: SystemAccount<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+let ix = anchor_lang::solana_program::system_instruction::transfer(
+    &ctx.accounts.payer.key(),
+    &ctx.accounts.vault.key(),
+    amount,
+);
+anchor_lang::solana_program::program::invoke(
+    &ix,
+    &[
+        ctx.accounts.payer.to_account_info(),
+        ctx.accounts.vault.to_account_info(),
+        ctx.accounts.system_program.to_account_info(),
+    ],
+)?;
+
+// SAFER SHAPE: bind the account key explicitly when the framework version is
+// in doubt, and keep a regression test that passes another executable program.
+require_keys_eq!(
+    ctx.accounts.system_program.key(),
+    anchor_lang::solana_program::system_program::ID,
+    ErrorCode::InvalidSystemProgram,
+);
+```
+
+**Defensive heuristic**:
+- Anchor 1.0 계열에서는 `Program<'info, System>` 를 “자동으로 안전” 하다고 가정하지 말고, 취약 버전 구간에서는 explicit key equality regression test를 둘 것
+- `system_program` 을 통해 CPI를 만들거나 계정 생성/지급 의미를 해석하는 경로에서는 **실제 key == `system_program::ID`** 를 assert 할 것
+- 테스트에 `ComputeBudget111111111111111111111111111111` 같은 다른 executable program 주입 케이스를 넣어 false acceptance를 막을 것
+- framework upgrade review에서 `typed program account special-case` 를 별도 점검할 것
+
+**Sources**: https://rustsec.org/advisories/RUSTSEC-2026-0144.html | https://github.com/otter-sec/anchor/security/advisories/GHSA-c6rc-8jpp-2fgc
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 에는 `Program<'info, System>` 사용처가 여러 곳 존재한다 (`:2129`, `:2196`, `:2334`, `:2429`, `:2624`, helper `:2995`).
+- 그러나 `microstable/solana/programs/microstable/Cargo.toml` 와 `solana/Cargo.lock` 기준 실제 사용 버전은 `anchor-lang = 0.31.1` 이고, RustSec advisory는 `< 1.0.0` 을 unaffected 로 명시한다.
+- 따라서 **current Microstable is NOT AFFECTED today**.
+- 다만 향후 Anchor `1.0.0` 또는 `1.0.1` 계열로 올라가거나 동일 validation logic을 부분 backport 하면, 지금 이미 존재하는 `system_program` call-sites가 즉시 재검토 대상이 된다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A123 Anchor System Program Identity Collapse / Arbitrary Executable CPI Surrogate | `Program<'info, System>` validation collapses into “any executable program” acceptance, so downstream logic trusts a fake system-program identity and performs CPI/payment/account-creation semantics under false assumptions | arbitrary CPI target substitution, payment bypass, fake-success flows, attacker-owned program injection where canonical system semantics were assumed | current Microstable repo **uses the pattern but on unaffected `anchor-lang 0.31.1`**, so **NOT AFFECTED today**; any future Anchor 1.0.0/1.0.1 adoption must re-audit all `system_program` call-sites |
+
+---
+
+### A124. Anchor Interface Owner-Only Type Confusion / `InterfaceAccount` Cross-Type Substitution
+
+**Published**: 2026-05-20 | **Severity**: HIGH | **Red Team**
+
+**Signal**: RustSec `RUSTSEC-2026-0146` (published 2026-05-18) + GitHub advisory `GHSA-429q-fhh4-r6hj`
+
+**Key insight**: `InterfaceAccount<T>` 는 많은 팀에게 “owner도 맞고 discriminator도 맞는 typed interface wrapper” 처럼 느껴진다. 그런데 이번 신호는 특정 Anchor 1.0 RC 경로에서 checked deserialization이 빠지면서, 이 wrapper가 사실상 **owner-only gate** 로 축소될 수 있음을 보여준다. 결과적으로 공격자는 같은 accepted interface owner 아래의 **다른 account type** 을 밀어 넣어도, 호출부는 그것을 기대한 타입처럼 읽어버릴 수 있다.
+
+**Attack chain**:
+1. protocol adopts `InterfaceAccount<T>` to accept accounts owned by one of several interface-compatible programs.
+2. vulnerable Anchor path validates only that the owner belongs to an accepted interface owner set.
+3. discriminator/type binding is skipped, so another account type under the same accepted owner passes the outer gate.
+4. business logic deserializes or interprets the bytes as the expected interface account type.
+5. authority, config, token-account semantics, or state-machine assumptions are violated through cross-type substitution without needing owner forgery.
+
+**Why distinct from existing vectors**:
+- **A6-style generic account substitution** 과 달리, **A124는 wrong owner나 raw unchecked account가 아니라 framework-sanctioned `InterfaceAccount` wrapper가 owner-only validation으로 축소되는 점** 이 핵심이다.
+- **A122** 는 zero-copy unchecked loader가 initialized state trust를 무너뜨리는 패턴이다. **A124** 는 zero-copy가 아니라 **interface-wrapper discriminator binding omission** 이다.
+- 같은 owner 아래 여러 타입이 공존하는 Solana 프로그램 구조에서, 이 버그는 “owner 맞으니 괜찮다” 는 일반 리뷰 직관을 정면으로 역이용한다.
+
+**Why audits miss this**:
+1. `InterfaceAccount<T>` 자체가 이미 엄격한 typed wrapper처럼 보인다.
+2. reviewer는 interface owner allowlist가 있으면 account-type validation도 함께 이뤄질 것이라 추정하기 쉽다.
+3. 테스트는 대개 “정상 owner program의 정상 type” 만 넣어보지, **같은 owner의 다른 type** 을 negative case로 넣지 않는다.
+4. bug가 framework RC line 내부 deserialization path에 숨어 있어, application-level constraints만 읽으면 놓치기 쉽다.
+
+**Code pattern to find**:
+
+```rust
+// VULNERABLE SHAPE: interface wrapper is assumed to guarantee both owner and
+// account-type binding.
+#[derive(Accounts)]
+pub struct Consume<'info> {
+    pub iface_state: InterfaceAccount<'info, ExpectedState>,
+}
+
+// SAFER SHAPE: keep explicit negative tests for same-owner / wrong-discriminator
+// substitutions when adopting new Anchor interface-account paths.
+```
+
+**Defensive heuristic**:
+- Anchor `1.0.0-rc.1` 계열에서는 `InterfaceAccount<T>` 채택 시 same-owner / wrong-type negative test를 반드시 둘 것
+- accepted interface owner set이 있어도 **type discriminator binding이 실제로 유지되는지** regression test로 검증할 것
+- upgrade 시 `InterfaceAccount::try_from` 관련 deserialization path diff를 릴리스 게이트에 포함할 것
+- interface abstraction이 raw owner allowlist보다 더 안전하다는 직관을 금지할 것
+
+**Sources**: https://rustsec.org/advisories/RUSTSEC-2026-0146.html | https://github.com/otter-sec/anchor/security/advisories/GHSA-429q-fhh4-r6hj
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `InterfaceAccount` 사용 흔적은 확인되지 않았다.
+- 코드베이스는 `anchor-lang 0.31.1` 을 사용 중이며, RustSec advisory는 affected version을 `1.0.0-rc.1` 단일 구간으로 명시한다.
+- 따라서 **NOT ACTIVE / NOT AFFECTED today**.
+- 다만 향후 multi-program interface abstraction, Token-2022 style interface wrappers, plugin-account abstraction을 들이면 A124는 즉시 relevant 해진다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A124 Anchor Interface Owner-Only Type Confusion / `InterfaceAccount` Cross-Type Substitution | `InterfaceAccount` accepts another same-owner account type because owner validation survives while discriminator/type binding is skipped, letting business logic deserialize unexpected bytes as the expected interface state | cross-type state confusion, authorization/policy bypass, incorrect state-machine branch, forged semantic interpretation under a trusted owner | current Microstable repo has **no `InterfaceAccount` usage** and runs on unaffected `anchor-lang 0.31.1`, so **NOT ACTIVE / NOT AFFECTED today**; future interface-wrapper adoption should add same-owner wrong-type regression tests |
+
+**Matrix state as of 2026-05-20 (red-team daily update)**: prior coverage retained; **A123** and **A124** added after classifying `RUSTSEC-2026-0144` / `0146` as **typed-framework validation collapses** in the Anchor 1.0 line, distinct from generic CPI misuse, generic account substitution, and A122 zero-copy opt-out. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; current result is version-gated and future-facing.
 
 ---
 
