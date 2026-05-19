@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-05-19 — Echo Protocol (Monad / eBTC — admin private key leak → attacker-granted mint rights → unbacked synthetic issuance)** — SlowMist's public incident summary says an **admin private key leak** let the attacker grant themselves **minting rights**, mint **1,000 unbacked eBTC**, deposit **45 eBTC** into Curvance, borrow **~11.29 WBTC**, bridge the proceeds to Ethereum, swap to ETH, and send **~384 ETH** to Tornado Cash while **955 eBTC** remained under attacker control at disclosure time.
+  **Root cause**: control of a privileged admin signer was sufficient not just to move treasury funds but to mutate **supply authority** itself. Once mint rights were reassigned, the protocol's own accounting accepted attacker-created synthetic collateral as if it were legitimate backing.
+  **Vector mapping**: **B15 Key Compromise** (2026-05-20 reinforcement, admin-key-to-mint-authority / unbacked-liability sub-pattern). Distinct from a generic treasury-drain note because the reusable defect is **privileged role mutation after key leak**, which lets the attacker manufacture protocol-recognized assets before extracting real value.
+  **Source**: https://hacked.slowmist.io/
+
 - **2026-05-12 — SQ Protocol staking contract (BSC / EVM — hidden hardcoded owner backdoor + `authorizationList` ownership seize)** — public loss amount not independently confirmed in the source used for this sweep. SlowMist's public mechanism summary says the verified staking contract still contained a **hardcoded owner backdoor**. The attacker used the modern **type-0x4 / `authorizationList`** transaction path to take effective ownership, generated fake staking-claim state, redeemed those claims for USDT, and sold the protocol token.
   **Root cause**: a nominally verified staking contract still exposed a **hidden privileged ownership path** that reviewers or integrators could miss if they only checked ordinary admin entrypoints. Once ownership fell, reward-claim and redemption logic became attacker-controlled value extraction.
   **Vector mapping**: **A4 Access Control** (2026-05-17 reinforcement, hidden privileged path / alternate transaction-authorization ownership seize sub-pattern).

@@ -1,5 +1,49 @@
 ---
 
+## 2026-05-20 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-13 to 2026-05-20 KST)
+- Sources checked: `https://hacked.slowmist.io/`, THORChain / Verus public incident coverage already fetched in this run, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, fallback-search evidence, and direct local code re-read
+- **Confirmed in-window items**:
+  1. **Echo Protocol (2026-05-19)** is admissible as a **B15 Key Compromise** reinforcement: the public mechanism summary is specific enough to preserve the attack chain **admin private key leak → mint-right assignment → 1,000 unbacked eBTC mint → collateral posting / borrow / bridge out**.
+  2. **Verus bridge** remains **NOT ADMISSIBLE YET** for matrix editing today. The public wording I could verify says `forged cross-chain message or bypassed the verification logic`, which is directionally consistent with **A32**, but still too coarse for a code-level reinforcement entry.
+  3. **THORChain vault churn poisoning** also remains **NOT ADMISSIBLE YET** for matrix editing today. The currently public coverage describes address-poisoning during churn, but I still do not have a direct code/mechanism write-up strong enough to formalize a reusable vector delta.
+  4. GitHub / Solana / Trail-of-Bits / OtterSec / Neodyme spot checks did **not** surface a fresh **Solana / Anchor / SPL** code-mechanism advisory requiring a new matrix delta for this run.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **B15 Key Compromise** now explicitly covers **admin-key-to-mint-authority escalation** via the **Echo Protocol** incident
+- Updated: `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, and `SKILL.md`
+- Not updated: `references/solana-specific.md` (public mechanism bar not met)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's changed vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B15 Key Compromise** (Echo reinforcement) | keeper signer loading / storage discipline | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:432-437` still requires **exactly 3** keeper keypair paths for 2-of-3 quorum, and `config.rs:814-845` forces **three distinct parent directories** with no ephemeral/traversal paths. `keeper/src/utils.rs:341-430` securely opens key files with `O_NOFOLLOW`, rejects group/world-readable modes, and requires file ownership to match the effective uid. `main.rs:654-676` also warns on non-`600` `.env` permissions. But the keepers are still **filesystem-loaded hot keys** on the operator host, not HSM/MPC-backed signers, so Echo-style host/admin-key compromise remains only partially mitigated. |
+| **A32 Cross-Chain Bridge Message Forgery** (Verus candidate, not admitted) | bridge-like external message trust paths | ✅ NOT ACTIVE | `keeper/src/hermes.rs:355-407` and `520-548` do parse Wormhole/Pyth VAA-backed price updates, but that path feeds oracle data submission, not user collateral credit or admin mutation. I did **not** find a Microstable path that mints assets, unlocks collateral, or changes protocol authority purely because an external cross-chain message was observed. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard RPC runtime | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:208-213` still limits strict cross-RPC checking to `getGenesisHash`, and `docs/app.js:243-266` / `1271-1276` still settle on a single verified endpoint for runtime reads. This defends against obvious wrong-network bootstraps, but not KelpDAO-style verifier-specific poisoning or degraded-mode integrity collapse. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:735-865` still fetches externally validated prices, enables manual oracle mode, and sends `ix_update_oracle`; `lib.rs:671-729` still enforces keeper quorum, bounds, and staleness, but I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor before publishing fallback prices. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on meta-only CSP, and `docs/app.js:43-48` still ships a devnet faucet mint-authority keypair in browser code. Devnet-only intent lowers severity, but a canonical frontend compromise would inherit that signer inside the demo surface. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+
+### Today's Verdict
+- New incidents found: **1 admissible as reinforcement only**
+- New attack vectors added: **0**
+- Reinforcements applied: **1** (**B15**, Echo Protocol)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today's public window gave one real B15 upgrade, but it did **not** justify forcing THORChain or Verus into the matrix without stronger mechanism evidence. On direct code re-read, Microstable still shows **partial key-handling hardening**, **partial RPC integrity defense**, and the same standing **B45 HIGH** continuity gap.
+
+---
+
 ## 2026-05-17 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-10 to 2026-05-17 KST)
