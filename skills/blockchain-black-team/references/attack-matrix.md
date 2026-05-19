@@ -1,4 +1,4 @@
-# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20) | META-01~69
+# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20) | META-01~69
 
 ## A. Smart Contract Vectors
 
@@ -6791,7 +6791,76 @@ pub struct Consume<'info> {
 |---|---|---|---|
 | A124 Anchor Interface Owner-Only Type Confusion / `InterfaceAccount` Cross-Type Substitution | `InterfaceAccount` accepts another same-owner account type because owner validation survives while discriminator/type binding is skipped, letting business logic deserialize unexpected bytes as the expected interface state | cross-type state confusion, authorization/policy bypass, incorrect state-machine branch, forged semantic interpretation under a trusted owner | current Microstable repo has **no `InterfaceAccount` usage** and runs on unaffected `anchor-lang 0.31.1`, so **NOT ACTIVE / NOT AFFECTED today**; future interface-wrapper adoption should add same-owner wrong-type regression tests |
 
-**Matrix state as of 2026-05-20 (red-team daily update)**: prior coverage retained; **A123** and **A124** added after classifying `RUSTSEC-2026-0144` / `0146` as **typed-framework validation collapses** in the Anchor 1.0 line, distinct from generic CPI misuse, generic account substitution, and A122 zero-copy opt-out. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; current result is version-gated and future-facing.
+---
+
+### A125. Cross-Chain Export Semantic Completeness / Economically-Unbacked Validated Release
+
+**Published**: 2026-05-20 | **Severity**: HIGH | **Purple Team**
+
+**Signal**: CryptoTimes public incident coverage of the Verus bridge exploit (2026-05-18), which described a source-side validation omission (`checkCCEValues`) that let an export path release real value after downstream proof verification, without a forged message or broken finality proof.
+
+**Key insight**: 많은 브릿지 리뷰는 `이 메시지/루트가 진짜인가`, `최종화되었는가`, `서명이 맞는가` 에 집중한다. 그러나 Verus 계열 신호는 **그 source-side state transition 자체가 exported amount를 실제 reserve / burn / lock delta와 결박했는가** 를 별도 보안 경계로 봐야 함을 보여준다. 즉 **유효하고 최종화된 증거** 가 곧바로 **경제적으로 backing된 release 권한** 을 뜻하지는 않는다.
+
+**Attack chain**:
+1. source chain constructs an export / payout intent whose hash and surrounding state are syntactically valid.
+2. source-side validation omits or weakens the conservation check that should bind exported value to actual locked / burned / reserve-backed balance.
+3. notaries / validators honestly finalize the state root or approval set because the transition is admissible under current rules.
+4. destination bridge verifies the root / message / approval path correctly and releases assets automatically.
+5. attacker extracts real destination-side value even though no signature was forged and no proof-verification code had to be bypassed.
+
+**Why distinct from existing vectors**:
+- **A32** 는 forged / weakly-bound proof가 real finalized source state를 충분히 증명하지 못하는 문제다. **A125** 는 그보다 한 단계 안쪽에서, **proof와 finalized state가 모두 genuine이어도 source transition semantics가 경제적 보전성(conservation)을 강제하지 않으면 release가 무담보가 될 수 있다** 는 패턴이다.
+- **A120** 은 route execution의 terminal settlement mismatch다. **A125** 는 swap route가 아니라 **cross-chain export semantics 자체가 source↔destination value binding을 빠뜨리는 문제** 다.
+- **META-51** 은 authority-bearing evidence 일반론이다. **A125** 는 그 evidence가 truthful 하더라도 **economic qualification** 이 비어 있으면 실제 자산 release가 일어난다는 bridge-specific exploit primitive다.
+
+**Why audits miss this**:
+1. source exporter / relay proof / destination release가 서로 다른 저장소·감사 범위·소유 팀으로 나뉘어, end-to-end conservation invariant가 orphan boundary가 된다.
+2. negative test가 대개 malformed proof, bad signature, stale root만 다루고, **완전히 valid한 export object가 reserve delta 없이도 통과하는가** 는 잘 보지 않는다.
+3. reviewer는 `finalized + quorum-approved` 를 곧 `economically correct` 로 심리적으로 승격시키기 쉽다.
+4. monitor와 IR은 signer compromise / validator fault를 우선 본다. 반면 **합법처럼 보이는 무담보 release** 는 parser/proof correctness가 모두 green 이라 초기 triage에서 늦게 보인다.
+
+**Code pattern to find**:
+
+```rust
+// VULNERABLE SHAPE: export admission proves message structure / root / quorum,
+// but never re-binds amount semantics to actual source-side conserved value.
+fn validate_export(export: &Export, proof: &Proof, state_root: Hash) -> Result<()> {
+    verify_state_root(proof, state_root)?;
+    verify_export_hash(export, proof)?;
+    // missing: exported_amount <= burned_or_locked_amount(export.source_context)
+    Ok(())
+}
+
+// SAFER SHAPE: treat economic conservation as a first-class admission predicate.
+fn validate_export(export: &Export, proof: &Proof, state_root: Hash) -> Result<()> {
+    verify_state_root(proof, state_root)?;
+    verify_export_hash(export, proof)?;
+    require!(
+        export.amount <= source_locked_or_burned_amount(export.source_context)?,
+        Error::UnbackedExport
+    );
+    Ok(())
+}
+```
+
+**Defensive heuristic**:
+- export / bridge admission에서 `message authenticity` 와 `economic backing` 을 별도 predicate로 강제할 것
+- source chain에서 **burn / lock / reserve delta == releasable amount** 를 명시적으로 검증하고, 그 결과를 destination release와 end-to-end invariant로 연결할 것
+- 테스트에 **valid proof + semantically unbacked export** 케이스를 넣을 것
+- postmortem / bounty triage에서 `forged message 없음` 을 곧 `proof layer safe` 로 해석하지 말 것
+
+**Sources**: https://www.cryptotimes.io/2026/05/18/verus-bridge-11-58m-breach-revives-fears-over-cross-chain-risks/
+
+**Microstable relevance**:
+- 현재 공개 Microstable artifact에는 live bridge / wrapped-collateral export / external release verifier path가 없어 **NOT ACTIVE today** 다.
+- Blue v14/v15가 flow cap, haircut, manual oracle gating, keeper quorum, upgrade-authority pinning은 강화했지만, 오늘 신호는 그와 별개로 **향후 bridge / reserve attestation / external collateral release를 붙일 때 source-side economic binding을 release gate로 승격해야 한다** 는 교훈을 준다.
+- 따라서 오늘은 신규 Microstable architecture finding까지는 올리지 않되, future expansion gate에서는 `proof-valid` 와 `economically-backed` 를 분리해 검토해야 한다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A125 Cross-Chain Export Semantic Completeness / Economically-Unbacked Validated Release | bridge/export path validates finalized root, message hash, and approval set, but fails to bind released amount to actual source-side lock/burn/reserve conservation, so a truthful proof can still authorize unbacked value release | unbacked bridge release, reserve drain, false confidence from green proof verification, delayed incident triage because no forged message exists | current Microstable repo has **no live bridge/export release path**, so **NOT ACTIVE today**; any future wrapped collateral / bridge / reserve-attestation flow must require end-to-end conservation binding before release |
+
+**Matrix state as of 2026-05-20 (purple/red daily update)**: prior coverage retained; **A123** and **A124** captured the Anchor 1.0 typed-framework validation collapses, and **A125** now captures the Verus-class case where a **truthful, finalized export path still fails economic conservation binding**. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; current result is future-facing and release-gate relevant rather than active-today.
 
 ---
 
