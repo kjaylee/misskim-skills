@@ -352,6 +352,16 @@ function handleIBCDeposit(bytes calldata payload) external {
 3. For token-gateway bridges, separate `message accepted` from `admin mutation executed`; high-impact verbs should require an additional allowlist / timelock / quorum layer even after proof verification
 **Source**: https://www.cryptotimes.io/2026/04/13/polkadot-hack-attacker-exploits-ethereum-contract-and-mints-1b-dot-tokens/ | https://www.coindesk.com/tech/2026/04/13/attacker-mints-usd1-billion-polkadot-tokens-on-ethereum-ends-up-stealing-just-usd250-000 | https://docs.hyperbridge.network/developers/polkadot/token-gateway/
 
+### A32 — 2026-05-20 Reinforcement: Butter Bridge Retry-Message Hash Collision Forgery
+**Historical Reinforcement**: Butter Bridge V3.1 / MAP Protocol / Butter Network (2026-05-20, forged ~1 quadrillion MAPO; realized drain ~52.21 ETH / ~$180K from ETH-MAPO liquidity).
+**Mechanism**: SlowMist's public incident summary says the vulnerable `OmniServiceProxy` retry-message verification path hashed attacker-controlled dynamic-bytes fields with an `abi.encodePacked`-style construction that permitted a boundary-collision. The attacker crafted a forged cross-chain retry payload that hashed to the same value as an authorized retry message, bypassed message authentication, and reached the mint path as if a legitimate cross-chain operation had been retried. The result was massive unbacked MAPO issuance, followed by a dump into on-chain liquidity.
+**Why this reinforces A32**: the core failure was still **forged bridge message acceptance**, but this variant sharpens where the trust break can occur: not only in proof/light-client validation, but also in the bridge's own **message canonicalization / hash domain separation** step. A bridge can verify signatures on the wrong thing if the signed/checked digest is itself ambiguous.
+**Audit delta**:
+1. Never hash multiple attacker-controlled dynamic fields with packed/ambiguous serialization in bridge auth or retry-verification paths; use canonical length-delimited encoding and explicit domain tags
+2. Bind retry authorization to a unique tuple such as `source chain + source app + nonce + payload type + canonical payload hash + finalized root/context`
+3. Treat `retry`, `resubmit`, `replay-safe` convenience paths as the same critical trust boundary as the primary proof-verification path
+**Source**: https://hacked.slowmist.io/en/ | https://ourcryptotalk.com/news/butter-bridge-exploit-mints-1-quadrillion-mapo-tokens
+
 ### B36. Social-Engineering-to-Stake-Authority-Hijack
 **Historical**: Step Finance (2026-01-31, $27.3M) — executive device compromised via spear-phish; stake delegation authority transferred to attacker wallet; 261,854 SOL unstaked in ~90 minutes.
 **Mechanism**: Attacker does not need a smart contract exploit. Solana's stake delegation model separates stake authority from withdrawal authority, both reassignable unilaterally by the current controller. If an operator's hot device (laptop, workstation) is compromised, the attacker can sign a `StakeAuthorize` instruction to redirect staking rights to their wallet, then unstake and drain. The on-chain action looks legitimate — no program exploit, no anomalous CPI.

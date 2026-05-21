@@ -1,5 +1,47 @@
 ---
 
+## 2026-05-22 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-15 to 2026-05-22 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, direct incident fetches, and local Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Butter Bridge V3.1 / MAP Protocol (2026-05-20)** is admissible as an **A32 Cross-Chain Bridge Message Forgery** reinforcement: the public mechanism summary is specific enough to preserve the chain **ambiguous packed hash over dynamic-bytes retry message → hash collision → forged authenticated retry payload → unbacked mint**.
+  2. **Bankr (2026-05-19)** does not justify a new matrix edit today because the public mechanism fits existing **AI-agent prompt-injection / tool-boundary takeover** classes already absorbed in **B29 / B38 / META AI-agent lanes**.
+  3. **RetoSwap** and **HermesVault** are still **NOT ADMISSIBLE YET** for matrix editing today. Their public descriptions are directionally useful, but I still do not have a sufficiently reusable code-mechanism cut to formalize a named-vector delta without overfitting the incident.
+  4. GitHub / Solana / Trail-of-Bits spot checks did **not** surface a fresh **Solana / Anchor / SPL** code-mechanism advisory requiring a new matrix delta for this run.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **A32 Cross-Chain Bridge Message Forgery** now explicitly covers **retry-message canonicalization / packed-hash collision forgery** via the **Butter Bridge** incident
+- Updated: `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, and `SKILL.md`
+- Not updated: `references/solana-specific.md` (no Solana-specific delta cleared the admissibility bar today)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's changed vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A32 Cross-Chain Bridge Message Forgery** (Butter reinforcement) | bridge-like external message trust paths | ✅ NOT ACTIVE | `keeper/src/hermes.rs:431-479,520-548` still parses Wormhole/Pyth VAA-backed price updates, but that path only prepares oracle data submission. I did **not** find a Microstable path that mints assets, unlocks collateral, or mutates protocol authority purely because an external cross-chain message or retry payload was observed. |
+| **B15 Key Compromise** | keeper signer loading / storage discipline | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:432-437` still requires **exactly 3** keeper keypair paths for 2-of-3 quorum hardening, `config.rs:450-476` still forces **three distinct parent directories** with no ephemeral/traversal paths, and `keeper/src/utils.rs:341-423` still rejects symlink/group-world-readable/wrong-owner key files. But the keepers are still **filesystem-loaded hot keys** on the operator host, not HSM/MPC-backed signers, so Echo/THORChain-style host or admin-key compromise remains only partially mitigated. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard RPC runtime | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:208-213` still limits strict cross-RPC checking to `getGenesisHash`, and `docs/app.js:1271-1276` still binds runtime reads to a single selected `Connection`. This blocks obvious wrong-network bootstrap, but not verifier-specific poisoning or degraded-mode integrity collapse. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/oracle.rs:735-849` still fetches externally validated prices, enables manual oracle mode, and sends `ix_update_oracle`; `solana/programs/microstable/src/lib.rs:671-707` still enforces keeper quorum, bounds, and staleness, but I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor before publishing fallback prices. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on meta-only CSP, and `docs/app.js:43-48` still ships a devnet faucet mint-authority keypair in browser code. Devnet-only intent lowers severity, but a canonical frontend compromise would inherit that signer inside the demo surface. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+
+### Today's Verdict
+- New incidents found: **1 admissible as reinforcement only**
+- New attack vectors added: **0**
+- Reinforcements applied: **1** (**A32**, Butter Bridge)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today's public window added one real A32 upgrade, but current Microstable code still does **not** expose the same bridge-message trust boundary. The only HIGH I could reconfirm from direct code/path evidence remains the audit-attestation continuity gap.
+
 ## 2026-05-20 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-13 to 2026-05-20 KST)
