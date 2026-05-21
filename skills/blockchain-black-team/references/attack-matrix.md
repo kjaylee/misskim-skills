@@ -1,4 +1,4 @@
-# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20) | META-01~69
+# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22) | META-01~69
 
 ## A. Smart Contract Vectors
 
@@ -6871,6 +6871,72 @@ fn validate_export(export: &Export, proof: &Proof, state_root: Hash) -> Result<(
 | A125 Cross-Chain Export Semantic Completeness / Economically-Unbacked Validated Release | bridge/export path validates finalized root, message hash, and approval set, but fails to bind released amount to actual source-side lock/burn/reserve conservation, so a truthful proof can still authorize unbacked value release | unbacked bridge release, reserve drain, false confidence from green proof verification, delayed incident triage because no forged message exists | current Microstable repo has **no live bridge/export release path**, so **NOT ACTIVE today**; any future wrapped collateral / bridge / reserve-attestation flow must require end-to-end conservation binding before release |
 
 **Matrix state as of 2026-05-20 (purple/red daily update)**: prior coverage retained; **A123** and **A124** captured the Anchor 1.0 typed-framework validation collapses, and **A125** now captures the Verus-class case where a **truthful, finalized export path still fails economic conservation binding**. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; current result is future-facing and release-gate relevant rather than active-today.
+
+---
+
+### A126. Anchor Zero-Copy Truncation Panic / Discriminator-Only Size Admission Collapse
+
+**Published**: 2026-05-21 | **Severity**: MEDIUM | **Red Team**
+
+**Signal**: otter-sec/anchor issue `#4509` (opened 2026-05-21) plus fix commit `b05a219` (`fix(lang): prevent panic on undersized zero-copy account deserialization (#4555)`)
+
+**Key insight**: 많은 팀이 `AccountLoader<T>` 나 `#[account(zero)]` 경로를 볼 때 “owner/discriminator만 맞으면 나머지는 Anchor가 안전하게 에러 처리해준다” 고 믿는다. 그런데 이번 신호의 핵심은 **type identity의 첫 8바이트만 통과한 짧은 account** 가 rejection error가 아니라 **panic abort** 로 이어질 수 있었다는 점이다. 즉 경계는 `wrong account rejected` 가 아니라, **partial-typed bytes가 structured failure 대신 runtime abort를 유발하는가** 로 다시 봐야 한다.
+
+**Attack chain**:
+1. attacker finds a public instruction or keeper/off-chain decode path that accepts a zero-copy account or `#[account(zero)]`-guarded account from partially trusted input.
+2. attacker supplies an account whose discriminator bytes are correct, but whose body is shorter than `disc.len() + size_of::<T>()`.
+3. outer validation passes the discriminator lane and proceeds to slice the typed body.
+4. framework code hits `data[disc.len()..disc.len()+size_of::<T>()]` (or equivalent zeroed path) without a full-length check.
+5. instruction aborts with panic rather than returning `AccountDidNotDeserialize`, degrading liveness, monitoring fidelity, retry logic, and circuit-breaker behavior.
+
+**Why distinct from existing vectors**:
+- **A122** 는 unchecked zero-copy loader가 owner/discriminator/type invariant를 무너뜨리는 **integrity/trust-collapse** 문제다. **A126** 은 checked path처럼 보이는 곳이 **length invariant omission으로 panic-based availability failure** 를 만든다.
+- generic parser panic과도 다르다. **A126의 새 요소는 Anchor typed zero-copy boundary가 discriminator-only admission으로 body length를 과신한다** 는 점이다.
+- `wrong discriminator` 나 `wrong owner` negative test로는 드러나지 않는다. 핵심은 **right discriminator + truncated body** 다.
+
+**Why audits miss this**:
+1. `AccountLoader` 와 `#[account(zero)]` 는 raw slice code보다 안전해 보여, reviewer가 length slicing까지 프레임워크가 이미 처리한다고 추정한다.
+2. negative test가 대개 wrong owner / wrong discriminator / full valid size만 다루고, **correct discriminator + short body** 를 넣지 않는다.
+3. 많은 팀이 “어차피 reject될 malformed input” 과 “panic abort” 를 운영상 같은 것으로 취급한다.
+4. fix가 보안 공지보다 bugfix/robustness patch처럼 보여 threat-model에서 과소평가되기 쉽다.
+
+**Code pattern to find**:
+
+```rust
+// VULNERABLE SHAPE: discriminator passes, but full typed-body length is not
+// checked before slicing / zero-copy reinterpretation.
+let disc = T::DISCRIMINATOR;
+require!(&data[..disc.len()] == disc, ErrorCode::AccountDiscriminatorMismatch);
+let body = &data[disc.len()..disc.len() + core::mem::size_of::<T>()]; // panic if truncated
+let state = bytemuck::from_bytes::<T>(body);
+
+// SAFER SHAPE: enforce full required length before any typed-body slice.
+let required = disc
+    .len()
+    .checked_add(core::mem::size_of::<T>())
+    .ok_or(ErrorCode::AccountDidNotDeserialize)?;
+require!(data.len() >= required, ErrorCode::AccountDidNotDeserialize);
+```
+
+**Defensive heuristic**:
+- zero-copy / fixed-layout account decode에서는 discriminator check와 별도로 **required full length** 검사를 항상 먼저 둘 것
+- `wrong type rejected` 와 `truncated type rejected` 를 별도 regression test로 분리할 것
+- panic을 structured error와 동급으로 취급하지 말고, public instruction / keeper ingest 경계에서는 **panic-free malformed-input contract** 를 요구할 것
+- framework upgrade review에서 zero-copy accessor / generated `#[account(zero)]` codegen diff를 별도 체크리스트 항목으로 둘 것
+
+**Sources**: https://github.com/otter-sec/anchor/issues/4509 | https://github.com/otter-sec/anchor/commit/b05a2192f53e2aae3b0cba1b7a1a2d3ca826c89c
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `AccountLoader`, `#[account(zero)]`, `#[account(zero_copy)]`, `bytemuck`, `new_unchecked`, `try_from_unchecked` 사용 흔적은 없다.
+- 온체인 `read_pyth_price_update()` 는 `data.len() >= 8` 을 먼저 검사한 뒤 discriminator와 Borsh deserialize error로 닫고, keeper `wire::decode_account()` / `utils.rs` upgradeable-loader decode도 길이 선검사를 둔다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 zero-copy refactor를 도입하면, A122와 별개로 **unchecked trust-collapse가 없어도 truncated-body panic lane** 이 새로 생길 수 있다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A126 Anchor Zero-Copy Truncation Panic / Discriminator-Only Size Admission Collapse | zero-copy accessor or generated `#[account(zero)]` path accepts the discriminator prefix but omits full body-size validation, so truncated typed accounts trigger panic-abort instead of structured deserialize failure | panic-based DoS, malformed-input liveness loss, broken retry/monitoring semantics, public instruction abort on attacker-chosen short account | current Microstable repo has **no zero-copy / `AccountLoader` / `#[account(zero)]` path** and keeps manual length guards on reviewed raw-account decoders, so **NOT ACTIVE today**; any future zero-copy adoption should require truncated-body regression tests |
+
+**Matrix state as of 2026-05-22 (red-team daily update)**: prior coverage retained; **A126** was added to separate **discriminator-only size admission panic** from A122’s unchecked-loader trust collapse. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless zero-copy typed account paths are introduced.
 
 ---
 

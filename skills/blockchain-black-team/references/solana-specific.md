@@ -1608,3 +1608,29 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 75. ☐ `Program<'info, System>` 를 사용하는 경로는 Anchor major upgrade 시 `actual key == system_program::ID` negative test를 반드시 돌리고, 다른 executable program 주입 케이스를 회귀 테스트로 고정할 것
 76. ☐ `InterfaceAccount<T>` 또는 동급 interface wrapper를 도입할 때는 same-owner / wrong-discriminator substitution negative test를 필수화하고, owner allowlist만으로 type binding이 증명됐다고 간주하지 말 것
+
+---
+<!-- AUTO-ADDED 2026-05-22 (Red Team Daily Evolution) — A126 zero-copy truncation panic -->
+
+## 2026-05-22 Anchor Zero-Copy Truncation Panic Pattern
+
+### A126 — Anchor Zero-Copy Truncation Panic / Discriminator-Only Size Admission Collapse
+- **Solana context**: Solana 팀은 `AccountLoader<T>` 나 `#[account(zero)]` 경로를 raw parser보다 안전한 typed wrapper로 여긴다. 하지만 이번 신호는 discriminator만 맞는 **짧은 account data** 가 structured reject가 아니라 panic abort로 바뀔 수 있음을 보여줬다.
+- **핵심 패턴**: 코드가 discriminator prefix만 확인하고 typed body 전체 길이를 확인하지 않은 채 zero-copy slice / reinterpretation으로 들어간다. 그러면 `wrong account rejected` 가 아니라 **`correct discriminator + truncated body` 가 availability kill-switch** 가 된다.
+- **왜 Solana에서 특히 위험한가**:
+  1. zero-copy는 vault, queue, oracle cache, sidecar처럼 hot path에 붙기 쉬워 malformed-input panic이 반복되면 liveness 손실이 커진다.
+  2. public instruction은 공격자가 계정 길이와 discriminator를 어느 정도 조절할 수 있어, 잘못된 happy-path test만으로는 안심할 수 없다.
+  3. 운영팀은 종종 malformed input reject와 panic abort를 같은 것으로 취급하지만, 실제로는 모니터링·재시도·경보 품질이 크게 달라진다.
+  4. `typed wrapper니까 길이 체크도 내부에서 끝났겠지` 라는 리뷰 직관이 가장 큰 함정이다.
+- **Source signals**:
+  - otter-sec/anchor issue `#4509` (`AccountLoader::{load, load_mut, load_init} and #[account(zero)] panic on under-sized accounts instead of returning AnchorError`, opened 2026-05-21)
+  - Anchor commit `b05a219` (`fix(lang): prevent panic on undersized zero-copy account deserialization (#4555)`)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `AccountLoader`, `#[account(zero)]`, `#[account(zero_copy)]`, `bytemuck`, `new_unchecked`, `try_from_unchecked` 사용 흔적은 없다.
+  - 온체인 `read_pyth_price_update()` 는 `data.len() >= 8` 선검사 뒤 discriminator와 Borsh decode error로 닫고, keeper `wire::decode_account()` 와 `utils.rs` upgradeable-loader decode는 필요한 최소 길이를 먼저 확인한다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 zero-copy refactor를 붙이면 A122와 별개로 truncated-body panic regression을 따로 막아야 한다.
+- **Checklist item 77**: ☐ zero-copy / fixed-layout account decode에서는 discriminator 일치만 확인하고 바로 typed slice에 들어가지 말고, `disc.len() + size_of::<T>()` full-length 검사를 먼저 강제하며 `correct discriminator + short body` 회귀 테스트를 필수화할 것
+
+### Solana-Specific Defense Checklist Update
+77. ☐ zero-copy / fixed-layout account decode에서는 discriminator 일치만 확인하고 바로 typed slice에 들어가지 말고, `disc.len() + size_of::<T>()` full-length 검사를 먼저 강제하며 `correct discriminator + short body` 회귀 테스트를 필수화할 것
