@@ -6940,6 +6940,70 @@ require!(data.len() >= required, ErrorCode::AccountDidNotDeserialize);
 
 ---
 
+### B81. Imperfect Commitment in Sealed MEV Auctions / Builder Ex-Post Bundle Replication
+
+**Published**: 2026-05-21 | **Severity**: MEDIUM | **Red Team**
+
+**Signal**: arXiv `2605.22667` (*Imperfect Commitment in Maximal Extractable Value Auctions*, submitted 2026-05-21)
+
+**Key insight**: 많은 팀이 private relay / sealed bundle auction을 “public mempool 노출이 없는 안전한 제출 경로” 정도로 이해한다. 그러나 이번 신호의 핵심은 **builder가 winning bundle과 bid를 본 뒤에도 그 경매 결과를 지킬 강제력이 없다** 는 점이다. 즉 threat model은 더 이상 단순 front-runner가 아니라, **auction operator 자신이 payload information을 ex post로 재사용하는 내부자** 까지 포함해야 한다.
+
+**Attack chain**:
+1. searcher or keeper submits a profitable bundle into a sealed/private MEV auction, assuming the builder will honor the auction result.
+2. builder observes the bundle payload, profit structure, and winning bid before final inclusion.
+3. protocol or relay provides no cryptographic / operational constraint that binds the builder to include the original winning bundle unchanged.
+4. builder defects: copies the strategy, replaces legs, inserts its own competing transaction, or withholds the bundle unless the bid is raised to a deterrence level.
+5. searchers react by overbidding, withholding strategies, or narrowing participation; the privileged builder captures surplus that the sealed auction claimed to protect.
+
+**Why distinct from existing vectors**:
+- **C25** 는 generic MEV extraction이다. **B81** 은 공개 mempool 경쟁이 아니라, **sealed/private auction 안에서 privileged builder가 observed payload를 ex post로 탈취·복제** 하는 구조다.
+- **B67** 은 off-chain solver/privacy failure 때문에 orderflow가 public path로 새는 문제다. **B81** 은 public leak가 없어도, **trusted private path 자체가 commitment failure** 로 value leakage를 만든다.
+- **D54** 는 bundle simulator resource exhaustion이다. **B81** 은 availability가 아니라 **auction integrity / confidentiality / operator honesty assumption collapse** 다.
+- **B80** 은 loss-looking execution을 covert transfer로 쓰는 패턴이다. **B81** 은 covert payment가 아니라 **auction operator의 privileged information reuse** 다.
+
+**Why audits miss this**:
+1. private relay / builder path는 보통 infra or market-structure assumption으로 밀려 스마트컨트랙트 감사 범위 밖에 놓인다.
+2. reviewer는 “sealed bid” 와 “credible commitment” 를 심리적으로 같은 것으로 취급하기 쉽다.
+3. 테스트는 wrong ordering / public mempool leakage는 보지만, **builder가 본 payload를 스스로 복제하는 insider case** 는 거의 모델링하지 않는다.
+4. 설계 문서는 often private orderflow 도입을 anti-MEV control로 서술해, 그 경로가 새 trust boundary라는 사실을 흐린다.
+
+**Code / architecture pattern to find**:
+
+```text
+VULNERABLE SHAPE:
+- keeper/searcher routes high-value execution through sealed bundles / private relay
+- safety claim assumes builder neutrality or auction-honesty
+- no TEEs, encrypted mempool, threshold decryption, delayed reveal, or post-trade evidence
+- failover / monitoring never asks whether builder copied or replaced the submitted strategy
+
+SAFER SHAPE:
+- treat builder as a potentially adversarial observer
+- add execution-path policies that survive builder defection
+- require post-trade reconciliation between submitted intent and realized inclusion outcome
+```
+
+**Defensive heuristic**:
+- private relay / sealed auction adoption 시 **builder neutrality를 보안 가정으로 두지 말 것**
+- submitted intent, bid, realized inclusion, extracted surplus를 사후 대조해 **builder-side appropriation evidence** 를 남길 것
+- possible하면 encrypted orderflow, threshold decryption, TEEs, delayed reveal, or multi-builder commit witness 같은 **commitment-preserving mechanism** 을 검토할 것
+- builder defection을 막지 못한다면, high-value bundle path에는 capped profit windows, dual approval, venue diversification, public-path fallback 금지 같은 **damage containment** 를 둘 것
+
+**Sources**: https://arxiv.org/abs/2605.22667
+
+**Microstable relevance**:
+- 현재 `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` 스캔에서 `Jito`, `bundle`, `sendBundle`, `block engine`, `private relay` 흔적은 확인되지 않았다.
+- keeper `rebalance` 는 commit/reveal coordination을 쓰지만, 아직 **sealed builder auction** 이나 private bundle submission path가 아니다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 keeper가 Jito bundle / private relay / sealed auction execution으로 large rebalance, liquidation, treasury unwind를 보낸다면, **commit/reveal이 있어도 builder ex-post replication risk는 별도** 로 다시 평가해야 한다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B81 Imperfect Commitment in Sealed MEV Auctions / Builder Ex-Post Bundle Replication | sealed/private MEV auction lets builder observe bundle payload and winning bid without binding the builder to honor the auction result, so the builder can copy, replace, or extort the strategy ex post | private-orderflow confidentiality collapse, auction-integrity loss, strategy theft, deterrence-bid inflation, builder-captured surplus, false sense of anti-MEV safety | current Microstable repo shows **no Jito/private relay/sealed bundle execution path**, so **NOT ACTIVE today**; any future bundle-based keeper execution must treat builder defection as a first-class trust boundary |
+
+**Matrix state as of 2026-05-24 (red-team daily update)**: prior coverage retained; **B81** was added to separate **private-auction builder defection** from generic MEV, solver fallback, and bundle-simulator DoS. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless private bundle / builder-auction routing is introduced.
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**

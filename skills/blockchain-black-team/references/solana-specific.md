@@ -1634,3 +1634,28 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 77. ☐ zero-copy / fixed-layout account decode에서는 discriminator 일치만 확인하고 바로 typed slice에 들어가지 말고, `disc.len() + size_of::<T>()` full-length 검사를 먼저 강제하며 `correct discriminator + short body` 회귀 테스트를 필수화할 것
+
+---
+<!-- AUTO-ADDED 2026-05-24 (Red Team Daily Evolution) — B81 imperfect commitment in sealed MEV auctions -->
+
+## 2026-05-24 Sealed MEV Auction Builder-Defection Pattern
+
+### B81 — Imperfect Commitment in Sealed MEV Auctions / Builder Ex-Post Bundle Replication
+- **Solana context**: Solana에서는 Jito block engine, private relay, bundle path가 종종 “public mempool보다 안전한 anti-MEV 제출 경로” 로 이해된다. 그러나 이번 신호는 그 경로가 안전하려면 ordering privacy만이 아니라 **builder가 본 payload를 그대로 존중할 credible commitment** 도 필요하다는 점을 보여준다.
+- **핵심 패턴**: searcher/keeper가 sealed bundle을 올리면 builder는 winning bid와 payload를 모두 본다. 그런데 builder를 경매 결과에 묶는 장치가 약하면, builder는 그 전략을 복제·치환·지연·재협상해 **원래 searcher가 가져가야 할 surplus를 ex post로 흡수** 할 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Jito/private relay는 anti-MEV control처럼 도입되기 쉬워, 팀이 오히려 그 경로의 trust assumption을 덜 의심한다.
+  2. 빠른 슬롯과 bundle economics 때문에 builder-side appropriation은 public mempool leak보다 포렌식이 더 어렵다.
+  3. liquidation, treasury unwind, keeper rebalance처럼 가치가 큰 flow는 한 번 private path에 얹히면 builder neutrality를 사실상 보안 가정으로 받아들이기 쉽다.
+  4. commit/reveal은 keeper intent 은닉에는 도움될 수 있지만, **builder가 reveal 이후 payload를 재사용하는 위험** 까지 자동으로 막아주지는 않는다.
+- **Source signals**:
+  - arXiv `2605.22667`, *Imperfect Commitment in Maximal Extractable Value Auctions* (submitted 2026-05-21)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs`, `keeper/src/main.rs`, `keeper/src/rebalance.rs` 스캔에서 `Jito`, `bundle`, `sendBundle`, `block engine`, `private relay` 흔적은 확인되지 않았다.
+  - 현재 keeper `rebalance` 는 commit/reveal coordination을 사용하지만 builder auction 제출기가 아니라 일반 RPC 기반 조율에 가깝다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 Jito/private bundle path로 keeper execution을 옮기면, “public mempool 노출이 없다” 는 이유만으로 anti-MEV가 해결됐다고 보면 안 되고 B81을 즉시 재평가해야 한다.
+- **Checklist item 78**: ☐ Jito/private relay/sealed bundle execution을 도입할 때는 builder neutrality를 기본 가정으로 두지 말고, `submitted intent ↔ realized inclusion` 사후 대조, high-value bundle dual approval, builder-side appropriation anomaly logging, public-path fail-open 금지를 함께 설계할 것
+
+### Solana-Specific Defense Checklist Update
+78. ☐ Jito/private relay/sealed bundle execution을 도입할 때는 builder neutrality를 기본 가정으로 두지 말고, `submitted intent ↔ realized inclusion` 사후 대조, high-value bundle dual approval, builder-side appropriation anomaly logging, public-path fail-open 금지를 함께 설계할 것
