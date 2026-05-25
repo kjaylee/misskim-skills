@@ -6940,6 +6940,78 @@ require!(data.len() >= required, ErrorCode::AccountDidNotDeserialize);
 
 ---
 
+### A127. External Authorization Root Injection / Attacker-Chosen Signature Oracle
+
+**Published**: 2026-05-26 | **Severity**: HIGH | **Red Team**
+
+**Signal**: SlowMist Hacked incident feed — **Mure** exploit summary (2026-05-23)
+
+**Key insight**: 많은 팀이 `SignatureChecker`, smart-wallet signer, verifier module, registry contract 같은 인증 보조 장치를 붙이면 권한 검증이 더 유연하고 안전해진다고 생각한다. 그러나 이번 신호의 핵심은 **서명을 어떻게 검증하느냐보다, 그 검증의 진실 근원(authority root)을 누가 고르느냐** 다. 공격자가 `signer source` / verifier contract / auth module 자체를 주입할 수 있으면, 올바른 digest 검증조차 **공격자 소유의 "항상 참" 오라클** 로 바뀐다.
+
+**Attack chain**:
+1. protocol keeps value in a proxy, distribution contract, vault, or claim executor that relies on a pluggable signer/verifier source.
+2. authorization path accepts a signer-source address / verifier module / wallet contract / registry account from calldata, mutable config, or weakly validated storage.
+3. downstream logic calls a standard checker (`SignatureChecker`, ERC-1271, CPI verifier, custom `is_valid_signature`) and sees a cryptographically well-formed success value.
+4. attacker supplies a malicious verifier under their control that returns success or points authorization to an attacker-defined policy root.
+5. token transfer, mint, claim, release, or privileged state transition executes with "valid" authorization even though no legitimate signer approved it.
+
+**Why distinct from existing vectors**:
+- **A4** 는 generic access-control failure다. **A127** 의 핵심은 missing `require` 가 아니라, **권한 검증의 truth source 자체가 attacker-chosen reference로 바뀌는 것** 이다.
+- **A7** partial signature coverage는 "무엇에 서명했는가" 의 누락이다. **A127** 은 digest가 맞아도 **누가 그 digest를 승인할 수 있는지의 루트** 가 오염된다.
+- **A123** 은 framework typed wrapper가 wrong executable program을 canonical system program처럼 받아들이는 패턴이다. **A127** 은 애플리케이션 레벨에서 verifier / signer-source / auth-root injection을 허용하는 구조다.
+
+**Why audits miss this**:
+1. reviewer는 `SignatureChecker` / ERC-1271 / standard verifier call이 보이면 "서명 검증은 이미 안전하다" 고 안심하기 쉽다.
+2. modular wallet / plugin signer / smart-account architecture에서는 verifier indirection이 정상 기능처럼 보여, provenance pinning이 보안 경계라는 사실이 흐려진다.
+3. happy-path 테스트는 보통 올바른 signer source만 넣고, **attacker-controlled verifier** 를 negative case로 넣지 않는다.
+4. 발견 시점에도 버그 설명이 "signature validation issue" 로 축약돼, 실제 핵심인 **authority-root substitution** 이 generic auth bug로 희석되기 쉽다.
+
+**Code pattern to find**:
+
+```solidity
+// VULNERABLE SHAPE: authority root is caller-controlled.
+function claim(
+    address signerSource,
+    bytes32 digest,
+    bytes calldata sig,
+    address from,
+    address to,
+    uint256 amount
+) external {
+    require(
+        SignatureChecker.isValidSignatureNow(signerSource, digest, sig),
+        "bad sig"
+    );
+    token.transferFrom(from, to, amount);
+}
+
+// SAFER SHAPE: signer source is pinned, allowlisted, or pre-bound to the
+// beneficiary/order at approval time — never attacker-selected at execution.
+```
+
+**Defensive heuristic**:
+- verifier / signer-source / registry / wallet-module address를 **execution-time user input** 으로 받지 말고, immutable pinning 또는 strict allowlist로 묶을 것
+- modular auth가 필요하면 `who signs` 뿐 아니라 **which verifier defines who signs** 까지 signed intent 또는 on-chain state에 함께 결박할 것
+- `SignatureChecker` / ERC-1271 / CPI verifier 사용 경로에는 **malicious verifier returns MAGICVALUE** negative test를 추가할 것
+- 권한 결정에 쓰이는 외부 contract/account/program은 price oracle처럼 **trust root asset** 으로 취급해 provenance/upgrade/owner drift를 별도 감시할 것
+
+**Sources**: https://hacked.slowmist.io/
+
+**Microstable relevance**:
+- 요청 경로 `/microstable/solana/programs/microstable_core/src/lib.rs` 는 여전히 absent 이므로, 실제 검토는 `programs/microstable/src/lib.rs` 와 `keeper/src/` 기준으로 수행했다.
+- 현재 reviewed live path에서는 user-supplied verifier / signer-source / external auth module / ERC-1271-like authority indirection이 보이지 않는다.
+- on-chain path는 trusted initializer, canonical mint/ATA binding, Pyth receiver program pinning, feed allowlist, trusted write-authority checks로 authority root를 고정하고 있다.
+- keeper path도 Pyth owner/write-authority 검증, upgrade-authority pinning, config signature sidecar, RPC allowlist 등으로 **verification root를 caller-chosen input으로 두지 않는다**.
+- 따라서 **NOT ACTIVE today**. 다만 향후 passkey/session-key signer, plugin wallet, delegated claimer, external signature-registry, policy-engine CPI를 붙이면 A127을 즉시 재평가해야 한다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A127 External Authorization Root Injection / Attacker-Chosen Signature Oracle | protocol accepts an attacker-chosen verifier / signer-source / auth-root contract or account, so standard signature validation succeeds against a malicious truth source rather than the legitimate authority root | forged claims, unauthorized transfers/mints, fake-valid privileged actions, auth bypass through malicious verifier indirection | current Microstable repo pins reviewed authority roots and exposes **no user-supplied verifier/auth-module path**, so **NOT ACTIVE today**; any future plugin signer / delegated auth feature should treat verifier provenance as a first-class trust boundary |
+
+**Matrix state as of 2026-05-26 (red-team daily update)**: prior coverage retained; **A127** was added to separate **attacker-chosen authorization-root injection** from generic access control, partial-signature binding, and framework typed-program collapse. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless delegated verifier / plugin signer / external auth-module paths are introduced.
+
+---
+
 ### B81. Imperfect Commitment in Sealed MEV Auctions / Builder Ex-Post Bundle Replication
 
 **Published**: 2026-05-21 | **Severity**: MEDIUM | **Red Team**
