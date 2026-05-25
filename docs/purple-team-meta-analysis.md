@@ -1,5 +1,58 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-05-26 (KST) — Daily Evolution (#52)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Cloudflare `Project Glasswing: what Mythos showed us` | 2026-05-18 | 보안형 LLM이 exploit chain construction에는 강해졌지만, **architecture and process around them** 이 바뀌지 않으면 실전 커버리지가 닫히지 않는다고 명시한다. 즉 node-local finding과 whole-path security는 다른 문제다. |
+| GitHub `foundry-rs/foundry#14437` | recent / fetched 2026-05-25 | SCFuzzBench 기준 Foundry invariant engine이 real DeFi targets에서 under-detect 상태이며, corpus/coverage/multi-step exploration 보강이 필요하다고 적는다. widely-used assurance plane도 **whole-path completeness gap** 을 가진다는 신호다. |
+| SlowMist Hacked front page — Bankr / Butter Bridge / RetoSwap / Mure / WUSD.fi-GLOVE | 2026-05-19 ~ 2026-05-25 | 최근 사고들은 개별 contract보다 **경계 의미론** 에서 무너졌다: `LLM output→wallet authority`, `retry message→bridge auth`, `ACK order→peer identity`, `signer source→verifier authority`, `per-address incentive assumption→EIP-7702 helper path`. |
+| Immunefi Bug Bounty Programs | last updated 2026-05-25 16:00 UTC | bounty 시장은 여전히 seam/edge class를 가격화한다. 즉 edge semantics는 문서형 리스크가 아니라 실전 수익화 표면이다. |
+
+### Phase 2) 갭 분석
+
+**오늘 신규 식별 갭**:
+
+#### META-70 — Node-Audit / Edge-Semantics Gap (NAESG)
+- **현상**: 팀은 contract, keeper, verifier, dashboard, wallet, agent 같은 **노드(node)** 를 각각 잘 감사하고 hardening한다. 그런데 실제 공격은 점점 그 사이 **edge semantics** 에 붙는다. 누가 signer source를 정하는가, retry/ACK 순서가 어떤 권한 변환을 뜻하는가, 어떤 fallback evidence가 privileged mutation을 열 수 있는가, 어떤 assistant output이 곧바로 wallet authority가 되는가가 직접 공격면이 된다.
+- **정황**:
+  1. Cloudflare Glasswing는 frontier tooling이 exploit chain construction에 강해졌음을 보여주면서도, 동시에 **architecture/process around them needs to change** 라고 적었다. 이는 `bug finder가 좋아졌다 = end-to-end security가 닫혔다` 가 아니라는 강한 신호다.
+  2. Foundry `#14437` 는 invariant engine도 benchmarked multi-step path에서 여전히 Echidna/Medusa 대비 gap이 있음을 공개적으로 적었다. 즉 assurance plane 자체가 **whole-path completeness** 를 충분히 보장하지 못한다.
+  3. Bankr/Butter Bridge/RetoSwap/Mure/WUSD-GLOVE 최근 창은 모두 edge failure였다. 공통점은 **개별 컴포넌트의 local correctness가 있어도 경계 의미론이 덜 고정되면 exploit가 성립** 한다는 점이다.
+  4. Immunefi의 daily-updated bounty surface는 이런 seam class가 계속 시장 보상을 받는다는 뜻이다.
+- **왜 메타인가**:
+  1. **node-centric coverage bias**: audit/FV/fuzz/AI review가 저장소·모듈·함수 단위 coverage에 최적화돼 있어, `A→B→C` handoff 자체는 종종 아무도 ownership을 갖지 않는다.
+  2. **schema-without-semantics bias**: 메시지·해시·proof·ACK가 typed / signed / hashed 되어 있으면, 그 입력이 실제로 어떤 **권한 변환** 을 수행하는지 끝까지 안 묻는다.
+  3. **handoff demotion**: contract review, backend review, AI review, wallet review가 분절되면서 경계는 plumbing으로 밀리고, 공격자는 바로 그 plumbing을 공격한다.
+  4. **runtime false-positive pressure**: edge cross-check는 noisy하다고 느껴 bootstrap/happy path에만 남고, incident 때 필요한 runtime edge invariant는 완화되기 쉽다.
+- **기존 패턴과 구별**:
+  - **META-61** 은 코어 assurance가 인접 plane으로 번지는 후광을 다룬다.
+  - **META-63** 은 발견한 속성이 운영 신호로 승격되는가를 다룬다.
+  - **META-69** 는 intermediate state entitlement 오인을 다룬다.
+  - **A125 / A127 / B29 / A32** 는 개별 edge exploit primitive다.
+  - **META-70** 은 그보다 상위에서, **왜 시스템이 node-level로는 잘 리뷰돼도 edge-level semantics는 끝까지 소유·검증되지 않는가** 를 규정한다.
+
+### Phase 3) 스킬 강화 델타 (2026-05-26)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-70 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~70 / 204+ total entries** 로 갱신
+- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-70** 반영
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0526-01 (MEDIUM latent)**: node-audit / edge-semantics gap.
+- 좋은 신호도 있다. on-chain privileged write는 keeper quorum으로 묶여 있고, manual oracle mode는 **circuit-breaker 전제 + 재활성 cooldown** 이 있으며, dashboard는 bootstrap 시 **`getGenesisHash` 다중 RPC 검증** 을 한다.
+- 다만 현재 공개 artifact 기준으로는 `external validated prices → manual oracle mode → update_oracle`, `secondary RPC degraded state → read/write policy`, `dashboard bootstrap → runtime endpoint trust` 같은 **경계별 의미론 manifest** 가 한 장으로 고정돼 있지 않다.
+- 특히 `microstable/docs/app.js` 는 runtime에서 `shouldCrossCheck(method)` 를 `getGenesisHash` 로 제한해 **bootstrap 이후 edge invariant를 부분적으로만 유지** 한다.
+- 따라서 **B45**, **D27**, **A75**, **A115** 는 모두 `node hardened, edge semantics partially specified` 관점의 같은 구조 문제로 재묶인다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://blog.cloudflare.com/cyber-frontier-models/
+- https://github.com/foundry-rs/foundry/issues/14437
+- https://hacked.slowmist.io/
+- https://immunefi.com/bug-bounty/
+
 ## 2026-05-20 (KST) — Daily Evolution (#51)
 
 ### Phase 1) 수집 소스 요약
