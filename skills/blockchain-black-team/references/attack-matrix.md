@@ -1,4 +1,4 @@
-# Attack Matrix — 130+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26) | META-01~70
+# Attack Matrix — 135+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27) | META-01~70
 
 ## A. Smart Contract Vectors
 
@@ -7074,6 +7074,71 @@ SAFER SHAPE:
 | B81 Imperfect Commitment in Sealed MEV Auctions / Builder Ex-Post Bundle Replication | sealed/private MEV auction lets builder observe bundle payload and winning bid without binding the builder to honor the auction result, so the builder can copy, replace, or extort the strategy ex post | private-orderflow confidentiality collapse, auction-integrity loss, strategy theft, deterrence-bid inflation, builder-captured surplus, false sense of anti-MEV safety | current Microstable repo shows **no Jito/private relay/sealed bundle execution path**, so **NOT ACTIVE today**; any future bundle-based keeper execution must treat builder defection as a first-class trust boundary |
 
 **Matrix state as of 2026-05-24 (red-team daily update)**: prior coverage retained; **B81** was added to separate **private-auction builder defection** from generic MEV, solver fallback, and bundle-simulator DoS. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless private bundle / builder-auction routing is introduced.
+
+---
+
+### B82. Out-of-Order Control-Plane ACK Identity Rebinding / Trusted-Peer Rewrite
+
+**Published**: 2026-05-20 | **Severity**: HIGH | **Red Team**
+
+**Signal**: SlowMist Hacked front page entry for **RetoSwap** (event date 2026-05-20, fetched 2026-05-27 KST)
+
+**Key insight**: 많은 팀이 ACK, handshake, peer-update, arbitrator notice 같은 control-plane message를 단순한 plumbing으로 본다. 그러나 이번 신호의 핵심은 **message ordering 자체가 trusted peer identity를 바꾸는 권한 경계** 였다는 점이다. 올바른 서명을 위조하지 않아도, 공격자가 **순서가 어긋난 합법처럼 보이는 ACK** 를 먼저 집어넣으면 클라이언트는 이후 자금을 맡길 상대의 node address를 공격자 것으로 다시 묶어버릴 수 있다.
+
+**Attack chain**:
+1. victim begins a trade/session that expects future ACK messages from a trusted coordinator, arbitrator, or peer.
+2. protocol accepts an ACK-like control-plane message before the state machine has cryptographically and semantically committed the expected peer identity for that session.
+3. attacker injects a fake or replayed **out-of-order ACK** that appears to belong to the current flow.
+4. client updates its trusted peer/arbitrator/node address to the attacker-controlled endpoint, believing the control-plane transition is legitimate.
+5. subsequent deposit, multisig setup, settlement, or recovery flow executes against the attacker-controlled peer, creating a compromised wallet/channel before funds move.
+
+**Why distinct from existing vectors**:
+- **B16** 은 generic keeper race condition이다. **B82** 의 핵심은 단순 timing bug가 아니라, **message ordering이 trusted-peer identity binding 자체를 바꾸는 state-machine authority failure** 라는 점이다.
+- **B18** 은 static config injection이나 malicious configuration drift다. **B82** 는 로컬 설정이 아니라 **runtime control-plane message sequence** 로 trust root를 재지정한다.
+- **A127** 은 attacker-chosen verifier/auth-root injection이다. **B82** 는 verifier contract가 아니라 **session/peer/arbitrator identity** 가 out-of-order ACK로 갈아끼워지는 문제다.
+- **META-70** 은 이런 edge semantics 전체를 설명하는 상위 구조다. **B82** 는 그중에서도 `ACK ordering → trusted peer rewrite` 라는 구체 exploit primitive다.
+
+**Why audits miss this**:
+1. message schema, onion endpoint, or websocket payload validation이 통과하면 semantic ordering도 안전하다고 착각한다.
+2. 리뷰가 deposit logic, multisig creation, arbitration flow를 따로 보면서 **peer identity가 언제 immutable 해져야 하는지** 를 한 경계로 다루지 않는다.
+3. happy-path integration tests는 in-order handshake만 확인하고, stale/out-of-order ACK가 trust root를 재바인딩하는 negative test를 거의 만들지 않는다.
+4. many teams treat “control-plane update” as UX/networking logic rather than as an authority mutation deserving the same rigor as key rotation or signer replacement.
+
+**Code / architecture pattern to find**:
+
+```text
+VULNERABLE SHAPE:
+- session/trade object accepts peer/arbitrator/node-address updates from asynchronous ACK messages
+- update is allowed before deposit/setup finalization or without a monotonic session epoch / nonce
+- control-plane payload is syntactically valid but not bound to the exact prior state transition
+- later wallet/multisig/deposit path trusts the rewritten endpoint as the canonical counterparty
+
+SAFER SHAPE:
+- pin trusted peer identity before any value-bearing step
+- require monotonic session epoch / nonce / transcript hash on ACK-driven state transitions
+- reject stale, replayed, or phase-skipping control-plane updates even if the message format is valid
+```
+
+**Defensive heuristic**:
+- ACK / handshake / arbitrator-change / peer-update messages를 **권한 변환(authority mutation)** 으로 분류할 것
+- trusted peer 변경은 `session id + monotonic phase + prior peer hash + expected counterparty identity` 에 묶어 검증할 것
+- deposit 전 peer/arbitrator identity가 바뀌는 경로에는 explicit pause / re-confirmation / dual-party rebind 절차를 둘 것
+- integration tests에 `out-of-order`, `stale ACK`, `cross-session replay`, `same payload different phase` 케이스를 넣을 것
+
+**Sources**: https://hacked.slowmist.io/
+
+**Microstable relevance**:
+- 현재 `microstable/solana/keeper/src/` 스캔에서는 ACK / handshake / arbitrator / peer-rebinding state machine이 확인되지 않았다.
+- reviewed live path는 `rpc_url`, `secondary_rpc_url`, `hermes_url` 을 로컬 `KeeperConfig` 에서 로드해 고정하고, `main.rs` / `oracle.rs` 는 그 configured endpoint들로만 RPC/Hermes fallback을 수행한다.
+- 즉 오늘 코드베이스에는 **network-delivered control-plane ACK가 trusted peer identity를 다시 쓰는 surface** 가 없다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 keeper sidecar, operator mesh, remote signing coordinator, session-based relayer, dynamic failover control-plane을 붙이면 B82를 즉시 재평가해야 한다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B82 Out-of-Order Control-Plane ACK Identity Rebinding / Trusted-Peer Rewrite | asynchronous ACK/control-plane message is accepted out of phase and rewrites the trusted peer/arbitrator/node identity for a live session, so later deposits or privileged flows execute against an attacker-controlled endpoint | compromised multisig/session bootstrap, deposit redirection, peer impersonation, authority rebinding without direct key theft, hard-to-triage pre-fund compromise | current Microstable keeper path shows **no ACK-driven peer/arbitrator rebinding state machine** and pins reviewed RPC/Hermes endpoints from local config, so **NOT ACTIVE today**; any future remote coordinator / dynamic failover control plane should treat message-order binding as a first-class trust boundary |
+
+**Matrix state as of 2026-05-27 (red-team daily update)**: prior coverage retained; **B82** was added to separate **out-of-order ACK driven trusted-peer rebinding** from generic races, config injection, and authorization-root injection. Matrix is now **135+ named vectors + META-01~70 + B73~B82 = 205+ total entries**. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless dynamic peer/coordinator control-plane paths are introduced.
 
 ---
 

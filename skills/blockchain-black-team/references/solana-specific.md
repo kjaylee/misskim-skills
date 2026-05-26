@@ -1659,3 +1659,28 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 78. ☐ Jito/private relay/sealed bundle execution을 도입할 때는 builder neutrality를 기본 가정으로 두지 말고, `submitted intent ↔ realized inclusion` 사후 대조, high-value bundle dual approval, builder-side appropriation anomaly logging, public-path fail-open 금지를 함께 설계할 것
+
+---
+<!-- AUTO-ADDED 2026-05-27 (Red Team Daily Evolution) — B82 out-of-order ACK identity rebinding -->
+
+## 2026-05-27 ACK-Driven Trusted-Peer Rebinding Pattern
+
+### B82 — Out-of-Order Control-Plane ACK Identity Rebinding / Trusted-Peer Rewrite
+- **Solana context**: Solana keeper, relayer, off-chain signer, price-poster, operator mesh는 온체인 안전성만큼이나 **누구와 세션을 맺고 누구의 endpoint를 신뢰하느냐** 가 중요하다. 이번 신호는 ACK/handshake message가 단순 상태 업데이트가 아니라, **다음 단계에서 자금을 맡길 peer identity 자체를 바꾸는 권한 경계** 가 될 수 있음을 보여준다.
+- **핵심 패턴**: 클라이언트나 sidecar가 세션 진행 중 **out-of-order ACK** 를 받아 trusted peer / arbitrator / node address를 공격자 endpoint로 갱신한다. 그러면 deposit, multisig bootstrap, signing coordination, recovery flow가 공격자와의 세션 위에서 계속 진행된다.
+- **왜 Solana에서 특히 위험한가**:
+  1. 많은 Solana 시스템은 on-chain instruction보다 off-chain coordinator, RPC, keeper mesh, signer service가 먼저 state transition을 결정한다.
+  2. 빠른 슬롯과 재시도 로직 때문에 stale ACK / retry ACK / fallback notice가 정상 복구 메시지처럼 보이기 쉽다.
+  3. endpoint 교체가 config drift가 아니라 runtime message 처리 문제면, 감사가 네트워크/UX 코드로 밀어 보안 경계에서 놓치기 쉽다.
+  4. value-bearing instruction 전에 peer identity가 고정됐다고 착각하면, 실제론 **pre-fund 단계에서 trust root가 바뀌는 invisible compromise** 가 된다.
+- **Source signals**:
+  - SlowMist Hacked front page — **RetoSwap** (event 2026-05-20, fetched 2026-05-27 KST)
+- **Microstable current status**:
+  - `microstable/solana/keeper/src/` repo-wide scan에서 `ack`, `arbitrator`, `peer` rebinding, handshake-driven node rewrite state machine은 확인되지 않았다.
+  - reviewed live path는 `KeeperConfig` 의 `rpc_url`, `secondary_rpc_url`, `hermes_url` 을 로컬 config에서 읽고 `main.rs` / `oracle.rs` 가 그 configured endpoint에만 연결한다.
+  - 따라서 현재는 **NOT ACTIVE today**.
+  - 다만 향후 remote signer / operator sidecar / dynamic failover mesh / session-based relayer를 붙이면 B82는 즉시 실전 relevance를 가진다.
+- **Checklist item 79**: ☐ ACK / handshake / failover notice / peer-update message가 trusted endpoint를 바꿀 수 있다면, `session id + monotonic phase/epoch + prior peer hash + explicit rebind approval` 없이는 peer identity를 갱신하지 말고, `out-of-order ACK`·`stale ACK`·`cross-session replay` 회귀 테스트를 필수화할 것
+
+### Solana-Specific Defense Checklist Update
+79. ☐ ACK / handshake / failover notice / peer-update message가 trusted endpoint를 바꿀 수 있다면, `session id + monotonic phase/epoch + prior peer hash + explicit rebind approval` 없이는 peer identity를 갱신하지 말고, `out-of-order ACK`·`stale ACK`·`cross-session replay` 회귀 테스트를 필수화할 것
