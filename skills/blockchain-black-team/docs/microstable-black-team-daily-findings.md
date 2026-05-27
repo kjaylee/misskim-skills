@@ -1,5 +1,53 @@
 ---
 
+## 2026-05-28 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-21 to 2026-05-28 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, Immunefi metrics page, and local Microstable code re-read
+- **Confirmed in-window items**:
+  1. **SKP (2026-05-26)** is admissible only as an **existing A91/A107 reserve-desync family reinforcement**, not a new vector. The public mechanism summary is already explainable as **token-side LP balance mutation outside normal AMM accounting → `sync()` writes attacker-shaped reserves**.
+  2. **SquidRouterModule (2026-05-25)** is admissible only as an **existing A4 access-control reinforcement**. The public mechanism is specific, but it does not justify a new named vector beyond **trusted module + weak auth proof → arbitrary calldata inherits wallet spending authority**.
+  3. **Mure (2026-05-23)** is already well explained by **A127 External Authorization Root Injection**; no extra matrix edit is needed today.
+  4. **Fractal Protocol (2026-05-22)** is directionally valuable, but for this skill it remains an **already-absorbed callback/re-entrant share-accounting family** case rather than a clean new named-vector delta.
+  5. GitHub / Solana / Trail-of-Bits / OtterSec / Neodyme spot checks did **not** surface a fresh **Solana / Anchor / SPL** code-mechanism advisory requiring a new matrix delta for this run.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 matrix edits**
+- Updated: `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`, and `SKILL.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md` (today's public mechanisms were already absorbed)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A91/A107 AMM reserve desync** (SKP reinforcement) | on-chain mint/redeem/rebalance surface | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs` still has **no AMM pair accounting**, **no protocol token burn-on-transfer path**, and `rebalance()` is still weight-state mutation only, not live swap execution. I did **not** find a place where external LP balances can be mutated and later canonized with `sync()`-style reserve acceptance. |
+| **A4 Access Control / trusted-module arbitrary-calldata** (Squid reinforcement) | privileged keeper / admin mutation paths | ✅ NOT ACTIVE | On-chain privileged writes still require explicit **2-of-3 keeper quorum** (`require_keeper_quorum()`), and I did **not** find a module/plugin path where weak off-chain proof could inherit wallet- or protocol-level spending authority. |
+| **A127 External Authorization Root Injection** (Mure reinforcement) | signer / verifier provenance paths | ✅ NOT ACTIVE | Reviewed keeper/on-chain paths still pin trusted authorities in config/state; I did **not** find a user-supplied signer registry, pluggable verifier source, or attacker-chosen signature oracle in `solana/programs/microstable/src/lib.rs` or `solana/keeper/src/`. |
+| **A115 constrained-CA / allowlisted-host impersonation** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves **`rustls-webpki 0.101.7`** and **`0.103.9`**. Keeper-side binary/Cargo.lock attestation helps provenance, but the trust-floor carry-forward remains unresolved at dependency level. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard + keeper runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js` still keeps strict cross-RPC validation focused on bootstrap `getGenesisHash`, while runtime reads settle on a single selected endpoint; keeper degraded mode is safer than before, but provider-independent integrity quorum is still incomplete. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/oracle.rs` still enables manual oracle mode and submits externally validated prices, but I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor before fallback writes. |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` rebalance admission logic | ⚠️ MEDIUM CARRY-FORWARD | `rebalance()` still keys commit/reveal escalation to **single-call turnover**. I still do **not** see a stateful cumulative drift accumulator that would stop many sub-threshold rebalances from composing into a larger unreviewed move. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html` still relies on meta-only CSP, and `docs/app.js` still ships a **DEVNET ONLY** faucet keypair in browser code. Devnet-only scope lowers severity, but the canonical frontend trust smell remains. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+
+### Today's Verdict
+- New incidents found: **4 clear real-world mechanism confirmations + 1 already-absorbed callback/share-accounting case**
+- New attack vectors added: **0**
+- New matrix reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today’s public window improved the incident ledger, but it did **not** justify a new matrix delta. On direct code/path evidence, current Microstable still avoids the SKP / Squid / Mure exploit surfaces. The only reconfirmed **HIGH** remains the audit-attestation continuity gap, with **A115 / D27 / A75 / A43** still open as carry-forward medium risk lanes.
+
+---
+
 ## 2026-05-22 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-15 to 2026-05-22 KST)
