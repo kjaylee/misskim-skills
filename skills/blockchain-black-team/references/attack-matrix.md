@@ -7142,6 +7142,70 @@ SAFER SHAPE:
 
 ---
 
+### A128. Anchor Serialized-Account Shrink-Tail Ghost Bytes / Post-Shrink Stale-Byte Reinterpretation
+
+**Published**: 2026-05-27 | **Severity**: MEDIUM | **Red Team**
+
+**Signal**: otter-sec/anchor PR `#4603` (`Pad shrunken serialized account tails`, patch dated 2026-05-27)
+
+**Key insight**: typed account serialization은 흔히 “새 값을 다시 쓰면 이전 상태는 사라진다” 는 직관 위에 올라간다. 그런데 이번 신호는 그 직관이 깨질 수 있음을 보여준다. **account payload가 이전보다 짧게 serialize될 때 old_len..new_len tail을 zeroize하지 않으면, 논리적으로는 삭제된 이전 바이트가 물리적으로는 그대로 남는다.** 그러면 공격자는 먼저 큰 payload에 유리한 바이트를 심고, 이후 더 짧은 benign-looking state로 shrink한 뒤에도 **ghost bytes** 를 후속 decode / TLV walk / custom codec / foreign parser가 다시 의미 있게 읽게 만들 수 있다.
+
+**Attack chain**:
+1. attacker reaches a path that writes a variable-length or shrinkable typed account through a framework helper / custom serializer.
+2. account is first populated with a longer payload whose tail contains attacker-chosen residual bytes.
+3. later instruction serializes a shorter logical value back into the same account without scrubbing the `new_len..old_len` range.
+4. primary business logic sees the shorter, apparently valid state, but downstream parser / custom codec / migration routine / extension walker reuses bytes past the new logical end.
+5. stale tail bytes are reinterpreted as still-live data, causing hidden capability carry-over, forged extension presence, stale-state leakage, or parser-dependent semantic split.
+
+**Why distinct from existing vectors**:
+- **A122** 는 unchecked zero-copy loader가 owner/discriminator/type invariant를 무너뜨리는 문제다. **A128** 은 validation collapse가 아니라, **정상 deserialize 후 shorter writeback에서 stale tail이 남는 exit/writeback semantics** 문제다.
+- **A126** 은 `correct discriminator + short body` 가 panic abort를 만드는 availability lane이다. **A128** 은 panic이 아니라 **post-shrink residual bytes가 이후 의미론을 오염시키는 integrity/confusion lane** 이다.
+- generic stale-storage issue처럼 보일 수 있지만, **A128의 핵심은 typed framework serialization boundary가 "새 값 write = 이전 의미 소거" 를 보장하지 못해 review 직관을 속인다는 점** 이다.
+
+**Why audits miss this**:
+1. 리뷰어는 discriminator와 deserialize success를 보면 tail scrubbing까지 자동으로 됐다고 가정하기 쉽다.
+2. 대부분 테스트는 deserialize된 logical value만 비교하고, shorter write 후 raw byte tail이 zeroized됐는지는 확인하지 않는다.
+3. 동일 account를 읽는 두 consumer가 모두 같은 codec을 쓰지 않으면, 한쪽에는 dead data여도 다른 쪽에는 live data가 될 수 있다.
+4. migration / custom codec / TLV-like extension parsing은 happy-path에선 잘 동작해 보여 residual-byte semantics가 incident 전까지 숨어 있기 쉽다.
+
+**Code / architecture pattern to find**:
+
+```text
+VULNERABLE SHAPE:
+- deserialize typed payload from account data
+- later serialize a shorter logical value back into the same backing slice
+- commit exits without zeroing bytes in old_serialized_len..new_serialized_len tail
+- some later consumer treats bytes beyond the new logical end as meaningful
+
+SAFER SHAPE:
+- track consumed serialized length at load time
+- on writeback, compute new serialized length and zero the new_len..old_len range
+- require regression tests that inspect raw account bytes after shrink writes
+```
+
+**Defensive heuristic**:
+- shrinkable account writeback path에서는 **old serialized length 추적 + post-shrink zeroization** 을 기본 invariant로 둘 것
+- custom codec / migration / TLV-style parser는 logical deserialize success만 보지 말고 **raw tail bytes cleared** 를 테스트할 것
+- “same account, different parser” 구조가 있으면 parser별 consumed-length contract를 명시하고, 남은 바이트를 의미 없는 zero pad로 강제할 것
+- account resize와 별개로, **same-size backing buffer 내부 shorter reserialize** 도 별도 위협모델에 넣을 것
+
+**Sources**: https://github.com/otter-sec/anchor/pull/4603 | https://patch-diff.githubusercontent.com/raw/otter-sec/anchor/pull/4603.patch
+
+**Microstable relevance**:
+- 현재 Microstable은 `anchor-lang = 0.31.1`, `anchor-spl = 0.31.1`, `anchor-client = 0.31.1` 을 사용하며, PR `#4603` 이 고친 `lang-v2::SerializedAccount` path는 repo에 없다.
+- 로컬 helper `write_anchor_account()` (`programs/microstable/src/lib.rs:3023-3033`) 역시 shorter reserialize 후 tail zeroization을 하지 않지만, 현재 이 helper로 write하는 `ProtocolState`, `CircuitBreakerState`, `CollateralVault` 는 reviewed 기준 모두 **fixed-width account state** 다.
+- repo-wide 스캔에서 `Vec`, `String`, TLV extension state, shrinkable serialized account writeback surface는 확인되지 않았다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 향후 migration helper나 custom codec이 variable-length state를 쓰기 시작하면, 현재 helper shape는 A128과 같은 ghost-byte lane으로 즉시 바뀔 수 있다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A128 Anchor Serialized-Account Shrink-Tail Ghost Bytes / Post-Shrink Stale-Byte Reinterpretation | shorter typed-account writeback leaves old tail bytes intact, so later parsers or extension walkers can reinterpret logically-deleted residual data as still-live state | hidden state carry-over, parser-split semantics, stale secret/flag leakage, forged extension presence, migration confusion | current Microstable repo is **not on Anchor lang-v2 SerializedAccount** and reviewed local write helpers only touch fixed-width account structs, so **NOT ACTIVE today**; any future variable-length account writeback must add tail-scrub regression tests |
+
+**Matrix state as of 2026-05-28 (red-team daily update)**: prior coverage retained; **A128** was added to separate **post-shrink stale-byte reinterpretation** from A122 unchecked-loader trust collapse and A126 truncation panic. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless variable-length typed account writeback is introduced.
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**

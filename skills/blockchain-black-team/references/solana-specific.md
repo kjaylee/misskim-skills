@@ -1684,3 +1684,29 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 79. ☐ ACK / handshake / failover notice / peer-update message가 trusted endpoint를 바꿀 수 있다면, `session id + monotonic phase/epoch + prior peer hash + explicit rebind approval` 없이는 peer identity를 갱신하지 말고, `out-of-order ACK`·`stale ACK`·`cross-session replay` 회귀 테스트를 필수화할 것
+
+---
+<!-- AUTO-ADDED 2026-05-28 (Red Team Daily Evolution) — A128 serialized shrink-tail ghost bytes -->
+
+## 2026-05-28 Serialized Shrink-Tail Ghost-Byte Pattern
+
+### A128 — Anchor Serialized-Account Shrink-Tail Ghost Bytes / Post-Shrink Stale-Byte Reinterpretation
+- **Solana context**: Solana account는 같은 backing buffer를 오래 재사용하고, migration helper / custom codec / TLV-like extension parser / foreign reader가 공존하기 쉽다. 이번 신호는 **logical state가 짧아졌다고 해서 raw bytes까지 사라지는 것은 아니다** 는 점을 공식화한다.
+- **핵심 패턴**: typed account가 더 짧게 serialize될 때 old payload tail을 zeroize하지 않으면, 공격자는 이전에 심어둔 residual bytes를 남긴 채 겉보기엔 benign한 shorter state로 shrink할 수 있다. 이후 다른 parser나 extension walker가 새 logical end 밖의 tail을 다시 읽으면 **ghost state** 가 부활한다.
+- **왜 Solana에서 특히 위험한가**:
+  1. 한 account를 on-chain program, migration helper, off-chain decoder가 각각 다른 codec/consumed-length 가정으로 읽는 경우가 흔하다.
+  2. Solana는 TLV/extension-like tail parsing, custom metadata suffix, reserved padding 재활용이 많아 **dead bytes가 다시 semantic surface** 로 바뀌기 쉽다.
+  3. happy-path 테스트는 보통 deserialize된 값만 확인하고 raw tail zeroization은 놓친다.
+  4. same-size backing buffer 안에서의 shorter reserialize는 `realloc` 없이 일어나므로, 리뷰어가 storage ghost 문제를 과소평가하기 쉽다.
+- **Source signals**:
+  - otter-sec/anchor PR `#4603` — `Pad shrunken serialized account tails` (patch dated 2026-05-27)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/Cargo.toml`, `keeper/Cargo.toml` 기준 repo는 `anchor-lang/anchor-spl/anchor-client 0.31.1` 을 사용하며, reviewed code에 Anchor `lang-v2::SerializedAccount` path는 없다.
+  - `programs/microstable/src/lib.rs:3023-3033` 의 `write_anchor_account()` 는 tail scrub 없이 payload를 다시 쓰지만, 현재 reviewed 대상 `ProtocolState`, `CircuitBreakerState`, `CollateralVault` 는 fixed-width state라 immediate exploit surface는 보이지 않는다.
+  - repo-wide 스캔에서 `Vec`, `String`, TLV-style variable-length account state writeback은 확인되지 않았다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 향후 variable-length account migration, custom codec, reserved-tail semantics를 도입하면 A128은 즉시 실전 relevance를 가진다.
+- **Checklist item 80**: ☐ variable-length account를 shorter reserialize하는 경로에서는 `old_len 추적 + new_len..old_len tail zeroization + raw-byte postcondition test` 를 필수화하고, logical deserialize success만으로 이전 state가 지워졌다고 간주하지 말 것
+
+### Solana-Specific Defense Checklist Update
+80. ☐ variable-length account를 shorter reserialize하는 경로에서는 `old_len 추적 + new_len..old_len tail zeroization + raw-byte postcondition test` 를 필수화하고, logical deserialize success만으로 이전 state가 지워졌다고 간주하지 말 것
