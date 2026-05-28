@@ -4,6 +4,16 @@
 
 ## 2026
 
+- **2026-05-28 — Joe Agent / $JOE (BNB Chain — single-function reentrancy in liquidity-removal path)** — SlowMist's public incident summary says the vulnerable `_removeLiquidityViaContract` path sent **BNB via low-level call before updating `lpInfo[user].lpAmount`**, letting the attacker re-enter roughly **25 times** and steal **62.5 BNB + ~1.196M JOE (~$45K)**.
+  **Root cause**: external value transfer executed before LP-share/accounting state was decremented. The function therefore exposed a classic single-function reentrancy primitive inside the liquidity-removal path.
+  **Vector mapping**: **A1 Reentrancy** reinforcement. Distinct from a generic “logic bug” label because the reusable defect is specifically **call-before-state-update on the same withdraw/remove-liquidity lane**.
+  **Source**: https://hacked.slowmist.io/
+
+- **2026-05-27 — Stake DAO / vsdCRV bridge path (Arbitrum — deployer-key compromise → LayerZero `setPeer()` trust rewrite → forged mint)** — SlowMist's public incident summary says a **compromised deployer private key** let the attacker change the LayerZero v2 bridge's **`setPeer()` configuration** to point at an attacker-controlled contract, after which they **forged a cross-chain message**, minted roughly **5.4 trillion vsdCRV**, swapped about **16.83M vsdCRV** for **~43.78 ETH**, and bridged out profits of roughly **$91,170**.
+  **Root cause**: a leaked privileged key did not just drain a wallet directly; it rewrote the bridge's **trusted peer / message-authentication root**, turning key compromise into arbitrary message authority and unbacked minting.
+  **Vector mapping**: **B15 Key Compromise** reinforcement (admin-key-to-bridge-peer rewrite / forged-mint sub-pattern). Secondary effect layer: **A32 bridge message forgery** after trust-root mutation, but the admission-critical root cause remains the privileged-key compromise.
+  **Source**: https://hacked.slowmist.io/
+
 - **2026-05-26 — SKP token / Pancake V2 SKP-USDT LP (BSC — token-side LP balance drain + `sync()` reserve rewrite)** — SlowMist's public incident summary says the SKP token logic let the attacker pull **extra SKP out of the Pancake V2 SKP/USDT LP after a large buy**, then call `sync()` so the pair cached the manipulated near-zero SKP reserve as truth. With flash-loan amplification, the attacker extracted about **162,854.21 USDT + 75.88 BNB (~$212.85K)** in a single transaction.
   **Root cause**: the AMM trusted `sync()` to serialize balances into reserves, but the token-side logic had already mutated the LP-held balance **outside the intended swap/mint/burn accounting path**. Once the pair wrote those attacker-shaped balances into reserves, pricing collapsed in the attacker's favor.
   **Vector mapping**: existing **A91 / A107 AMM reserve desync** family reinforcement. Distinct from a plain flash-loan label because the reusable primitive is **out-of-band pool-balance mutation followed by reserve acceptance**.
