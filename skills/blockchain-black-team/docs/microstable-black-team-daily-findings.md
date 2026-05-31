@@ -1,5 +1,48 @@
 ---
 
+## 2026-06-01 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-25 to 2026-06-01 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus direct Microstable code re-read
+- **Confirmed in-window items**:
+  1. **MoneyMon (2026-05-29)** and **ONTR (2026-05-28)** are now admissible as a **new A129 vector**: both expose the narrower reusable primitive where a **null / zero-authority sentinel remains a valid auth comparison target**, so failed auth collapses into apparent success.
+  2. **WUSD.fi / GLOVE (2026-05-25)** is admissible as a **C24 Sybil Attack reinforcement**, not a new vector: the public mechanism is specifically **per-address reward gating broken by EIP-7702 helper rotation + flash-loan-funded address cycling**.
+  3. GitHub / Solana / Trail-of-Bits / OtterSec / Neodyme / Immunefi rechecks did **not** surface a fresh **Solana / Anchor / SPL** code-mechanism advisory requiring another matrix delta today.
+
+### Skill Delta Today
+- **1 NEW vector**: **A129 Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse**
+- **1 reinforcement**: **C24 Sybil Attack** now explicitly covers **per-address incentive collapse under EIP-7702 helper rotation** via **WUSD.fi / GLOVE**
+- Updated: `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`, and `SKILL.md`
+- Not updated: `references/solana-specific.md` (today's admitted delta is EVM auth/incentive-centric, not Solana-specific)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's changed vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A129 Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse** | on-chain mint/redeem and keeper authority paths | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:1058-1123,1281-1360` keeps user asset movement bound to canonical ATA checks plus explicit signer-owned token authorities, and reviewed keeper paths do **not** expose an EVM-style zero-address authority sentinel or invalid-signature acceptance lane. I did **not** find a path where failed auth could collapse into a privileged null sentinel. |
+| **C24 Sybil Attack** (WUSD.fi / GLOVE reinforcement) | dashboard / faucet / reward-like surfaces | ✅ NOT ACTIVE | Current Microstable reviewed paths do **not** expose per-address reward farming, `<threshold per fresh address>` emissions, or helper-contract-delegated incentive claims. `docs/index.html` / `docs/app.js` still expose devnet faucet UX, but that is explicit demo funding rather than economically scarce reward logic. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard + keeper runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js` still keeps strict cross-RPC validation concentrated around bootstrap/network identity, while keeper-side controls improve endpoint hygiene without full provider-independent runtime quorum. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/oracle.rs:735-875` still enables manual oracle mode and sends fallback writes, but I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor / TWAP before those writes. |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` rebalance admission logic | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1571-1605` still escalates commit/reveal by **single-call turnover**, and I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal sub-threshold moves from composing into a larger unreviewed shift. |
+| **A115 constrained-CA / allowlisted-host impersonation** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves **`rustls-webpki 0.101.7`** and **`0.103.9`**. Provenance controls help, but the dependency trust-floor carry-forward remains unresolved. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still relies on meta-only CSP, and `docs/app.js:43-49,1489-1508` still keep devnet faucet signer behavior in browser code. |
+
+### Today's Verdict
+- New incidents found: **2 admissible for new vector formalization + 1 admissible reinforcement**
+- New attack vectors added: **1** (**A129**)
+- Reinforcements applied: **1** (**C24**, WUSD.fi / GLOVE)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today’s public window did justify a real matrix delta — **A129** separates **null-authority sentinel truthiness collapse** from generic access-control/signature bugs. But on direct code/path evidence, current Microstable still does **not** expose that lane. The only reconfirmed **HIGH** remains the audit-attestation continuity gap.
+
 ## 2026-05-31 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-24 to 2026-05-31 KST)

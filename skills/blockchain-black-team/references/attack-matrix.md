@@ -1,4 +1,4 @@
-# Attack Matrix — 135+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27) | META-01~70
+# Attack Matrix — 136+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01) | META-01~70
 
 ## A. Smart Contract Vectors
 
@@ -259,6 +259,7 @@ function execute() external {
 
 ### C24. Sybil Attack
 **Mechanism**: Create many identities to gain disproportionate influence.
+**2026 reinforcement (WUSD.fi / GLOVE, 2026-05-25)**: SlowMist's public incident summary says the attacker used **EIP-7702 helper contracts** plus a **Morpho USDT flash loan** to repeatedly wrap/unwrap WUSD across fresh addresses that each satisfied the `<2 GLOVE` reward condition, harvesting nearly **2 GLOVE per cycle**. Key reusable smell: a reward path that treats **per-address eligibility** as if it implied **per-user scarcity** collapses once helper-contract delegation and cheap address rotation let one operator replay the same small-holder predicate at scale.
 **Defense**: Minimum stake, identity verification, reputation decay, capability gates.
 
 ### C25. MEV Extraction
@@ -7204,6 +7205,64 @@ SAFER SHAPE:
 | A128 Anchor Serialized-Account Shrink-Tail Ghost Bytes / Post-Shrink Stale-Byte Reinterpretation | shorter typed-account writeback leaves old tail bytes intact, so later parsers or extension walkers can reinterpret logically-deleted residual data as still-live state | hidden state carry-over, parser-split semantics, stale secret/flag leakage, forged extension presence, migration confusion | current Microstable repo is **not on Anchor lang-v2 SerializedAccount** and reviewed local write helpers only touch fixed-width account structs, so **NOT ACTIVE today**; any future variable-length account writeback must add tail-scrub regression tests |
 
 **Matrix state as of 2026-05-28 (red-team daily update)**: prior coverage retained; **A128** was added to separate **post-shrink stale-byte reinterpretation** from A122 unchecked-loader trust collapse and A126 truncation panic. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless variable-length typed account writeback is introduced.
+
+---
+
+### A129. Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse
+
+**Published**: 2026-06-01 | **Severity**: HIGH | **Red Team**
+
+**Signals**: SlowMist Hacked entries for **MoneyMon** (2026-05-29) and **ONTR** (2026-05-28)
+
+**Key insight**: 취약점의 본질은 단순한 “권한검사 누락” 이나 “서명 재사용” 이 아니다. **`address(0)` 같은 null/sentinel authority가 시스템에서 “권한 없음” 이 아니라 “비교 가능한 정상값” 으로 남아 있고, invalid auth result도 같은 sentinel로 붕괴할 때, 실패해야 할 검증이 성공처럼 보인다.** 즉 authority가 죽은 상태여야 하는데, 구현이 그 죽은 상태를 다시 privileged truth target으로 재사용한다.
+
+**Attack chain**:
+1. contract stores an authority field (`admin`, `owner`, signer root) that can become `address(0)`.
+2. auth logic only checks equality against that field, instead of first rejecting the null-authority state.
+3. an invalid auth result collapses into the same sentinel value — e.g. `ecrecover(...)` failure returns `address(0)`.
+4. attacker sets or reaches `authority == address(0)` and supplies input that deterministically yields the null result.
+5. auth check passes, or a renounced/null owner state becomes reclaimable, letting the attacker drain or mutate privileged state.
+
+**2026 incidents**:
+- **MoneyMon (2026-05-29)**: SlowMist's public summary says `cliamRewred`'s `verify()` only checked `recoverSigner(...) == admin`; the attacker set `admin = address(0)` and used an invalid signature (`r=0, s=0, v=27`) so failed recovery collapsed into apparent authorization success.
+- **ONTR (2026-05-28)**: SlowMist's public summary says a flawed `onlyOwner`-style check accepted `owner == address(0)`, allowing a renounced token to be re-owned and later abused for hidden-balance dumping into LP.
+
+**Why distinct from existing vectors**:
+- **Not A4 Access Control**: A4 is the broad family of missing/weak authorization. **A129** is the narrower, reusable sub-primitive where **null authority itself becomes a valid success target**.
+- **Not A7 Signature Replay**: no previously valid signature needs to be replayed. The exploit works because **invalid auth collapses into sentinel truthiness**.
+- **Not A127**: the attacker is not choosing the signer oracle/root. The contract's own auth semantics treat a null authority as admissible truth.
+
+**Code pattern to find**:
+```solidity
+// VULNERABLE: invalid recover -> address(0), and admin may also be address(0)
+address signer = ecrecover(digest, v, r, s);
+require(signer == admin, "bad sig");
+
+// VULNERABLE: renounced/null owner remains privilege-bearing
+modifier onlyOwner() {
+    require(msg.sender == owner || owner == address(0), "not owner");
+    _;
+}
+```
+
+**Defense**:
+1. treat `address(0)` as **non-authorizing** everywhere in signature/admin/owner logic.
+2. require `recovered != address(0)` before any equality check.
+3. make renounce states one-way and non-recoverable unless a separately authenticated recovery lane exists.
+4. add regression tests for invalid `(r,s,v)` tuples and `owner/admin == address(0)` states.
+
+**Sources**: https://hacked.slowmist.io/en/
+
+**Microstable relevance**:
+- current Microstable reviewed paths do **not** expose an EVM-style `address(0)` authority sentinel or a signature-acceptance path where invalid recovery can mutate balances.
+- user-asset movement remains bound to explicit signer-owned token authorities, and privileged on-chain mutation remains keeper-quorum-gated.
+- therefore **NOT ACTIVE today**, but any future off-chain signed claim, admin-recovery, or cross-chain authority-translation lane should explicitly model A129.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A129 Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse | a null/sentinel authority such as `address(0)` remains admissible inside auth logic, so invalid signature recovery or renounced-owner state collapses into a false-positive authorization success | unauthorized reward claims, reclaimed ownership after renounce, hidden privileged-state resurrection, drain without valid auth material | current Microstable repo shows **no zero-address authority sentinel or invalid-signature acceptance lane** in reviewed on-chain / keeper paths, so **NOT ACTIVE today**; future signed-claim or admin-recovery surfaces must reject null authority as non-authorizing |
+
+**Matrix state as of 2026-06-01 (red-team daily update)**: **A129** was added to separate **null-authority sentinel truthiness collapse** from broad access-control failure, replay, and attacker-chosen verifier patterns. Matrix is now **136+ named vectors + META-01~70 + B73~B82 = 206+ total entries**. Microstable has **no new active CRITICAL**, and the only reconfirmed **active HIGH** from direct code/path evidence remains **B45 Audit Attestation Gap**.
 
 ---
 

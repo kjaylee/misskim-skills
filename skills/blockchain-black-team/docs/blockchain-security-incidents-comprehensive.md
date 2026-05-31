@@ -9,10 +9,20 @@
   **Vector mapping**: **B15 Key Compromise** reinforcement (bridge signer / contract-key authority sub-pattern). Secondary bridge context exists, but the admission-critical reusable primitive remains **privileged signing-authority compromise** rather than a novel verification failure.
   **Source**: https://hacked.slowmist.io/en/
 
+- **2026-05-29 — MoneyMon / LegendaryMoneyMonNft (BSC — invalid signature collapses into zero-address admin truthiness)** — SlowMist's public incident summary says the vulnerable `cliamRewred` verification path only checked whether `recoverSigner(...) == admin`, without rejecting the case where failed recovery returns `address(0)`. The attacker reportedly set `admin` to the zero address, supplied an invalid signature (`r=0, s=0, v=27`), claimed rewards arbitrarily, and drained the contract into USDT.
+  **Root cause**: signature verification treated a **null authority sentinel** as a valid equality target. Once the privileged authority value itself was zero, invalid signature recovery collapsed into authorization success.
+  **Vector mapping**: **A129 Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse**.
+  **Source**: https://hacked.slowmist.io/en/
+
 - **2026-05-28 — Joe Agent / $JOE (BNB Chain — single-function reentrancy in liquidity-removal path)** — SlowMist's public incident summary says the vulnerable `_removeLiquidityViaContract` path sent **BNB via low-level call before updating `lpInfo[user].lpAmount`**, letting the attacker re-enter roughly **25 times** and steal **62.5 BNB + ~1.196M JOE (~$45K)**.
   **Root cause**: external value transfer executed before LP-share/accounting state was decremented. The function therefore exposed a classic single-function reentrancy primitive inside the liquidity-removal path.
   **Vector mapping**: **A1 Reentrancy** reinforcement. Distinct from a generic “logic bug” label because the reusable defect is specifically **call-before-state-update on the same withdraw/remove-liquidity lane**.
   **Source**: https://hacked.slowmist.io/
+
+- **2026-05-28 — ONTR token (EVM token — renounced/zero-owner state remained privilege-bearing and reclaimable)** — SlowMist's public incident summary says a flawed ownership check accepted `owner == address(0)`, allowing a renounced token to be re-owned. The attacker then used hidden balance-grant logic to fabricate balances and dump into the ONTR/WETH LP.
+  **Root cause**: a supposedly null / renounced authority state was still treated by authorization logic as a privilege-bearing or recoverable state.
+  **Vector mapping**: **A129 Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse** reinforcement.
+  **Source**: https://hacked.slowmist.io/en/
 
 - **2026-05-27 — Stake DAO / vsdCRV bridge path (Arbitrum — deployer-key compromise → LayerZero `setPeer()` trust rewrite → forged mint)** — SlowMist's public incident summary says a **compromised deployer private key** let the attacker change the LayerZero v2 bridge's **`setPeer()` configuration** to point at an attacker-controlled contract, after which they **forged a cross-chain message**, minted roughly **5.4 trillion vsdCRV**, swapped about **16.83M vsdCRV** for **~43.78 ETH**, and bridged out profits of roughly **$91,170**.
   **Root cause**: a leaked privileged key did not just drain a wallet directly; it rewrote the bridge's **trusted peer / message-authentication root**, turning key compromise into arbitrary message authority and unbacked minting.
@@ -28,6 +38,11 @@
   **Root cause**: a privileged extension/module boundary authenticated **reachability of the module** but not the authenticity of the action being authorized. Once weak module-local proof was accepted, arbitrary calldata inherited wallet-spending authority.
   **Vector mapping**: **A4 Access Control** reinforcement (trusted-module / arbitrary-calldata signer surrogate sub-pattern). A127-adjacent, but the reusable primitive here is **privileged module authorization collapse**, not attacker-chosen verifier provenance.
   **Source**: https://hacked.slowmist.io/en/ | https://thecurrencyanalytics.com/finance/squid-protocol-survives-3-2-million-squidroutermodule-breach-with-core-systems-intact-260383
+
+- **2026-05-25 — WUSD.fi / GLOVE (Ethereum — per-address incentive assumption collapses under EIP-7702 helper rotation)** — SlowMist's public incident summary says the attacker used **EIP-7702 helper contracts** and a **Morpho USDT flash loan** to repeatedly wrap/unwrap WUSD across fresh addresses that each satisfied the `<2 GLOVE` reward condition, harvesting nearly **2 GLOVE per cycle** and extracting roughly **$200K** of downstream value.
+  **Root cause**: the incentive path treated **address-level eligibility** as if it represented unique-user scarcity. Helper-contract delegation and cheap address rotation made the same small-holder reward predicate replayable at scale.
+  **Vector mapping**: **C24 Sybil Attack** reinforcement.
+  **Source**: https://hacked.slowmist.io/en/
 
 - **2026-05-23 — Mure `MureDistribution` proxy (Ethereum — attacker-chosen signer source → signature check passes against attacker-owned truth source)** — SlowMist's public incident summary says the distribution proxy accepted a **malicious contract as the “signer source”**, after which `SignatureChecker` returned `true` and let the attacker drain **4.85M QUEST** tokens already approved to the proxy, later swapped for about **5.45 ETH (~$11.7K)**.
   **Root cause**: the contract did not just verify a signature incorrectly; it let the attacker influence **which authority root / signer source was consulted**. Standard signature checking therefore validated attacker-chosen truth, not protocol-trusted truth.
