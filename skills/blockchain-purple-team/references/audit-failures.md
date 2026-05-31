@@ -75,6 +75,11 @@
 **Historical**: Anchor `v1.0.0` (2026-04-02) added owner checks on `reload()` and disallowed duplicate mutable accounts by default. This implies older Anchor-pinned protocols may keep latent exposure even when their app code is unchanged and previously audited.
 **Detection**: Maintain an upstream security-delta review for every pinned framework/toolchain. If a release adds new default guards, ask: (a) which older code paths relied on the old behavior, (b) what compensating assertions exist today, (c) does the audit attestation explicitly cover the pinned framework version and its known semantic gaps, (d) is there a version SBOM linking on-chain program, keeper client, and deployment tooling.
 
+## AF-16: Terminal-State / Sentinel Admissibility Blindness
+**Pattern**: Audit verifies that live signer/owner/peer/module values are checked, but does not prove that `address(0)`, `Pubkey::default()`, `None`, empty root, renounced owner, or unset config states are **non-authorizing**. If invalid recovery, wrapper fallback, or default initialization collapses into the same sentinel value, failed verification can masquerade as success.
+**Historical**: MoneyMon (2026-05-29) used `admin = address(0)` plus invalid `ecrecover` output to bypass reward-claim auth; ONTR (2026-05-28) left `owner == address(0)` semantically admissible and enabled re-ownership after renounce; Anchor A123 showed a framework-level sentinel collision where `Program<'info, System>` trust could collapse around `Pubkey::default()` special-case handling.
+**Detection**: For every privileged field, require a state table that distinguishes `live / rotated / revoked / renounced / unset / default`. Add regression tests for invalid `(r,s,v)` signatures, empty verifier roots, default pubkeys, missing peers, and wrapper special-cases. The rule should be explicit: **reject terminal sentinel states before equality/provenance comparison**.
+
 ## Meta-Insight
 The common thread: **auditors optimize for known patterns and explicit scope.**
 Purple Team optimizes for: **unknown patterns, implicit assumptions, and scope gaps.**
