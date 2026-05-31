@@ -1,5 +1,50 @@
 ---
 
+## 2026-05-31 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-24 to 2026-05-31 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, fallback-search evidence, and local Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Gravity Bridge (2026-05-30)** is admissible only as an **existing B15 Key Compromise reinforcement**, not a new vector. The public mechanism summary is already explainable as **bridge-recognized contract/signing authority compromise → authorized-looking asset release/drain**.
+  2. **MoneyMon (2026-05-29)** is directionally useful, but for this skill it remains an **already-absorbed A4/A7 family** case rather than a clean new named-vector delta. The visible mechanism is **zero-address admin state + invalid-signature acceptance**, which is specific, but not strong enough yet to justify a new slot beyond the current access-control / signature-validation matrix.
+  3. **Superfortune (2026-05-27)** remains **NOT ADMISSIBLE YET** for matrix editing today. The public wording still says recipient-address alteration / multisig address tampering, but I still do not have a sufficiently reusable mechanism cut separating **address poisoning, signer UX compromise, or transaction-construction tampering**.
+  4. GitHub / Solana / Trail-of-Bits / OtterSec / Neodyme spot checks did **not** surface a fresh **Solana / Anchor / SPL** code-mechanism advisory requiring a new matrix delta for this run.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **B15 Key Compromise** now explicitly covers **bridge-recognized contract/signing-authority compromise** via the **Gravity Bridge** incident
+- Updated: `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`, and `SKILL.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md` (today's public mechanisms were already absorbed)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B15 Key Compromise** (Gravity Bridge reinforcement) | keeper signer loading / storage discipline | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs` still requires **exactly 3** keeper keypair paths for 2-of-3 quorum hardening, and `keeper/src/utils.rs` still rejects symlink/group-world-readable/wrong-owner key files. But the keepers are still **filesystem-loaded hot keys** on the operator host, not HSM/MPC-backed signers, so Gravity/Stake DAO/Echo-style signer compromise remains only partially mitigated. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/oracle.rs` still fetches externally validated prices, enables manual oracle mode, and sends `ix_update_oracle`; `solana/programs/microstable/src/lib.rs` still enforces keeper quorum, manual-mode timeboxing, and freshness, but I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor before fallback writes. |
+| **A43 cumulative sub-threshold rebalance drift** | `lib.rs` rebalance admission logic | ⚠️ MEDIUM CARRY-FORWARD | `commit_rebalance()` / `rebalance()` now defend large single moves with **2-of-3 quorum + commit/reveal + step/turnover limits**, but I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal sub-threshold rebalances from composing into a larger unreviewed move. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard + keeper runtime reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js` still keeps strict cross-RPC validation focused on bootstrap `getGenesisHash`, while runtime reads settle on a single selected endpoint; keeper-side watchdog cross-checks improve read-path assurance, but provider-independent integrity quorum is still incomplete. |
+| **A115 constrained-CA / allowlisted-host impersonation** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock` still resolves **`rustls-webpki 0.101.7`** and **`0.103.9`**. Keeper-side provenance controls help, but the dependency trust-floor carry-forward remains unresolved. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html` still relies on meta-only CSP, and `docs/app.js` still ships a **DEVNET ONLY** faucet keypair in browser code. Devnet-only scope lowers severity, but the canonical frontend trust smell remains. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+
+### Today's Verdict
+- New incidents found: **2 directionally useful + 1 admissible reinforcement + 1 inadmissible-for-formalization carry item**
+- New attack vectors added: **0**
+- Reinforcements applied: **1** (**B15**, Gravity Bridge)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: today’s public window adds one real **B15** reinforcement, but it did **not** justify a new matrix delta. On direct code/path evidence, current Microstable still avoids the Gravity-style bridge trust boundary itself, yet continues to rely on **hot keeper keys**, **manual oracle fallback without explicit anchor-relative drift clamp**, and **runtime single-endpoint RPC trust**. The only reconfirmed **HIGH** remains the audit-attestation continuity gap.
+
+---
+
 ## 2026-05-28 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-21 to 2026-05-28 KST)

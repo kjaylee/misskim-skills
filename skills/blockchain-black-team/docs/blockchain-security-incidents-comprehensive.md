@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-05-30 — Gravity Bridge (Ethereum ↔ Cosmos bridge — compromised contract/signing key → bridge asset drain)** — SlowMist's public incident summary says Gravity Bridge was exploited likely because a **contract key or signing authorization was compromised**, after which the attacker drained about **$5.4M** in **USDC, ETH, and USDT** and began laundering the funds while a large portion remained under attacker control.
+  **Root cause**: this was not just a treasury hot-wallet theft; compromise of a bridge-recognized signing authority effectively inherited the bridge's asset-release trust boundary. Once the attacker controlled the protocol-recognized signing lane, the system treated the resulting releases as legitimate bridge-authorized withdrawals.
+  **Vector mapping**: **B15 Key Compromise** reinforcement (bridge signer / contract-key authority sub-pattern). Secondary bridge context exists, but the admission-critical reusable primitive remains **privileged signing-authority compromise** rather than a novel verification failure.
+  **Source**: https://hacked.slowmist.io/en/
+
 - **2026-05-28 — Joe Agent / $JOE (BNB Chain — single-function reentrancy in liquidity-removal path)** — SlowMist's public incident summary says the vulnerable `_removeLiquidityViaContract` path sent **BNB via low-level call before updating `lpInfo[user].lpAmount`**, letting the attacker re-enter roughly **25 times** and steal **62.5 BNB + ~1.196M JOE (~$45K)**.
   **Root cause**: external value transfer executed before LP-share/accounting state was decremented. The function therefore exposed a classic single-function reentrancy primitive inside the liquidity-removal path.
   **Vector mapping**: **A1 Reentrancy** reinforcement. Distinct from a generic “logic bug” label because the reusable defect is specifically **call-before-state-update on the same withdraw/remove-liquidity lane**.
