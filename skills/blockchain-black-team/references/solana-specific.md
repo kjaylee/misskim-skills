@@ -1710,3 +1710,20 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 80. ☐ variable-length account를 shorter reserialize하는 경로에서는 `old_len 추적 + new_len..old_len tail zeroization + raw-byte postcondition test` 를 필수화하고, logical deserialize success만으로 이전 state가 지워졌다고 간주하지 말 것
+
+## 2026-06-03 Anchor Optional-Sentinel / Tail-Scrub Reinforcement
+
+- **Anchor PR #4617** (`Fix v2 CPI optional sentinel handles`) 는 optional CPI account `None` 가 invoked program id sentinel meta로 encode되는 path를 고쳤다. 핵심 교훈은 **absence를 identity value와 같은 값 공간에 싣는 순간, framework special-case가 곧 auth/dispatch boundary** 가 된다는 점이다.
+- **Anchor PR #4603** (`Pad shrunken serialized account tails`) 는 shorter serialized writeback 후 `new_len..old_len` tail scrub을 추가했다. 즉 Solana account에서 **logical delete / shrink는 raw-byte zeroization까지 끝나야 truly dead state** 라는 점을 공개적으로 재확인했다.
+- 따라서 Solana 리뷰에서는 아래 둘을 함께 본다.
+  1. optional / unset / `None` 상태가 **presence bit** 없이 sentinel pubkey, program id, default value로 운반되는가
+  2. shorter reserialize / migration / custom codec writeback 후 old tail이 남아 다른 parser에서 다시 semantic surface가 되는가
+
+**Microstable current status**:
+- `solana/programs/microstable/src/lib.rs:1179-1188,2360-2364` 의 `Pubkey::default()` 사용은 빈 `user_position` 초기화 sentinel에 한정되고, 이후 same-PDA + `constraint = user_position.owner == user.key()` 로 다시 결박돼 현재 auth-collapse lane으로 보이지 않는다.
+- `solana/programs/microstable/src/lib.rs:3018-3031` 의 `write_anchor_account()` 는 tail scrub이 없지만, 현재 reviewed state는 fixed-width account 위주이고 repo-wide scan에서 variable-length account migration / `SerializedAccount` 기반 shrink path는 확인되지 않았다.
+- 그래서 **today verdict = NOT ACTIVE**, 다만 향후 optional external authority object, peer manifest, variable-length account migration이 들어오면 즉시 재평가 대상이다.
+
+**Sources**:
+- https://github.com/otter-sec/anchor/pull/4617
+- https://github.com/otter-sec/anchor/pull/4603

@@ -1,5 +1,52 @@
 ---
 
+## 2026-06-03 Daily Check
+
+### Source Sweep (24h~7d window: 2026-05-27 to 2026-06-03 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus direct `web_fetch` cross-read of Anchor public PR **#4603** / **#4617** and fresh Microstable code re-read
+- **Confirmed in-window items**:
+  1. 오늘 창에서는 **새 incident-driven named vector admission은 없음**. SlowMist live window의 **Fluid / Gravity Bridge / Alephium Bridge / Gnosis Pay** 는 모두 `approver key / trusted peer / backend / delay module` 류의 **edge authority object** 가 계속 사고 중심임을 재확인했고, 이는 **META-70 Node-Audit / Edge-Semantics Gap** 강화 근거다.
+  2. **Anchor PR #4617** 는 optional CPI `None` 가 program-id sentinel meta로 encode될 수 있음을 보여줘, **absence가 live-looking identity representation과 같은 값 공간을 공유하면 special-case가 바로 security boundary가 된다** 는 점에서 **META-71 Terminal-State / Sentinel Admissibility Gap** 을 Solana framework 층까지 강화했다.
+  3. **Anchor PR #4603** 는 shorter serialized writeback 후 tail scrub을 추가하며, **logical shrink/delete와 raw-byte zeroization은 분리된 문제** 임을 공개적으로 확인했다. 이는 기존 **A128 Serialized Shrink-Tail Ghost Bytes** 를 강화한다.
+  4. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi recheck에서는 **새 Solana / Anchor / SPL exploit-class advisory** 로 즉시 새 vector를 분리할 만큼의 추가 메커니즘은 확인되지 않았다.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **3 reinforcements**: **META-70**, **META-71**, **A128**
+- Updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/microstable-black-team-daily-findings.md`, and `SKILL.md`
+- Not updated: `docs/blockchain-security-incidents-comprehensive.md` (오늘 창에서는 기존 incident timeline을 넘어서는 신규 incident admission 없음)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **META-71 Terminal-State / Sentinel Admissibility Gap** | on-chain owner/auth state | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:1179-1188` 의 `Pubkey::default()` 는 empty `user_position` bootstrap sentinel에 한정되고, 실제 privileged use는 `seeds = [b"user_position", user.key().as_ref()]` + `constraint = user_position.owner == user.key()` (`lib.rs:2360-2364`) 로 다시 묶인다. failed auth가 sentinel equality로 붕괴하는 lane은 못 찾았다. |
+| **A128 Serialized Shrink-Tail Ghost Bytes** | account writeback surface | ✅ NOT ACTIVE TODAY | `solana/programs/microstable/src/lib.rs:3018-3031` 의 `write_anchor_account()` 자체는 tail scrub을 하지 않지만, 현재 reviewed state는 fixed-width account 위주이고 repo-wide scan에서 Anchor `SerializedAccount` shrink path나 variable-length migration state를 확인하지 못했다. 즉시 exploitable ghost-byte surface는 보이지 않는다. |
+| **META-70 Node-Audit / Edge-Semantics Gap** | keeper signer / trusted edge object | ⚠️ MEDIUM PARTIAL DEFENSE | `keeper/src/config.rs:434-442,845-852` 는 3개 keeper key + 서로 다른 parent dir를 강제하고, `keeper/src/utils.rs:376-421` 는 `O_NOFOLLOW` 와 restrictive file mode를 강제한다. 다만 signer가 아직 host filesystem hot key라서 Gravity/Stake DAO류 signer compromise를 완전히 닫지는 못한다. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:209-212,243-262` 는 bootstrap 단계에서만 `getGenesisHash` cross-check를 유지하고, runtime quorum은 의도적으로 끈다. `docs/index.html:6` / `docs/app.js:3-6` 의 allowlisted endpoints는 도움이 되지만 provider-independent runtime integrity는 아직 부족하다. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `keeper/src/price_feed.rs:165-185` 는 외부 두 소스의 상호편차만 제한하고, `keeper/src/oracle.rs:744-875` 는 manual oracle mode를 켠 뒤 validated price를 바로 `ix_update_oracle` 로 보낸다. 마지막 trusted on-chain anchor/TWAP 대비 keeper-side max-drift clamp는 아직 안 보인다. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `lib.rs:1540-1592` 는 step/turnover/commit-reveal로 **single-call** large move를 잘 막지만, 여러 번의 individually legal small move를 epoch/window 단위로 누적 추적하는 accumulator는 여전히 없다. |
+| **A115 constrained-CA / allowlisted-host impersonation** | keeper TLS dependency lane | ⚠️ MEDIUM ACTIVE-LATENT | `solana/Cargo.lock:3303,3316,3357,7164` still resolve **`rustls-webpki 0.101.7`** and **`0.103.9`**. Provenance controls help, but the dependency trust-floor carry-forward remains unresolved. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` is still meta-only CSP, and `docs/app.js:1489-1508` keeps devnet faucet behavior in browser code. Devnet-only scope lowers severity, but the trust boundary still lives in a static client. |
+
+### Today's Verdict
+- New incidents found: **0 admissible for new vector formalization**
+- New attack vectors added: **0**
+- Reinforcements applied: **3** (**META-70**, **META-71**, **A128**)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: 오늘 창은 **새 패턴 추가보다 기존 구조의 sharpen** 이 핵심이었다. Microstable은 Anchor sentinel/tail-scrub 계열의 active exploit lane은 아직 보이지 않았지만, **audit-attestation 부재**, **manual oracle anchor-relative drift clamp 부재**, **runtime RPC quorum 생략**, **hot-key keeper trust** 는 계속 남아 있다.
+
+---
+
 ## 2026-06-01 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-05-25 to 2026-06-01 KST)

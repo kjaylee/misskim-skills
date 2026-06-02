@@ -9049,6 +9049,11 @@ Microstable은 오늘 새 live exploit이 확인된 것은 아니다. 다만 blu
 - 다만 future expansion에서는 같은 문제가 쉽게 재수입된다: off-chain signed claim, admin recovery, bridge/export peer manifest, optional evidence source, manual override object, agent/tool provenance root 등은 모두 `unset/default` 상태를 가질 수 있다.
 - 따라서 오늘 기준 **active exploit은 아니지만 LOW current / MEDIUM-if-expansion architecture watch** 로 분류할 가치가 있다.
 
+**2026-06-03 reinforcement note**:
+- **Anchor PR #4617** 은 optional CPI account `None` 를 invoked program id sentinel meta로 싣는 path를 고치며, **absence가 live-looking identity representation과 같은 값 공간에 닿는 순간 special-case가 곧 security boundary** 가 된다는 점을 보여줬다.
+- **Anchor PR #4603** 은 shorter serialized writeback 뒤 tail scrub을 추가하며, terminal/deleted state가 lifecycle label만으로는 죽지 않고 **raw representation까지 zeroized** 되어야 함을 다시 확인했다.
+- 즉 `sentinel/terminal state는 비교 전에 hard-fail`, `absence는 presence bit로 표현`, `deleted state는 raw bytes에서도 제거` 가 함께 가야 한다.
+
 **Purple Team verdict**: 최근 신호의 본질은 단순 access-control miss가 아니다. **팀이 “죽은 권한 상태는 무해하다” 고 믿는 순간, 그 상태가 실패 결과와 같은 값 공간을 공유하면 권한은 다시 살아난다.** META-71은 이 문제를 **Terminal-State / Sentinel Admissibility Gap** 으로 고정한다.
 
 **Matrix state as of 2026-06-01 (purple daily update)**: **136+ named vectors + META-01~71 + B73~B82 = 207+ total entries**. META-71 added by Purple Team 2026-06-01: **Terminal-State / Sentinel Admissibility Gap (TSSAG)**. MoneyMon/ONTR의 zero/null authority incidents와 A123의 framework sentinel collision을 하나의 `terminal state is still admissible auth value` 패턴으로 상위 구조화한다.
