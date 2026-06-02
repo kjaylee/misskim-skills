@@ -1,57 +1,5 @@
 # Purple Team Meta Analysis (Cumulative)
 
-## 2026-06-02 (KST) — Daily Evolution (#55)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| SlowMist Hacked — Fluid / Gravity Bridge / Alephium Bridge / Gnosis Pay | 2026-05-30 ~ 2026-06-01 | 최근 창의 strongest incident signal은 여전히 **edge authority object** 다. proposer/approver key, trusted peer, bridge backend, timelock module 같은 주변 경계가 실제 privileged plane이었다. |
-| Immunefi Bug Bounty Programs | last updated 2026-06-01 16:00 UTC | daily-updated 보상 시장은 auth/ops seam, helper path, optional/legacy control surface가 계속 실제 수익화 표면임을 재확인한다. |
-| GitHub `otter-sec/anchor#4603` | merged 2026-05-27 | shorter writeback 후 tail zeroization을 framework가 직접 추가했다. 즉 “논리적으로 삭제된 상태” 가 raw representation에서는 여전히 live data일 수 있다는 신호다. |
-| GitHub `otter-sec/anchor#4617` | merged 2026-06-01 | optional-account `None` 를 program-id sentinel meta로 표현하는 v2 CPI path는 absence와 live identity가 같은 값 공간에 닿을 때 special-case 없이는 붕괴함을 보여준다. |
-| GitHub `otter-sec/anchor#4560` | merged 2026-05-28 | serialize 직전의 argument admissibility를 먼저 닫아야 한다는 신호다. typed/encoded path도 pre-encoding edge validation이 없으면 충분히 흔들린다. |
-
-보조 확인:
-- GitHub `foundry-rs/foundry#14437` 는 background signal로는 유지하지만, 최근 7일 publish window 바깥이라 오늘 5-source minimum 에서는 제외했다.
-
-### Phase 2) 갭 분석
-
-**판정: 오늘은 신규 META admission 없음. reinforcement-only. strongest signal은 `META-71 — Terminal-State / Sentinel Admissibility Gap (TSSAG)` 와 `META-70 — Node-Audit / Edge-Semantics Gap (NAESG)` 의 결합 강화다.**
-
-#### Reinforcement A — META-71 / absence·default·deleted state는 선언만으로 죽지 않는다
-- **MoneyMon / ONTR** 는 null authority가 auth failure와 같은 값 공간을 공유하면 drain으로 직결된다는 것을 이미 보여줬다.
-- **Anchor #4617** 은 같은 패턴을 framework optional-account 표현에서 재확인한다. `None` 은 실제로는 엄격한 special-case가 필요한 **sentinel-carrying representation** 이다.
-- **Anchor #4603** 은 삭제/축소된 상태가 raw bytes로는 남을 수 있음을 보여준다. 즉 terminal state는 lifecycle label이 아니라 representation layer까지 닫혀야 한다.
-
-#### Reinforcement B — META-70 / 사고는 계속 edge authority object에서 난다
-- **Fluid** 는 off-chain proposer/approver + merkle root edge가, **Gravity Bridge / Alephium Bridge** 는 bridge signer/backend edge가, **Gnosis Pay** 는 delay/timelock module edge가 실제 privileged plane임을 재확인한다.
-- 공통점은 node 내부 correctness보다 **어떤 주변 객체가 실제로 authority를 운반하는가** 가 사고를 결정했다는 점이다.
-
-#### 왜 신규 META가 아닌가
-1. 오늘 창의 strongest signals는 이미 열린 **META-71 + META-70** 조합으로 충분히 설명된다.
-2. 새로 늘어난 것은 독립 구조보다, **terminal-state admissibility와 edge authority drift가 서로 결합되는 사례** 다.
-3. 따라서 오늘은 새 상위 admission보다 기존 메타 sharpen이 맞다.
-
-### Phase 3) 스킬 강화 델타 (2026-06-02)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-71 reinforcement note** 추가. 신규 벡터/메타 번호 증설은 하지 않는다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log 1행 추가, matrix count는 유지.
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding은 없지만, latent architecture finding 1건은 추가한다.**
-- today signal은 `optional evidence / default identity / shrink-update residue` 가 **같은 값 공간을 공유하면 absence가 authority처럼 보일 수 있다** 는 점이다.
-- 현재 공개 Microstable artifact에는 direct optional sentinel auth lane이 없어 **NOT ACTIVE today** 다.
-- 다만 향후 signed claim / peer manifest / optional oracle witness / governance adapter / tool provenance object를 붙이면, presence bit와 identity 분리를 강제하지 않는 순간 같은 문제가 재수입된다.
-- **CRITICAL 없음. HIGH 없음. LOW 1건 추가(현재) / MEDIUM if expansion.**
-
-### Sources
-- https://hacked.slowmist.io/en/
-- https://immunefi.com/bug-bounty/
-- https://github.com/otter-sec/anchor/pull/4603
-- https://github.com/otter-sec/anchor/pull/4617
-- https://github.com/otter-sec/anchor/pull/4560
-
 ## 2026-05-28 (KST) — Daily Evolution (#54)
 
 ### Phase 1) 수집 소스 요약
