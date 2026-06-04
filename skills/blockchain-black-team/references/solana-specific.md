@@ -1727,3 +1727,41 @@ archive_or_forward(tx)?; // delayed execution risk
 **Sources**:
 - https://github.com/otter-sec/anchor/pull/4617
 - https://github.com/otter-sec/anchor/pull/4603
+
+---
+<!-- AUTO-ADDED 2026-06-05 (Red Team Daily Evolution) — A130 CPI return-data snapshot gap -->
+
+## 2026-06-05 Anchor CPI Return-Data Snapshot Pattern
+
+### A130 — Anchor CPI Return-Data Invoke-Time Snapshot Gap / Same-Program Late-Overwrite
+- **Solana context**: Solana return-data는 instruction 전체가 공유하는 전역 버퍼다. `Return<T>` 같은 typed helper를 쓰면 많은 팀이 값을 "이미 캡처한 handle" 로 느끼지만, 실제 구현이 lazy read면 **같은 프로그램으로 가는 나중 CPI가 earlier trusted result를 덮어써도 그대로 통과** 할 수 있다.
+- **핵심 패턴**: caller가 trusted CPI의 `Return<T>` wrapper를 받아 둔 뒤 `.get()` 을 늦게 호출한다. 그 사이 attacker-influenced flow가 **같은 program id** 로 한 번 더 CPI를 날려 return-data를 같은 타입으로 덮어쓰면, old path는 `program_id` 검사를 통과하면서도 **wrong call instance** 의 값을 읽는다.
+- **왜 Solana에서 특히 위험한가**:
+  1. many reviewers stop at `program_id` provenance validation and never model **temporal freshness** of return-data.
+  2. shared return-data buffer는 account graph에 남지 않아, later same-program overwrite가 감사/포렌식에서 잘 안 보인다.
+  3. quote helper, simulation helper, permission helper처럼 “나중에 읽어도 되겠지” 라는 사용 습관과 잘 결합한다.
+  4. 동일 `program_id` 이므로 A116류 provenance alarm이 울리지 않아 patched 후에도 blind spot이 남는다.
+- **Source signals**:
+  - otter-sec/anchor PR `#4624` — `fix(lang): snapshot CPI return data for Return::get()` (merged 2026-06-04)
+  - otter-sec/anchor commit `e5a4715` (`get() (#4624)`)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/Cargo.toml` 는 `anchor-lang = 0.31.1` 이고, live-path scan에서 `programs/microstable/src/lib.rs` / `keeper/src/` 에 `Return::<T>`, `get_return_data`, `set_return_data` 사용 흔적은 없다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 future CPI quote/view helper를 도입하면 **invoke-time snapshot 또는 immediate decode before any later CPI** 를 릴리스 게이트로 강제해야 한다.
+- **Checklist item 81**: ☐ CPI return-data helper는 `program_id` 검증만으로 충분하다고 보지 말고, trusted CPI 직후 `(program_id, bytes)` 를 snapshot/decode한 뒤 later same-program CPI overwrite 회귀 테스트를 필수화할 것
+
+### Solana-Specific Defense Checklist Update
+81. ☐ CPI return-data helper는 `program_id` 검증만으로 충분하다고 보지 말고, trusted CPI 직후 `(program_id, bytes)` 를 snapshot/decode한 뒤 later same-program CPI overwrite 회귀 테스트를 필수화할 것
+
+## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
+
+- **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
+- 핵심 교훈은 `extensions::*` constraint가 써 있어도 **초기화 경로와 검증 경로가 동일하지 않을 수 있다** 는 점이다. 즉, 개발자는 Token-2022 extension invariant가 항상 enforced 된다고 느끼지만 실제로는 `init_if_needed` 분기에서 빈틈이 남을 수 있다.
+- 현재 Microstable live path는 classic SPL Token + ATA path만 사용하고, `Token2022`, `token_2022`, `extensions::*`, mint extension constraint 사용 흔적이 없다. 그래서 **NOT ACTIVE today**.
+- 다만 future Token-2022 adoption에서는 이것을 **A113 Token-2022 Extension Authority-Meta Elision** 과 **META-58 Default-Path / Scope-Carveout Responsibility Gap** 강화 신호로 취급해야 한다. "constraint가 선언돼 있다" 와 "모든 분기에서 실제 검증된다" 는 다른 명제다.
+
+**Additional sources**:
+- https://github.com/otter-sec/anchor/pull/4624
+- https://github.com/otter-sec/anchor/commit/e5a4715e9cad1d7e66f18244325b82aa880a0ecd
+- https://github.com/otter-sec/anchor/pull/4632
+- https://github.com/otter-sec/anchor/commit/94df365f8442a3acb6403ba4348d1b5b0a90f3ed

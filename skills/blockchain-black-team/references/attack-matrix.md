@@ -1,4 +1,4 @@
-# Attack Matrix — 136+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01) | META-01~71
+# Attack Matrix — 137+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05) | META-01~71
 
 ## A. Smart Contract Vectors
 
@@ -7264,6 +7264,72 @@ modifier onlyOwner() {
 | A129 Null-Authority Sentinel / Zero-Address Signature Truthiness Collapse | a null/sentinel authority such as `address(0)` remains admissible inside auth logic, so invalid signature recovery or renounced-owner state collapses into a false-positive authorization success | unauthorized reward claims, reclaimed ownership after renounce, hidden privileged-state resurrection, drain without valid auth material | current Microstable repo shows **no zero-address authority sentinel or invalid-signature acceptance lane** in reviewed on-chain / keeper paths, so **NOT ACTIVE today**; future signed-claim or admin-recovery surfaces must reject null authority as non-authorizing |
 
 **Matrix state as of 2026-06-01 (red-team daily update)**: **A129** was added to separate **null-authority sentinel truthiness collapse** from broad access-control failure, replay, and attacker-chosen verifier patterns. Matrix is now **136+ named vectors + META-01~70 + B73~B82 = 206+ total entries**. Microstable has **no new active CRITICAL**, and the only reconfirmed **active HIGH** from direct code/path evidence remains **B45 Audit Attestation Gap**.
+
+---
+
+### A130. Anchor CPI Return-Data Invoke-Time Snapshot Gap / Same-Program Late-Overwrite
+
+**Published**: 2026-06-05 | **Severity**: HIGH | **Red Team**
+
+**Signals**:
+- otter-sec/anchor PR `#4624` (`fix(lang): snapshot CPI return data for Return::get()`, merged 2026-06-04)
+- otter-sec/anchor commit `e5a4715` (`get() (#4624)`)
+
+**Key insight**: A116 이후 많은 팀은 `Return<T>::get()` 가 `program_id` 만 맞으면 충분히 안전하다고 생각한다. 하지만 기존 구현은 **invoke 시점의 return-data를 캡처하지 않고, `get()` 호출 시점의 전역 return-data 버퍼를 다시 읽었다.** 그래서 attacker가 같은 instruction 흐름 안에서 **같은 program_id를 가진 뒤늦은 CPI** 를 한 번 더 실행하면, provenance 검사는 통과하면서도 **원래 trusted call의 값이 아니라 더 나중 값** 이 읽힌다. 즉 문제는 이제 “누가 썼는가” 를 넘어 **“언제의 값을 읽는가”** 다.
+
+**Attack chain**:
+1. victim program calls a trusted CPI that returns `Return<T>` and stores the wrapper for later policy use.
+2. trusted callee writes a legitimate return value into Solana's global return-data buffer.
+3. before the caller invokes `.get()`, another CPI to the **same callee program id** executes and writes attacker-chosen bytes of the same serialized type.
+4. old `Return<T>::get()` reads the live buffer at read time instead of an invoke-time snapshot, so `program_id` validation still passes.
+5. caller consumes a stale/spoofed `bool` / `u64` / struct and takes the wrong privileged branch.
+
+**Why distinct from existing vectors**:
+- **A116** = different program overwrites return-data and the caller fails to validate authoring `program_id`.
+- **A130** = even with matching `program_id`, the caller still reads the **wrong temporal instance** because return-data is looked up too late.
+- **A108** = instruction introspection / index semantics confusion.
+- **A130** = CPI response freshness collapse inside a shared global return-data slot.
+
+**왜 감사가 놓치는가**:
+1. 리뷰어는 흔히 `program_id` 검증 패치가 들어오면 return-data 문제 전체가 닫혔다고 착각한다.
+2. `Return<T>` 는 lazy getter 모양이라, 값이 이미 캡처됐다고 오해하기 쉽다.
+3. happy-path 테스트는 trusted CPI 한 번만 호출하고 바로 `.get()` 하므로, **같은 프로그램에 대한 늦은 second CPI overwrite** 를 재현하지 않는다.
+4. 같은 `program_id` 가 유지되므로 로그상 provenance mismatch가 보이지 않아 incident triage가 더 어렵다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: wrapper remembers only program_id, then reads global
+// return-data later.
+let result = trusted_helper::cpi::quote(cpi_ctx)?;
+// ... later CPI to same program id runs and overwrites return-data ...
+let quote = result.get();
+
+// SAFER SHAPE: snapshot return-data at invoke time or decode immediately
+// before any later CPI can mutate the global slot.
+let result = trusted_helper::cpi::quote(cpi_ctx)?;
+let quote = result.get(); // safe only if get() reads invoke-time snapshot
+```
+
+**Defense**:
+1. use Anchor versions containing `CpiReturnData::snapshot()` / invoke-time return-data capture.
+2. if wrapping return-data yourself, snapshot `(program_id, bytes)` immediately after the trusted CPI and never lazily re-read the global slot later.
+3. do not carry `Return<T>` across later CPIs to the same program without a freshness invariant.
+4. add regression tests for `trusted return -> later same-program overwrite -> stale read rejected`.
+
+**Sources**:
+- https://github.com/otter-sec/anchor/pull/4624
+- https://github.com/otter-sec/anchor/commit/e5a4715e9cad1d7e66f18244325b82aa880a0ecd
+
+**Microstable relevance**:
+- `microstable/solana/programs/microstable/Cargo.toml` stays on `anchor-lang = 0.31.1`, and current live-path scan found **no** `Return::<T>`, `get_return_data`, or `set_return_data` usage in `programs/microstable/src/lib.rs` or `keeper/src/`.
+- therefore **NOT ACTIVE today**.
+- however any future CPI-based quote/view/helper path in Microstable must treat **invoke-time snapshotting** as mandatory, not optional hardening.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A130 Anchor CPI Return-Data Invoke-Time Snapshot Gap / Same-Program Late-Overwrite | caller holds a lazy `Return<T>` wrapper, then a later CPI to the same program overwrites global return-data before `.get()`; program-id validation still passes because freshness, not provenance, failed | spoofed quote/boolean/struct from the right program but the wrong call instance, leading to unsafe admissions, slippage bypass, or wrong policy branch | current Microstable repo shows **no CPI return-data helper path** in reviewed on-chain/keeper code, so **NOT ACTIVE today**; any future `Return<T>`-based quote/view helper must snapshot or decode before later same-program CPIs |
+
+**Matrix state as of 2026-06-05 (red-team daily update)**: **A130** was added to separate **same-program late-overwrite freshness collapse** from A116's cross-program provenance confusion. Matrix is now **137+ named vectors + META-01~71 + B73~B82 = 208+ total entries**. Microstable has **no new active CRITICAL/HIGH from A130**, and direct-code carry-forward remains unchanged.
 
 ---
 
