@@ -194,7 +194,9 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 ### B18. Config Injection
 **Mechanism**: Modify config file → change RPC endpoints, fee rates, authority keys.
 **2026 reinforcement (Moonwell)**: Misconfigured oracle rollout plus unbypassable timelock can lock protocol into a bad config long enough for extraction.
-**Defense**: Config file permissions (600), integrity checks, immutable deployment, and emergency fast-path for oracle rollback/kill-switch outside normal governance delay.
+**2026 reinforcement (Phala Cloud, 2026-05-31)**: SlowMist's public incident summary says an API endpoint flaw let an attacker modify **Offchain KMS CVM pre-launch scripts** before boot. Once affected CVMs started, the malicious bootstrap path could access **decrypted environment variables** after launch. **Key pattern**: config injection is not limited to static files — if a control-plane API can rewrite bootstrap script, launch template, init container, or pre-start hook, it can silently become the effective secret-release authority.
+**Why audits miss**: many reviews validate guest runtime logic, KMS isolation, and post-boot permission boundaries, but treat the **bootstrap control plane** that feeds scripts/config into the workload as deployment plumbing outside the main threat model. That leaves a gap where `who may mutate startup inputs before secrets decrypt` is weaker than the audited runtime itself.
+**Defense**: Config file permissions (600), integrity checks, immutable deployment, signed bootstrap artifacts, secret release only after launch-measurement verification, and emergency fast-path for oracle rollback/kill-switch outside normal governance delay.
 
 ### B19. Memory/Log Leak
 **Historical**: Slope wallet (private keys in Sentry logs)
