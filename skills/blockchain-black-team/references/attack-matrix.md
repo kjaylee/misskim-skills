@@ -508,6 +508,7 @@ allowed_skills:
 5. Behavioral audit log: surface when agent takes actions outside observed historical pattern
 6. Separate execution context for untrusted research/browsing tasks vs. privileged tool invocations
 7. Human quorum gate for any action that involves signing/broadcasting to chain
+**Reinforcement update (2026-06-06)**: Trail of Bits' `The sorry state of skill distribution` showed that **ClawHub's malicious skill detector, Cisco's skill-scanner, and all three scanners integrated into `skills.sh`** could be bypassed with low-effort tricks such as file truncation via 100,000 newlines, `.docx`/ZIP indirection, poisoned `.pyc` bytecode, and hidden or opaque files. The important purple-team point is not merely that marketplace skills can be malicious — it is that **the scanner's visible-text scope becomes part of the trust boundary**, while the marketplace still emits a practical "safe enough to install" signal. That sharpens D32's `why audits miss it`: teams often review the skill's declared instructions, not the full packaged execution surface that the agent will actually load.
 **Source**: https://rekt.news/identity-theft-2
 
 ### D33. Transitive Payload Relay Typosquat
