@@ -6877,6 +6877,8 @@ fn validate_export(export: &Export, proof: &Proof, state_root: Hash) -> Result<(
 - Blue v14/v15가 flow cap, haircut, manual oracle gating, keeper quorum, upgrade-authority pinning은 강화했지만, 오늘 신호는 그와 별개로 **향후 bridge / reserve attestation / external collateral release를 붙일 때 source-side economic binding을 release gate로 승격해야 한다** 는 교훈을 준다.
 - 따라서 오늘은 신규 Microstable architecture finding까지는 올리지 않되, future expansion gate에서는 `proof-valid` 와 `economically-backed` 를 분리해 검토해야 한다.
 
+**Reinforcement update (2026-06-08)**: Aave의 rsETH 포스트모템은 이 벡터를 실전 lending collateral 관점에서 더 선명하게 만들었다. 요지는 **Aave 자체 코드는 설계대로 동작했어도, LayerZero bridge verification failure로 발행된 116,500 unbacked rsETH가 담보로 들어오자 downstream bad debt가 발생했다** 는 점이다. Aave가 이후 listing standard를 `bridge infrastructure / oracle dependency / custodians / operational security` 까지 넓히겠다고 한 것은, `truthful-looking bridged asset` 와 `economically-backed admissible collateral` 이 별개임을 보여주는 purple-team reinforcement다.
+
 | Vector | Mechanism | Impact | Microstable relevance |
 |---|---|---|---|
 | A125 Cross-Chain Export Semantic Completeness / Economically-Unbacked Validated Release | bridge/export path validates finalized root, message hash, and approval set, but fails to bind released amount to actual source-side lock/burn/reserve conservation, so a truthful proof can still authorize unbacked value release | unbacked bridge release, reserve drain, false confidence from green proof verification, delayed incident triage because no forged message exists | current Microstable repo has **no live bridge/export release path**, so **NOT ACTIVE today**; any future wrapped collateral / bridge / reserve-attestation flow must require end-to-end conservation binding before release |
