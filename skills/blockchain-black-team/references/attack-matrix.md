@@ -148,11 +148,11 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 **Defense**: Multisig upgrade authority, timelock, freeze authority, eventual immutability.
 
 ### A10. Logic Bug
-**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap)
+**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap), ApeBond (2026 duplicate-pool migration inflation)
 **Mechanism**: Incorrect business logic allows unintended state transitions or value extraction.
-**2026 reinforcement (Moonwell + Stake Nova)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission (Moonwell) or unchecked redeem-path validation (`RedeemNovaSol`) that becomes flash-loan-amplified (Stake Nova).
-**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`), plus redeem invariant assertions (`min_out`, vault/account binding, and per-tx flow caps).
-**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/
+**2026 reinforcement (Moonwell + Stake Nova + ApeBond)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission (Moonwell), unchecked redeem-path validation (`RedeemNovaSol`) that becomes flash-loan-amplified (Stake Nova), or batch-migration code that treats attacker-supplied identifiers as a set when the implementation actually accepts a multiset. In the ApeBond case, `migrateToVotingEscrow` accepted duplicate pool IDs, so one economic position was counted multiple times and an approximately `1.71 quadrillion ABOND` lock was inflated to roughly `29 quadrillion ABOND` before claim/unlock.
+**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`), redeem invariant assertions (`min_out`, vault/account binding, and per-tx flow caps), and **batch uniqueness assertions** (`pool_id`/`position_id`/`vault_id` lists must be deduplicated or hard-fail on duplicates before value aggregation).
+**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/en/
 
 ### A11. Rent/Lamport Drain (Solana)
 **Historical**: Multiple small-scale
@@ -5276,6 +5276,8 @@ def _transfer(from, to, amount):
 
 **Rebase variant (Ampleforth)**: A negative rebase reduces all balances proportionally. If the pool doesn't `sync()`, `k` becomes permanently inflated relative to actual token counts.
 
+**2026 reinforcement (ATM token, 2026-06-04)**: SlowMist's public mechanism summary says the ATM token's custom `transferFrom()` automatically swapped roughly **20%** of each transferred amount into **BSC-USD**. The attacker repeatedly triggered that side effect to drain about **$243.5K**. The reusable lesson is that **transfer-time tokenomics can become an attacker-triggerable AMM state-shaping primitive even when the hook is not a literal burn**. If `transfer()` / `transferFrom()` performs side-effect swaps against protocol liquidity, it belongs in the same admission family: pool state changes are occurring outside the caller's apparent asset movement semantics.
+
 **Code pattern to find (AMM V2)**:
 ```solidity
 // VULNERABLE: AMM V2 pair — reserves only updated on sync/mint/burn/swap
@@ -6487,6 +6489,8 @@ require!(cctp_outflow_1h <= CCTP_CIRCUIT_BREAKER_THRESHOLD,
 3. **Dead-address supply tracking**: explicitly subtract dead-address balance from circulating supply in any accounting
 4. **Virtual reserve accounting**: maintain internal "real supply" accounting that excludes dead-address holdings
 5. **Minimum liquidity enforcement**: AMM pairs should require minimum initial liquidity with no burn exemption
+
+**2026 reinforcement (BYToken, 2026-06-04)**: SlowMist's public mechanism summary says the public `triggerAutoBurn()` maintenance function could be called by anyone. The attacker flash-borrowed WBNB, manipulated the pair, then invoked the unprivileged function to burn roughly **67.8 quadrillion BY directly from the BY/WBNB pair** and call `pair.sync()`, rewriting reserves to **1 BY + full WBNB** before dumping BY back into the skewed pool. This proves the A107 family is broader than dead-address burns: **any public maintenance hook that can mutate pair-held balance out-of-band and then canonize it with `sync()` is the same reserve-desync primitive**.
 
 **Checklist item 53**: ☐ If any AMM integration is added: verify pair reserves account for dead-address balances; use TWAP not spot; enforce minimum liquidity with no burn exemption
 

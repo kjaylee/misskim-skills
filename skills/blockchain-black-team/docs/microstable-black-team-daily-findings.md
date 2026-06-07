@@ -1,3 +1,49 @@
+## 2026-06-08 Daily Check
+
+### Source Sweep (24h~7d window: 2026-06-01 to 2026-06-08 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus direct current Microstable code re-read
+- **Confirmed in-window items**:
+  1. **ATM (2026-06-04)** is admissible as an **A91 reinforcement**, not a new vector. SlowMist's public mechanism summary is specific enough to preserve the reusable primitive: a custom `transferFrom()` auto-swapped roughly **20%** of transferred amounts into **BSC-USD**, so attacker-triggered transfer side effects became a liquidity-drain primitive.
+  2. **BYToken (2026-06-04)** is admissible as an **A107 reinforcement**, not a new vector. The public mechanism is specific: a public `triggerAutoBurn()` burned roughly **67.8 quadrillion BY directly from the BY/WBNB pair** and then called `pair.sync()`, canonizing manipulated reserves before the attacker sold into the skew.
+  3. **ApeBond (2026-06-03)** is admissible as an **A10 Logic Bug reinforcement**, not a new vector. The public helper path remained permissionless, and the reusable bug is **duplicate identifier acceptance in a batch migration path**, causing one source position to be counted multiple times.
+  4. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi rechecks did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory requiring another matrix delta today.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **3 reinforcements**: **A10**, **A91**, **A107**
+- Updated: `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`, and `SKILL.md`
+- Not updated: `references/solana-specific.md` (today's admissible deltas are BSC/EVM-centric, not Solana-specific)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A91 transfer-hook reserve manipulation** (ATM reinforcement) | on-chain mint / redeem / reserve accounting | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:904-1206` binds mint to canonical ATAs and direct `token::transfer_checked`, and `lib.rs:1208-1499` binds redeem to canonical ATAs plus direct `token::burn`. I did **not** find token-side transfer hooks, AMM pair reserve caching, or `sync()`-style reserve acceptance. |
+| **A107 out-of-band LP balance mutation + `sync()`** (BYToken reinforcement) | on-chain rebalance / liquidity integration surface | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:1534-1605` mutates only protocol weights with turnover / commit-reveal controls. There is still **no live AMM pool integration**, no pair-held inventory mutation path, and no reserve-serialization primitive analogous to `pair.sync()`. |
+| **A10 duplicate-identifier batch inflation** (ApeBond reinforcement) | quorum / identifier aggregation paths | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:153,3362-3375` still reject default / duplicate keeper keys, `solana/keeper/src/config.rs:434-445` still requires exactly three keeper key paths, and direct code read did **not** reveal a permissionless batch list where duplicate IDs are aggregated into mint / lock / claim value. |
+| **META-71 Terminal-State / Sentinel Admissibility Gap** | on-chain owner/auth state | ✅ NOT ACTIVE | The prior sentinel watch remains closed: `solana/programs/microstable/src/lib.rs:2360-2364` still re-binds `user_position.owner == user.key()` under PDA seeds, so I still do **not** see failed auth collapsing into a default sentinel equality path. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/price_feed.rs:29-69` cross-validates CoinGecko/Binance with a **50 bps** source-deviation gate, and `solana/keeper/src/oracle.rs:716-875` still enables manual oracle mode then submits `ix_update_oracle`. I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor / TWAP before those writes. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1534-1605` still escalates large **single-call** turnover with commit/reveal, but I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal small moves from composing into a larger unreviewed shift. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:212` still restricts strict runtime cross-check semantics to `getGenesisHash`, and `docs/app.js:1275` still binds the dashboard to one selected `Connection` for live reads after bootstrap. Wrong-network bootstrap is guarded, but provider-independent runtime integrity is still incomplete. |
+| **B15 / META-70 signer edge trust** | keeper key storage + quorum discipline | ⚠️ MEDIUM PARTIAL DEFENSE | `solana/keeper/src/config.rs:416-434` still forces distinct primary/secondary RPC hosts and exactly three keeper keys, while `solana/keeper/src/utils.rs:376-421` still enforce `O_NOFOLLOW`, restrictive file modes, and owner checks. But the signer model is still **host filesystem hot key**, not HSM/MPC-backed. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` is still meta-only CSP, and `docs/app.js:46` still ships the devnet faucet keypair in browser code. Devnet-only scope lowers severity, but the trust boundary remains in a static client. |
+
+### Today's Verdict
+- New incidents found: **3 admissible as reinforcements only**
+- New attack vectors added: **0**
+- Reinforcements applied: **3** (**A10**, **A91**, **A107**)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: 오늘 창은 **새 번호 추가보다 기존 실전 벡터를 더 날카롭게 만드는 날** 이었다. Microstable은 ATM/BYToken류 **AMM reserve-desync lane** 과 ApeBond류 **duplicate-ID inflation lane** 을 현재 공개 코드 기준으로 직접 노출하지 않지만, **`/security/audit-attestation.json` 부재**, **manual oracle anchor-relative drift clamp 부재**, **runtime RPC quorum 생략**, **hot-key keeper trust** 는 계속 남아 있다.
+
 ---
 
 ## 2026-06-03 Daily Check

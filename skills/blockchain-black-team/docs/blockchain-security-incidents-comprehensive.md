@@ -4,6 +4,21 @@
 
 ## 2026
 
+- **2026-06-04 — ATM token (BSC — `transferFrom()` side-effect auto-swap became attacker-triggerable drain primitive)** — SlowMist's public incident summary says the ATM token's custom `transferFrom()` automatically swapped roughly **20%** of each transferred amount into **BSC-USD**. The attacker repeatedly triggered that hook and drained about **$243,500**.
+  **Root cause**: token transfer semantics were not just balance movement; `transferFrom()` carried a hidden **AMM-interacting side effect**. Once an attacker could repeatedly trigger that side effect, transfer-time tokenomics became a liquidity-manipulation primitive rather than a passive fee/burn feature.
+  **Vector mapping**: **A91 Token Supply Externalities — Burn-on-Transfer / Fee-on-Transfer AMM Reserve Manipulation** reinforcement. The public wording is broader than a literal burn, but it is the same reusable class: **transfer-time token logic mutates pool economics outside normal user-facing transfer assumptions**.
+  **Source**: https://hacked.slowmist.io/en/
+
+- **2026-06-04 — BYToken (BSC — public maintenance hook burned LP-held balance then canonized skewed reserves with `sync()`)** — SlowMist's public incident summary says the attacker used a **Moolah flashloan (~422k WBNB)**, executed Pancake swaps, then called the public `triggerAutoBurn()` function. That unprivileged maintenance path burned roughly **67.8 quadrillion BY directly from the BY/WBNB pair** and then called `pair.sync()`, rewriting reserves to **1 BY + full WBNB** before the attacker sold BY into the distorted pool and netted about **146.60 BNB (~$87,402)**.
+  **Root cause**: a public maintenance function could mutate **pair-held token balance out-of-band** and immediately serialize the manipulated balance into canonical AMM reserves. The exploit did not need admin compromise; it only needed a public hook that touched LP inventory and called `sync()`.
+  **Vector mapping**: **A107 AMM Reserve Desync via Permanent Token Destruction to Dead Address** reinforcement. Distinct trigger, same primitive: **out-of-band LP balance mutation + reserve acceptance**.
+  **Source**: https://hacked.slowmist.io/en/
+
+- **2026-06-03 — ApeBond / ApeYieldVault (BSC — duplicate pool IDs in migration batch inflated voting-escrow lock)** — SlowMist's public incident summary says the attacker used a public helper contract to call `migrateToVotingEscrow` with **duplicate pool IDs**, inflating a lock from about **1.71 quadrillion ABOND** to roughly **29 quadrillion ABOND**. They then unlocked, claimed the inflated lock, sold ABOND in the public ABOND/WBNB pool, repaid a flashloan, and kept about **5.72 WBNB (~$3,421)**.
+  **Root cause**: migration logic treated attacker-supplied batch identifiers as if they were a unique set, but the implementation accepted duplicate IDs and **counted the same economic source multiple times**.
+  **Vector mapping**: **A10 Logic Bug** reinforcement (duplicate-identifier / multiset-accounting sub-pattern).
+  **Source**: https://hacked.slowmist.io/en/
+
 - **2026-05-30 — Gravity Bridge (Ethereum ↔ Cosmos bridge — compromised contract/signing key → bridge asset drain)** — SlowMist's public incident summary says Gravity Bridge was exploited likely because a **contract key or signing authorization was compromised**, after which the attacker drained about **$5.4M** in **USDC, ETH, and USDT** and began laundering the funds while a large portion remained under attacker control.
   **Root cause**: this was not just a treasury hot-wallet theft; compromise of a bridge-recognized signing authority effectively inherited the bridge's asset-release trust boundary. Once the attacker controlled the protocol-recognized signing lane, the system treated the resulting releases as legitimate bridge-authorized withdrawals.
   **Vector mapping**: **B15 Key Compromise** reinforcement (bridge signer / contract-key authority sub-pattern). Secondary bridge context exists, but the admission-critical reusable primitive remains **privileged signing-authority compromise** rather than a novel verification failure.
