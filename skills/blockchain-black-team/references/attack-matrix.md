@@ -7342,6 +7342,79 @@ let quote = result.get(); // safe only if get() reads invoke-time snapshot
 
 ---
 
+### A131. Forgeable Liquidity-Addition Intent Detection / Pair-Balance Heuristic Spoofing
+
+**Published**: 2026-06-11 | **Severity**: HIGH | **Red Team**
+
+**Signal**: DTXT/USDT pair on BSC — event dated 2026-06-05 with reported loss of about **$35,041** (SlowMist Hacked, fetched 2026-06-11).
+
+**Key insight**: 많은 tax / anti-bot 토큰은 `sell` 과 `addLiquidity` 를 구분하려고 pair 쪽 잔고나 reserve delta를 읽는다. 하지만 **pair balance movement는 LP intent의 증거가 아니다.** 공격자가 먼저 pair에 paired asset을 dust 수준으로 직접 넣어두면, 이후의 대규모 매도도 contract는 "지금은 유동성 추가" 라고 오판할 수 있다. 이때 공격 표면은 AMM 수학 자체가 아니라 **정책 분기에서 쓰는 intent classifier** 다.
+
+**Attack chain**:
+1. victim token has a transfer-time branch like `if isAddLiquidity(...) { skip sell fee } else { charge sell fee }`.
+2. classifier infers intent from raw pair balances / reserves / deltas instead of verified LP-token mint semantics.
+3. attacker sends a small amount of the paired asset (e.g. USDT) directly to the pair before the real dump transaction.
+4. attacker then sells a large amount of victim tokens into the pair.
+5. heuristic sees the preloaded counter-asset delta and misclassifies the sell as liquidity addition.
+6. sell tax / anti-dump limit / cooldown branch is bypassed, giving the attacker materially better exit pricing and enabling pool drain.
+
+**Why distinct from existing vectors**:
+- **A91** = burn-on-transfer / fee-on-transfer / reflection / rebase가 **reserve state 자체** 를 왜곡한다.
+- **A107** = dead-address burn 또는 public maintenance hook이 **pair-held balance / reserve accounting** 을 out-of-band로 바꾼다.
+- **A131** = reserve math가 꼭 틀릴 필요도 없고, 핵심은 **"이 거래가 sell인가 add-liquidity인가" 라는 policy classifier가 pair-balance heuristic에 속는 것** 이다.
+- **A10** generic logic bug보다 좁고 재사용 가능한 subclass로, **tokenomics privilege gating by inferred LP intent** 를 겨냥한다.
+
+**왜 감사가 놓치는가**:
+1. 리뷰어는 흔히 sell-tax bypass를 access-control이나 fee math 문제로만 보고, `isAddLiquidity()` 자체를 privileged admission gate로 보지 않는다.
+2. happy-path 테스트는 보통 router를 통한 정상 add/remove liquidity만 다루고, **"dust paired-asset direct transfer → large sell"** 같은 split-step sequencing을 재현하지 않는다.
+3. pair reserve / pool balance가 눈에 띄게 깨지지 않을 수 있어, A91/A107처럼 AMM desync signature가 로그에 남지 않는다.
+4. contract 작성자는 "유동성 추가는 fee exempt" 같은 제품 요구를 넣으면서, **intent inference를 state proof로 오해** 하기 쉽다.
+
+**Code pattern to find**:
+```solidity
+// VULNERABLE SHAPE: infer add-liquidity from pair-side balance delta.
+function _isAddLiquidity() internal view returns (bool) {
+    (uint112 r0, uint112 r1,) = pair.getReserves();
+    uint256 usdtBal = IERC20(usdt).balanceOf(address(pair));
+    return usdtBal > uint256(r1); // attacker can pre-seed dust USDT
+}
+
+function _transfer(address from, address to, uint256 amount) internal {
+    if (to == address(pair) && _isAddLiquidity()) {
+        _basicTransfer(from, to, amount); // sell fee skipped
+    } else {
+        _sellWithFee(from, to, amount);
+    }
+}
+
+// SAFER SHAPE: privilege branch is granted only when LP-mint semantics are
+// actually proven, not when pair balances merely moved.
+```
+
+**Defense**:
+1. do **not** infer `addLiquidity` / `removeLiquidity` from raw pair balances alone.
+2. if a privileged branch must exist, bind it to **verified router path + LP token mint/burn evidence + expected recipient**.
+3. ambiguous states must fail closed to the ordinary sell-fee / anti-dump path.
+4. direct transfers to the pair address must never by themselves unlock fee exemption.
+5. add regression/fuzz tests for `dust paired-asset transfer -> large sell`, split-transaction sequencing, and multi-account staging.
+
+**Sources**:
+- https://hacked.slowmist.io/en/
+
+**Microstable relevance**:
+- requested path `/microstable/solana/programs/microstable_core/src/lib.rs` is absent; live review path remains `/microstable/solana/programs/microstable/src/lib.rs` plus `/microstable/solana/keeper/src/`.
+- current scan found **no** `raydium`, `orca`, `jupiter`, `amm`, `swap`, `pair`, `lp`, transfer-tax, or liquidity-intent classifier path in reviewed on-chain / keeper code.
+- therefore **NOT ACTIVE today**.
+- however any future treasury-liquidity automation, AMM-facing rebalance wrapper, or taxed external collateral integration must treat **liquidity-intent detection itself** as a privileged security boundary.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A131 Forgeable Liquidity-Addition Intent Detection / Pair-Balance Heuristic Spoofing | attacker pre-seeds paired asset into the AMM pair so token-side `isAddLiquidity()` / similar heuristic misclassifies a large sell as a liquidity-add action, skipping sell-side controls | sell-fee bypass, anti-dump bypass, materially improved attacker exit, pool drain without needing classic reserve-desync signatures | current Microstable repo shows **no DEX / AMM / sell-fee classifier path** in reviewed on-chain/keeper code, so **NOT ACTIVE today**; future AMM-facing automation must prove LP-mint semantics rather than infer intent from pair balances |
+
+**Matrix state as of 2026-06-11 (red-team daily update)**: **A131** added to separate **pair-balance-based liquidity-intent spoofing** from A91/A107 reserve-manipulation families. Matrix is now **138+ named vectors + META-01~71 + B73~B82 = 209+ total entries**. Microstable has **no new active CRITICAL/HIGH from A131**, and requested `microstable_core` path remains absent while the live `microstable` program path stays unaffected.
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**
