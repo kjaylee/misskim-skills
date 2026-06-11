@@ -1,427 +1,334 @@
 # Purple Team Meta Analysis (Cumulative)
 
-## 2026-06-10 (KST) — Daily Evolution (#59)
+## 2026-06-12 (KST) — Daily Evolution (Purple Team)
+
+### Current state / Verification criteria / Completion criteria / Artifact path
+- **Current state**: `2026-06-11` 기준 reinforcement-only 판단과 기존 Microstable architecture finding `PT-ARCH-2026-0515-01`, `PT-ARCH-2026-0526-01`, `PT-ARCH-2026-0606-01` 이 이미 누적돼 있었다.
+- **Verification criteria**: 최근 7일 외부 신호가 기존 메타(`META-68`, `META-70`)를 다시 강화하는지, 아니면 퍼플팀 신규 admission이 필요한 구조인지 black/red/blue 문서와 current artifact 관점에서 재판정한다.
+- **Completion criteria**: 새 구조가 아니면 억지 신규 번호를 만들지 않고 reinforcement-only로 누적하며, 퍼플 누적 문서와 repo 미러를 동기화한다.
+- **Artifact path**: `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/docs/purple-team-meta-analysis.md`
 
 ### Phase 1) 수집 소스 요약
 
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| Morgan Lewis — `Keys to Success in Cyber Incident Response in 2026` | 2026-06-04 / fetched 2026-06-10 KST | 가장 강한 메타 신호는 `좋은 계획 문서` 자체가 아니라 **실제 의사결정선, 백업 연락선, 오프밴드 통신, 몇 분 안에 내릴 containment 결정** 이다. 즉 runbook 품질의 본질은 상세함보다 **발사 가능한 command path** 다. |
-| SlowMist Hacked front page — Humanity Protocol / Syscoin Bridge / Ambient Finance / Gnosis Pay | 2026-06-01 ~ 2026-06-09 | 최근 사고들도 여전히 core code만이 아니라 **private key, bridge verification, pause/blacklist/containment tempo, monitored actuator path** 같은 edge/control-plane object가 승패를 갈랐다. |
-| Trail of Bits — `The sorry state of skill distribution` | 2026-06-03 / re-read 2026-06-10 KST | `scan passed` 는 여전히 **실제 설치·실행 표면과 다른 reassurance label** 일 수 있다. 이는 새 META보다 `META-61` 과 `META-66` 의 배경 강화다. |
-| GitHub `foundry-rs/foundry#14437` | current re-check 2026-06-10 KST | invariant tooling completeness gap은 계속 공개 상태다. widely-used assurance plane도 **실전 multi-step path under-detect** 상태일 수 있다는 점이 유지된다. |
-| Certora — `Proving P-Token` / Runtime Verification smart-contract blog listing | 2026-06-03 / current listing re-check | formal verification pressure는 여전히 강하지만, 보장은 **명시된 equivalence boundary와 assumptions** 안에서만 닫힌다. 오늘 창에서는 새 admission보다 기존 assurance-plane 메타의 강화 신호다. |
-| Immunefi Bug Bounty Programs | last updated 2026-06-09 16:00 UTC | bounty telemetry는 여전히 **resolved report 기준 2주 지연** 이다. useful pressure signal이지만 real-time admission sensor로 과신하면 안 된다. |
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| SlowMist Hacked — **Raydium / NovaBox / Humanity Protocol / Haedal Vault / Syscoin Bridge** | 2026-06-05 ~ 2026-06-10 incidents, 2026-06-12 sweep | strongest purple signal은 **Raydium deprecated AMM V3** 였다. 핵심은 inactive/deprecated pool이 여전히 real withdraw authority를 가졌고, `유효한 SPL mint` 확인만으로는 **그 pool에 귀속된 LP mint identity** 를 증명하지 못했다는 점이다. **NovaBox** 는 dividend snapshot이 deposit/withdraw 정산보다 먼저 실행되면 old-share/new-balance 불일치가 phantom payout으로 번질 수 있음을 보여줬지만, 이는 오늘 퍼플 신규 메타보다 black-team `A10` 강화 신호에 더 가깝다. |
+| Rekt current post list — **Syscoin / Gravity Bridge / TESSERA** | current re-check | current public incident list를 다시 훑어도 `A125`, `META-53`, `META-68`, `META-70` 을 넘어서는 더 강한 새 상위 메타는 확인되지 않았다. |
+| GitHub Advisory `solana` query + Trail of Bits / OtterSec / Neodyme / Immunefi public indexes | current re-check | 최근 7일 창에서 Raydium보다 더 강하게 신규 퍼플 admission을 여는 crypto-specific public delta는 확인되지 않았다. absence of fresher evidence 역시 reinforcement-only 판정을 지지한다. |
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘은 신규 named vector도 신규 META admission도 없다. reinforcement-only. strongest signal은 `META-53` 과 `META-66` 의 동시 강화다.**
+**판정: 오늘은 신규 named vector도 신규 META admission도 없다. reinforcement-only. strongest signal은 `Raydium deprecated AMM V3` 였고, 퍼플팀 기준으로는 `META-68` 과 `META-70` 의 동시 강화가 가장 정확하다.**
 
-#### Reinforcement A — `runbook exists` 와 `containment fires` 는 다르다
-- Morgan Lewis는 좋은 incident response plan이 긴 문서가 아니라 **team, backup contact, decision path, off-band communications** 를 바로 꺼낼 수 있어야 한다고 못 박는다.
-- SlowMist current feed의 **Syscoin Bridge** 는 validation issue 뒤 즉시 bridge pause, tainted output tracing, exchange coordination이 핵심이었고, **Gnosis Pay** 역시 Delay Module active exploitation 경고 뒤 사용자에게 바로 withdraw action을 요구했다.
-- 공통점은 `pause exists`, `delay exists`, `monitor exists` 가 아니라, **누가 어떤 연락선과 signer ceremony로 어떤 containment verb를 몇 분 안에 발사하느냐** 가 실제 방어력이라는 점이다.
-- 이는 새 구조라기보다 기존 **META-53 Runbook-to-Actuator Binding Gap** 의 실전 강화다.
+#### Reinforcement A — META-68: deprecated/inactive 라벨은 hard-fail decommission 증거가 아니다
+- **Raydium** 신호의 첫 번째 교훈은 명확하다. pool이 `inactive` 또는 `deprecated` 로 분류돼도, 실제 withdraw authority와 value-moving path가 남아 있으면 보안적으로는 아직 살아 있다.
+- 퍼플팀 관점의 핵심은 단순 fake LP mint가 아니라, **팀이 old surface를 운영상 은퇴했다고 느껴도 loss path는 그 legacy surface에 그대로 남을 수 있다** 는 점이다.
+- 이는 기존 **META-68 Decommission-Semantics / Legacy-Liveness Gap** 이 이미 설명하는 구조다. `deprecated` 라벨, migration 인지, 새 경로 존재는 `old authority hard-fail` 의 증거가 아니다.
 
-#### Reinforcement B — assurance surface가 있어도 failure semantics를 소유한 것은 아니다
-- Trail of Bits 사례는 scanner가 보는 표면과 실제 실행 표면이 다를 수 있음을, Foundry 이슈는 invariant tooling 자체가 중요한 bug class를 놓칠 수 있음을 다시 보여준다.
-- Certora 글도 proof가 강력하더라도 **어떤 차이를 scope 밖에 두는가** 에 따라 운영 보장의 모양이 달라진다는 점을 드러낸다.
-- 즉 조직은 `scanner green`, `fuzzer present`, `monitor alerted`, `proof exists` 를 쉽게 합성하지만, **그 assurance plane이 일부만 보거나 under-detect 하거나 signal만 내고 action semantics가 비어 있을 때 시스템이 어떤 모드로 전환되는가** 는 여전히 취약하다.
-- 이는 새 META가 아니라 기존 **META-66 Assurance-Plane Failure Semantics Gap** 강화로 보는 편이 맞다.
+#### Reinforcement B — META-70: `a valid mint` 와 `the mint for this pool` 는 다른 의미다
+- **Raydium** 신호의 두 번째 교훈은 경계 의미론이다. 입력 계정이 단지 **유효한 SPL mint** 인지 확인하는 것만으로는, 그것이 **현재 pool state/PDA에 귀속된 LP mint identity** 인지 증명되지 않는다.
+- 즉 각 노드 로컬에서는 `mint account is valid`, `pool exists`, `withdraw path exists` 가 모두 그럴듯해 보여도, **pool state ↔ LP mint binding semantics** 가 공격자에게 steer되면 privileged withdraw branch가 열린다.
+- 이것이 오늘 신호를 신규 퍼플 번호보다 기존 **META-70 Node-Audit / Edge-Semantics Gap** 강화로 읽어야 하는 이유다.
 
-#### 왜 신규 META가 아닌가
-1. Morgan Lewis + Syscoin/Gnosis 조합의 strongest signal은 이미 `META-53` 이 설명하는 **계획→actuator 마지막 결박** 문제 안에 있다.
-2. Trail of Bits + Foundry + Certora 조합도 기존 `META-61 / META-66 / META-67` 바깥의 새 상위 구조까지는 열지 않는다.
-3. Immunefi telemetry lag 역시 이미 누적 문서가 반복해서 기록한 **background pressure / delayed sensor** 문제의 재확인이다.
+#### 왜 신규 admission이 아닌가
+1. **Raydium** 은 이미 열린 `META-68` 과 `META-70` 두 축의 교차 사례다. 새 상위 구조를 추가할 만큼 기존 설명력이 모자라지 않다.
+2. **NovaBox** 는 중요한 실전 신호지만, 오늘 창에서는 퍼플 신규 메타보다 기존 `A10 Logic Bug` 류 강화로 읽는 편이 더 정확하다.
+3. **Syscoin / Haedal Vault** 도 여전히 중요하지만, 각각 `A125` 와 `META-68` 으로 이미 누적된 구조 설명력 안에 있다.
+4. current public source window에서 위 패턴들과 직교하는 더 강한 상위 admission 근거는 확보하지 못했다.
 
-### Phase 3) 스킬 강화 델타 (2026-06-10)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: 추가 수정 없음. `META-53` / `META-66` 의 2026-06-09 reinforcement note가 이미 반영돼 있어 today delta는 누적 문서 동기화에 한정했다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: 추가 수정 없음. recent daily log에 같은 reinforcement 판정이 이미 존재한다.
+### Phase 3) 스킬 강화 델타 (2026-06-12)
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 source mapping 누적.
+- `misskim-skills/docs/purple-team-meta-analysis.md`: 누적 문서 미러를 workspace 문서와 동기화.
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: 추가 수정 없음. `2026-06-12` source sweep가 이미 반영돼 있다.
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: 추가 수정 없음. 오늘 신호는 기존 `META-68` / `META-70` 설명력 안에 충분히 들어간다.
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- current public artifact 기준으로는 live bridge release path, hosted skill marketplace install path, external scanner verdict가 signer-capable execution으로 직결되는 path는 보이지 않는다.
-- 다만 `manual oracle mode / emergency shutdown / RPC degraded path` 는 이미 존재하므로, 오늘 strongest signal은 **containment semantics를 machine-checkable command artifact와 off-band 연락선까지 결박해야 한다** 는 기존 watch의 강화다.
-- 따라서 기존 `PT-ARCH-2026-0526-01`, `PT-ARCH-2026-0606-01`, `B45 HIGH carry-forward` 판정은 유지하고, **CRITICAL 없음 / HIGH 신규 없음 / 신규 MEDIUM 없음** 으로 닫는다.
+- 오늘 창에서도 **신규 architecture finding 없음**.
+- `Raydium` 계열은 기존 `PT-ARCH-2026-0515-01` 과 `PT-ARCH-2026-0526-01` 조합으로 이미 설명 가능하다. 즉 **legacy-live surface** 와 **edge binding semantics** 두 축이 현재 watch의 핵심이다.
+- blue `v14` / `v15` 재확인 기준으로 Microstable은 `legacy unsigned checkpoint load 제거`, `default HMAC key 제거`, `filename-based unsigned config 예외 제거`, `manual oracle mode 재활성 cooldown` 까지 반영돼 있어 같은 계열 stale compatibility path 일부를 선제 완화했다.
+- current public artifact와 recent sweep 기준 reviewed path에는 `raydium`, `orca`, `jupiter`, `amm`, `pair`, `lp`, `reward dividend`, `share distribution` 표면이 보이지 않는다. 따라서 오늘 신호는 **NOT ACTIVE today** 다.
+- 현재 판정: **CRITICAL 없음. HIGH 없음. 신규 architecture finding 없음.**
+
+### Sources
+- https://hacked.slowmist.io/en/
+- https://rekt.news/syscoin-rekt
+- https://github.com/advisories?query=solana
+- https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/
+- https://osec.io/blog/
+- https://neodyme.io/en/blog/
+- https://immunefi.com/bug-bounty/
+
+## 2026-06-11 (KST) — Daily Evolution (Purple Team)
+
+### Current state / Verification criteria / Completion criteria / Artifact path
+- **Current state**: `2026-06-09` 기준 reinforcement-only 판단과 기존 Microstable architecture finding `PT-ARCH-2026-0515-01`, `PT-ARCH-2026-0526-01`, `PT-ARCH-2026-0606-01` 이 이미 누적돼 있었다.
+- **Verification criteria**: 최근 7일 외부 신호가 기존 메타(`META-68`, `META-70`)를 강화하는지, 아니면 퍼플팀 신규 admission이 필요한 구조인지 blue/red/black 문서와 live path 재확인으로 판정한다.
+- **Completion criteria**: 억지 신규 번호를 만들지 않고, 새 구조가 아니면 reinforcement-only로 누적하고 관련 매트릭스·스킬 로그를 보강한다.
+- **Artifact path**: `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/SKILL.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| SlowMist Hacked — **DTXT/USDT** | 2026-06-05 incident, 2026-06-11 fetch | 핵심은 reserve 파괴가 아니라, **pair에 paired asset을 먼저 넣어 `addLiquidity` intent 판정을 위조** 했다는 점이다. 즉 정책 분기에서 쓰는 의미론이 pair balance heuristic에 속았다. |
+| SlowMist Hacked — **Haedal Vault** | 2026-06-09 incident, 2026-06-11 fetch | deprecated deposit path와 new redeem path가 공존한 상태에서 **cross-version share inflation** 이 발생했다. `새 경로가 있다` 와 `옛 경로가 죽었다` 가 다름을 재확인한다. |
+| Trail of Bits `The sorry state of skill distribution` | 2026-06-03 재확인 | scanner verdict scope mismatch 신호는 여전히 유효하지만, 오늘 창의 strongest purple delta는 scanner보다 **legacy-live authority** 와 **edge semantics** 쪽이 더 선명했다. |
+| GitHub `foundry-rs/foundry#14437` | 현재 창 재확인 | whole-path completeness gap 배경 신호를 유지한다. 오늘은 신규 메타보다 **경계 의미론 검증 부족** 쪽의 설명력을 보강한다. |
+| Microstable blue reports `v14` / `v15` | local re-read | `legacy unsigned checkpoint load 제거`, `기본 HMAC key 제거`, `filename-based unsigned config 예외 제거`, `manual oracle mode 재활성 cooldown` 은 기존 `META-68` 대응이 일부 실제 제거로 이어졌음을 보여준다. |
+
+### Phase 2) 갭 분석
+
+**판정: 오늘은 신규 named vector나 신규 META admission 없음. 대신 `META-68` 과 `META-70` reinforcement 2건이 타당하다. strongest signal은 `Haedal Vault + DTXT/USDT` 조합이었다.**
+
+#### Reinforcement A — META-68: 업그레이드 성공과 legacy authority 제거는 다르다
+- **Haedal Vault** 는 new redeem path가 존재해도 deprecated deposit/share path가 live authority를 계속 가지면, cross-version invariant가 무너질 수 있음을 보여줬다.
+- 퍼플팀 관점의 핵심은 단순 share inflation이 아니라, **review가 현재 경로를 따라가도 실제 손실은 아직 살아 있는 옛 경로에서 날 수 있다** 는 점이다.
+- Microstable에서는 blue v15가 `legacy unsigned checkpoint load`, `default HMAC key`, `filename-based unsigned config 예외` 를 제거해 같은 계열 위험을 일부 줄였다. 다만 여전히 `retired checkpoint/config/binary/RPC/override surface` 전체의 hard-fail 증빙은 분산돼 있다.
+- 따라서 오늘 신호는 신규 메타가 아니라 기존 **META-68 Decommission-Semantics / Legacy-Liveness Gap** 과 `PT-ARCH-2026-0515-01` 의 실전 강화다.
+
+#### Reinforcement B — META-70: 경계 의미론이 heuristic이면 privileged branch가 공격자에게 넘어간다
+- **DTXT/USDT** 는 reserve가 크게 깨지지 않아도, `pair balance delta` 를 `유동성 추가의 증거` 로 읽는 순간 **token policy ↔ AMM pair boundary semantics** 가 공격자에게 steer될 수 있음을 보여줬다.
+- 이 사건의 퍼플팀 포인트는 새 공격 번호 `A131` 자체보다, **노드별로는 그럴듯해 보이는 로컬 상태가 경계에서는 잘못된 권한 의미로 번역될 수 있다** 는 점이다.
+- 즉 `paired asset moved` 는 단지 상태 변화일 뿐인데, 시스템은 이를 `fee exemption을 열 privileged intent proof` 로 오해했다.
+- 따라서 오늘 신호는 신규 메타보다 기존 **META-70 Node-Audit / Edge-Semantics Gap** 과 `PT-ARCH-2026-0526-01` 강화로 읽는 편이 맞다.
+
+#### 왜 신규 admission이 아닌가
+1. **Haedal Vault** 는 이미 `META-68` 이 설명하는 `deprecated ≠ dead` 구조 안에 정확히 들어간다.
+2. **DTXT/USDT / A131** 은 red-team 신규 vector로는 타당하지만, purple-team 차원에서는 기존 `META-70` 의 **heuristic edge semantics** 사례를 더 선명하게 만든다.
+3. Microstable 현재 공개 artifact에는 `raydium`·`orca`·`jupiter`·`amm`·`swap`·`pair`·`lp`·liquidity-intent classifier path가 없어 A131형 표면은 **NOT ACTIVE today** 다.
+4. blue v15가 일부 stale compatibility path를 실제로 제거했기 때문에, 오늘 Microstable 쪽 판정은 신규 finding 추가보다 기존 carry-forward 재확인이 더 정확하다.
+
+### Phase 3) 스킬 강화 델타 (2026-06-11)
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: `2026-06-11` purple meta sweep 1행 추가.
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-68 reinforcement note** 와 **META-70 reinforcement note** 추가.
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 source mapping 누적.
+- `/Users/kjaylee/.openclaw/workspace/docs/microstable-purple-team-daily-findings.md`: **신규 finding 추가 없음**. 기존 `PT-ARCH-2026-0515-01` 과 `PT-ARCH-2026-0526-01` 이 오늘 신호를 이미 포괄한다.
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- 오늘 창에서 새 architecture finding까지는 올리지 않았다.
+- `Haedal Vault` 계열은 기존 `PT-ARCH-2026-0515-01` 로, `DTXT/USDT` 계열은 기존 `PT-ARCH-2026-0526-01` 로 이미 설명력이 충분하다.
+- live path 재확인 기준 `microstable/docs/app.js` 는 여전히 bootstrap `getGenesisHash` cross-check 중심이고, reviewed on-chain/keeper path에서는 AMM/liquidity-intent classifier는 보이지 않았다.
+- 현재 판정: **CRITICAL 없음. HIGH 없음. 신규 architecture finding 없음.**
+
+### Sources
+- https://hacked.slowmist.io/en/
+- https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/
+- https://github.com/foundry-rs/foundry/issues/14437
+
+## 2026-06-09 (KST) — Daily Evolution (Purple Team)
+
+### Current state / Verification criteria / Completion criteria / Artifact path
+- **Current state**: 기존 문서에는 `2026-06-06` 기준 `D32`, `META-53`, `META-61`, `META-66` 강화 판단과 `PT-ARCH-2026-0606-01` 이 이미 존재했다.
+- **Verification criteria**: 최근 7일 외부 신호가 정말 신규 admission을 요구하는지, 아니면 기존 메타의 reinforcement로 충분한지 문서·매트릭스·Microstable architecture note와 대조한다.
+- **Completion criteria**: 신규 번호를 억지로 만들지 않고, 새 구조가 없으면 reinforcement-only로 누적하며 관련 문서와 매트릭스 노트를 업데이트한다.
+- **Artifact path**: `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/SKILL.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| Morgan Lewis `Keys to Success in Cyber Incident Response in 2026` | 2026-06-04 | incident response의 본질은 문서 길이가 아니라 **decision path, executive authority, backup contact, off-band communications** 라는 점을 분명히 적었다. 즉 `plan exists` 와 `containment actuator is actually launchable` 는 다른 상태다. |
+| SlowMist Hacked | 2026-06-01 ~ 2026-06-08 | **Syscoin Bridge / Gnosis Pay / Ambient Finance** 는 contract core보다 `validation lane`, `delay module`, `privileged exception path`, `operator containment tempo` 가 실전 승패를 가름한다는 점을 재확인한다. |
+| Trail of Bits `The sorry state of skill distribution` | 2026-06-03 | `scan passed` 라벨은 실제 실행 표면 일부만 커버해도 전체 package safety verdict처럼 소비될 수 있다. 즉 **assurance signal의 scope** 와 **사용자가 해석하는 의미론** 이 어긋난다. |
+| GitHub `foundry-rs/foundry#14437` | 현재 창 재확인 | invariant engine이 존재해도 실전 completeness gap이 남을 수 있어, **도구 존재 자체를 안전 증거로 승격하면 안 된다** 는 배경 신호를 유지한다. |
+| Certora / Runtime Verification public blog listings | 2026-06-08 fetch | 최근 7일 창에서 위 네 신호보다 더 강한 신규 메타 admission을 요구하는 fresh public post는 보이지 않았다. 오늘 창에서는 **absence of fresher evidence** 자체가 `reinforcement-only` 판정을 지지한다. |
+
+### Phase 2) 갭 분석
+
+**판정: 오늘은 신규 named vector나 신규 META admission 없음. 대신 `META-53` 과 `META-66` reinforcement 2건이 타당하다. strongest signal은 Morgan Lewis + SlowMist 조합이었다.**
+
+#### Reinforcement A — META-53: runbook이 있어도 actuator path가 결박되지 않으면 containment는 늦어진다
+- Morgan Lewis는 2026 incident response의 핵심을 **결정권자, 백업 연락선, 오프밴드 커뮤니케이션, 실제 셧다운 경로** 로 정리했다.
+- SlowMist의 **Gnosis Pay delay module**, **Syscoin Bridge validation failure**, **Ambient Finance** 는 같은 메시지를 준다. 핵심 contract correctness보다 **예외 시 무엇을 끄고 누구 권한으로 얼마나 빨리 묶는가** 가 손실 창을 줄인다.
+- 따라서 오늘 신호는 새 메타가 아니라 기존 **META-53 Runbook-to-Actuator Binding Gap** 의 실전 강화다.
+
+#### Reinforcement B — META-66: assurance signal이 있어도 failure semantics가 비어 있으면 운영 해석이 보안 정책이 된다
+- Trail of Bits는 `scan passed` 가 실제로는 부분 가시성 위에 서 있는데도 package-wide safety verdict처럼 소비될 수 있음을 보여줬다.
+- Foundry `#14437` 는 invariant tooling이 있어도 completeness gap이 남는다는 점을 유지한다.
+- 이 둘은 Morgan Lewis / SlowMist의 운영 신호와 결합될 때, **signal exists ≠ failure semantics are owned** 를 더 또렷하게 만든다. scanner, fuzzer, monitor가 green 이더라도 partial visibility, under-detect, alert-without-bound-action 상태면 운영자는 결국 임시 override 해석에 기대게 된다.
+- 따라서 오늘 신호는 기존 **META-66 Assurance-Plane Failure Semantics Gap** 강화로 보는 편이 맞다.
+
+#### 왜 신규 admission이 아닌가
+1. containment/actuator 문제는 이미 **META-53** 이 충분히 설명한다.
+2. assurance signal의 성공 의미론과 실패 의미론 불일치는 이미 **META-66** 축에 들어가 있다.
+3. SlowMist의 bridge/payment/delay-module 사례도, Trail of Bits의 scanner scope mismatch도 결국 **새 번호보다 기존 메타의 실전 증거를 더 두껍게 만드는 재료** 에 가깝다.
+4. Microstable 현재 artifact에는 live bridge release path가 없어 오늘 신호를 active code finding으로 올릴 근거는 약하다.
+
+### Phase 3) 스킬 강화 델타 (2026-06-09)
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: `2026-06-09` daily evolution log 1행 추가, `last updated 2026-06-09` 로 갱신.
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-53 reinforcement note** 와 **META-66 reinforcement note** 추가.
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 source mapping 누적.
+- `/Users/kjaylee/.openclaw/workspace/docs/microstable-purple-team-daily-findings.md`: **신규 finding 추가 없음**. 기존 `PT-ARCH-2026-0606-01` 과 `PT-ARCH-2026-0526-01` 이 오늘 신호를 이미 충분히 포괄한다.
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- 오늘 창에서 새 architecture finding까지는 올리지 않았다.
+- 이유는 현재 공개 artifact에 **live bridge release lane** 이 없고, 오늘 strongest signal이 active exploit보다 **operator containment semantics / assurance failure semantics** 강화 쪽이기 때문이다.
+- 다만 기존 carry-forward는 유지된다:
+  - `PT-ARCH-2026-0606-01` — Scanner-Verdict / Packaged-Surface Trust Gap
+  - `PT-ARCH-2026-0526-01` — Node-Audit / Edge-Semantics Gap
+- 현재 판정: **CRITICAL 없음. HIGH 없음. 신규 architecture finding 없음.**
 
 ### Sources
 - https://www.morganlewis.com/pubs/2026/06/keys-to-success-in-cyber-incident-response-in-2026
-- https://hacked.slowmist.io/
+- https://hacked.slowmist.io/en/
 - https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/
 - https://github.com/foundry-rs/foundry/issues/14437
-- https://www.certora.com/blog/proving-p-token
-- https://www.runtimeverification.com/blog/category/Smart%20Contracts
-- https://immunefi.com/bug-bounty/
+- https://www.certora.com/blog
+- https://runtimeverification.com/blog
 
-## 2026-06-08 (KST) — Daily Evolution (#58)
+## 2026-06-06 (KST) — Daily Evolution (Purple Team)
 
 ### Phase 1) 수집 소스 요약
 
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| CoinDesk — `Aave overhauls listing standards after $230 Million rsETH exploit exposed bridge risks` | 2026-06-01 / fetched 2026-06-08 KST | Aave 공식 포스트모템 요지는 분명하다. **Aave 코드가 아니라 LayerZero bridge verification failure** 로 무담보 `rsETH` 가 발행됐고, 그래서 collateral review 범위를 **bridge / oracle dependency / custodian / operational security** 까지 넓히겠다는 것이다. 즉 `listed asset` 검토는 token interface나 가격 파라미터만으로 닫히지 않고, **upstream control-plane을 대차대조표 안으로 수입하는 행위** 임이 다시 확인됐다. |
-| Trail of Bits — `The sorry state of skill distribution` | 2026-06-03 / re-read 2026-06-08 KST | `scan passed` 배지가 실제 설치·실행 표면과 다를 수 있다는 D32/META-61 신호는 여전히 강하다. 다만 이 축은 2026-06-06 entry에서 이미 반영돼 오늘은 배경 압력으로만 유지했다. |
-| GitHub `foundry-rs/foundry#14437` | fetched 2026-06-08 KST | invariant tooling completeness gap은 여전히 공개 상태다. 그러나 오늘 창에서도 **새 상위 메타** 보다는 기존 `META-65 / META-66 / META-67` 배경 강화에 머문다. |
-| Certora — `Proving P-Token` | 2026-06-03 / fetched 2026-06-08 KST | formal verification은 강력하지만, proof는 여전히 **명시된 equivalence boundary와 assumptions** 안에서만 닫힌다. 이는 기존 `META-25` 설명력을 보강하지만, 오늘 새 admission을 열 정도의 별도 구조까지는 아니다. |
-| Immunefi Bug Bounty Programs | last updated 2026-06-07 16:00 UTC | bounty telemetry는 여전히 **resolved report 기준 2주 지연** 이다. 즉 market pressure 센서로는 유효하지만, 실시간 admission 센서로 과신하면 안 된다. |
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| Trail of Bits `The sorry state of skill distribution` | 2026-06-03 | `scan passed` 배지가 실제 설치·실행 표면 전체를 커버하지 못해도 사용자에게는 **safe-enough-to-install** 신호로 소비될 수 있음을 보여줌. `100,000` newlines truncation, `.docx`/ZIP indirection, poisoned `.pyc`, hidden/opaque file이 모두 low-effort bypass로 제시됨 |
+| SlowMist Hacked | 2026-05-31 ~ 2026-06-04 | **Fluid / Phala Cloud / Gnosis Pay / Gravity Bridge / Alephium Bridge / ATM** 는 contract 본체보다 `approver key`, `pre-launch script`, `delay module`, `signing authority`, `bridge backend`, `helper transfer logic` 같은 **주변 control plane** 이 실제 사고 중심임을 재확인 |
+| Immunefi `May 2026 Ecosystem Update` | 2026-06-06 fetch | bounty payouts `+135.4%` MoM, critical bugs `2026 monthly high`, Code4rena migration으로 **취약점 발견 시장이 더 집중·가속** 되고 있음을 보여줌 |
+| Morgan Lewis `Keys to Success in Cyber Incident Response in 2026` | 2026-06-04 | incident response는 긴 문서보다 **결정 경로, executive authority, backup contact, off-band communications** 가 핵심이며, near miss 기반 훈련이 필요하다고 명시 |
+| GitHub `foundry-rs/foundry#14437` | 2026-06-06 re-check | invariant engine의 under-detect/completeness gap이 여전히 남아 있어, **검사 도구 존재 자체를 안전 증거로 과대해석하면 안 된다** 는 배경 신호를 유지 |
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘은 신규 named vector도 신규 META admission도 없다. reinforcement-only. strongest signal은 `META-56` 과 `A125` 의 실전 재확인이다.**
+**판정: 오늘은 신규 named vector나 신규 META admission 없음. 대신 `D32` reinforcement 1건이 타당하다. strongest signal은 Trail of Bits 기사였다.**
 
-#### Reinforcement A — `listed collateral` 은 token이 아니라 upstream control-plane 묶음이다
-- Aave 포스트모템은 `Aave contracts worked exactly as designed` 였어도, **single verifier가 forged bridge message를 승인해 무담보 rsETH가 들어오면 downstream lending protocol은 그대로 bad debt를 수입한다** 는 점을 분명히 적었다.
-- 따라서 자산 상장은 `price feed / LTV / liquidity` 검토가 아니라, **bridge verification topology / oracle dependency / custodian / operational security** 를 함께 심사하는 행위다.
-- 이 신호는 신규 구조라기보다 기존 **META-56 Collateral Listing Trust Import Gap** 과 **A125 Cross-Chain Export Semantic Completeness** 의 현실적 후속 증거다.
+#### Reinforcement A — D32 + META-61: scanner의 가시 범위가 곧 trust boundary가 되는 순간
+- Trail of Bits가 보여준 핵심은 “악성 skill이 있다” 가 아니다. 더 중요한 점은 **scanner가 실제 실행 표면의 일부만 보고도 marketplace/guardrail은 전체 설치 결정을 정당화하는 신호를 낸다** 는 것이다.
+- 이때 실패는 단순 malware miss가 아니라 **security verdict scope mismatch** 다. 사용자는 `scan passed` 를 package 전체의 승인으로 읽지만, 실제 검사는 truncated text, opaque asset, precompiled bytecode, archive indirection 바깥에서 멈춘다.
+- 그래서 오늘 신호는 새 META라기보다 기존 **D32 AI Agent Skill/Identity Poisoning** 과 **META-61 Assurance-Halo Transitivity Gap** 을 더 날카롭게 만든다.
 
-#### Reinforcement B — 검증 통과와 설계 경계 통과는 같은 말이 아니다
-- Certora의 P-Token 글은 proof가 강력하더라도, 실제 보장은 **어떤 차이를 intentional difference로 두고 어떤 입력을 equivalence boundary 밖으로 둘 것인가** 에 의존함을 다시 보여준다.
-- Foundry 이슈도 널리 쓰는 assurance plane이 real DeFi multi-step path에서 completeness gap을 안고 있음을 공개적으로 인정한다.
-- 그러나 둘 다 오늘은 새 META라기보다 기존 **META-25 / META-65 / META-66 / META-67** 의 배경 강화로 보는 편이 맞다.
+#### Reinforcement B — META-53/66 계열: 대응 계획이 있어도 actuator path가 흐리면 containment는 늦어진다
+- Morgan Lewis는 2026년 incident response의 핵심을 **누가 몇 분 안에 shutdown/notification/escalation 결정을 내리는가** 로 정리했다. plan 문서의 분량보다 **decision path와 off-band 연락 체계** 가 중요하다는 뜻이다.
+- SlowMist의 **Fluid / Gnosis Pay / Phala Cloud** 도 같은 메시지를 준다. code core가 멀쩡해도, `claim pause`, `delay module containment`, `pre-launch script 차단`, `compromised key revocation` 같은 actuator가 늦거나 흐리면 손실 창이 열린다.
+- 이는 신규 admission이라기보다 기존 **META-53 Runbook-to-Actuator Binding Gap** 과 **META-66 Assurance-Plane Failure Semantics Gap** 의 운영 측 강화 신호다.
 
-#### 왜 신규 META가 아닌가
-1. Aave 신호의 핵심은 이미 `META-56` 이 규정한 **collateral listing = upstream trust import** 구조 안에 있다.
-2. bridge verifier failure가 downstream release/bad debt로 번지는 메커니즘도 이미 `A125` 가 분리해 설명한다.
-3. Certora/Foundry/Immunefi 신호는 중요하지만, 오늘 창에서 기존 admission과 직교하는 새 상위 메타를 열 정도까지는 아니다.
-
-### Phase 3) 스킬 강화 델타 (2026-06-08)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **A125 reinforcement** 추가. Aave rsETH 포스트모템을 근거로, `proof-valid bridge asset` 와 `economically-backed collateral` 이 다를 수 있음을 보강했다.
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: recent log에 오늘 purple reinforcement-only delta를 추가.
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- current public artifact 기준으로는 live bridge collateral listing / wrapped-asset admission / reserve-attestation release path가 보이지 않아, 오늘 A125/META-56 강화 신호는 **NOT ACTIVE today** 다.
-- 다만 향후 Microstable이 bridged collateral, LRT/LST wrapper, reserve attestation형 external asset admission을 붙이면, `asset review` 를 **bridge verifier topology / upstream pause authority / bad-debt containment rule** 까지 포함하는 release gate로 승격해야 한다.
-- 기존 `PT-ARCH-2026-0526-01`, `PT-ARCH-2026-0606-01`, `B45 HIGH carry-forward` 판정은 유지된다.
-- **CRITICAL 없음. HIGH 신규 없음. 신규 MEDIUM 없음.**
-
-### Sources
-- https://www.coindesk.com/markets/2026/06/01/aave-overhauls-listing-standards-after-usd230-million-rseth-exploit-exposed-bridge-risks
-- https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/
-- https://github.com/foundry-rs/foundry/issues/14437
-- https://www.certora.com/blog/proving-p-token
-- https://immunefi.com/bug-bounty/
-
-## 2026-06-06 (KST) — Daily Evolution (#57)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| Trail of Bits — `The sorry state of skill distribution` | 2026-06-03 / fetched 2026-06-06 KST | public skill marketplace의 핵심 리스크는 단순히 악성 skill 존재가 아니라, **scanner가 보는 표면** 과 **agent가 실제로 실행하는 표면** 이 다를 수 있다는 점이다. `ClawHub`, `Cisco skill-scanner`, `skills.sh` 통합 스캐너들이 `100,000 newlines` truncation, `.docx`/ZIP indirection, poisoned `.pyc`, hidden/opaque file에 우회됐다. 즉 `scan passed` 배지는 D32를 닫는 근거가 아니라 오히려 **identity-plane assurance halo** 를 만들 수 있다. |
-| SlowMist Hacked front page — ATM / Phala Cloud / Fluid / Gnosis Pay / Gravity Bridge / Alephium Bridge | 2026-05-30 ~ 2026-06-04 | 지난 cycle과 동일하게 strongest incident pressure는 여전히 `approver key`, `delay module`, `signing authority`, `backend message forge`, `pre-launch script` 같은 edge/control-plane object 쪽에 남아 있다. |
-| Immunefi Bug Bounty Programs | last updated 2026-06-05 16:00 UTC | telemetry는 갱신됐지만 여전히 **resolved report 기준 2주 지연** 이라 admission용 실시간 센서라기보다 배경 압력이다. |
-| GitHub `foundry-rs/foundry#14437` + SecurityWeek / Google VRP | fetched 2026-06-06 KST | invariant tooling completeness gap과 `architectural changes` 를 유도하는 bug bounty pressure는 계속 유효하지만, 오늘 창에서 기존 `META-65 / META-66` 밖의 새 상위 구조까지는 열지 않는다. |
-
-### Phase 2) 갭 분석
-
-**판정: 오늘은 신규 named vector도 신규 META admission도 없다. 다만 `D32` 의 `왜 감사가 놓치는가` 가 한 단계 더 선명해졌으므로 reinforcement 1건을 반영한다. strongest signal은 `malicious skill` 자체보다도 `scanner-safe label이 policy-plane assurance로 오인되는 구조` 다.**
-
-#### Reinforcement A — D32 / visible skill 과 executable skill 은 같은 객체가 아니다
-- Trail of Bits 사례는 악성 skill이 존재한다는 사실보다, **검사된 표면과 설치·실행되는 표면의 불일치** 를 공개적으로 보여줬다.
-- `SKILL.md` 나 노출 텍스트만 훑는 정적/LLM 스캐너는 `poisoned .pyc`, archive indirection, hidden file, truncation 뒤 payload 같은 **packaging layer authority** 를 놓칠 수 있다.
-- 그래서 팀이 `scan passed`, `safe`, `0 findings` 를 **설치 허가 신호** 로 쓰는 순간, 실제 privileged boundary는 skill policy가 아니라 **scanner scope carveout** 으로 이동한다.
-- 이 신호는 새 META라기보다 기존 **D32 + META-61** 설명력을 강화한다. D32는 agent identity/policy plane 오염을, META-61은 한 레이어의 assurance가 인접 plane까지 번지는 후광을 이미 설명하고 있다.
-
-#### 왜 신규 META가 아닌가
-1. 이번 기사에서 드러난 failure mode는 새로운 상위 구조라기보다, 기존 `D32 AI Agent Skill/Identity Poisoning` 의 **실전 우회 증거** 다.
-2. `scanner-safe label` 문제가 중요하긴 하지만, 이는 이미 `META-61 Assurance-Halo Transitivity Gap` 이 설명하는 **assurance spillover** 축 안에 있다.
-3. SlowMist / Immunefi / Foundry / Google 신호도 함께 보면 오늘 창의 중심은 여전히 **edge authority / assurance interpretation** 이지, 별도의 신규 메타 패턴은 아니다.
+#### 왜 신규 admission이 아닌가
+1. scanner-scope 문제는 이미 **D32 + META-61** 조합으로 설명력이 충분하다.
+2. 대응 계획/containment 문제도 이미 **META-53 / META-66** 축에 들어가 있다.
+3. 오늘 창의 value는 새 번호 추가보다, **“검사 결과의 범위” 와 “대응 권한의 실제 작동 경로”** 를 분리해서 보게 만든 reinforcement에 있다.
 
 ### Phase 3) 스킬 강화 델타 (2026-06-06)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **D32 reinforcement** 추가. `ClawHub` / `Cisco skill-scanner` / `skills.sh` 우회 사례를 바탕으로, **scanner의 visible-text scope 자체가 trust boundary가 된다** 는 점을 명시했다.
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: recent log에 오늘 reinforcement-only delta를 추가.
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: 2026-06-06 Purple meta sweep 1행이 이미 반영돼 있으며, D32 reinforcement와 `last updated 2026-06-06` 상태가 유지된다.
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: D32 reinforcement note가 이미 반영돼 있으며, scanner-visible scope mismatch를 `why audits miss it` 관점으로 sharpen 했다.
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 source mapping을 누적.
+- `/Users/kjaylee/.openclaw/workspace/docs/microstable-purple-team-daily-findings.md`: agentic ops 확장 시의 latent architecture finding 1건 추가.
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- 오늘 AI-agent 신호는 강하지만, current public artifact 기준으로는 **marketplace-loaded privileged skill / hosted agent policy import / external skill execution plane** 이 보이지 않는다.
-- 따라서 `Agent ↔ Governance ↔ Parameter` 체인에서 이 이슈는 **future-facing watch** 로 남고, 오늘 새 finding ID를 열 정도의 current-path evidence는 없다.
-- 기존 `PT-ARCH-2026-0526-01`, `B45 HIGH carry-forward`, `D27 / A75 / A115 MEDIUM latent watch` 판정은 유지된다.
-- **CRITICAL 없음. HIGH 신규 없음. 신규 MEDIUM 없음.**
+- **PT-ARCH-2026-0606-01 (LOW 현재 / MEDIUM 확장 시)**: Scanner-Verdict / Packaged-Surface Trust Gap.
+- 현재 공개 artifact에는 **marketplace-loaded privileged skill**, **hosted agent policy import**, **scan-pass verdict만으로 설치되는 signer path** 가 직접 보이지 않아 **ACTIVE 이슈는 아니다**.
+- 다만 향후 dashboard helper, governance copilot, keeper-side agent, deploy assistant를 붙일 때 `scanner passed`, `safe repo`, `approved helper` 같은 라벨을 곧바로 privileged install 신호로 쓰면, 실제 실행 표면과 승인 표면이 다시 어긋난다.
+- 권고는 단순하다: **scanner는 advisory only**, privileged tool/skill은 `full-tree hash manifest + immutable source + binary/archive policy + human approval + off-band disable path` 로 닫아야 한다.
+- **CRITICAL 없음. HIGH 없음. LOW 1건 추가(현재) / MEDIUM if expansion.**
 
 ### Sources
 - https://blog.trailofbits.com/2026/06/03/the-sorry-state-of-skill-distribution/
-- https://hacked.slowmist.io/
-- https://immunefi.com/bug-bounty/
+- https://hacked.slowmist.io/en/
+- https://docs.immunefi.foundation/may-2026-immunefi-ecosystem-update/
+- https://www.morganlewis.com/pubs/2026/06/keys-to-success-in-cyber-incident-response-in-2026
 - https://github.com/foundry-rs/foundry/issues/14437
-- https://www.securityweek.com/google-paid-out-17-million-in-bug-bounty-rewards-in-2025/
 
-## 2026-06-05 (KST) — Daily Evolution (#56)
+## 2026-06-03 (KST) — Daily Evolution (Purple Team)
 
 ### Phase 1) 수집 소스 요약
 
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| SlowMist Hacked front page — ATM / Phala Cloud / Fluid / Gnosis Pay / Gravity Bridge / Alephium Bridge | 2026-05-30 ~ 2026-06-04 | 오늘 창의 strongest signal은 **부트스트랩 control-plane이 secret-release authority를 먹어버리는 순간** 이다. 특히 **Phala Cloud** 는 `API endpoint → pre-launch script rewrite → decrypted env access after boot` 로 이어지며, 운영팀이 guest/KMS/runtime을 따로 harden해도 launch-time input provenance가 약하면 실제 trust root가 그 앞단으로 이동함을 보여준다. 같은 창의 Fluid / Gnosis Pay / Gravity / Alephium도 여전히 `approver key`, `delay module`, `signing authority`, `backend message forge` 같은 **edge authority object** 가 사고 중심이었다. |
-| Immunefi Bug Bounty Programs | last updated 2026-06-04 16:00 UTC | 보상 시장 telemetry는 유효하지만 여전히 **resolved report 기준 2주 지연** 이다. 즉 bounty surface는 seam/authority class를 계속 가격화하지만, 실시간 admission 근거로는 response/telemetry lag를 전제해야 한다. |
-| SecurityWeek — Google Paid Out $17 Million in Bug Bounty Rewards in 2025 | recent / fetched 2026-06-05 KST | Google은 cloud VRP, AI VRP, Chrome VRP에서 **다수 보고가 제품 아키텍처 변경까지 밀어냈다** 고 공개했다. 이것은 버그 바운티가 단순 patch feed가 아니라 **architecture-pressure feed** 라는 점을 재확인한다. 특히 AI / cloud / browser 세 축에서 high-severity signal이 많았다는 점은 `meta security = edge + ops + architecture` 관점을 지지한다. |
-| GitHub `foundry-rs/foundry#14437` | fetched 2026-06-05 KST | widely-used invariant tooling도 여전히 real DeFi benchmark에서 multi-step path completeness gap을 공개적으로 안고 있다. 다만 오늘 창에서는 이 신호가 새 META라기보다 기존 completeness / assurance-plane 계열의 배경 강화로 머문다. |
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| SlowMist Hacked | 2026-05-27 ~ 2026-06-01 | **Fluid / Gravity Bridge / Alephium Bridge / Gnosis Pay** 는 contract 단일 버그보다 `off-chain root approver`, `trusted peer`, `bridge backend`, `delay/timelock module` 같은 **edge authority object** 가 실제 위험 중심임을 다시 보여줌 |
+| Immunefi bounty metrics | 2026-06-01 16:00 UTC update | daily-updated 보상 시장은 여전히 auth/ops seam, helper path, optional/legacy control surface에 경제적 인센티브가 붙어 있음을 재확인 |
+| Anchor PR `#4603` — Pad shrunken serialized account tails | merged 2026-05-27 | shorter writeback 뒤 old tail을 0으로 지우지 않으면 **논리적으로 죽은 상태가 물리 바이트로 남아 재해석** 될 수 있음을 framework가 직접 인정 |
+| Anchor PR `#4617` — Fix v2 CPI optional sentinel handles | merged 2026-06-01 | `optional None` 를 invoked program id sentinel meta로 표현하는 경로는, **부재(absence)** 와 **live identity** 가 같은 값 공간에 닿을 때 special-case 없이는 의미론이 붕괴함을 보여줌 |
+| Anchor PR `#4560` — validate instruction args before borsh encode | merged 2026-05-28 | serialize 직전에도 argument shape를 먼저 닫아야 한다는 신호로, typed/encoded path라도 **pre-encoding admissibility** 를 놓치면 edge에서 실패한다는 점을 강화 |
 
 보조 확인:
-- 접근 가능한 Certora / Runtime Verification 공개 인덱스를 재확인했지만, **최근 7일 창에서 오늘 새 상위 META admission을 열 만큼 강한 crypto-specific delta는 확인되지 않았다**.
-- AI agent security / cross-chain interop 쪽도 오늘 창에서 기존 누적 admission(`B29`, `META-70`, `A125`)을 넘어서는 fresh public signal은 확보하지 못했다.
+- GitHub `foundry-rs/foundry#14437` 는 여전히 background signal로 유효하지만, 공개 시점이 최근 7일 창 바깥이라 오늘의 **5-source minimum** 에는 포함하지 않았다.
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘은 신규 META admission 없음. reinforcement-only. strongest signal은 `META-70 — Node-Audit / Edge-Semantics Gap (NAESG)` 의 부트스트랩 control-plane 하위축 강화이고, `META-65 / META-66` 은 배경 압력으로 재확인된다.**
+**판정: 오늘 신규 META admission 없음. reinforcement-only. strongest signal은 이미 열린 `META-71 — Terminal-State / Sentinel Admissibility Gap (TSSAG)` 와 `META-70 — Node-Audit / Edge-Semantics Gap (NAESG)` 의 결합 강화다.**
 
-#### Reinforcement A — META-70 / authority dies last at the edge, and sometimes before boot
-- **Phala Cloud** 는 guest workload나 KMS enclave 자체보다 앞단의 `pre-launch script` 가 실질적인 권한 경계였음을 보여줬다.
-- **Fluid** 는 `proposer / approver operational key → fake root → empty-proof claim`, **Gnosis Pay** 는 `Delay Module`, **Gravity Bridge** 는 `contract key / signing authorization`, **Alephium Bridge** 는 `backend-forged bridge message` 에서 무너졌다.
-- 공통점은 모두 **코드 본체보다 edge object 또는 bootstrap control-plane이 authority를 운반했다** 는 점이다.
-- 따라서 "노드를 감사했다" 는 사실은 충분하지 않다. **누가 startup input·edge evidence·bridge truth·delay safety object를 정의하는가** 까지 하나의 security contract로 소유해야 한다.
+#### Reinforcement A — META-71 / terminal-state가 값 공간에서 완전히 죽지 않으면 다시 살아난다
+- **MoneyMon / ONTR** 는 `zero/null authority` 가 auth failure와 같은 값 공간을 공유할 때 바로 drain으로 이어진다는 것을 이미 보여줬다.
+- **Anchor PR #4617** 는 같은 문제가 framework 쪽 optional-account 표현에서도 반복될 수 있음을 공개적으로 드러냈다. `None` 슬롯이 invoked program id sentinel meta로 실리면, absence는 단순 빈값이 아니라 **엄격한 special-case가 필요한 live-looking representation** 이 된다.
+- **Anchor PR #4603** 도 같은 축의 다른 면이다. shrink 후 tail scrub이 없으면 “삭제된 상태” 가 실제 바이트 레벨에서는 죽지 않는다. 즉 terminal state는 선언만으로 닫히지 않고 **표현·직렬화·재해석 레이어 모두에서 hard-fail / zeroize** 되어야 한다.
 
-#### Reinforcement B — META-65 / META-66 / 공개 보상시장과 assurance plane은 여전히 운영·아키텍처 쪽으로 압박을 준다
-- **Google VRP** 는 많은 보고가 실제로 제품 **architectural changes** 로 이어졌다고 적었다. 이는 취약점 데이터가 단순 patch backlog가 아니라 **구조 수정 압력** 이라는 뜻이다.
-- **Immunefi** 는 시장이 seam/authority class를 계속 보상하지만, 동시에 **telemetry lag** 를 명시한다. 즉 팀은 public reward telemetry를 참고하되, 그것을 incident-admission의 실시간 센서로 과신하면 안 된다.
-- **Foundry #14437** 은 assurance plane 자체가 여전히 under-detect 상태일 수 있음을 보여준다. 그러나 오늘 창에서 이것이 새 구조를 열기보다는 기존 `response artifact / failure semantics / completeness` 축을 더 세게 밀어주는 근거에 가깝다.
-
-#### 왜 신규 META가 아닌가
-1. **Phala Cloud** 의 strongest mechanism은 독립된 새 상위 구조라기보다, 이미 있던 `META-70` 의 **bootstrap-before-secret-release** 하위축을 또렷하게 만든다.
-2. **Google VRP / Immunefi / Foundry** 도 중요하지만, 기존 `META-65 / META-66 / validation completeness` 설명력 밖으로 나가는 새 축까지는 아니다.
-3. 오늘 창의 사고들은 여전히 `authority lives in edge object / control-plane / bootstrap lane` 으로 수렴한다.
-
-### Phase 3) 스킬 강화 델타 (2026-06-05)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **B18 Config Injection 강화**. `static file` 뿐 아니라 `pre-launch script / launch template / secret-release bootstrap` 이 effective authority가 되는 이유와 **왜 감사가 놓치는가** 노트를 추가했다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: 오늘 reinforcement-only delta를 recent log에 추가.
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- 오늘 창은 기존 `PT-ARCH-2026-0526-01 — Node-Audit / Edge-Semantics Gap` 을 강화하지만, **새 finding ID를 열 정도의 current-path evidence는 없다**.
-- 현재 공개 artifact 기준으로는 remote CVM, launch-template API, pre-secret-release script mutation 같은 **Phala형 bootstrap control-plane** 이 보이지 않는다.
-- 다만 향후 keeper 배포가 remote runner / secret-injection sidecar / launch-hook 기반으로 이동하면, `startup script provenance`, `launch measurement`, `secret release gating` 을 edge manifest에 반드시 포함해야 한다.
-- 오늘도 `B45 HIGH carry-forward` 외 신규 CRITICAL/HIGH는 없다. `D27 / A75 / A115` 는 기존 MEDIUM latent watch로 유지한다.
-- **CRITICAL 없음. HIGH 신규 없음. 신규 MEDIUM 없음.**
-
-### Sources
-- https://hacked.slowmist.io/
-- https://immunefi.com/bug-bounty/
-- https://www.securityweek.com/google-paid-out-17-million-in-bug-bounty-rewards-in-2025/
-- https://github.com/foundry-rs/foundry/issues/14437
-- https://www.certora.com/blog
-- https://www.runtimeverification.com/blog/category/Smart%20Contracts
-
-## 2026-06-04 (KST) — Daily Evolution (#55)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| SlowMist Hacked front page — MoneyMon / ONTR / Fluid / Gravity Bridge / Alephium Bridge / Gnosis Pay | 2026-05-29 ~ 2026-06-01 | 이번 창의 strongest signal은 **sentinel state와 edge authority object** 다. MoneyMon / ONTR는 `address(0)`·renounced owner 같은 terminal value가 검증 실패가 아니라 **검증 통과값** 으로 재사용될 때 auth가 붕괴함을 보여줬다. Fluid / Gravity / Alephium / Gnosis Pay는 core business logic보다 `approver key`, `signing authority`, `backend message forge`, `delay module` 같은 **edge authority object** 가 실제 사고의 중심이었음을 재확인한다. |
-| Immunefi Bug Bounty Programs | last updated 2026-06-03 16:00 UTC | 보상 시장은 여전히 seam/authority class를 가격화하지만, 동시에 지표가 **resolved report 기준 2주 지연** 임을 명시한다. 즉 bounty telemetry는 useful하지만, 실시간 admission 근거로는 **response/telemetry lag** 를 전제해야 한다. |
-| GitHub `foundry-rs/foundry#14437` | fetched 2026-06-03 | widely-used invariant tooling도 real DeFi benchmark에서 multi-step path completeness gap을 여전히 공개적으로 안고 있다. 다만 오늘 창에서는 이 신호가 새 META라기보다 기존 completeness / assurance-scarcity 계열의 배경 강화로 머문다. |
-| Anchor PR `#4617` / `#4603` | 2026-05-27 window, fetched 2026-06-03 | `#4617` 은 optional `None` 가 program-id sentinel meta와 같은 값 공간을 공유할 때 framework special-case가 security boundary가 됨을 보여줬고, `#4603` 은 shorter writeback 뒤 tail scrub 부재가 **logical deletion ≠ raw-byte death** 임을 다시 확인했다. |
-
-보조 확인:
-- 접근 가능한 Certora / Runtime Verification 공개 인덱스를 재확인했지만, **최근 7일 창에서 META-71 / META-70을 넘어서는 새 상위 메타를 강하게 여는 crypto-specific delta는 확인되지 않았다**.
-
-### Phase 2) 갭 분석
-
-**판정: 오늘은 신규 META admission 없음. reinforcement-only. strongest signal은 `META-71 — Terminal-State / Sentinel Admissibility Gap (TSSAG)` 와 `META-70 — Node-Audit / Edge-Semantics Gap (NAESG)` 의 동시 강화다.**
-
-#### Reinforcement A — META-71 / terminal state is not safe if it can still compare as identity
-- **MoneyMon** 은 invalid signature가 `address(0)` recover 결과와 만나며, `admin == address(0)` 상태를 사실상 **검증 통과값** 으로 바꿨다.
-- **ONTR** 는 renounced owner(`address(0)`)를 죽은 권한이 아니라 **재점유 가능한 auth slot** 으로 남겨 뒀다.
-- **Anchor #4617** 은 framework 층에서도 optional `None` 가 program-id sentinel meta로 표현될 수 있고, 그 sentinel을 어떻게 special-case 하느냐가 호출 의미를 바꾼다는 점을 보여줬다.
-- 공통점은 `없음`, `종료`, `renounced`, `None` 같은 상태가 **값 공간에서 여전히 비교 가능한 identity** 로 남는 순간, 감사자는 terminal marker로 읽고 런타임은 admissible value로 읽는 틈이 생긴다는 점이다.
-
-#### Reinforcement B — META-70 / authority keeps living in the edge object
-- **Fluid** 는 on-chain core가 아니라 `proposer / approver operational key → fake Merkle root → empty-proof reward claim` 체인에서 무너졌다.
-- **Gravity Bridge** 는 `contract key / signing authorization` 이 bridge truth를 대표하는 edge authority object였음을 다시 보여줬다.
-- **Alephium Bridge** 는 `backend forgeable message` 가 곧 cross-chain asset reality가 되는 구조를 드러냈다.
-- **Gnosis Pay** 는 `Delay Module` 같은 안전장치형 control-plane object가 깨질 때 user-facing fund safety가 즉시 흔들린다는 점을 보여줬다.
-- 공통점은 전부 **코드 본체보다 경계 객체(edge object)가 authority를 운반했다** 는 점이고, node-local audit만으로는 그 의미론을 다 담기 어렵다.
-
-#### Reinforcement C — completeness/telemetry lag is real, but not a separate top-level META today
-- **Foundry #14437** 은 invariant tooling의 multi-step exploration gap을 그대로 드러낸다.
-- **Immunefi** 는 보안 시장 telemetry가 유용해도 2주 지연을 안고 있음을 명시한다.
-- 그러나 이 둘은 오늘 창에서 독립된 새 구조라기보다, 이미 누적된 **validation completeness / response artifact scarcity / assurance lag** 문제를 다시 밀어주는 배경 신호에 가깝다.
+#### Reinforcement B — META-70 / 감사는 node를 봤는데 사고는 edge object에서 난다
+- **Fluid** 는 core lending/DEX가 멀쩡해도 `off-chain proposer/approver + merkle root approval` edge가 뚫리면 reward entitlement가 무너질 수 있음을 보여줬다.
+- **Gravity Bridge / Stake DAO** 류는 여전히 `trusted peer / signing authority / deployer key → bridge-recognized authority` edge가 실제 mint/release 권한임을 재확인한다.
+- **Gnosis Pay Delay Module** 사건도 같은 축이다. timelock/security module은 주변장치가 아니라 실제 privileged path이며, “보호 모듈” 이라는 라벨이 곧 안전을 뜻하지 않는다.
 
 #### 왜 신규 META가 아닌가
-1. **MoneyMon / ONTR / Anchor #4617** 의 strongest mechanism은 이미 `META-71` 설명력 안에 들어간다.
-2. **Fluid / Gravity / Alephium / Gnosis Pay** 도 독립 구조라기보다 `authority lives in the edge object` 라는 `META-70` 축을 반복 강화한다.
-3. Foundry / Immunefi 신호는 중요하지만, 오늘 창에서 기존 META와 직교하는 새 상위 구조를 여는 정도까지는 아니다.
+1. 오늘 창의 strongest signal은 **이미 정의된 META-71과 META-70 안에서 설명력이 충분하다**.
+2. 새로 드러난 것은 독립 메타라기보다, **absence/default/deleted state와 edge authority object가 같은 사고 계열로 반복된다** 는 강화 신호다.
+3. 따라서 오늘은 matrix count를 늘리기보다, existing admission을 더 operational하게 sharpen 하는 쪽이 맞다.
 
-### Phase 3) 스킬 강화 델타 (2026-06-04)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **변경 없음**. 오늘 신호는 이미 반영된 **META-71 / META-70 / A128** 강화로 충분하다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: **변경 없음**. 2026-06-03 black-team daily evolution log가 오늘 창의 named-vector / framework reinforcement를 이미 담고 있다.
+### Phase 3) 스킬 강화 델타 (2026-06-03)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-71 reinforcement note** 추가. `optional sentinel handle` / `post-shrink dead-state residue` 가 terminal-state admissibility 문제의 framework-level 재현임을 반영.
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log 1행 추가, `last updated 2026-06-03` 로 갱신.
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 5-source mapping 누적.
+- `/Users/kjaylee/.openclaw/workspace/docs/microstable-purple-team-daily-findings.md`: architecture-level latent finding 1건 추가.
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- 현재 공개 artifact 기준으로는 `address(0)` / `Pubkey::default()` / optional `None` 가 privileged auth lane으로 직접 승격되는 경로를 확인하지 못했다.
-- 또한 reviewed public artifact 기준으로는 Anchor `SerializedAccount` shrink-tail class가 곧바로 활성화되는 variable-length state writeback surface도 확인되지 않았다.
-- 따라서 오늘 창은 새 finding을 여는 대신, 기존 `PT-ARCH-2026-0526-01 — Node-Audit / Edge-Semantics Gap` 과 `PT-ARCH-2026-0515-01 — Decommission-Semantics / Legacy-Liveness Gap` 을 더 강하게 만든다.
-- 다만 향후 Microstable이 signed-claim helper, peer manifest, optional evidence object, variable-length migration state를 도입하면 **LOW current / MEDIUM-if-expansion** watch를 즉시 재평가해야 한다.
-- **CRITICAL 없음. HIGH 없음. 신규 MEDIUM 없음.**
+- **PT-ARCH-2026-0603-01 (LOW 현재 / MEDIUM 확장 시)**: Optional-Evidence Sentinel / Representation-Authority Gap.
+- 현재 공개 artifact에는 `optional account None -> default pubkey/program-id sentinel` 같은 live path가 직접 보이지 않아 **active exploit은 아니다**.
+- 다만 향후 Microstable이 **optional oracle witness, bridge/export peer, signed-claim evidence object, governance adapter, tool/agent provenance root** 를 추가할 때, 부재 상태를 `default key`, `same id sentinel`, `empty root`, `zeroized-but-still-parseable blob` 으로 표현하면 META-71류 문제가 다시 들어온다.
+- 권고는 명확하다: **presence bit와 identity value를 분리** 하고, privileged manifest는 `is_present / identity / hash / state` 를 독립 필드로 강제하며, serialized shrink/update path는 `tail zeroization` 을 회귀 테스트로 고정해야 한다.
+- **CRITICAL 없음. HIGH 없음. LOW 1건 추가(현재) / MEDIUM if expansion.**
 
 ### Sources
-- https://hacked.slowmist.io/
+- https://hacked.slowmist.io/en/
 - https://immunefi.com/bug-bounty/
-- https://github.com/foundry-rs/foundry/issues/14437
-- https://github.com/otter-sec/anchor/pull/4617
 - https://github.com/otter-sec/anchor/pull/4603
-- https://www.certora.com/blog
-- https://www.runtimeverification.com/blog
+- https://github.com/otter-sec/anchor/pull/4617
+- https://github.com/otter-sec/anchor/pull/4560
 
-## 2026-05-28 (KST) — Daily Evolution (#54)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| SlowMist Hacked front page — Polymarket / Mure / SquidRouterModule / WUSD.fi-GLOVE / SKP | 2026-05-22 ~ 2026-05-26 | 이번 창의 strongest signal은 여전히 **edge semantics reinforcement** 다. Mure는 `signer source → verifier authority`, SquidRouterModule은 `trusted module → arbitrary spend`, WUSD.fi/GLOVE는 `per-address incentive assumption → EIP-7702 helper path`, Polymarket은 `legacy operational key → still-live payout authority` 로 무너졌다. SKP는 중요 사고지만 상위 메타보다는 기존 logic/LP-reserve class 강화에 가깝다. |
-| Immunefi Bug Bounty Programs | last updated 2026-05-27 16:00 UTC | 보상 시장은 여전히 seam/edge/authorization class에 가격을 붙인다. 즉 `helper path`, `auth provenance`, `legacy authority residue` 류가 문서형 우려가 아니라 실제 수익화 표면임을 다시 확인한다. |
-| GitHub `foundry-rs/foundry#14437` | fetched 2026-05-27 | 널리 쓰는 invariant tooling도 multi-step path completeness gap을 계속 안고 있다. 다만 오늘 창에서는 이 신호가 새 META를 여는 증거라기보다 기존 메타의 배경 강화에 머문다. |
-
-보조 확인:
-- 접근 가능한 Certora / Runtime Verification / Trail of Bits / HackerOne / AI-agent 공개 인덱스를 재확인했지만, **최근 7일 창에서 META-70을 넘어서는 새 상위 메타를 강하게 여는 crypto-specific delta는 확인되지 않았다**.
-
-### Phase 2) 갭 분석
-
-**판정: 오늘도 신규 META admission 없음. reinforcement-only. strongest signal은 `META-70 — Node-Audit / Edge-Semantics Gap (NAESG)` 와 `META-68 / META-64` 축의 재확인이다.**
-
-#### Reinforcement A — META-70 / authority lives in the edge
-- **Mure** 는 서명 검증 자체를 깨지 않고도, **누가 signer truth source를 제공하는가** 를 바꿔 권한 경계를 넘겼다.
-- **SquidRouterModule** 은 `trusted module` 등록이 사실상 **arbitrary calldata spend 권한** 으로 승격되는 경계를 보여줬다.
-- **WUSD.fi/GLOVE** 는 `1 address = 1 participant` 같은 단순 가정이 helper path(EIP-7702) 앞에서 얼마나 쉽게 붕괴되는지 드러냈다.
-- 공통점은 모두 **노드 내부 correctness보다 경계에서의 권한 의미 변환이 먼저 공격면** 이었다는 점이다.
-
-#### Reinforcement B — META-68 / META-64 / B15 sharpened by Polymarket
-- **Polymarket** 은 새 구조라기보다, **오래된 운영 지갑이 실제로는 여전히 rewards payout / initializer authority를 쥐고 있었던 문제** 를 재확인한다.
-- 즉 `deprecated` 또는 `오래된 운영 키` 라는 라벨은 안전을 뜻하지 않는다. **revocation complete인가, legacy authority가 hard-fail 하는가** 가 핵심이다.
-
-#### 왜 신규 META가 아닌가
-1. 이번 창의 strongest cases는 이미 **META-70** 과 **META-68 / META-64** 설명력 안에 들어간다.
-2. 새로 선명해진 것은 독립된 상위 구조라기보다, **authority mutation이 edge와 residue에서 반복적으로 터진다** 는 강화 신호다.
-3. accessible formal-verification / playbook / AI-security 공개 신호에서도 오늘 창에 기존 admission과 직교하는 강한 상위 패턴은 확인되지 않았다.
-
-### Phase 3) 스킬 강화 델타 (2026-05-28)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **변경 없음**. 오늘 신호는 기존 **META-70 / META-68 / META-64 / B15** 강화로 충분하다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: **변경 없음**. 새 named vector나 새 META admission이 없어 matrix count 변동이 없다.
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- 오늘 창은 `PT-ARCH-2026-0526-01 — Node-Audit / Edge-Semantics Gap` 과 `PT-ARCH-2026-0515-01 — Decommission-Semantics / Legacy-Liveness Gap` 을 더 강하게 만든다.
-- 현재 공개 artifact 기준으로는 Mure/Squid류의 `external signer source`, `trusted helper module`, `per-address reward assumption` 표면은 확인되지 않았다.
-- 다만 향후 Microstable에 distribution helper, adapter/module trust, external signer/oracle attester, address-counted reward path를 붙이면 **authority mutation edge** 로 재분류해야 한다.
-- 또한 old operator key, payout wallet, initializer-capable account, legacy config path가 실제로 hard-fail 하는지 **decommission manifest** 로 증명하지 않으면 Polymarket류 신호가 활성화될 수 있다.
-- **CRITICAL 없음. HIGH 없음. 신규 MEDIUM 없음.**
-
-### Sources
-- https://hacked.slowmist.io/
-- https://immunefi.com/bug-bounty/
-- https://github.com/foundry-rs/foundry/issues/14437
-- https://www.certora.com/blog
-- https://www.runtimeverification.com/blog
-- https://blog.trailofbits.com/
-- https://www.hackerone.com/blog
-- https://arxiv.org/abs/2605.17634
-
-## 2026-05-27 (KST) — Daily Evolution (#53)
+## 2026-06-01 (KST) — Daily Evolution (Purple Team)
 
 ### Phase 1) 수집 소스 요약
 
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| SlowMist Hacked front page — RetoSwap / Butter Bridge / Polymarket / Mure / SquidRouterModule / WUSD.fi-GLOVE | 2026-05-20 ~ 2026-05-25 | 최근 창의 strongest new sharpening은 **RetoSwap** 이다. 여기서는 단순 race가 아니라 **out-of-order ACK가 trusted peer identity를 다시 쓰는 권한 변환** 이 핵심이었다. 같은 창의 Butter/Mure/Squid/WUSD도 여전히 node보다 **edge semantics** 에서 무너졌다. |
-| Immunefi Bug Bounty Programs | last updated 2026-05-26 16:00 UTC | bounty surface는 여전히 seam/edge class에 시장 가격을 붙인다. 즉 `control-plane ordering`, `auth provenance`, `helper path identity` 류가 문서형 우려가 아니라 실전 수익화 표면임을 다시 확인한다. |
-| GitHub `foundry-rs/foundry#14437` | fetched 2026-05-26 | 널리 쓰는 invariant tooling도 여전히 multi-step path completeness gap을 공개적으로 안고 있다. 오늘 창에서 이 갭을 뒤집는 fresh closure signal은 확인되지 않았다. |
-
-보조 확인:
-- 접근 가능한 Certora / Runtime Verification / Trail of Bits / HackerOne 공개 인덱스를 직접 훑었지만, **최근 7일 창에서 META-70을 뒤집거나 새 상위 메타를 강하게 여는 crypto-specific delta는 확인되지 않았다**.
-
-### Phase 2) 갭 분석
-
-**판정: 오늘은 신규 META admission 없음. 오늘 창의 strongest signal은 B82가 이미 보여준 내용을 따라, `META-70 — Node-Audit / Edge-Semantics Gap (NAESG)` 를 더 날카롭게 만드는 reinforcement다.**
-
-#### Reinforcement A — META-70 / `ordering-is-authority` sharpened
-- **RetoSwap / B82** 는 `ACK ordering` 이 단순 네트워킹 이벤트가 아니라 **trusted peer identity mutation** 임을 드러냈다. 즉 “메시지가 형식상 유효한가” 와 “이 phase에서 이 peer를 authority로 승격해도 되는가” 는 다른 질문이다.
-- **Butter Bridge** 는 `retry message encoding → bridge authorization`, **Mure** 는 `signer source selection → verifier authority`, **SquidRouterModule** 은 `module trust → arbitrary calldata spend`, **WUSD.fi/GLOVE** 는 `per-address incentive assumption → EIP-7702 helper path` 로 무너졌다. 전부 같은 주제다. **노드 내부 정합성보다 경계의 의미 변환이 먼저 공격면이 됐다.**
-- **Immunefi** 의 daily-updated market surface는 이런 seam/edge class가 지금도 실제 보상 시장을 가진다는 점을 다시 보여준다.
-
-#### 왜 신규 META가 아닌가
-1. **META-70이 이미 상위 구조를 설명한다.** 누가 signer source를 고를 수 있는가, retry/ACK 순서가 무엇을 뜻하는가, 어떤 helper/fallback evidence가 privileged mutation으로 승격되는가가 핵심이라는 점은 어제 admission에서 이미 고정됐다.
-2. 오늘 새로 선명해진 것은 **독립된 두 번째 구조** 가 아니라, 그중에서도 특히 `control-plane ordering = authority mutation` 이라는 하위 축이다.
-3. accessible formal-verification / playbook / AI-security 공개 신호에서도 오늘 창에 **META-70과 직교하는 새 상위 패턴** 을 밀어올릴 만큼 강한 추가 근거는 없었다.
-
-### Phase 3) 스킬 강화 델타 (2026-05-27)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 **reinforcement-only** 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **변경 없음**. 오늘 strongest signal은 이미 반영된 **B82 + META-70** 조합으로 충분하다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: **변경 없음**. matrix count/최근 로그는 이미 오늘 red-team delta를 반영하고 있다.
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 active architecture finding 없음.**
-- 현재 공개 Microstable artifact 기준으로는 keeper가 `rpc_url` / `secondary_rpc_url` / `hermes_url` 을 로컬 `KeeperConfig` 에서 고정 로드하며, **ACK-driven peer/arbitrator rebinding state machine** 은 확인되지 않았다.
-- 따라서 오늘 B82 sharpened signal은 **NOT ACTIVE today** 다. 어제의 `PT-ARCH-2026-0526-01 — Node-Audit / Edge-Semantics Gap (MEDIUM latent)` 이 여전히 strongest live architecture watch다.
-- 다만 향후 remote signing coordinator, operator mesh, session relayer, dynamic failover control plane을 붙이면 endpoint/peer update를 **authority mutation** 으로 재분류하고, edge manifest에 `session id / monotonic phase / prior endpoint hash / dual-party re-confirmation` 을 포함해야 한다.
-- **CRITICAL 없음. HIGH 없음. 신규 MEDIUM 없음.**
-
-### Sources
-- https://hacked.slowmist.io/
-- https://immunefi.com/bug-bounty/
-- https://github.com/foundry-rs/foundry/issues/14437
-- https://www.certora.com/blog
-- https://www.runtimeverification.com/blog
-- https://blog.trailofbits.com/
-- https://www.hackerone.com/blog
-
-## 2026-05-26 (KST) — Daily Evolution (#52)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| Cloudflare `Project Glasswing: what Mythos showed us` | 2026-05-18 | 보안형 LLM이 exploit chain construction에는 강해졌지만, **architecture and process around them** 이 바뀌지 않으면 실전 커버리지가 닫히지 않는다고 명시한다. 즉 node-local finding과 whole-path security는 다른 문제다. |
-| GitHub `foundry-rs/foundry#14437` | recent / fetched 2026-05-25 | SCFuzzBench 기준 Foundry invariant engine이 real DeFi targets에서 under-detect 상태이며, corpus/coverage/multi-step exploration 보강이 필요하다고 적는다. widely-used assurance plane도 **whole-path completeness gap** 을 가진다는 신호다. |
-| SlowMist Hacked front page — Bankr / Butter Bridge / RetoSwap / Mure / WUSD.fi-GLOVE | 2026-05-19 ~ 2026-05-25 | 최근 사고들은 개별 contract보다 **경계 의미론** 에서 무너졌다: `LLM output→wallet authority`, `retry message→bridge auth`, `ACK order→peer identity`, `signer source→verifier authority`, `per-address incentive assumption→EIP-7702 helper path`. |
-| Immunefi Bug Bounty Programs | last updated 2026-05-25 16:00 UTC | bounty 시장은 여전히 seam/edge class를 가격화한다. 즉 edge semantics는 문서형 리스크가 아니라 실전 수익화 표면이다. |
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| SlowMist Hacked | 2026-05-25 ~ 2026-05-30 | MoneyMon/ONTR는 **null·renounced·default authority state가 살아 있는 비교값으로 남을 때** auth failure가 success처럼 보일 수 있음을 실사고로 보여줌 |
+| Foundry issue `#14437` | 2026-05-31 확인 | invariant engine gap은 여전히 구조적이지만, 오늘 창에서는 신규 메타라기보다 기존 `META-70` 강화 신호 |
+| Immunefi bounty metrics | 2026-05-31 16:00 UTC update | 공격 표면 탐색 시장은 계속 열려 있고, 특히 auth/ops seam 같은 cheap-to-trigger class는 여전히 경제성이 높음 |
+| Local matrix cross-read | cumulative | `A123` 의 framework sentinel collision과 이번 `A129` 의 zero-address auth collapse를 함께 보면 **terminal state admissibility** 가 상위 구조로 드러남 |
 
 ### Phase 2) 갭 분석
 
 **오늘 신규 식별 갭**:
 
-#### META-70 — Node-Audit / Edge-Semantics Gap (NAESG)
-- **현상**: 팀은 contract, keeper, verifier, dashboard, wallet, agent 같은 **노드(node)** 를 각각 잘 감사하고 hardening한다. 그런데 실제 공격은 점점 그 사이 **edge semantics** 에 붙는다. 누가 signer source를 정하는가, retry/ACK 순서가 어떤 권한 변환을 뜻하는가, 어떤 fallback evidence가 privileged mutation을 열 수 있는가, 어떤 assistant output이 곧바로 wallet authority가 되는가가 직접 공격면이 된다.
+#### META-71 — Terminal-State / Sentinel Admissibility Gap (TSSAG)
+- **현상**: 팀은 `address(0)`, `Pubkey::default()`, `None`, empty root, renounced owner, unset peer를 “권한 없음” 또는 “종료됨” 으로 받아들인다. 하지만 실제 구현은 그 값을 자주 **비교 가능한 정상값** 으로 남겨 두고, invalid recovery나 wrapper special-case도 같은 값으로 수렴시킨다. 그 순간 **실패 의미론이 성공 비교값으로 붕괴** 한다.
 - **정황**:
-  1. Cloudflare Glasswing는 frontier tooling이 exploit chain construction에 강해졌음을 보여주면서도, 동시에 **architecture/process around them needs to change** 라고 적었다. 이는 `bug finder가 좋아졌다 = end-to-end security가 닫혔다` 가 아니라는 강한 신호다.
-  2. Foundry `#14437` 는 invariant engine도 benchmarked multi-step path에서 여전히 Echidna/Medusa 대비 gap이 있음을 공개적으로 적었다. 즉 assurance plane 자체가 **whole-path completeness** 를 충분히 보장하지 못한다.
-  3. Bankr/Butter Bridge/RetoSwap/Mure/WUSD-GLOVE 최근 창은 모두 edge failure였다. 공통점은 **개별 컴포넌트의 local correctness가 있어도 경계 의미론이 덜 고정되면 exploit가 성립** 한다는 점이다.
-  4. Immunefi의 daily-updated bounty surface는 이런 seam class가 계속 시장 보상을 받는다는 뜻이다.
+  1. **MoneyMon (2026-05-29)**: invalid `ecrecover` 결과 `address(0)` 를 먼저 거부하지 않아, `admin = address(0)` 인 상태에서 실패한 서명이 인증 성공으로 위장됐다.
+  2. **ONTR (2026-05-28)**: renounced/null owner state를 non-authorizing terminal state로 봉인하지 않아, “버린 권한” 이 다시 privileged control path가 되었다.
+  3. **A123 누적 근거**: Anchor typed wrapper도 `Pubkey::default()` sentinel collision 때문에 “typed safety” 가 임의 executable acceptance로 붕괴할 수 있었다. 즉 EVM zero-address만의 문제가 아니다.
 - **왜 메타인가**:
-  1. **node-centric coverage bias**: audit/FV/fuzz/AI review가 저장소·모듈·함수 단위 coverage에 최적화돼 있어, `A→B→C` handoff 자체는 종종 아무도 ownership을 갖지 않는다.
-  2. **schema-without-semantics bias**: 메시지·해시·proof·ACK가 typed / signed / hashed 되어 있으면, 그 입력이 실제로 어떤 **권한 변환** 을 수행하는지 끝까지 안 묻는다.
-  3. **handoff demotion**: contract review, backend review, AI review, wallet review가 분절되면서 경계는 plumbing으로 밀리고, 공격자는 바로 그 plumbing을 공격한다.
-  4. **runtime false-positive pressure**: edge cross-check는 noisy하다고 느껴 bootstrap/happy path에만 남고, incident 때 필요한 runtime edge invariant는 완화되기 쉽다.
+  1. 단일 access-control bug가 아니라, **terminal/unset/default state를 lifecycle 문제로 낮춰 보고 auth semantics로 닫지 않는 조직 습관** 이 반복된다.
+  2. 리뷰어는 equality check와 wrapper type은 보지만, **그 비교 대상이 애초에 admissible value여야 하는가** 는 덜 묻는다.
+  3. negative tests가 valid owner/signer 중심이라 `invalid recover -> sentinel`, `default pubkey`, `renounced owner`, `empty verifier root` 같은 상태가 회귀 자산으로 잘 남지 않는다.
+  4. sentinel 값이 framework internals/config defaults에 숨어 있어 app-layer 감사만으로는 충돌이 늦게 드러난다.
 - **기존 패턴과 구별**:
-  - **META-61** 은 코어 assurance가 인접 plane으로 번지는 후광을 다룬다.
-  - **META-63** 은 발견한 속성이 운영 신호로 승격되는가를 다룬다.
-  - **META-69** 는 intermediate state entitlement 오인을 다룬다.
-  - **A125 / A127 / B29 / A32** 는 개별 edge exploit primitive다.
-  - **META-70** 은 그보다 상위에서, **왜 시스템이 node-level로는 잘 리뷰돼도 edge-level semantics는 끝까지 소유·검증되지 않는가** 를 규정한다.
+  - **A123 / A129** 는 구체 exploit primitive다.
+  - **META-54** 는 declared role과 effective authority mismatch를 다룬다.
+  - **META-68** 은 은퇴/legacy surface의 live authority persistence를 다룬다.
+  - **META-71** 은 그보다 한 단계 위에서, **왜 조직이 비활성/종료/기본 상태를 여전히 admissible auth value로 남겨 두는가** 를 규정한다.
 
-### Phase 3) 스킬 강화 델타 (2026-05-26)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-70 추가** + summary row / 상세 섹션 반영
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~70 / 204+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-70** 반영
+### Phase 3) 스킬 강화 델타 (2026-06-01)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-71 추가** + 헤더/summary row/상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~71 / 207+ total entries** 로 갱신
+- `misskim-skills/skills/blockchain-purple-team/references/audit-failures.md`: **AF-16 Terminal-State / Sentinel Admissibility Blindness** 추가
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-71** 반영
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0526-01 (MEDIUM latent)**: node-audit / edge-semantics gap.
-- 좋은 신호도 있다. on-chain privileged write는 keeper quorum으로 묶여 있고, manual oracle mode는 **circuit-breaker 전제 + 재활성 cooldown** 이 있으며, dashboard는 bootstrap 시 **`getGenesisHash` 다중 RPC 검증** 을 한다.
-- 다만 현재 공개 artifact 기준으로는 `external validated prices → manual oracle mode → update_oracle`, `secondary RPC degraded state → read/write policy`, `dashboard bootstrap → runtime endpoint trust` 같은 **경계별 의미론 manifest** 가 한 장으로 고정돼 있지 않다.
-- 특히 `microstable/docs/app.js` 는 runtime에서 `shouldCrossCheck(method)` 를 `getGenesisHash` 로 제한해 **bootstrap 이후 edge invariant를 부분적으로만 유지** 한다.
-- 따라서 **B45**, **D27**, **A75**, **A115** 는 모두 `node hardened, edge semantics partially specified` 관점의 같은 구조 문제로 재묶인다.
-- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+- **PT-ARCH-2026-0601-01 (LOW 현재 / MEDIUM 확장 시)**: Terminal-State Non-Admissibility Manifest Gap.
+- 현재 공개 artifact에는 EVM식 `address(0)` auth lane이나 default pubkey authorization success path가 보이지 않는다.
+- 다만 향후 **off-chain signed claim, admin recovery, bridge/export peer manifest, optional evidence source, agent/tool provenance root** 를 붙이면 `unset/default` 상태가 쉽게 privileged comparator로 남을 수 있다.
+- 권고는 단순하다: privileged object마다 `live / rotated / revoked / renounced / unset / default` 상태표를 만들고, **sentinel 값은 equality/provenance 비교 전에 hard-fail** 로 닫아야 한다.
+- **CRITICAL 없음. HIGH 없음. LOW 1건(현재) / MEDIUM if expansion.**
 
 ### Sources
-- https://blog.cloudflare.com/cyber-frontier-models/
+- https://hacked.slowmist.io/en/
 - https://github.com/foundry-rs/foundry/issues/14437
-- https://hacked.slowmist.io/
 - https://immunefi.com/bug-bounty/
 
 ## 2026-05-20 (KST) — Daily Evolution (#51)
@@ -455,7 +362,7 @@
 ### Phase 3) 스킬 강화 델타 (2026-05-20)
 - `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **A125 추가** + Why-Audits-Miss / Microstable relevance 반영
 - `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **132+ named vectors / 201+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **A125 admission 판정** 반영
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **A125 admission 판정** 반영
 
 ### Phase 4) Microstable 아키텍처 점검 요약
 - **신규 active architecture finding 없음.** 현재 공개 Microstable artifact에는 live bridge / export / wrapped-collateral release path가 없다.
@@ -501,7 +408,7 @@
 ### Phase 3) 스킬 강화 델타 (2026-05-17)
 - `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-69 추가** + summary row / 상세 섹션 반영
 - `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~69 / 199+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-69** 반영
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-69** 반영
 
 ### Phase 4) Microstable 아키텍처 점검 요약
 - **새 active finding 없음.** 현재 공개 Microstable artifact에는 x402 / paid API / facilitator settlement path가 없다.
@@ -514,144 +421,45 @@
 - https://arxiv.org/html/2605.11781v1
 - https://hacked.slowmist.io/
 
-## 2026-05-15 (KST) — Daily Evolution (#49)
+## 2026-05-07 (KST) — Daily Evolution (#49)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| SlowMist Hacked front page | 2026-05-10 ~ 2026-05-13 incidents | Renegade V1, Huma V1, Aurellion, Transit legacy TRON 사례가 모두 `deprecated/current-safe` 선언과 `실제 live authority 제거` 가 다른 문제임을 보여준다. |
-| Runtime Verification `KelpDAO Audit Passed. $292M Left Anyway.` | 2026-05-15 KST fetched | hidden assumption을 명시적 trust model로 올리지 않으면 보안 posture가 ad-hoc service assembly가 된다고 지적한다. decommission 역시 같은 수준의 explicit security contract가 필요하다. |
-
-### Phase 2) 갭 분석
-
-**오늘 신규 식별 갭**:
-
-#### META-68 — Decommission-Semantics / Legacy-Liveness Gap (DSLLG)
-- **현상**: 팀은 새 UI, 새 SDK, V2 론치, deprecated 라벨, sunset 공지로 어떤 surface가 은퇴했다고 느낀다. 하지만 실제 보안은 **old path가 여전히 live authority, standing approval, residual fee balance, reinitializer, version counter, shared vault/state write 권한을 갖는가** 로 결정된다.
-- **정황**:
-  1. **Renegade V1 (2026-05-10)** — legacy Arbitrum V1이 faulty migration으로 version counter가 어긋난 채 남았고, unprotected initializer가 다시 열리며 deprecated surface가 곧 drain path가 됐다.
-  2. **Huma Finance V1 (2026-05-11)** — 팀은 V1을 sunset 중이고 V2는 안전하다고 했지만, deprecated V1 fee pool은 계속 value-bearing surface였다.
-  3. **Aurellion Labs (2026-05-12)** — 당일 ownership 탈취는 re-initialization이었지만, 실제 사용자 손실은 **예전 approvals** 가 그대로 살아 있었기 때문에 발생했다.
-  4. **Transit Finance legacy TRON (2026-05-13)** — 현재 계약과 별도로 살아 있던 2022-era deprecated contract만으로 $1.88M 손실이 났다.
-- **왜 메타인가**:
-  1. **retirement-as-routing illusion**: UI/SDK가 더 이상 보내지 않으면 체인 위 경로도 사실상 죽었다고 느낀다.
-  2. **migration completion under-specification**: 새 경로 activation은 확인하지만 old approval revoke, old fee bucket drain, old initializer disable, old binary disable은 종료 조건으로 약하게 남는다.
-  3. **residual privilege minimization**: deprecated fee bucket, stale allowance, legacy sidecar, old config를 작은 residue로 보고 privileged control plane으로 늦게 재분류한다.
-  4. **current-safe narrative bias**: 사고 후 `current contracts are secure` 라는 표현이 실제 legacy privileged surface를 늦게 드러나게 만든다.
-- **기존 패턴과 구별**:
-  - **A119** 는 immutable legacy package가 shared state를 계속 쓰는 기술 벡터다.
-  - **META-64** 는 incident 시 revoke set completeness를 다룬다.
-  - **META-68** 은 그보다 앞서 **애초에 은퇴했어야 할 old surface가 왜 계속 live였는가** 를 다룬다. 즉 `deprecated ≠ dead` 를 조직적 종료 조건 문제로 고정한다.
-
-### Phase 3) 스킬 강화 델타 (2026-05-15)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-68 추가** + **A119** 최근 7일 legacy-live 사례로 강화
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~68 / 197+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-68** 반영
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0515-01 (MEDIUM latent)**: decommission-semantics / legacy-liveness gap.
-- 좋은 신호도 있다. Blue v15는 **legacy unsigned checkpoint load 제거**, **기본 HMAC key 제거**, **filename-based unsigned config 예외 제거**, **manual oracle mode 재활성 cooldown** 으로 stale compatibility path를 실제로 줄였다.
-- 그러나 현재 공개 artifact 기준으로는 **retired checkpoint/config/binary/RPC/manual-override surface가 전부 죽었는지** 한 장에서 증명하는 decommission manifest가 약하다.
-- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `legacy trust surface may still be live` 관점의 같은 구조 문제로 재묶인다.
-- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
-
-### Sources
-- https://hacked.slowmist.io/
-- https://www.runtimeverification.com/blog/kelp-dao-audit-passed-292-m-left-anyway
-
-## 2026-05-11 (KST) — Daily Evolution (#48)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| CoinDesk `Kelp says LayerZero approved setup...` | 2026-05-05 | vendor default / review / bug bounty scope carve-out 가 실제 고위험 bridge 보안 가정을 orphan boundary로 만들 수 있음을 재확인한다. |
-| CoinDesk `LayerZero says it made a mistake...` | 2026-05-09 | provider도 뒤늦게 `우리가 1-of-1 DVN을 허용한 것이 실수` 였음을 인정했다. 즉 integrator misconfig로만 밀 수 없는 구조적 ownership gap 이다. |
-| Crypto Times `xAI’s Grok AI Loses $175K...` | 2026-05-04 | 겉으로는 chatbot reply surface였지만, 실제로는 Bankr가 그 출력 텍스트를 wallet authorization으로 해석했다. `assistant` 라벨과 `effective authority` 가 분리되지 않았다. |
-| Certora `Mastering Threat Modeling` | 2026-05-05 | actor / key / off-chain infra / assumption을 living document로 유지하지 않으면 ownership gap이 머릿속에서만 관리된다. |
-| GitHub `foundry-rs/foundry#14437` + Immunefi Bug Bounty page | fetched in-window, no fresh delta | 기존 META-66/67을 뒤집을 새 구조 신호는 추가로 나오지 않았다. |
-
-### Phase 2) 갭 분석
-
-**판정: 오늘은 신규 META 추가 없음. 기존 META 강화만 유효.**
-
-#### Reinforcement A — META-58 Default-Path / Scope-Carveout Responsibility Gap (DSCRG)
-- **정황**: Kelp / LayerZero 공방은 단순한 integrator misconfiguration 논쟁이 아니었다. CoinDesk 2026-05-05 보도에 따르면 Kelp는 LayerZero personnel review, quickstart/example, bug bounty scope carve-out, default-path guidance가 모두 `1-of-1 DVN` 위험을 실질적으로 흐렸다고 주장했다. 2026-05-09에는 LayerZero도 `our DVN should not have been allowed to secure high-value assets in 1/1 mode` 라고 인정했다.
-- **왜 메타인가**:
-  1. **default-path authority**: builder는 공식 quickstart / example / vendor review를 사실상의 보안 권고로 받아들인다.
-  2. **scope-carveout drift**: bounty / audit scope는 `application misconfiguration` 으로 밀어내지만, 운영 현실에서는 그 misconfiguration이 provider-approved production path가 되기 쉽다.
-  3. **ownership diffusion**: 사고 전에는 integrator 책임, 사고 후에는 provider도 일부 책임을 인정하는 식으로 책임 경계가 뒤늦게만 드러난다.
-- **기존 패턴과 구별**: 이 신호는 **새 META가 아니라 META-58의 강한 실증 강화** 다. 특히 `unsafe default + approved review + out-of-scope bounty` 조합이 왜 orphan boundary를 만드는지 더 선명해졌다.
-
-#### Reinforcement B — META-54 Declared-Role / Effective-Authority Gap (DREAG) + META-38 AI Agent Runtime Governance Framework Gap (AARGFG)
-- **정황**: Grok / Bankr 사건은 `Grok가 해킹당했다` 처럼 보였지만, 실제 핵심은 **LLM 출력 텍스트를 Bankr가 financial authorization으로 해석한 설계** 였다. 공격자는 membership NFT로 transfer capability를 unlock 한 뒤, Morse code prompt injection으로 assistant reply를 transaction command로 변환시켰다.
-- **왜 메타인가**:
-  1. **declared role mismatch**: 표면상 `chatbot reply` 였지만, effective authority는 `wallet command dispatcher` 였다.
-  2. **runtime governance absence**: tool call 권한, capability unlock 조건, human approval boundary가 런타임에서 충분히 강제되지 않았다.
-  3. **auth-by-text anti-pattern**: 비신뢰 LLM output을 그대로 authorization surface로 쓰면 prompt-injection은 곧 권한 상승이 된다.
-- **기존 패턴과 구별**: 이것도 **새 META가 아니라** 기존 **B29 / META-38 / META-54 / META-45** 강화 신호다. 새 primitive보다, 이미 알려진 AI control-plane gap이 실제 자금 이동으로 현실화됐다는 쪽이 더 중요하다.
-
-### Phase 3) 스킬 강화 델타 (2026-05-11)
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 source cross-read를 누적 기록.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **변경 없음**. 오늘 신호는 기존 **META-38 / META-54 / META-58** 및 **B29 / A4** 의 reinforcement로 충분하다.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: **변경 없음**. 2026-05-11 A4 reinforcement log가 이미 현재 신호를 흡수하고 있다.
-
-### Phase 4) Microstable 아키텍처 점검 요약
-- **신규 아키텍처 finding 없음.**
-- **LayerZero/Kelp class**: 현재 Microstable에는 bridge / DVN / external message verifier path가 없어 **NOT ACTIVE today**.
-- **Grok/Bankr class**: 현재 Microstable에는 assistant-text → signer / wallet command dispatcher 경로가 없어 **NOT ACTIVE today**.
-- 다만 두 사건은 각각 다음 carry-forward를 강화한다:
-  - future bridge / wrapped collateral 확장 시 **META-58 / META-56 / META-57** 체크를 출시 게이트로 승격할 것
-  - future AI operator / dashboard assistant / governance copilot 도입 시 **META-38 / META-54 / B29** 를 별도 위협 모델 세션으로 먼저 다룰 것
-- **CRITICAL 없음. HIGH 없음. 기존 carry-forward만 유지.**
-
-### Sources
-- https://www.coindesk.com/web3/2026/05/05/kelp-claims-that-layerzero-approved-the-setup-it-blamed-for-usd292-million-bridge-hack
-- https://www.coindesk.com/tech/2026/05/09/layerzero-says-it-made-a-mistake-in-usd292-million-kelp-exploit
-- https://www.cryptotimes.io/2026/05/04/xais-grok-ai-loses-175k-in-crypto-heist-via-clever-prompt-injection-then-gets-it-all-back/
-- https://www.certora.com/blog/threat-modeling
-- https://github.com/foundry-rs/foundry/issues/14437
-- https://immunefi.com/bug-bounty/
-
-## 2026-05-07 (KST) — Daily Evolution (#47)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| RustSec `RUSTSEC-2026-0118` | 2026-05-01 issued | validation path가 cross-zone 응답 하나로 **root-stall / OOM kill-switch** 가 될 수 있음을 보여준다. |
-| RustSec `RUSTSEC-2026-0119` | 2026-05-01 issued | name compression encoder가 많은 record 입력에서 O(n²) CPU exhaustion path가 될 수 있음을 보여준다. |
-| RustSec `RUSTSEC-2026-0120` | 2026-05-01 issued | `hickory-net` validation path도 같은 class의 resource exhaustion 취약성을 가진다. |
-| Certora `Mastering Threat Modeling` | 2026-05-05 | actor / dependency / assumption을 living document로 유지해야 검증면의 비용 경계도 자산처럼 다룰 수 있다. |
-| Immunefi Bug Bounty Programs | 2026-05-06 16:00 UTC update | cheap-to-trigger / expensive-to-process 틈은 계속 시장에서 가격이 붙는다. |
+| RustSec `RUSTSEC-2026-0118` | 2026-05-01 issued | DNSSEC validation path가 cross-zone 응답 하나로 **root-stall / OOM kill-switch** 가 될 수 있음을 보여준다. 검증층은 판정기이기 전에 비용 공격면이 될 수 있다. |
+| RustSec `RUSTSEC-2026-0119` | 2026-05-01 issued | message encoder의 name compression이 많은 record 입력에서 **O(n²) CPU exhaustion** 으로 무너질 수 있음을 보여준다. encoder도 assurance-adjacent surface다. |
+| RustSec `RUSTSEC-2026-0120` | 2026-05-01 issued | 같은 closest-encloser loop class가 `hickory-net` 에도 존재한다. 즉 개별 구현 버그보다 **validation-path cost explosion** 이 재발 가능한 패턴이다. |
+| Certora `Mastering Threat Modeling` | 2026-05-05 | actor / dependency / assumption을 living document로 유지하라고 권한다. 퍼플팀 관점에서는 여기에 **검증 단계별 input bound / allocation ceiling / timeout budget** 도 포함돼야 한다. |
+| Immunefi Bug Bounty Programs | last updated 2026-05-06 16:00 UTC | bug bounty surface와 daily metrics가 계속 열려 있다. 즉 방어자가 정상 입력 기준으로만 본 assurance surface의 **cheap-to-trigger / expensive-to-process** 틈은 계속 시장에서 탐색된다. |
 
 ### Phase 2) 갭 분석
 
 **오늘 신규 식별 갭**:
 
 #### META-67 — Validation Cost-Ceiling Gap (VCCG)
-- **현상**: 팀은 validator, parser, attestation check, dependency verifier, invariant engine 같은 assurance layer에 대해 `정답을 맞게 판별하는가` 와 `실패하면 어떻게 전환되는가` 는 묻기 시작했지만, **입력 하나가 CPU·메모리·시간 비용을 얼마나 비정상적으로 키울 수 있는가** 는 별도 보안 경계로 잘 다루지 않는다.
+- **현상**: 팀은 validator, encoder, parser, attestation check, dependency verifier 같은 assurance layer에 대해 `정답을 맞게 판별하는가` 와 `실패하면 어떻게 전환되는가` 는 비교적 잘 묻는다. 그러나 **공격자가 입력 형태를 비틀어 CPU·메모리·시간 비용을 비정상적으로 키울 수 있는가** 는 별도 보안 경계로 잘 다루지 않는다. 그 결과 검증층은 fail-open/fail-stop을 논하기도 전에 **cheap-to-trigger, expensive-to-process resource-exhaustion actuator** 가 된다.
 - **메타 원인**:
-  1. **semantic-first bias**: valid / invalid 판별 정확도에 집중하고, resource envelope를 security invariant로 다루지 않는다.
-  2. **cheap-trigger / expensive-verify asymmetry**: 공격자는 작은 입력으로 defender의 큰 검증 비용을 유발할 수 있다.
-  3. **cost bug invisibility**: parser / verifier / cross-check slowdown은 기능 이슈로 보이기 쉬워, privilege-bearing assurance plane 취약점으로 승격되지 않는다.
-  4. **operator pressure drift**: 검증 비용이 과도하면 운영자는 disable / bypass / timeout 완화 쪽으로 밀리기 쉽고, cost bug가 semantic bypass로 전이된다.
+  1. **benign-validator bias**: validator / encoder / parser를 방어막으로만 보고, 공격자가 work factor를 조작할 수 있다고 잘 상상하지 않는다.
+  2. **correctness-over-cost bias**: soundness / completeness / failure semantics는 적어도, `input bound / allocation ceiling / timeout budget` 은 성능 문제로 밀리기 쉽다.
+  3. **threat-model truncation**: threat model이 자산·행위자·가정까지만 다루고, 검증 단계별 비용 상한은 빠뜨린다.
+  4. **bypass-pressure blindness**: 반복된 slow-path가 결국 operator bypass·disable pressure로 이어지는 운영 역학을 과소평가한다.
 - **기존 패턴과 구별**:
-  - **META-66** = assurance plane이 실패할 때 어떤 의미론으로 전환되는가
-  - **META-67** = **그 assurance plane이 감당 가능한 비용 상한 안에서만 동작하도록 예산화됐는가**
-- **Purple Team 고유 기여**: 오늘 신호는 `validation is correct` 와 `validation is affordable under attack` 가 다른 속성임을 분리한다. 보안 검증층은 correctness만으로 충분하지 않고, **adversarial cost budget** 안에 묶여 있어야 한다.
+  - **META-65** = cheap search vs scarce response artifact
+  - **META-66** = assurance plane이 실패했을 때 어떤 보안 의미론으로 전환되는가
+  - **META-67** = **그 이전 단계, 즉 검증면 자체의 계산비용 상한을 설계했는가**
+- **Purple Team 고유 기여**: 오늘 신호는 `검증을 더 붙였는가` 가 아니라, **방어 로직이 감당 가능한 비용 상한 안에서만 실행되도록 예산화됐는가** 가 실제 구조적 빈틈임을 보여준다.
 
 ### Phase 3) 스킬 강화 델타 (2026-05-07)
 - `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-67 추가** + Why-Audits-Miss / 상세 섹션 반영
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~67 / 196+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-67** 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Patterns + matrix count를 **META-01~67 / 196+ total entries** 로 갱신
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-67** 반영
 
 ### Phase 4) Microstable 아키텍처 점검 요약
 - **PT-ARCH-2026-0507-01 (MEDIUM latent)**: validation cost-ceiling gap.
-- secondary RPC degraded mode, binary / Cargo.lock continuity check는 존재한다.
-- 그러나 공개 artifact 기준으로는 **RPC divergence cross-check, attestation verifier, dependency integrity check, future validator/prover sidecar** 에 대해 `input bound / allocation ceiling / timeout budget / graceful abort / post-abort evidence` 를 한 묶음으로 고정한 증거가 약하다.
-- 따라서 **B45**, **D27**, **A115**, **A75** 는 모두 `validation cost ceiling` 관점의 같은 구조 문제로 재묶인다.
+- keeper의 secondary RPC degraded mode, emergency shutdown path, Cargo.lock / binary attestation continuity check는 이미 일부 존재한다.
+- 다만 현재 공개 artifact 기준으로는 **RPC divergence cross-check, attestation/digest verifier, dependency integrity check, future validator/prover sidecar** 에 대해 `최대 입력 크기 / 최대 allocation / per-check timeout / graceful abort / post-abort evidence` 를 한 묶음으로 고정한 증거가 약하다.
+- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `validation cost ceiling` 관점의 같은 구조 문제로 재묶인다.
 - **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
 
 ### Sources
@@ -661,159 +469,164 @@
 - https://www.certora.com/blog/threat-modeling
 - https://immunefi.com/bug-bounty/
 
-## 2026-05-06 (KST) — Daily Evolution (#46)
+## 2026-05-06 (KST) — Daily Evolution (#48)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| RustSec `RUSTSEC-2026-0118` | 2026-05-01 issued | DNSSEC validation path 자체가 cross-zone 응답 하나로 **root-stall / OOM kill-switch** 가 될 수 있음을 보여준다. 즉 assurance layer는 본질적으로도 공격 표면이다. |
-| RustSec `RUSTSEC-2026-0120` | 2026-05-01 issued | 같은 class가 `hickory-net` 에도 존재한다. 검증면은 `통과 조건` 만이 아니라 **실패 비용과 중단 의미론** 도 설계 대상임을 재확인한다. |
-| GitHub `foundry-rs/foundry#14437` | 4 days ago surfaced / fetched 2026-05-06 | SCFuzzBench 기준 Foundry invariant engine이 Echidna/Medusa 대비 bug-finding completeness gap을 보인다고 정리한다. 즉 widely-used assurance plane도 **under-detect / early-stop / corpus-quality** 실패 의미론을 가진다. |
-| Immunefi Bug Bounty Programs | 2026-05-05 16:00 UTC update | 경제적 인센티브는 계속 열려 있고, 방어자가 믿는 검증층의 blind spot은 계속 외부에서 탐색된다. |
-| Certora `Mastering Threat Modeling` | 2026-05-05 | protocol이 커질수록 actor, key, dependency, off-chain infra를 머릿속으로만 관리할 수 없다고 지적한다. 검증면을 늘리는 것과 **그 검증면의 override / failure contract를 고정하는 것** 은 다른 과업이다. |
+| RustSec `RUSTSEC-2026-0118` / `RUSTSEC-2026-0120` | 2026-05-01 | DNSSEC validation path 하나가 **cross-zone 응답만으로 root-stall/OOM kill-switch** 가 될 수 있음을 보여준다. 즉 validator 자체가 availability trust boundary다. |
+| GitHub `foundry-rs/foundry` issue `#14437` | 4 days ago | SCFuzzBench 기준 Foundry invariant engine이 Echidna/Medusa 대비 실전 bug 탐지 갭을 보인다는 신호가 나왔다. 즉 널리 쓰는 assurance engine도 **under-detect semantics** 를 가진다. |
+| Immunefi `Bug Bounty Programs` page | 1 day ago | 상시 활성화된 bounty surface는 assurance blind spot을 찾는 경제적 유인이 계속 열려 있음을 보여준다. |
 
 ### Phase 2) 갭 분석
 
 **오늘 신규 식별 갭**:
 
 #### META-66 — Assurance-Plane Failure Semantics Gap (APFSG)
-- **현상**: 팀은 validator, prover, invariant engine, attestation check, RPC cross-check 같은 assurance plane을 계속 붙인다. 그러나 대개 `무엇이 유효한가(pass semantics)` 는 정교하게 적으면서도, **그 plane이 hang / diverge / under-detect / timeout 할 때 시스템이 fail-stop 해야 하는지, 제한적 fail-open 으로 갈 수 있는지, 어떤 override 와 사후 증빙이 필요한지** 는 느슨하게 남긴다.
+- **현상**: 팀은 validator, prover, invariant engine, attestation check, RPC cross-check 같은 assurance plane을 계속 추가하지만, 대개 `무엇이 유효한가` 는 정교하게 정의하면서도 **그 plane이 hang / diverge / under-detect / timeout 할 때 시스템이 어떤 보안 의미론으로 전환되는가** 는 느슨하게 남긴다.
 - **메타 원인**:
-  1. **safeguard halo**: 검증 컴포넌트를 benign safeguard로 보고, 그것이 실패할 때의 의미론을 별도 trust boundary로 다루지 않는다.
-  2. **pass-path bias**: 테스트와 감사가 주로 success path와 valid-output semantics에 집중하고, validation-cost ceiling / hang path / disagreement contract는 덜 고정한다.
-  3. **override informality**: 검증층이 여러 개여도 `누가 언제 override 하는가` 와 `override 후 어떤 evidence가 남아야 하는가` 는 운영 관행으로 밀린다.
-  4. **more-checks-equals-safer 착시**: 검증층이 많아질수록 오히려 failure semantics의 공백이 가려진다.
+  1. **guardian-benign bias**: 검증면을 방어 장치로만 보고 그 자체의 failure mode를 별도 trust boundary로 취급하지 않는다.
+  2. **pass-first testing**: pass/fail correctness는 검증해도, hang path, validation-cost ceiling, disagreement contract는 잘 못 박지 않는다.
+  3. **override informalism**: 어떤 assurance layer를 누가 언제 우회할 수 있는지와, 우회 후 어떤 추가 증거가 필요한지가 문서보다 운영자 관행에 남는다.
+  4. **more-checks-equals-safer bias**: 검증층이 많다는 사실이 오히려 failure semantics 부재를 가린다.
 - **기존 패턴과 구별**:
-  - **META-57** = 중복과 failover의 독립성이 실제인가
-  - **META-63** = 발견한 속성을 운영 신호로 승격했는가
-  - **META-65** = cheap search와 scarce response artifact의 비대칭
-  - **META-66** = **그 신호·검증면 자체가 실패할 때 어떤 보안 의미론으로 전환되는가**
-- **Purple Team 고유 기여**: 오늘 신호는 `검증을 더 붙였는가` 가 아니라, **그 검증층이 실패했을 때 무엇을 금지하고 무엇을 허용하는가를 미리 못 박았는가** 가 실제 구조적 빈틈임을 보여준다.
+  - **META-57** = redundancy와 failover 독립성 문제
+  - **META-63** = 찾은 속성을 운영 신호로 승격했는가
+  - **META-65** = cheap search와 scarce response artifact의 속도 차이
+  - **META-66** = **그 신호·검증면 자체가 실패할 때 fail-stop / fail-open / degraded-with-guard 중 무엇으로 전환되는가**
+- **Purple Team 고유 기여**: 오늘 신호는 `검증을 더 붙여라` 가 아니라, **검증면이 실패할 때의 의미론을 먼저 못 박지 않으면 그 검증면 자체가 blind spot 또는 kill-switch가 된다** 는 점을 보여준다.
 
 ### Phase 3) 스킬 강화 델타 (2026-05-06)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-66 추가** + Why-Audits-Miss / 상세 섹션 반영
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~66 / 195+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-66** 반영
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-66 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Patterns + matrix count를 **META-01~66 / 195+ total entries** 로 갱신
+- `docs/purple-team-meta-analysis.md`: 오늘자 **META-66 누적**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
 - **PT-ARCH-2026-0506-01 (MEDIUM latent)**: assurance-plane failure semantics gap.
-- secondary RPC degraded mode, Cargo.lock / binary attestation continuity, emergency-only degraded path는 일부 존재한다.
-- 다만 현재 공개 artifact 기준으로는 **RPC divergence / timeout, attestation absence/hash drift, manual oracle override, future validator/prover failure** 를 하나의 failure-semantics manifest로 묶은 증거가 약하다.
-- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `assurance plane failure semantics` 관점의 같은 구조 문제로 재묶인다.
+- 긍정 신호: secondary RPC degraded mode, degraded에서도 유지되는 emergency shutdown path, Cargo.lock / binary attestation continuity check가 이미 있다.
+- 그러나 현재 공개 artifact 기준으로는 **RPC divergence, attestation absence/hash drift, manual oracle override, future validator/prover failure** 를 하나의 `success semantics / failure semantics / override owner / post-override evidence` 표로 묶은 증거가 약하다.
+- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `assurance plane failure semantics` 관점의 같은 구조적 갭으로 다시 묶인다.
 - **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
 
 ### Sources
 - https://rustsec.org/advisories/RUSTSEC-2026-0118.html
-- https://rustsec.org/advisories/RUSTSEC-2026-0120.html
 - https://github.com/foundry-rs/foundry/issues/14437
 - https://immunefi.com/bug-bounty/
-- https://www.certora.com/blog/threat-modeling
 
-## 2026-05-03 (KST) — Daily Evolution (#45)
+## 2026-05-03 (KST) — Daily Evolution (#47)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| Chainalysis `The Resolv Hack: How One Compromised Key Printed $23 Million` | 2026-04-30 fetched | 병목은 코드 취약점 발견보다 **signing environment를 누가 얼마나 빨리 끊고 대체할 수 있는가** 였다. |
-| OWASP `Incident Response Playbook` | 2026-04-28 fetched | 대응 절차는 촘촘하지만, 실행은 여전히 사람·역할·수동 artifact에 크게 의존한다. |
-| Foundry `v1.7.0` | 2026-04-28 | invariant/time fuzz의 탐색 비용을 더 낮춘다. 공격·검증 탐색 노동은 더 싸고 병렬화된다. |
-| GitHub `shuvonsec/claude-bug-bounty` | published 2 days ago / fetched 2026-05-03 | target memory, autonomous mode, report writer를 묶어 recon → hunt → validate → report를 automation asset으로 만든다. |
+| Chainalysis `The Resolv Hack: How One Compromised Key Printed $23 Million` | 2026-04-30 fetched | 사고의 병목은 코드 해석이 아니라 **누가 signer environment를 얼마나 빨리 끊고 대체할 수 있는가** 였다. |
+| Foundry `v1.7.0` release | 2026-04-28 | invariant exploration, optimization mode, time-delay fuzzing으로 **시퀀스 탐색 비용** 이 더 내려갔다. |
+| OWASP `Incident Response Playbook` | 2026-04-28 fetched | 대응은 severity, owner, containment, cleanup, communication이 촘촘하지만, 바로 그만큼 **사람과 절차에 묶인 희소 작업** 이다. |
+| GitHub `shuvonsec/claude-bug-bounty` | 2 days ago | recon → hunt → validate → report가 memory-backed autopilot으로 포장되며 **공격 탐색 노동의 대중화** 가 가속된다. |
+| Stingrai `Crypto Hacking Statistics 2026` | 3 days ago | 상위 손실은 logic novelty보다 **operator / signing / infrastructure compromise** 쪽에 집중되고, audits는 여전히 충분조건이 아님이 재확인된다. |
 
 ### Phase 2) 갭 분석
 
 **오늘 신규 식별 갭**:
 
 #### META-65 — Assurance-Commoditization / Response-Scarcity Gap (ACRSG)
-- **현상**: invariant fuzz, 공개 FV 도구, AI bug bounty autopilot 같은 흐름으로 **취약점 탐색·시퀀스 생성·검증 보고서 작성 노동은 점점 싸고 병렬적이며 기억을 가진 자동화 작업** 이 된다. 반면 실제 incident 대응에 필요한 authority inventory, actuator binding, freeze/rotate evidence, owner escalation은 여전히 **소수 인간이 수동으로 유지하는 희소 자산** 이다.
+- **현상**: exploit discovery, sequence search, validation, report-grade write-up은 점점 더 **싸고 병렬적이며 memory-backed** 인 자동화로 변하고 있다. 반면 실제 incident를 닫는 authority inventory, freeze/rotate artifact, escalation owner map, verification evidence는 여전히 **소수 인간이 수동으로 유지하는 희소 산출물** 이다. 이제 많은 조직은 취약점을 몰라서가 아니라, **닫을 산출물을 항상 최신으로 유지하지 못해** 진다.
 - **메타 원인**:
-  1. **search-cost collapse**: 공개 툴링과 memory-backed 자동화가 취약점 탐색 비용을 급격히 낮춘다.
-  2. **artifact underpricing**: runbook, authority manifest, command artifact를 보안 핵심 산출물이 아니라 운영 문서로 낮게 본다.
-  3. **assurance halo**: 취약점 탐색 도구의 발전이 곧 방어 우위라고 착각한다.
-  4. **human bottleneck persistence**: defender 쪽 inventory와 actuator는 여전히 사람 머릿속이나 산발적 문서에 남는다.
+  1. **search commoditization**: Foundry/AI bounty tooling/FV democratization으로 공격 가설 생성과 검증의 진입 비용이 낮아진다.
+  2. **memory asymmetry**: 공격 자동화는 세션 간 패턴과 보고 포맷을 축적하지만, 방어 쪽 authority inventory와 actuator 지식은 사람 머릿속이나 산발적 문서에 남는다.
+  3. **artifact demotion**: runbook, rotate 명령, freeze checklist, owner escalation map이 security artifact가 아니라 ops note로 취급된다.
+  4. **labor-model lag**: 조직은 아직도 `전문가 몇 명이 가끔 깊게 보면 충분하다` 는 희소성 가정 위에서 방어 프로세스를 운영한다.
 - **기존 패턴과 구별**:
-  - **META-40/41** = AI·공개화가 공격 tempo를 어떻게 높이는가
-  - **META-63** = 중요한 속성을 운영 신호로 승격했는가
-  - **META-64** = 끊기로 한 뒤 revoke set을 완전히 셌는가
-  - **META-65** = **cheap search와 expensive closure 사이의 속도 차**
-- **Purple Team 고유 기여**: 오늘 신호는 취약점을 `찾는 능력` 보다, **닫을 산출물을 항상 최신으로 유지하는 능력** 이 더 희소해졌다는 구조를 드러낸다.
+  - **META-40** = AI 도구의 양면성
+  - **META-41** = disclosure 이후 copycat tempo
+  - **META-63** = 찾은 속성을 운영 신호로 승격하는 문제
+  - **META-64** = 끊기로 한 뒤 revoke set을 얼마나 완전하게 세는가
+  - **META-65** = **그 모든 전단계에서 공격 탐색 노동이 상품화되는 속도와, 대응 산출물 유지 노동이 희소한 속도의 차이**
+- **Purple Team 고유 기여**: 오늘 신호는 `공격이 빨라졌다` 보다 한 단계 더 간다. **탐색은 상품화되고, 대응은 아직 희소하다** 는 노동 구조 자체가 방어 실패 원인임을 드러낸다.
 
 ### Phase 3) 스킬 강화 델타 (2026-05-03)
 - `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-65 추가** + summary row / 상세 섹션 반영
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~65 / 193+ total entries** 로 갱신
-- `misskim-skills/docs/purple-team-meta-analysis.md`: 본 누적 문서에 **META-65** 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Patterns + matrix count를 **META-01~65 / 193+ total entries** 로 갱신
+- `docs/purple-team-meta-analysis.md`: 오늘자 **META-65 누적**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
 - **PT-ARCH-2026-0503-01 (MEDIUM latent)**: assurance-commoditization / response-scarcity gap.
-- black/red/purple 누적 지식과 blue hardening으로 핵심 위협 경계는 비교적 잘 드러나 있다.
-- 그러나 현재 공개 artifact 기준으로는 **authority inventory, invariant manifest, freeze/rotate command artifact, verification evidence bundle** 이 여러 문서와 절차에 분산돼 있다.
-- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `공격 탐색 자동화 > 대응 artifact 최신성` 이라는 같은 구조 문제로 이어진다.
+- Blue v14/v15 hardening과 Black/Red/Purple 누적 분석으로 무엇이 위험한지는 꽤 잘 드러나 있다.
+- 그러나 현재 공개 artifact 기준으로는 **authority inventory, invariant manifest, freeze/rotate command artifact** 가 문서와 절차에 분산되어 있고, machine-checkable response bundle 형태로 고정돼 있지 않다.
+- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `cheap search ≠ cheap closure` 관점에서 다시 묶인다.
 - **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
 
 ### Sources
 - https://www.chainalysis.com/blog/lessons-from-the-resolv-hack/
+- https://github.com/foundry-rs/foundry/releases/tag/v1.7.0
 - https://owasp.org/www-project-agentic-skills-top-10/incident-response
-- https://github.com/foundry-rs/foundry/releases
 - https://github.com/shuvonsec/claude-bug-bounty
+- https://www.stingrai.io/blog/crypto-hacking-statistics-2026
 
-## 2026-05-01 (KST) — Daily Evolution (#44)
+## 2026-04-30 (KST) — Daily Evolution (#46)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| Chainalysis `The Resolv Hack: How One Compromised Key Printed $23 Million` | 2026-04-30 fetched | `SERVICE_ROLE` 서명 하나가 곧 mint upper bound 전체를 대체했다. 문제는 키 한 개보다, **그 키가 대표하는 서명 환경 전체를 얼마나 빨리 봉쇄·교체할 수 있는가** 다. |
-| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | 첫 손실 뒤 대응은 단일 스위치가 아니었다. Ethereum/L2 pause, blacklist, downstream freeze처럼 **여러 control surface를 함께 끊어야 containment가 성립** 했다. |
-| OWASP `Incident Response Playbook` | 2026-04-28 fetched | incident response는 remove, reset credentials, clear caches, support coordination처럼 **행동 목록 이전에 영향 자산 목록** 이 있어야 제대로 굴러간다. |
-| Foundry `v1.7.0` | 2026-04-28 | invariant/time fuzz는 더 좋아졌지만, 그것만으로 `무엇을 rotate/revoke/freeze 해야 하는가` 의 **권한 그래프 인벤토리** 를 만들어주지는 않는다. |
+| Foundry `v1.7.0` release | 2026-04-28 | invariant testing, optimization mode, time-based fuzzing이 강화됐다. 속성을 **더 빨리 찾고 더 오래 돌리는 능력** 이 커졌다. |
+| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | traditional security tools가 놓친 이유는 on-chain calldata가 정상처럼 보였기 때문이며, 필요한 것은 **live cross-chain invariant monitoring** 이었다고 명시한다. |
+| OWASP `Incident Response Playbook` | 2026-04-28 fetched | IR 절차는 잘 정리돼 있지만, 그 전제는 이미 **어떤 속성이 깨졌는지 알려주는 운영 신호가 존재한다** 는 것이다. |
+| Immunefi `Base <> Immunefi Audit Competition` | 2026-04-21 | pre-mainnet reviewer density를 높이는 흐름이 강화되고 있다. 즉 배포 전 scrutiny는 더 두꺼워진다. |
+| Nomos Labs `Smart Contract Testing Guide 2026` | 2026-04 window | unit/integration/fuzz/invariant/formal verification을 모두 권장한다. 그러나 무게중심은 여전히 **pre-deploy correctness** 다. |
+| arXiv `2604.18395` (FAUDITOR) / `2604.13611` (V2E) | 2026-04-20 submission/update | exploitable property discovery와 PoC validation 자동화가 빨라지고 있다. 즉 `무엇이 깨질 수 있는가` 를 더 잘 찾는다. |
 
 ### Phase 2) 갭 분석
 
 **오늘 신규 식별 갭**:
 
-#### META-64 — Revocation-Surface Completeness Gap (RSCG)
-- **현상**: 팀이 incident에서 `pause`, `rotate`, `revoke`, `freeze`, `blacklist` 를 하기로 결정해도, 실제로 같은 권한을 운반하는 **전체 revocation surface** 를 다 세지 못해 containment가 부분적으로만 끝난다. 키 하나는 교체했지만 sibling token, deploy integration, OAuth grant, legacy signer, pending rotation set, downstream approval, sidecar attestation 같은 **동등 권한 표면** 이 남는다.
+#### META-63 — Invariant-to-Operations Promotion Gap (IOPG)
+- **현상**: 업계는 불변식 탐지와 검증을 빠르게 고도화하고 있지만, 그렇게 찾은 속성이 **런타임 monitor / disagreement alarm / auto-halt threshold** 로 승격되지 않는 경우가 많다. 그 결과 팀은 `무엇을 지켜야 하는가` 는 알아도 `운영에서 언제 이미 깨졌는가` 는 늦게 안다.
 - **메타 원인**:
-  1. **principal-list bias**: 팀은 권한을 graph가 아니라 `키 1개`, `역할 1개`, `서비스 1개` 처럼 단일 principal로 요약한다.
-  2. **action-first / inventory-late**: runbook는 `무엇을 할지` 는 적지만, `무엇을 함께 끊어야 닫히는지` 의 완전한 목록은 약하다.
-  3. **audit-scope truncation**: 감사와 바운티는 대개 exploit precondition이나 direct drain path까지만 본다. 같은 authority를 공유하는 sibling surface의 **완전한 revoke set** 까지는 모델링하지 않는다.
-  4. **containment false-closure**: 일부 rotation/pause가 성공하면 팀은 incident가 닫혔다고 느끼지만, 남은 equivalent authority가 재진입 통로가 된다.
+  1. **artifact-ends-here bias**: audit report, formal proof, fuzz property, competition finding이 나오면 안전성이 이미 전달됐다고 느끼고 observability spec까지 이어 붙이지 않는다.
+  2. **ownership split**: invariant를 정의한 사람과 monitor를 운영하는 사람이 다르다. property는 문서에 남고 telemetry는 일반적인 health metric에 머문다.
+  3. **runtime semantics downgrade**: cross-chain conservation, artifact continuity, verifier disagreement, oracle-source divergence 같은 속성을 protocol security가 아니라 단순 monitoring enhancement로 축소한다.
+  4. **tool-success substitution**: fuzz/FV/PoC validation이 강해질수록 `우리는 이 속성을 이미 관리하고 있다` 는 착시가 생긴다.
 - **기존 패턴과 구별**:
-  - **META-54** = 어떤 표면이 실효 권한을 갖는가
-  - **META-58** = 그 기본 경계를 누가 소유하는가
-  - **META-62** = 언제 incomplete evidence로 끊을 것인가
-  - **META-63** = 어떤 속성을 런타임 신호로 승격할 것인가
-  - **META-64** = **이제 끊기로 했을 때, 무엇을 전부 끊어야 닫히는가**
-- **Purple Team 고유 기여**: 오늘 신호는 빠른 대응의 중요성만이 아니라, **빠른 대응도 revocation set이 불완전하면 구조적으로 새어 나간다** 는 점을 보여준다.
+  - **META-15** = 테스트가 실체인 의미론을 검증하는가
+  - **META-53** = actuator를 실제로 발사할 수 있는가
+  - **META-62** = 언제 불완전한 증거만으로 containment threshold를 넘길 것인가
+  - **META-63** = **그 전에 어떤 속성을 운영 신호와 차단 동작으로 승격했는가**
+- **Purple Team 고유 기여**: 오늘 신호는 `탐지 도구가 부족하다` 가 아니라, **찾아낸 속성이 production sensor가 되지 못하는 구조** 를 보여준다.
 
-### Phase 3) 스킬 강화 델타 (2026-05-01)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-64 추가** + summary row / 상세 섹션 반영
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~64 / 192+ total entries** 로 갱신
+### Phase 3) 스킬 강화 델타 (2026-04-30)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-63 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Patterns + matrix count를 **META-01~63 / 190+ total entries** 로 갱신
+- `docs/purple-team-meta-analysis.md`: 오늘자 **META-63 누적**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0501-01 (MEDIUM latent)**: revocation-surface completeness gap.
-- `docs/ops-runbook.md` 는 emergency shutdown, key rotation, quorum 유지 절차를 갖고 있다. 다만 현재 공개 artifact 기준으로는 **keeper current/next set, expected upgrade authority, RPC/provider ownership, attestation artifact, deploy freeze 대상** 을 하나의 authority inventory로 묶은 증거가 약하다.
-- 그 결과 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `무엇을 rotate/revoke/freeze 해야 incident가 실제로 닫히는가` 관점의 같은 구조 문제로 재묶인다.
+- **PT-ARCH-2026-0430-01 (MEDIUM latent)**: invariant-to-operations promotion gap.
+- Blue v14/v15는 mint/redeem flow cap, oracle staleness/confidence, degraded write suppression, emergency path 품질을 실제로 끌어올렸다.
+- 그러나 현재 공개 artifact 기준으로는 각 핵심 보안 속성이 `누가 모니터링하고`, `어떤 disagreement에서`, `어떤 halt/failover로` 이어지는지를 한 장에서 묶는 **explicit invariant manifest** 증거가 약하다.
+- 따라서 **B45**(audit attestation continuity), **D27**(RPC truth divergence), **A115**(dependency-latent TLS trust drift), **A75**(manual oracle fallback semantic gap) 는 모두 `assurance exists, runtime promotion unclear` 관점의 같은 구조적 갭으로 다시 묶인다.
 - **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
 
 ### Sources
-- https://www.chainalysis.com/blog/lessons-from-the-resolv-hack/
+- https://github.com/foundry-rs/foundry/releases/tag/v1.7.0
 - https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
 - https://owasp.org/www-project-agentic-skills-top-10/incident-response
-- https://github.com/foundry-rs/foundry/releases
+- https://immunefi.com/blog/all/base-immunefi-audit-competition/
+- https://nomoslabs.io/blog/smart-contract-testing-guide-tools-tips-2026
+- https://arxiv.org/abs/2604.18395
+- https://arxiv.org/abs/2604.13611
 
-## 2026-04-29 (KST) — Daily Evolution (#43)
+## 2026-04-29 (KST) — Daily Evolution (#45)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| OWASP `Incident Response Playbook` | 2026-04-28 fetched | 심각도별 response time과 containment 순서를 먼저 고정한다. 즉 incident 대응은 root-cause 보고서보다 `언제 끊을 것인가` 를 먼저 결정해야 한다. |
-| OpenSourceMalware `Vercel April 2026 incident-response` | 2026-04-20 update | `Rotate first, then investigate.` 로그 retention이 짧고 UI가 불완전하므로, 영향 범위 확정 전이라도 deploy freeze, integration disable, secret rotation을 먼저 하라고 권한다. |
+| OWASP `Incident Response Playbook` | 2026-04-28 fetched | 심각도별 response time과 containment 순서를 먼저 고정한다. incident 대응은 root-cause 보고서보다 `언제 끊을 것인가` 를 먼저 결정해야 한다. |
+| OpenSourceMalware `Vercel April 2026 incident-response` | 2026-04-20 update / 2026-04-28 fetched | `Rotate first, then investigate.` audit log retention이 짧고 UI가 불완전하므로, 영향 범위 확정 전이라도 deploy freeze, integration disable, secret rotation을 먼저 하라고 권한다. |
 | Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | 첫 forged release는 되돌릴 수 없었지만, anomaly 인지 직후 pause와 downstream freeze가 후속 ~$95M 시도를 막았다. 핵심은 첫 완전한 확증이 아니라 **두 번째 손실 이전의 첫 조치** 였다. |
 | Google Cloud `Next '26...` | 2026-04-22 | M-Trends 2026 기준 attacker hand-off가 8시간에서 22초로 축소됐다. defender approval/forensics cadence가 공격자 tempo를 못 따라가면 확증 대기 자체가 취약점이 된다. |
-| Nomos Labs `Smart Contract Testing Guide 2026` | 2026-04 window | unit/integration/fuzz/invariant/FV를 계속 강화하라고 권하지만, 이 툴링의 성공이 incident-time containment threshold 문제를 자동으로 해결해주지는 않는다. |
+| Nomos Labs `Smart Contract Testing Guide 2026` | 2026-04 window | unit/integration/fuzz/invariant/formal verification을 더 촘촘히 권하지만, 이 툴링의 성공이 incident-time containment threshold 문제를 자동으로 해결해주지는 않는다. |
 | arXiv `2604.18395` (FAUDITOR) / `2604.13611` (V2E) | 2026-04-20 submission/update | exploitable bug detection과 PoC validation은 발전 중이다. 그러나 adjacent-plane 사고는 `무엇이 exploitable인가` 만큼이나 `언제 incomplete evidence로 끊을 것인가` 가 중요함을 드러낸다. |
 
 ### Phase 2) 갭 분석
@@ -826,7 +639,7 @@
   1. **certainty-first bias**: `영향받았는지 정확히 안다` 와 `지금 끊어야 할 secret/integration이 무엇인지 안다` 를 혼동한다.
   2. **evidence shelf-life mismatch**: control-plane audit log, OAuth 기록, SaaS telemetry는 retention이 짧고 exportability가 낮아, 확증을 기다릴수록 오히려 증거가 사라진다.
   3. **tempo asymmetry**: attacker hand-off와 privilege pivot는 22초급으로 빨라지는데, defender는 여전히 승인 체인과 forensic 완성본을 기다린다.
-  4. **tooling overhang**: fuzz/FV/PoC validation이 좋아질수록 팀은 "더 잘 증명한 뒤 움직이자" 는 확증 편향을 강화할 수 있다.
+  4. **tooling overhang**: fuzz/FV/PoC validation이 좋아질수록 팀은 `더 잘 증명한 뒤 움직이자` 는 확증 편향을 강화할 수 있다.
 - **기존 패턴과 구별**:
   - **META-53** = actuator를 실제로 발사할 수 있는가
   - **META-55** = 선언된 제약이 집행에서 힌트로 강등되는가
@@ -835,8 +648,9 @@
 - **Purple Team 고유 기여**: 오늘 신호는 detection 품질 자체보다, **확실성을 기다리는 문화가 containment를 구조적으로 늦춘다** 는 점을 보여준다.
 
 ### Phase 3) 스킬 강화 델타 (2026-04-29)
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-62 추가** + summary row / 상세 섹션 반영
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-62 추가** + Why-Audits-Miss/상세 섹션 보강
 - `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + matrix count를 **META-01~62 / 189+ total entries** 로 갱신
+- `docs/purple-team-meta-analysis.md`: 오늘자 **META-62 누적**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
 - **PT-ARCH-2026-0429-01 (MEDIUM latent)**: certainty-seeking containment gap.
@@ -853,6 +667,107 @@
 - https://nomoslabs.io/blog/smart-contract-testing-guide-tools-tips-2026
 - https://arxiv.org/abs/2604.18395
 - https://arxiv.org/abs/2604.13611
+
+## 2026-04-28 (KST) — Daily Evolution (#44)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| QuillAudits `KelpDAO rsETH $292M Bridge Exploit (Explained)` | 2026-04-28 fetched / incident 2026-04-18 | 재구성된 메커니즘에서도 contract와 DVN multisig 자체는 nominal-path대로 동작했고, 실제 실패는 **DVN이 보는 RPC truth plane** 과 verifier independence 부재에 있었다. |
+| OWASP `Incident Response Playbook` (Agentic Skills Top 10) | 2026-04-28 fetched | 최근 IR guidance는 단순 원칙이 아니라 **severity별 SLA, containment verb, 사용자 통지 순서** 까지 적는다. runbook의 존재보다 **actuator artifact 결박** 이 핵심이라는 신호다. |
+| Nomos Labs `Smart Contract Testing Guide: Tools and Tips for 2026` | 2026-04-28 fetched | 업계 testing stack은 unit/integration/fuzz/invariant/formal verification 쪽으로 더 촘촘해졌지만, coverage 중심은 여전히 **계약 내부 상태 전이와 nominal-path correctness** 다. |
+| OpenSourceMalware `vercel-april2026-incident-response` | 2026-04-20 updated / 2026-04-28 fetched | 실무 대응의 첫 줄은 code fix가 아니라 **env var rotation, OAuth scope inventory, third-party integration triage** 였다. 대응 무게중심이 support/deploy adjacency에 있음을 보여준다. |
+
+### Phase 2) 갭 분석
+
+**판정: 오늘은 신규 META 추가 없이 기존 메타를 강화한다.**
+
+#### Reinforcement A — META-53 Runbook-to-Actuator Binding Gap
+- **신호**: OWASP playbook은 severity별 응답 시간, containment 순서, 제거/차단/자격증명 회전 같은 **구체 명령 경로** 를 적는다.
+- **의미**: 2026년의 차이는 “IR plan이 있는가” 가 아니라, **누가 어떤 키/권한으로 어떤 명령을 몇 분 안에 발사하는가** 가 미리 결박돼 있는가다.
+- **왜 신규 META가 아닌가**: 이 구조는 이미 **META-53** 이 정확히 설명하고 있다. 오늘 신호는 그 가설을 더 operational하게 검증한 reinforcement다.
+
+#### Reinforcement B — META-61 Assurance-Halo Transitivity Gap
+- **신호**: Nomos/Foundry류 공개 guidance는 계속 nominal-path correctness를 밀어 올리는 반면, Quill Kelp와 Vercel IR playbook는 실제 실패와 대응이 **verifier / RPC / env / OAuth / support** plane으로 이동했음을 보여준다.
+- **의미**: 코어 검증이 강해질수록 공격은 주변 privileged plane으로 이동하고, 팀은 그 코어 assurance를 주변부 안전의 proxy처럼 오해하기 쉽다.
+- **왜 신규 META가 아닌가**: 이 구조는 이미 **META-61** 이 설명한다. 오늘은 **코어 검증 강화와 주변 control-plane 실패가 동시에 심화되는 분화** 를 확인한 날이다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-28)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-53 / META-61 reinforcement note** 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log에 **0 new meta, +2 reinforcements** 기록
+- **Matrix state unchanged**: **126+ named vectors + META-01~61 + B73~B78 = 187+ total entries**
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **신규 PT-ARCH 없음.** 오늘 신호는 새 취약점보다 기존 watch의 우선순위를 높인다.
+- **Carry-forward 1**: `PT-ARCH-2026-0427-01` assurance-halo watch 유지. blue/black hardening 성공을 dashboard / build / deploy / RPC / attestation plane safety의 proxy로 쓰면 안 된다.
+- **Carry-forward 2**: **B45 HIGH** (`microstable/security/audit-attestation.json` absent) 는 여전히 최상위 continuity gap이다.
+- **운영 메모**: incident runbook는 문장 수준이 아니라 **signer set, 명령 artifact, 성공 확인 절차** 까지 묶여 있어야 한다.
+- **CRITICAL 없음. HIGH 신규 없음. MEDIUM latent carry-forward only.**
+
+### Sources
+- https://www.quillaudits.com/blog/hack-analysis/kelp-dao-hack
+- https://owasp.org/www-project-agentic-skills-top-10/incident-response.html
+- https://nomoslabs.io/blog/smart-contract-testing-guide-tools-tips-2026
+- https://github.com/OpenSourceMalware/vercel-april2026-incident-response
+
+## 2026-04-27 (KST) — Daily Evolution (#43)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-25 fetched / incident 2026-04-18 | 온체인 calldata와 validator signature는 모두 정상처럼 보였고, 실제 실패는 off-chain verifier / RPC truth plane에 있었다. **코어 로직 assurance와 시스템 assurance가 분리** 됐다. |
+| CoinDesk `Hack at Vercel sends crypto developers scrambling to lock down API keys` | 2026-04-20 | core protocol이나 user funds가 직접 영향 없더라도, 실제 대응은 credential rotation과 deployment-plane inspection으로 이동했다. **support/front-end plane도 privileged control plane** 임을 보여준다. |
+| RustSec `RUSTSEC-2026-0107` / `RUSTSEC-2026-0108` | 2026-04-24 issued | `mysten-metrics`, `sui-execution-cut` 둘 다 build script가 build machine data exfiltration을 시도했다. **코어 비즈니스 로직을 건드리지 않아도 assurance chain 바깥에서 비밀이 빠져나갈 수 있다.** |
+| CoinDesk `How Anthropic’s Mythos model is forcing the crypto industry to rethink everything about security` | 2026-04-25 | "bigger risks sit in infrastructure", "traditional audits never touch" 라는 framing이 명시됐다. **공격이 인프라·조합·인접 plane으로 이동** 했음을 업계가 스스로 인정한다. |
+| Nomos Labs `Fuzz Testing Smart Contracts: Complete Guide for 2026` | 2026 guide, in-window recheck | fuzz / invariant testing은 계약 내부 상태 전이와 호출 시퀀스 coverage를 크게 올리지만, coverage 중심은 여전히 **코어 코드** 다. |
+| Foundry recent releases page | 2026-04-19~26 | nominal-path toolchain cadence는 활발하지만, 같은 속도의 build/deploy/support-plane assurance 공개 delta는 약하다. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 퍼플팀: **META-49**(Executable Configuration Trust Drift), **META-51**(Provenance-Carried Authority Gap), **META-52**(Metric-Optimized Security Mirage), **META-58**(Default-Path / Scope-Carveout Responsibility Gap), **META-60**(Recoverability-Collateralized Security Gap)
+- 블랙/레드: **D28**(Supply Chain), **D27**(RPC Takeover), **D26**(Frontend Injection), **B45**(Audit Attestation Drift)
+- 블루: `docs/microstable-blue-v14-report.md`, `docs/microstable-blue-v15-report.md` 는 nominal-path / degraded-path hardening을 올렸지만, artifact continuity / assurance boundary 명시는 별도 항목으로 강하게 드러나지 않는다.
+
+**오늘 신규 식별 갭**:
+
+#### META-61 — Assurance-Halo Transitivity Gap (AHTG)
+- **현상**: audit/FV/invariant/fuzz가 코어 코드에 대해 강해질수록, 팀은 그 신뢰 신호를 build / deploy / RPC / frontend / support / AI-tooling 같은 **인접 plane에도 자동 전이** 시키기 쉽다.
+- **메타 원인**:
+  1. **coverage-transitivity illusion**: in-scope 코드에 대한 강한 assurance가 adjacent infra까지 커버하는 것처럼 느껴진다.
+  2. **residual-risk migration blindness**: 코드 hardening이 성공할수록 공격은 build host, verifier/RPC, deployment OAuth, support SaaS로 이동하지만 review intensity는 그대로 남는다.
+  3. **clean-calldata / unaffected-contract fallacy**: core contract가 직접 안 뚫렸거나 calldata가 정상처럼 보이면, support/control plane compromise가 protocol-security에서 분리된다.
+  4. **scope-normalized blind spot**: "traditional audits never touch infrastructure" 가 예외가 아니라 정상으로 받아들여지며 assurance chain 단절이 고착된다.
+- **기존 패턴과 구별**:
+  - **META-49** = 설정 파일이 실행면이 되는 구조
+  - **META-51** = proof/memory/artifact가 권한을 운반하는 구조
+  - **META-52** = 측정 가능한 지표 최적화 편향
+  - **META-58** = default path와 scope carve-out 사이 ownership 부재
+  - **META-60** = recoverability가 severity를 깎는 구조
+  - **META-61** = **한 레이어에서 얻은 assurance 신호가 왜 다른 레이어의 미검증 위험까지 덮어버리는가** 를 설명한다.
+- **Purple Team 고유 기여**: 이번 신호는 단순히 "인프라도 중요하다" 를 넘어서, **코어 검증의 성공 자체가 주변부 과소감사를 유도하는 역설** 을 포착한다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-27)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-61 추가** + Why-Audits-Miss 표에 `META-61` 행 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Assurance-Halo Transitivity Gap`) 강화
+- **Matrix state updated**: **124+ named vectors + META-01~61 + B73~B78 = 185+ total entries**
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0427-01 (MEDIUM latent)**: 최근 blue/black/red hardening이 실제로 좋아졌지만, 바로 그 성공이 `dashboard / build / deploy / RPC / attestation` plane까지 이미 충분히 커버됐다는 **assurance halo** 로 번질 수 있다.
+- 특히 **B45 HIGH carry-forward** (`microstable/security/audit-attestation.json` absent) 는 "검토한 소스" 와 "실제 배포/운영 artifact" 사이의 continuity가 아직 약함을 보여준다.
+- 따라서 Microstable은 앞으로 audit/FV/fuzz artifact마다 **coverage boundary manifest** 를 남겨, 어디서 assurance가 끝나는지 명시해야 한다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
+- https://www.coindesk.com/tech/2026/04/20/hack-at-vercel-sends-crypto-developers-scrambling-to-lock-down-api-keys
+- https://rustsec.org/advisories/RUSTSEC-2026-0107.html
+- https://rustsec.org/advisories/RUSTSEC-2026-0108.html
+- https://www.coindesk.com/tech/2026/04/25/how-anthropic-s-mythos-model-is-forcing-the-crypto-industry-to-rethink-everything-about-security
+- https://nomoslabs.io/blog/fuzz-testing-smart-contracts-complete-guide-2026
+- https://github.com/foundry-rs/foundry/releases
 
 ## 2026-04-26 (KST) — Daily Evolution (#42)
 
@@ -910,144 +825,442 @@
 - https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
 - https://github.com/foundry-rs/foundry/releases
 
-## 2026-04-18 (KST) — Daily Evolution (#36)
+## 2026-04-25 (KST) — Daily Evolution (#41)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| CybersecurityDive / Sygnia IR readiness survey | 2026-04-13 | formal IR plan 보유와 실제 실행 준비는 다르다. 역할과 책임이 문서에 있어도 실제 권한/행동 경로는 자주 흐리다. |
-| Immunefi `How fragmented security enabled the $100m Balancer exploit` | 최근 7일 sweep fetch | 핵심 계약 외부의 보조 control surface들이 서로 분절되면 exploitability가 커진다. |
-| Hyperbridge exploit coverage | 2026-04-13 | `proof` 로 보인 경로가 실제로는 `ChangeAssetAdmin` 급 권한을 운반했다. |
-| Unit42/Vertex AI `Double Agent` coverage | 2026-04-14 | `assistant/agent` 표면이 과도한 default scope를 물고 있으면 project-wide data plane까지 확장된다. |
-| Foundry releases | 2026-04-15 ~ 2026-04-16 | invariant/assert tooling은 강화되지만, UI/agent/proof surface가 애초에 signer·broad scope를 가져도 되는지는 검증하지 않는다. |
+| Chainalysis `Inside the KelpDAO Bridge Exploit` | 2026-04-24 fetched / incident 2026-04-18 | KelpDAO 사건은 온체인 calldata만 보면 정상처럼 보였고, 실제 손실 상한과 회수 가능성은 pause, blacklist, downstream freeze 같은 **예외 경로** 에 의해 크게 좌우됐다. |
+| Immunefi/Base `Audit Competition Scope` | 2026-04-21 | invalid proposal을 dispute/blacklist/retire 할 수 있거나, service를 manual restart with different configuration 할 수 있으면 valid bug도 downgrade 가능하다고 적는다. 즉 예외 경로가 이미 safety claim으로 쓰인다. |
+| CoinDesk `Arbitrum freezes $71 million in ether tied to Kelp DAO exploit` | 2026-04-21 | Security Council은 실제로 30,766 ETH를 intermediary wallet로 이동시켰다. emergency authority는 추상적 backstop이 아니라 **실제 자산 소유/회수 경로를 바꾸는 별도 프로토콜** 이다. |
+| CoinDesk `AI agents are set to power crypto payments, but a hidden flaw could expose wallets` | 2026-04-13 (7d window 포함) | LLM router는 정상 agent flow 밖 transport layer에서 credential/tool path를 바꾼다. 오늘 신규 META의 직접 근거라기보다, 사고가 nominal path 밖에서 시작되고 대응도 exception lane으로 넘어간다는 보조 신호다. |
+| CoinDesk `Hack at Vercel sends crypto developers scrambling to lock down API keys` | 2026-04-20 | support surface compromise 후 대응의 핵심은 코드 correctness가 아니라 credential rotation / deployment control plane containment였다. 4/23 패턴을 재강화한다. |
+| Foundry recent releases page | 2026-04-18~23 | 최근 툴링 채널은 정상 경로 테스트/실행 환경 개선 신호를 계속 주지만, `freeze`, `manual restart`, `loss socialization` 같은 예외 semantics를 1급 assurance 대상으로 올리는 공개 delta는 약했다. |
+| invariant / formal verification / incident-response 채널 재검색 | 최근 7일 재점검 | 이번 창에서는 기존 META-53/58보다 강한 ownership delta보다, **정상 경로 대비 예외 경로 assurance 불균형** 이 더 선명하게 보였다. |
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘은 META-54를 새로 만든다.**
+**기존 커버**:
+- 퍼플팀: **META-53**(Runbook-to-Actuator Binding), **META-54**(Declared-Role / Effective-Authority Gap), **META-58**(Default-Path / Scope-Carveout Responsibility Gap)
+- 블랙/레드: **D27**(RPC trust corruption), **B29**(AI routing confused deputy), **A32**(cross-chain trust failure), **A75**(manual oracle fallback semantic gap)
 
-#### META-54 — Declared-Role / Effective-Authority Gap (DREAG)
-- **현상**: 팀은 component를 `dashboard=view`, `agent=assistant`, `proof=data`, `runbook=document` 같은 **역할 라벨** 로 분류한다. 그러나 실제 실패는 이 라벨이 아니라 **effective authority graph** 에서 발생한다. read-only처럼 보이는 surface 안에 signer가 숨어 있거나, proof path가 admin verb를 운반하거나, assistant agent가 project-wide scope를 상속하면 방어는 잘못된 곳을 감시하게 된다.
+**오늘 신규 식별 갭**:
+
+#### META-59 — Nominal-Path / Exception-Path Assurance Asymmetry (NPEAA)
+- **현상**: audit, formal verification, invariant testing, bug bounty, audit competition은 대부분 **정상 경로(nominal path)** 의 correctness를 강화한다. 하지만 실제 사고가 나면 시스템은 `dispute`, `blacklist`, `manual restart`, `security-council freeze`, `manual oracle mode`, `redeem-only` 같은 **예외 경로(exception path)** 로 전환된다. 문제는 이 경로가 대개 governance emergency power, downgrade assumption, incident runbook 부록처럼 취급되어 **정상 경로만큼의 명세·불변식·잔고 보전·공정성 검증** 을 받지 못한다는 점이다.
 - **메타 원인**:
-  1. **역할 라벨 편향**: 이름과 UX가 privileged review 범위를 잘못 줄인다.
-  2. **소유권 편향**: UI/demo/docs/agent repo는 핵심 계약·keeper보다 낮은 위험으로 취급된다.
-  3. **demo/devnet 예외의 정규화**: “실가치 없음” 명분으로 signer·secret hygiene 예외가 누적되고, 이후 운영 습관을 오염시킨다.
-  4. **correctness tooling의 맹점**: FV/invariant/CSP hardening은 correctness를 높여도 permission topology audit를 대체하지 못한다.
-- **Purple Team 고유 기여**: META-54는 “왜 방어에 실패했는가”를 proof provenance나 actuator latency가 아니라, **권한이 있어서는 안 되는 표면이 이미 권한을 가진 상태** 에서 설명한다.
+  1. **nominal-path bias**: 감사/FV/fuzz/competition이 정상 호출과 모델링된 상태 전이에 집중한다.
+  2. **appendix treatment**: freeze/dispute/restart/recovery/socialization을 protocol semantics가 아니라 IR/거버넌스 부록으로 분류한다.
+  3. **backstop-as-proof 착시**: "필요하면 사람이 개입한다" 는 사실이 safety guarantee처럼 과대평가된다.
+  4. **recovery fairness blind spot**: 예외 경로가 어떤 사용자에게 어떤 순서로 손실·회수·재개를 배분하는지 별도 검증하지 않는다.
+- **기존 패턴과 구별**:
+  - **META-53** = emergency actuator를 실제로 발사할 수 있는가
+  - **META-54** = 누가 실효 권한을 가지는가
+  - **META-58** = 그 default/exception control plane을 누가 소유하는가
+  - **META-59** = **발사된 뒤의 예외 프로토콜이 무엇을 보장하는가**
+- **Purple Team 고유 기여**: META-53/54/58이 예외 경로의 존재·권한·ownership을 설명했다면, META-59는 **왜 위기 순간 시스템이 더 강한 권한을 쓰면서도 더 얕은 assurance 상태로 전환되는가** 를 고정한다.
 
-### Phase 3) 스킬 강화 델타 (2026-04-18)
-- `skills/blockchain-black-team/SKILL.md`: Daily Evolution Log에 **META-54** 추가.
-- `skills/blockchain-black-team/references/attack-matrix.md`: summary row + 상세 섹션으로 **META-54 DREAG** 추가.
-- `skills/blockchain-black-team/references/attack-matrix.md`: **D26 Frontend Injection** 의 `왜 감사가 놓치는가` 노트를 “read-only/demo surface 권한 오판” 관점으로 강화.
-- Matrix state: **121+ named vectors + META-01~54 + B73~B78 = 176+ total entries**.
+### Phase 3) 스킬 강화 델타 (2026-04-25)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-59 추가** + Why-Audits-Miss 표에 `META-59` 행 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Nominal-Path / Exception-Path Assurance Asymmetry`) 강화
+- **Matrix state updated**: **123+ named vectors + META-01~59 + B73~B78 = 183+ total entries**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0418-01 (MEDIUM active)**: Dashboard read-only boundary collapse.
-  - `microstable/docs/index.html` 은 dashboard를 **browser-only, zero-backend, direct polling** surface로 소개한다.
-  - `microstable/docs/app.js` 는 `FAUCET_CONFIG.instructionAvailable = true` 와 함께 **64-byte faucet signer secret** 을 브라우저 번들에 포함한다.
-  - 따라서 이 surface는 observability plane처럼 보이지만 실제로는 **write-capable execution plane** 이다.
-  - Blue v15에서 CSP와 RPC quorum은 강화됐지만, **"대시보드는 secret-free read surface여야 한다"** 는 아키텍처 규율은 아직 강제되지 않았다.
-- **CRITICAL 없음.** 다만 Black Team이 오늘 기록한 **D26 HIGH code finding** 의 상위 원인을 Purple Team은 `declared role ≠ effective authority` 로 고정한다.
+- **PT-ARCH-2026-0425-01 (MEDIUM latent)**: Microstable에는 이미 `emergency_shutdown`, degraded safe mode, `manual oracle mode` 같은 **exception lane** 이 있다.
+- Blue v14/v15는 degraded write 차단과 auto emergency shutdown 쪽을 강화해 **actuation** 품질은 좋아졌다 ✅
+- 그러나 현재 공개 문서 기준으로는 `manual oracle mode` 의 허용 drift/source precedence/expiry, shutdown 후 re-enable 조건, 예외 상태에서의 reconciliation 규칙이 하나의 **exception-lane invariant set** 으로 묶여 있지 않다 ⚠️
+- 따라서 오늘 신규 active exploit은 아니지만, 예외 경로 semantic safety는 architecture-level로 **MEDIUM latent** watch로 승격한다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
 
 ### Sources
-- https://www.cybersecuritydive.com/news/cisos--gaps-incident-response-playbooks/817323/
-- https://immunefi.com/blog/expert-insights/how-fragmented-security-enabled-balancer-exploit/
+- https://www.chainalysis.com/blog/kelpdao-bridge-exploit-april-2026/
+- https://immunefi.com/audit-competition/audit-comp-base-azul/scope/
+- https://www.coindesk.com/markets/2026/04/21/arbitrum-freezes-usd71-million-in-ether-tied-to-kelp-dao-exploit
+- https://www.coindesk.com/tech/2026/04/13/ai-agents-are-set-to-power-crypto-payments-but-a-hidden-flaw-could-expose-wallets
+- https://www.coindesk.com/tech/2026/04/20/hack-at-vercel-sends-crypto-developers-scrambling-to-lock-down-api-keys
 - https://github.com/foundry-rs/foundry/releases
-- https://www.coinlive.com/news/hyperbridge-exploit-exposes-limits-of-proof-based-security-after-237k-bridge
-- https://securitymea.com/2026/04/14/palo-alto-uncovers-double-agent-threat-in-google-cloud-vertex-ai/
 
-## 2026-04-17 (KST) — Daily Evolution (#35)
+## 2026-04-24 (KST) — Daily Evolution (#40)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| CybersecurityDive / Sygnia IR readiness survey | 2026-04-13 | 99%가 formal IR plan을 갖고도 73%는 다음 공격 대응 준비 부족. 병목은 stakeholder coordination, executive/board involvement 부족, legal/communications delay. |
-| Immunefi `How fragmented security enabled the $100m Balancer exploit` | 최근 7일 sweep fetch | controls operating in isolation, operational pause/containment constraints, fragmented defense가 compound exploit를 systemic failure로 키움. |
-| Foundry releases | 2026-04-15 ~ 2026-04-16 | invariant/assert correctness tooling은 강화되지만 emergency actuator path 자체를 검증하지는 않음. |
-| Hyperbridge exploit coverage | 2026-04-13 | proof-based narrative가 깨진 뒤에도 핵심은 얼마나 빨리 containment를 발사할 수 있는가. |
-| Unit42/Vertex AI `Double Agent` coverage | 2026-04-14 | overprivileged agent scope는 incident 때 권한 축소/격리 actuator가 미리 결박돼 있지 않으면 damage window가 길어짐을 재확인. |
+| LayerZero `KelpDAO Incident Statement` | 2026-04-18 | LayerZero는 사건을 Kelp의 single-DVN 선택 문제로 설명했다. 핵심은 downstream RPC poisoning + DDoS failover였지만, 동시에 "누가 이 기본 구성의 소유자인가" 도 남겼다. |
+| CoinDesk `Kelp DAO hits back...` | 2026-04-20 | Kelp는 문제가 된 1-of-1 DVN 구성이 LayerZero의 quickstart/default 경로였다고 반박했다. 공식 기본값과 integrator 책임의 경계가 사고 후에야 드러났다. |
+| Immunefi `Base <> Immunefi Audit Competition` + Base Azul scope | 2026-04-21 / fetched 2026-04-24 | 보상 풀과 code-review 강도는 높지만, scope 문서는 `Base corporate infrastructure`, `KMS`, `deployment pipelines`, 일부 proof/manual-dispute 가정을 out-of-scope 또는 downgrade 근거로 둔다. 즉 실제 blast radius와 audit ownership 사이 seam이 명시된다. |
+| CoinDesk `Inside the $71 million freeze on Arbitrum...` | 2026-04-23 | Arbitrum Security Council은 실제로 공격자 자금을 이동시켜 동결 효과를 냈다. emergency authority는 존재하고 작동하지만, 많은 팀은 이를 평시 threat model의 핵심 control plane으로는 문서화하지 않는다. |
+| formal verification / invariant testing / incident-response 채널 재검색 | 최근 7일 재점검 | Certora / Runtime Verification / Foundry / Echidna / IR 채널 재검색에서는 위 네 신호보다 강한 신규 admissible 메타 시그널이 없었다. 최신 공개 강화는 여전히 code correctness와 readiness 중심이다. |
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘은 META-53을 새로 만든다.**
+**기존 커버**:
+- 퍼플팀: **META-53**(Runbook-to-Actuator Binding), **META-54**(Declared-Role / Effective-Authority Gap), **META-55**(Declared-Constraint / Resolver-Enforcement Gap), **META-57**(Counted-Redundancy / Correlated-Failover Gap)
+- 블랙/레드: **D26**(canonical trust-anchor hijack), **D27**(RPC trust corruption), **B29**(AI routing confused deputy), **A32**(bridge/proof trust failure)
 
-#### META-53 — Runbook-to-Actuator Binding Gap (RABG)
-- **현상**: 업계는 monitoring, audits, invariant/FV, IR plans를 빠르게 늘렸지만, 실제 containment action(`pause`, `mint_limit=0`, `redeem-only`, `manual_oracle_mode`, key rotation, role revoke)이 **누가 어떤 키로 어떤 명령을 몇 분 안에 실행하는가** 에까지 결박되지 않은 경우가 많다.
+**오늘 신규 식별 갭**:
+
+#### META-58 — Default-Path / Scope-Carveout Responsibility Gap (DSCRG)
+- **현상**: 팀은 vendor quickstart, official sample config, provider-managed verifier/RPC, emergency council 같은 요소를 자연스럽게 "기본 경로" 로 채택한다. 하지만 감사/바운티 scope는 corporate infra, deployment pipeline, KMS, prover/TEE, manual dispute/restart/freeze 가정을 자주 바깥으로 민다. 그 결과 실제 production control plane은 **다들 사용하지만 아무도 끝까지 소유하지 않는 orphan boundary** 가 된다.
 - **메타 원인**:
-  1. **계획-실행 혼동**: `runbook exists` 를 `command is launchable` 로 오인.
-  2. **감사 범위의 마지막 1단계 누락**: 감사는 pause 함수, guardian quorum, role check를 확인해도 actuator 문서화·리허설·automation toggle state까지는 보통 검증하지 않음.
-  3. **correctness tooling의 범위 한계**: invariant/FV/AI review는 detection·correctness를 강화하지만, containment latency와 signer choreography는 다루지 않음.
-  4. **조직 병목의 보안화 실패**: board/legal/comms delay를 governance 문제로 취급하고, attack-tempo security variable로 모델링하지 않음.
-- **Purple Team 고유 기여**: META-53은 “왜 방어에 실패했는가”를 detection 이전도, provenance도, KPI bias도 아닌 **마지막 actuator 연결선** 에서 설명한다.
+  1. **default-as-safety bias**: 공식 quickstart와 sample config를 이미 security-vetted baseline처럼 받아들인다.
+  2. **scope carve-out 편향**: provider-managed infra와 emergency authority를 protocol audit의 주변부로 민다.
+  3. **manual backstop 착시**: "문제 생기면 dispute/restart/freeze" 같은 수동 개입 가능성이 구조적 위험의 downgrade 근거가 된다.
+  4. **사후 blame loop**: 사고 후 provider는 integrator misconfiguration을, integrator는 official default를 근거로 든다. 그러나 사전 ownership manifest는 없다.
+- **기존 패턴과 구별**:
+  - **META-54** = 역할 라벨과 실효 권한 불일치
+  - **META-55** = 선언된 constraint가 실행에서 hint로 강등
+  - **META-57** = redundancy count와 real independence 불일치
+  - **META-58** = **기본값과 scope carve-out 사이에서 shared-responsibility 자체가 orphaned boundary가 되는 구조**
+- **Purple Team 고유 기여**: D26/D27/B29/A32는 각기 벡터를 설명한다. META-58은 이 벡터들이 왜 반복적으로 "provider 쪽", "기본값", "scope 밖" 으로 밀리며 ownership 없이 운영되는지를 설명한다.
 
-### Phase 3) 스킬 강화 델타 (2026-04-17)
-- `skills/blockchain-black-team/SKILL.md`: principle **16. Runbook-to-Actuator Binding** 추가.
-- `skills/blockchain-black-team/SKILL.md`: Daily Evolution Log에 **META-53** 추가.
-- `skills/blockchain-black-team/references/attack-matrix.md`: summary row + 상세 섹션으로 **META-53 RABG** 추가.
-- Matrix state: **121+ named vectors + META-01~53 + B73~B78 = 175+ total entries**.
+### Phase 3) 스킬 강화 델타 (2026-04-24)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: **META-58 추가** + Why-Audits-Miss 표에 `META-58` 행 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Default-Path / Scope-Carveout Responsibility Gap`) 강화
+- **Matrix state updated**: **123+ named vectors + META-01~58 + B73~B78 = 182+ total entries**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0417-01 (MEDIUM latent)**: Emergency containment actuator binding gap.
-  - `docs/ops-runbook.md` 는 incident 시 `mint_limit=0` 를 지시하지만, 정확한 on-chain `emergency_shutdown` ceremony·signer·success criteria를 명시하지 않는다.
-  - `solana/programs/microstable/src/lib.rs` 의 `emergency_shutdown` 는 2-of-3 keeper quorum이 필요하고 실제로 `mint_rate_limit=0` 를 적용한다.
-  - `solana/keeper/config.devnet.json` 은 `auto_emergency_shutdown=false`; `keeper/src/monitor.rs` 는 emergency condition을 감지해도 auto mode가 꺼져 있으면 경고만 남기고 종료한다.
-  - 결론: control primitive는 있으나 detection→containment의 마지막 연결선이 manual coordination에 의존한다.
-- **CRITICAL 없음. HIGH 없음.** 오늘은 새 코드 버그가 아니라, **문서·권한·자동화 간 결박 부족** 을 구조적으로 문서화한 날이다.
+- **PT-ARCH-2026-0424-01 (LOW current / HIGH-if-expansion)**: 현재 repo에 bridge/DVN/security-council path는 없다 ✅
+- 그러나 keeper와 dashboard는 이미 **off-chain RPC/provider defaults** 에 의존하며, 현재 문서 범위에는 `누가 owner인지`, `왜 이 기본 경로를 받아들였는지`, `어떤 compensating control을 붙였는지` 를 적은 **default ownership manifest** 가 없다 ⚠️
+- 따라서 향후 hosted dashboard, third-party bridge/L2, provider-managed oracle/verifier, external AI ops, emergency multisig를 붙일 때는 **default를 쓴다는 사실 자체** 가 별도 승인/감사 경계가 되어야 한다.
+- **CRITICAL 없음. HIGH 없음. LOW current / HIGH-if-expansion 1건.**
 
 ### Sources
-- https://www.cybersecuritydive.com/news/cisos--gaps-incident-response-playbooks/817323/
-- https://immunefi.com/blog/expert-insights/how-fragmented-security-enabled-balancer-exploit/
-- https://github.com/foundry-rs/foundry/releases
-- https://www.coinlive.com/news/hyperbridge-exploit-exposes-limits-of-proof-based-security-after-237k-bridge
-- https://securitymea.com/2026/04/14/palo-alto-uncovers-double-agent-threat-in-google-cloud-vertex-ai/
+- https://layerzero.network/blog/kelpdao-incident-statement
+- https://www.coindesk.com/tech/2026/04/20/kelp-dao-claims-layerzero-s-default-settings-are-what-actually-caused-the-usd290-million-disaster
+- https://immunefi.com/blog/all/base-immunefi-audit-competition/
+- https://immunefi.com/audit-competition/audit-comp-base-azul/scope/
+- https://www.coindesk.com/tech/2026/04/22/inside-the-usd71-million-freeze-on-arbitrum-that-has-the-crypto-world-questioning-what-decentralization-really-means
 
-## 2026-04-16 (KST) — Daily Evolution (#34)
+## 2026-04-23 (KST) — Daily Evolution (#39)
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 발행일 | 핵심 신호 |
 |------|--------|-----------|
-| RustSec `RUSTSEC-2026-0098` | 2026-04-15 | `rustls-webpki` 가 URI name constraints를 잘못 수용. patched `>=0.103.12`. |
-| RustSec `RUSTSEC-2026-0099` | 2026-04-15 | wildcard certificate에 대한 DNS permitted-subtree name constraints를 잘못 수용. patched `>=0.103.12`. |
-| `solana-program/token` commit `4c6f8a7` | 2026-04-15 | Solana ecosystem maintainers가 `rustls-webpki` 보안 업데이트를 즉시 반영. dependency-level trust issue가 실전적 신호임을 재확인. |
-| Foundry releases | 2026-04-09 ~ 2026-04-15 | invariant/Tempo 관련 개선은 계속되지만, queue/admission/TLS trust-boundary 자체를 새로 덮는 신호는 아님. |
-| Immunefi blog / Sygnia IR readiness survey | 2026-04-14 ~ 2026-04-15 fetch | incident response readiness / ecosystem metrics는 강화되지만, verifier dependency drift 같은 control-plane 신호는 여전히 KPI 밖에 머무름. |
+| CoinDesk `AI agents are set to power crypto payments, but a hidden flaw could expose wallets` | 2026-04-13 | 모델 자체보다 **LLM router / relay layer** 가 tool call과 credential을 가로채고 변조할 수 있다는 점이 핵심. 사용자는 상위 모델을 신뢰하지만 실제 위험은 중간 전달 계층에 있다. |
+| CoinDesk `Hack at Vercel sends crypto developers scrambling to lock down API keys` | 2026-04-20 | frontend hosting / deployment plane 옆에 붙은 **AI SaaS / OAuth 연동** 하나가 내부 환경과 env var, API key plane으로 이어질 수 있다. 코드 취약점 없이도 support surface compromise가 protocol-adjacent credential pivot가 된다. |
+| LayerZero `KelpDAO Incident Statement` + BlockSec roundup 재검토 | 2026-04-18 / 2026-04-22 | verifier/RPC 쪽도 본질은 같다. 핵심 컴포넌트가 아니라 **하류 support infrastructure** 를 밟아 trust decision을 왜곡한다. 즉 공격자는 항상 "보조면" 에 숨어들어 권한면으로 번진다. |
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘은 META-53을 새로 만들지 않음.**
+**판정: 오늘은 신규 META를 만들지 않는다. 대신 기존 패턴을 더 정확하게 결박한다.**
 
-이유는 명확하다.
+#### 오늘의 강화 포인트 — Auxiliary Support Surface Credential Adjacency
+- **현상**: 팀은 `frontend host`, `AI router`, `employee support SaaS`, `deployment helper` 를 핵심 custody surface가 아닌 보조 운영면으로 분류한다. 그러나 최근 신호는 이 보조면이 **env/OAuth/API-key/secret plane** 에 닿는 순간, 별도 스마트콘트랙트 취약점 없이도 production trust anchor를 탈취할 수 있음을 보여준다.
+- **왜 신규 META로 분리하지 않았는가**:
+  1. **META-54 DREAG** 가 이미 `declared role ≠ effective authority` 를 설명한다. support surface가 helper로 보여도 secret에 닿으면 이미 privileged plane이다.
+  2. **B29** 는 AI tool/agent routing layer가 secret-bearing command path를 하이재킹할 수 있음을 설명한다.
+  3. **D26** 는 canonical frontend trust anchor가 DNS/host/entrypoint에서 탈취될 수 있음을 설명한다.
+  4. **B73/D28/D45** 는 tooling/SaaS compromise가 credential plane 전체를 오염시키는 경로를 이미 포착했다.
+- **오늘 결론**: 이번 신호는 META-58을 새로 세우기보다, **기존 DREAG + D26 + B29 + 공급망 credential-theft 계열을 하나의 운영 교훈으로 묶는 것이 더 정확** 하다.
 
-1. **A115 (`rustls-webpki` name-constraint bugs)** 가 보여준 구조는 이미 **META-51 PCAG** 안에 들어간다. 인증서 체인과 verifier result는 단순 transport metadata가 아니라, "이 endpoint를 authoritative source로 믿어도 된다" 는 **authority-bearing evidence** 이다.
-2. 동시에 이 신호는 **META-52 MOSM** 도 강화한다. 많은 팀이 `https://`, host allowlist, multi-source cross-check, uptime 같은 **보이는 안전 지표** 는 추적하지만, 실제 trust decision을 떠받치는 verifier dependency version drift는 잘 측정하지 않는다.
-3. Foundry / Echidna / Medusa / FV 계열의 최근 공개 신호도 execution correctness 쪽 강화에 가깝고, 오늘 새로 드러난 blind spot은 "새 메타" 라기보다 **기존 META-51/52의 실전 사례** 에 더 가깝다.
+#### 왜 감사가 놓치는가
+1. **scope split 편향**: 스마트콘트랙트 감사는 코드, appsec는 served frontend, IT는 SaaS/OAuth를 본다. support-surface ↔ credential-plane 경계는 셋 사이에서 고아가 된다.
+2. **non-custodial 착시**: "호스팅", "라우팅", "보조 AI 툴" 은 자산을 직접 보관하지 않으니 저위험이라고 오인한다.
+3. **credential inheritance 비가시성**: env var, deployment token, workspace OAuth, prompt relay visibility는 코드 diff에 잘 드러나지 않는다.
+4. **correctness tooling의 맹점**: FV/invariant/fuzz는 secret placement와 SaaS adjacency를 모델링하지 않는다.
 
-즉, 오늘 퍼플팀 결론은 **새 메타 패턴 추가보다 기존 메타의 적용 범위를 명시적으로 확장** 하는 쪽이 더 정확하다.
-
-### Phase 3) 스킬 강화 델타 (2026-04-16)
-- `attack-matrix.md`: **A115** 항목에 `왜 감사가 놓치는가` 노트 추가 — hostname allowlist/https/TLS 통과를 충분조건으로 오인하는 조직 패턴, verifier dependency drift가 감사/KPI에서 잘 안 보이는 이유를 문서화.
-- `purple-team-meta-analysis.md`: 오늘 판정 기록 — **META-53 무증설**, 대신 A115를 META-51/52 reinforcement로 고정.
-- Matrix state: **121+ named vectors + META-01~52 + B73~B78 = 174+ total entries (unchanged)**.
+### Phase 3) 스킬 강화 델타 (2026-04-23)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
+  - **B29** 에 `LLM router / relay layer` reinforcement 추가
+  - **D26** 에 `Vercel / Context.ai` reinforcement 추가
+  - 두 벡터 모두 **why-audits-miss** 문장을 2026-04-23 신호 기준으로 보강
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`
+  - Daily Evolution Log에 오늘의 **reinforcement-only purple meta sweep** 추가
+- **Matrix state unchanged**: **122+ named vectors + META-01~57 + B73~B78 = 180+ total entries**
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0416-01 (MEDIUM active-latent)**: Keeper outbound TLS namespace trust gap.
-  - `microstable/solana/keeper/Cargo.toml` 은 `reqwest` + `rustls-tls` 사용.
-  - `microstable/solana/Cargo.lock` 에 `rustls-webpki 0.103.9` 와 `0.101.7` 이 존재해 오늘 advisory patch floor(`>=0.103.12`)보다 낮다.
-  - keeper는 `https://hermes.pyth.network`, `https://api.coingecko.com`, `https://api.binance.com` 로 직접 연결하고, `config.rs` 는 `https://` 와 host allowlist는 강제하지만 **certificate pinning은 하지 않는다**.
-  - 따라서 현재 노출은 **availability-first, integrity-conditional** 형태의 active-latent risk다. 단일 source impersonation만으로도 degraded mode / operator hotfix pressure / failover churn을 유발할 수 있다.
-- **CRITICAL 없음. HIGH 없음.** 오늘은 새 on-chain exploit path가 아니라, **keeper trust-boundary drift** 를 구조적으로 문서화한 날이다.
+- **PT-ARCH-2026-0423-01 (MEDIUM active-latent)**: Auxiliary support surface credential adjacency watch.
+- 현재 코드/문서 범위에서 **Vercel, LLM router, hosted AI ops** 사용 증거는 없다 ✅
+- 그러나 `docs/app.js` 의 **client-side devnet faucet signer** 는 이미 support/UI plane에도 secret가 실릴 수 있음을 보여준다 ⚠️
+- 따라서 향후 dashboard hosting, deploy helper, analytics, AI monitoring, agentic ops를 붙일 때 **support surface는 secret-free가 기본** 이어야 하며, env/OAuth/API-key plane을 production control plane과 분리해야 한다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM active-latent 1건.**
 
 ### Sources
-- https://rustsec.org/advisories/RUSTSEC-2026-0098.html
-- https://rustsec.org/advisories/RUSTSEC-2026-0099.html
-- https://github.com/solana-program/token/commit/4c6f8a7
-- https://github.com/foundry-rs/foundry/releases
-- https://immunefi.com/blog/
+- https://www.coindesk.com/tech/2026/04/13/ai-agents-are-set-to-power-crypto-payments-but-a-hidden-flaw-could-expose-wallets
+- https://www.coindesk.com/tech/2026/04/20/hack-at-vercel-sends-crypto-developers-scrambling-to-lock-down-api-keys
+- https://layerzero.network/blog/kelpdao-incident-statement
+- https://blocksec.com/blog/weekly-web3-security-incident-roundup-apr-13-apr-19-2026
+
+## 2026-04-22 (KST) — Daily Evolution (#38)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| LayerZero `KelpDAO Incident Statement` | 2026-04-18 | 공격자는 verifier key나 protocol code를 직접 깨지 않고, downstream RPC 일부를 오염시킨 뒤 정상 RPC를 DDoS해 **failover 자체를 poisoned path로 강제** 했다. 더 나쁘게는 poisoned node가 DVN에게만 거짓 상태를 보여주고, 다른 IP에는 정상 응답을 돌려 observability까지 회피했다. |
+| CoinDesk follow-up `LayerZero blames Kelp's setup...` | 2026-04-20 | Kelp의 1-of-1 DVN 구성과 poisoned-failover가 함께 작동했다. 즉 문제는 "RPC 2개가 깨졌다" 가 아니라 **어떤 witness set이 최종 truth로 채택되는가** 였다. |
+| bug bounty / formal verification / invariant testing / incident response 채널 재검색 | 최근 7일 재점검 | 최근 7일 범위에서 위 사건보다 강한 신규 admissible 메타 시그널은 없었다. 공개 채널의 최신 강화는 여전히 code/invariant/readiness 중심이며, **fault-domain independence / failover integrity / observer independence** 자체를 전면에 두지 않았다. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 블랙/레드: **D27**(RPC endpoint takeover), **A32**(proof/bridge trust failure), **META-55**(resolver enforcement), **META-56**(collateral trust import)
+- 블루 v14/v15: RPC quorum, CSP, degraded safety, config hardening 등은 강화했지만, **redundancy count와 독립 fault-domain 검증은 별도 통제 항목으로 고정되지 않음**
+
+**오늘 신규 식별 갭**:
+
+#### META-57 — Counted-Redundancy / Correlated-Failover Gap (CRCFG)
+- **현상**: 팀은 `primary + secondary`, `multi-DVN`, `backup agent`, `fallback endpoint` 처럼 redundancy를 개수로 세면 독립성도 확보됐다고 느낀다. 그러나 실제 실패는 공격자가 일부 path만 오염시키고, 나머지 path를 DDoS·timeout·session steering·state continuation으로 밀어내어 시스템이 **스스로 poisoned subset을 선택** 하게 만들 때 난다.
+- **메타 원인**:
+  1. **count-based comfort**: 다른 URL, 다른 host, verifier 수 증가를 곧 독립 fault-domain 확보로 오인한다.
+  2. **availability 편향**: failover를 가용성 기능으로만 보고 integrity downgrade 경로로는 모델링하지 않는다.
+  3. **shared observer blind spot**: verifier와 monitoring이 같은 upstream data plane을 보면 selective-lie 공격이 운영 지표상 정상처럼 보일 수 있다.
+  4. **모델 경계 한계**: FV/invariant/fuzz는 state machine correctness를 잘 보지만, attacker-induced failover와 trust steering은 대개 모델 밖이다.
+- **기존 패턴과 구별**:
+  - **D27** = RPC 경로가 악성 상태를 주는 직접 벡터
+  - **META-55** = 선언된 제약이 실행기에서 hint로 강등되는 구조
+  - **META-56** = 외부 자산 상장이 upstream control plane을 들여오는 구조
+  - **META-57** = **redundancy를 세는 것과 independent truth plane을 확보하는 것이 다르다** 는 구조
+- **Purple Team 고유 기여**: D27은 인프라 벡터고, META-55/56은 선언·자산 측면이다. META-57은 이들을 묶어 **왜 backup/fallback이 있는 시스템도 위기 시 공격자 선택의 monoculture로 붕괴되는가** 를 설명한다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-22)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: META-57 추가 — Counted-Redundancy / Correlated-Failover Gap
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Counted Redundancy / Correlated Failover`) 강화
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0422-01 (MEDIUM active-latent)**: 현재 새 온체인 버그는 없다. 문제는 **Keeper ↔ RPC ↔ On-chain**, **Dashboard ↔ RPC ↔ On-chain** 에서 redundancy를 세는 방식이 아직 독립 truth plane까지 보장하지 않는다는 점이다.
+- `keeper/config.devnet.json` / `keeper/src/config.rs` 는 distinct host와 기본 failover는 보이지만, **provider ownership / ASN / operator independence / N-of-M runtime observation quorum** 은 구조적으로 고정돼 있지 않다.
+- `docs/app.js` 는 bootstrap 시 `getGenesisHash` cross-check를 하지만, 런타임 주요 read path는 대체로 단일 endpoint 응답을 신뢰한다.
+- 따라서 poisoned subset + degraded fallback 시나리오에서 **무엇을 redundancy로 세고, 어떤 disagreement에서 privileged path를 중단할지** 가 아직 핵심 운영 경계로 승격되지 않았다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM active-latent 1건.**
+
+### Sources
+- https://layerzero.network/blog/kelpdao-incident-statement
+- https://www.coindesk.com/tech/2026/04/20/layerzero-blames-kelp-s-setup-for-usd290-million-exploit-attributes-it-to-north-korea-s-lazarus
+
+## 2026-04-19 (KST) — Daily Evolution (#37)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Sygnia `2026 CISO Survey: The State of Incident Response Readiness` | 2026-04-13 | 99%가 formal IR plan을 갖고도 73%는 실제 고압 대응 준비가 안 됐고, 90%는 incident 시 coordination breakdown을 예상. 선언된 계획과 실행 강제 사이가 비어 있음. |
+| Unit42 `Double Agents: Exposing Security Blind Spots in GCP Vertex AI` | 2026-04-14 coverage | assistant-like AI agent가 default-scoped service agent를 통해 consumer/producer project 자원까지 확장. 문서상 scope와 실제 resolved authority가 다를 수 있음을 보여줌. |
+| Hyperbridge exploit coverage | 2026-04-13 | forged proof가 단순 data path에서 끝나지 않고 `ChangeAssetAdmin` 으로 이어졌다. proof artifact의 acceptance와 privileged verb resolution 사이 gap가 핵심. |
+| Anchor issue `#4216` + PR `#4228` | issue 2026-02-04, PR merged 2026-04-16 | upstream 자체가 `yarn` 호출에 `--frozen-lockfile` 강제를 넣었다. lockfile이 있어도 install resolver가 immutable하지 않으면 dependency intent는 advisory에 불과하다. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 블랙/레드: **D51**(Anchor JS lockfile drift), **A32**(Hyperbridge류 proof forgery), **D26**(dashboard trust boundary), **B45**(artifact attestation gap)
+- 퍼플팀: **META-49**(Executable Configuration Trust Drift), **META-53**(Runbook-to-Actuator Binding), **META-54**(Declared-Role / Effective-Authority Gap)
+- 블루 v14/v15: CSP, RPC quorum, degraded emergency path 등 **runtime hardening** 은 강화했지만, **immutable install / build determinism / source↔artifact continuity** 는 아직 핵심 관리 항목으로 올라오지 않음
+
+**오늘 신규 식별 갭**:
+
+#### META-55 — Declared-Constraint / Resolver-Enforcement Gap (DCREG)
+- **현상**: 팀은 lockfile, proof, service-account scope, IR plan처럼 보안 의도가 선언된 artifact가 존재하면 제약이 이미 강제됐다고 느낀다. 그러나 실제 보안은 **build resolver / verification pipeline / default IAM / incident-time decision chain** 이 그 선언을 hard constraint로 집행하는지에 달려 있다. 선언은 남아 있어도 마지막 마일에서 쉽게 **hint** 로 강등된다.
+- **메타 원인**:
+  1. **선언 검토 편향**: lockfile·proof·runbook가 존재하는지만 먼저 보고 enforcement semantics는 깊게 추적하지 않는다.
+  2. **마지막 마일 재해석**: package manager, proof handler, cloud default scope, 조직 의사결정 체인이 선언을 각자 다시 해석한다.
+  3. **정상 문서 / 비정상 실행 공존**: artifact는 syntactically correct한데 resolved behavior만 drift해도 리뷰에서 잘 드러나지 않는다.
+  4. **권한 상속의 비가시성**: semver-compatible refresh, proof→admin verb 연결, default-scoped service agent 같은 inherited power가 작은 diff 아래 숨어든다.
+- **기존 패턴과 구별**:
+  - **META-49** = 설정 파일이 실행면이 되는 문제
+  - **META-53** = 계획에서 실제 actuator까지 마지막 연결선
+  - **META-54** = 역할 라벨과 실효 권한 불일치
+  - **META-55** = 라벨이 맞고 artifact가 있어도, **실행기가 제약을 hard-enforce 하지 않으면 선언 자체가 힌트로 전락** 하는 구조
+- **Purple Team 고유 기여**: D51/A32는 각기 build/bridge 메커니즘이고, Blue v14/v15는 runtime hardening이다. META-55는 이들을 묶어 **“왜 correct-looking declaration 아래서도 security boundary가 재해석되는가”** 를 설명한다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-19)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: META-55 추가 — Declared-Constraint / Resolver-Enforcement Gap
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: Why-Audits-Miss 표에 `D51`, `META-55` 행 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Constraint-as-Hint / Resolver Drift`) 강화
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0419-01 (MEDIUM active-latent)**: 현재 새 온체인 exploit path가 아니라 **builder-path determinism 경계** 가 문제다.
+- `microstable/solana/Anchor.toml` 은 `package_manager = "yarn"`, `microstable/solana/package.json` 은 `@coral-xyz/anchor`, `@solana/spl-token` 및 다수 devDependency에 caret range(`^`)를 쓴다.
+- `yarn.lock` 이 존재해도, Anchor-driven workflow 또는 로컬 maintainer 습관 중 하나라도 immutable install을 보장하지 않으면 dependency graph는 재해석될 수 있다.
+- Blue v14/v15가 dashboard CSP/RPC quorum/read-only regression은 다뤘지만, **build determinism / lockfile immutability / generated client artifact continuity** 는 아직 구조적으로 비어 있다.
+- 기존 **B45 artifact attestation gap** 과 결합하면, 검토한 source / lockfile / generated TS client artifact 사이의 연속성 증명은 여전히 약하다.
+- **CRITICAL 없음. HIGH 없음. MEDIUM active-latent 1건.**
+
+### Sources
 - https://www.sygnia.co/press-release/sygnia-released-ciso-survey-2026/
+- https://unit42.paloaltonetworks.com/double-agents-vertex-ai/
+- https://www.banklesstimes.com/articles/2026/04/13/1b-counterfeit-dot-minted-in-hyperbridge-ismp-exploit-cashed-out-in-eth/
+- https://github.com/solana-foundation/anchor/issues/4216
+- https://github.com/solana-foundation/anchor/pull/4228
+
+---
+
+## 2026-04-15 (KST) — Daily Evolution (#33)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Immunefi March 2026 Ecosystem Update | 2026-04 | $2.7M payout, 247 live threats prevented, median-hack 개선 서사가 전면. 업계가 무엇을 측정하고 무엇을 전면에 내세우는지 보여줌. |
+| Mitchell Amador `The Real Cost of an Onchain Hack: 2024-2025 Update` | 2026-03-24, fetched 2026-04-15 | median theft는 줄었지만 top 5 hacks가 62%, top 10이 73%를 차지. 평균보다 tail concentration이 더 중요해졌음. |
+| Hyperbridge exploit coverage | 2026-04-13 | proof-validation miss 하나가 `ChangeAssetAdmin`까지 이어짐. 취약점 개수보다 blast radius 큰 control-plane miss 하나가 더 중요하다는 신호. |
+| Nomos Labs fuzz-testing guide | 2026 | Foundry/Echidna/Medusa 조합이 correctness coverage를 크게 올리지만, coverage의 범위 자체는 여전히 모델링된 invariant 안에 묶여 있음. |
+| SwarmSignal AI Agent Security 2026 | fetched 2026-04-15 | prompt injection, memory poisoning, tool misuse는 모두 low-frequency/high-blast control-plane failure. agent security도 결국 권한 경계가 핵심. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 블랙팀: A32, A94/A105, B45, META-48~51
+- 퍼플팀: META-48 (OCHTG), META-49 (ECTD), META-50 (ASG), META-51 (PCAG)
+
+**오늘 신규 식별 갭**:
+
+#### META-52 — Metric-Optimized Security Mirage (MOSM)
+- **현상**: 업계는 payout, live threats prevented, audit count, verified properties, fuzz coverage처럼 **잘 보이고 잘 셀 수 있는 보안 지표** 를 빠르게 개선한다. 그런데 실제 손실은 여전히 proof/admin/key/artifact/control-plane 같은 **저빈도·고파괴 tail risk** 가 좌우한다.
+- **메타 원인**:
+  1. **측정 가능성 편향**: 예산·리포트·홍보가 countable security output 중심으로 설계된다.
+  2. **평균-꼬리 분리**: median hack, bug count, prevented threats가 개선돼도 power-law tail은 악화될 수 있다.
+  3. **도구 성공의 과대 일반화**: fuzz/FV/AI auditor 성능 향상이 전체 security posture 개선으로 오해된다.
+  4. **통제면 저평가**: artifact attestation, signer ceremony, rollback latency, authority concentration, provenance coverage는 대시보드에 잘 안 잡혀 우선순위에서 밀린다.
+- **Purple Team 고유 기여**: META-48~51이 blind spot의 위치를 설명했다면, META-52는 **왜 업계가 그 blind spot에 계속 과소투자하는가** 를 measurement/incentive 관점에서 고정한다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-15)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: META-52 추가 — Metric-Optimized Security Mirage
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: Why-Audits-Miss 표에 META-52 행 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Metric-Optimized Security Mirage`) 강화
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0415-01 (MEDIUM latent)**: 현재 active exploit path는 새로 확인되지 않음 ✅
+- 그러나 현재의 안전 신호는 mostly code-path correctness 중심이다. **B45 artifact attestation gap**, A43 admission carry-forward, future provenance schema risk는 모두 headline security metrics에서 과소표시될 수 있는 tail-risk 성격이다.
+- 따라서 “테스트 통과 / 신규 CVE 없음 / 바운티 사고 없음”만으로 아키텍처 안전을 과대평가할 수 있음.
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://docs.immunefi.foundation/march-2026-immunefi-ecosystem-update/
+- https://mitchellamador.com/p/the-real-cost-of-an-onchain-hack
+- https://www.banklesstimes.com/articles/2026/04/13/1b-counterfeit-dot-minted-in-hyperbridge-ismp-exploit-cashed-out-in-eth/
+- https://nomoslabs.io/blog/fuzz-testing-smart-contracts-complete-guide-2026
+- https://swarmsignal.net/ai-agent-security-2026/
+
+---
+
+## 2026-04-14 (KST) — Daily Evolution (#32)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Hyperbridge / Polkadot bridge exploit coverage | 2026-04-13 | forged ISMP state proof가 `ChangeAssetAdmin` 까지 운반. proof failure가 단순 mint/unlock이 아니라 admin authority mutation으로 연결됨. |
+| Atlan `AI Agent Memory Governance` | 2026-04-02 | memory layer에 provenance, temporal validity, ownership, audit trail이 없으면 governance가 성립하지 않음. memory는 storage가 아니라 governed context layer. |
+| SwarmSignal AI Agent Security update (fetch timestamp 2026-04-11) | 2026-04-11 | prompt injection보다 memory poisoning이 더 위험한 이유는 공격과 실행이 시간적으로 분리되어, 훗날 unrelated session에서 권한 판단을 오염시키기 때문. |
+| Immunefi platform/playbook signals | current | “top auditing firms missed” 사례와 playbook framing이 custody / governance / infrastructure / monitoring까지 포함. audit-only coverage의 한계 재확인. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 블랙팀: A32, A113, B43, B52, META-49, META-50
+- 퍼플팀: META-44 (bridge attestation classification), META-48 (OCHTG), META-49 (Executable Config), META-50 (Admissibility)
+
+**오늘 신규 식별 갭**:
+
+#### META-51 — Provenance-Carried Authority Gap (PCAG)
+- **현상**: bridge proof, AI memory, vector-store context, artifact manifest는 겉보기엔 data plane이지만 실제로는 privileged action을 정당화하는 authority-bearing evidence다.
+- **메타 원인**:
+  1. 감사/FV/퍼징이 대부분 evidence가 ingest된 뒤의 실행 정확성만 검증.
+  2. provenance / freshness / owner namespace / trust scope가 schema에 강제되지 않아도 기능 테스트는 통과.
+  3. memory store, proof relay, artifact manifest를 여전히 plumbing/storage/UX 레이어로 분류.
+  4. 버그바운티는 drain/권한우회 보상 중심이라 stale/poisoned authoritative context는 저평가.
+- **Purple Team 고유 기여**: A32/A113은 cross-chain proof 실패, B43/B52는 AI memory poisoning 공격 벡터다. META-51은 그 둘을 묶어 **“왜 syntactically valid한 증거가 privileged action이 되는가”** 를 구조적으로 설명한다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-14)
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: META-51 추가 — Provenance-Carried Authority Gap
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: A32 Hyperbridge reinforcement에 “왜 감사가 놓치는가” 노트 보강
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: B43에 memory governance / provenance schema 방어 노트 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: Daily Evolution log + Defense Failure Pattern(`Evidence-as-Authority Confusion`) 강화
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- **PT-ARCH-2026-0414-01 (MEDIUM latent)**: 현재는 hardcoded Pyth feed binding, no bridge, no AI governance memory로 active exploit path 없음 ✅
+- 그러나 future manual oracle fallback / bridge messaging / AI-assisted governance 도입 시, evidence provenance schema (`source_id`, `captured_at`, `expires_at`, `owner_namespace`, `trust_scope`)가 없으면 구조적 blind spot 즉시 활성화
+- **CRITICAL 없음. HIGH 없음. MEDIUM latent 1건.**
+
+### Sources
+- https://www.banklesstimes.com/articles/2026/04/13/1b-counterfeit-dot-minted-in-hyperbridge-ismp-exploit-cashed-out-in-eth/
+- https://atlan.com/know/ai-agent-memory-governance/
+- https://swarmsignal.net/ai-agent-security-2026/
+- https://immunefi.com/
+
+---
+
+## 2026-04-11 (KST) — Daily Evolution (#29)
+
+**Current Time**: 2026-04-11 04:01 KST | **Run**: #29 | **Analyst**: Purple Team (Miss Kim)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| Anchor 1.0 stable release notes | 2026-04-02 | `Anchor.toml`에 `pre_build/post_build/pre_test/post_test/pre_deploy/post_deploy` lifecycle hook 추가. 설정 파일이 실행 가능한 control-plane으로 승격. |
+| Anchor v1.0.0 changelog | 2026-04-02 | hook 추가가 RC 단계부터 반영됨. Solana/Anchor 프로젝트의 build/deploy trust boundary가 구조적으로 넓어졌음. |
+| CertiK AI Auditor launch coverage | 2026-04-08 | 업계 시선이 AI 기반 코드 탐지·triage 성능 향상에 집중. 검증 대상은 여전히 소스/개발 워크플로우 중심. |
+| Immunefi March 2026 ecosystem update | 2026-04 | 247 live threats prevented, $2.7M payout, security score 공개. 보상 구조가 온체인/코드 레이어에 집중됨을 재확인. |
+| Q1 2026 exploit autopsy + Drift/Resolv post-mortems | 2026-04 / 2026-03 | 실제 손실 분포는 여전히 운영·키·배포면에서 증폭. 코드 correctness 개선만으로 손실 클래스가 이동하지 않음. |
+
+### Phase 2) 갭 분석
+
+**기존 커버**:
+- 블랙팀: D28 (Supply Chain), A109 (Anchor lifecycle hook abuse), B45 (artifact attestation carry-forward)
+- 레드팀: supply-chain / CI / deploy-path 악용 가능성 시뮬레이션 범주
+- 퍼플팀: META-48 (OCHTG), META-25 (FVSC), META-40~45 (AI tooling/coordination)
+
+**오늘 신규 식별 갭**:
+
+#### META-49 — Executable Configuration Trust Drift (ECTD)
+- **현상**: 업계 보안 역량은 AI 감사 도구, bug bounty, formal verification 쪽으로 빠르게 고도화되고 있다. 그런데 동시에 `Anchor.toml [hooks]`, CI YAML, deploy wrapper처럼 원래 선언형으로 여겨지던 파일이 실행 가능한 제어면으로 바뀌고 있다.
+- **메타 원인**:
+  1. **범주 오인**: 설정 파일을 여전히 "메타데이터"로 분류해 코드 리뷰/감사 우선순위 밖에 둔다.
+  2. **검증 연속성 붕괴**: FV·감사는 검토한 소스와 배포 산출물이 동일하다고 가정한다. post-build / pre-deploy hook는 그 가정을 뒤에서 깨뜨린다.
+  3. **시장 인센티브 편향**: 바운티·AI auditor는 재현 가능한 코드 취약점 발견에 보상이 집중. 빌드/배포 control-plane abuse는 상대적으로 저가치로 취급된다.
+  4. **신뢰 이동의 비가시성**: 팀은 보안 도구가 좋아질수록 전체 안전성이 높아졌다고 느끼지만, 실제로는 "보는 면"만 강해지고 "안 보는 면"의 상대가치가 올라간다.
+- **기존 패턴과 구별**:
+  - **D28** = 악성 패키지/의존성 공급망
+  - **A109** = Anchor hook라는 구체 공격 벡터
+  - **META-48** = 인간-기계 신뢰 경계 전반
+  - **META-49** = **설정이 실행권을 얻는 순간 검증 사슬이 끊기는 구조적 감사 실패** 자체를 다룸
+- **Purple Team 고유 기여**: 블랙팀이 A109로 벡터를 기록할 수는 있어도, 왜 업계 전체가 이런 변화를 체계적으로 과소평가하는지는 퍼플팀 메타 분석이 아니면 남지 않는다.
+
+### Phase 3) 스킬 강화 델타 (2026-04-11)
+- `skills/blockchain-black-team/references/attack-matrix.md`
+  - 헤더: `META-01~49`로 갱신
+  - Why-Audits-Miss 표: `A109`, `META-49` 행 추가
+  - 본문: `META-49 Executable Configuration Trust Drift (ECTD)` 신규 섹션 추가
+- `skills/blockchain-black-team/SKILL.md`
+  - Daily Evolution Log에 2026-04-11 Purple meta sweep 추가
+  - Defense Failure Patterns에 `Executable-Config Drift` 추가
+- 변화 성격: **0 new named vectors, +1 new meta pattern**
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- `microstable/solana/Anchor.toml` 확인 결과:
+  - 현재 `[hooks]` 섹션 없음 ✅
+  - 즉시 exploit path 미확인 ✅
+- 그러나 **latent risk는 분명**:
+  1. Anchor 1.0 업그레이드 시 `Anchor.toml`이 곧 실행 가능한 security boundary가 됨
+  2. 기존 carry-forward인 **B45 (artifact attestation 부재)** 와 결합하면, 검토한 소스와 실제 배포 산출물의 동일성 입증이 더 약해짐
+  3. 향후 build/deploy runner가 long-lived key를 보유하면 hook 삽입만으로 서명권/배포권 측면 compromise 가능
+- **판정**: 현재 **LOW~MEDIUM latent**. 코드 취약점은 아니지만, 업그레이드/배포 아키텍처 정책으로 선제 통제 필요.
+
+### 퍼플팀 메타 인사이트 누적 현황 (2026-04-11 기준)
+
+| ID | 이름 | 등재일 |
+|----|------|--------|
+| META-01~48 | (기존 항목) | 2026-03-13 ~ 2026-04-10 |
+| META-49 | Executable Configuration Trust Drift (ECTD) | 2026-04-11 |
+
+**총 퍼플팀 메타 인사이트: 49건**
+
+### Sources
+- https://www.anchor-lang.com/docs/updates/release-notes/1-0-0
+- https://github.com/solana-foundation/anchor/blob/v1.0.0/CHANGELOG.md
+- https://www.valuethemarkets.com/cryptocurrency/news/certik-enhances-blockchain-security-with-ai-auditor-tool
+- https://docs.immunefi.foundation/march-2026-immunefi-ecosystem-update/
+- https://dev.to/ohmygod/the-q1-2026-defi-exploit-autopsy-137m-lost-15-protocols-breached-the-5-root-cause-patterns-and-3o92
+
+---
 
 ## 2026-04-10 (KST) — Daily Evolution (#28)
+
+**Current Time**: 2026-04-10 04:00 KST | **Run**: #28 | **Analyst**: Purple Team (Miss Kim)
 
 ### Phase 1) 수집 소스 요약
 
@@ -1055,13 +1268,13 @@
 |------|--------|-----------|
 | BlockSec Drift Protocol post-mortem | 2026-04-02 | A105 durable nonce mechanism 분석 — 2/5 nonce account control가 핵심. 멀티시그 정족수와 nonce 실행 정족수가 구조적으로 분리 가능. |
 | CoinDesk "Solana Foundation SIRN" | 2026-04-07 | Solana Foundation 공식 인정: "Stride formal verification도 Drift 공격 포착 불가." onchain correctness와 offchain human trust 간격(OCHTG)을 당국이 인정. |
-| BlockSec/KuCoin AI agent breach 분석 | 2026-04-02 | Memory poisoning → AI 에이전트가 잘못된 가격 신호를 정당한 것으로 처리 → cascade of beneficial trades. |
-| Certora + Aave V4 6년 협력 결과 | 2026-03 | Formal verification이 "검증 가능한 속성"만 증명. OpSec/social engineering은 명시적으로 범위 밖. |
-| Google DeepMind/SecurityWeek AI Agent Traps | 2026-04-03~07 | Agent Trap 분류 체계: Interaction Traps, Systemic Traps, Human-in-the-Loop Traps. |
+| BlockSec/KuCoin AI agent breach 분석 | 2026-04-02 | Memory poisoning → AI 에이전트가 잘못된 가격 신호를 정당한 것으로 처리 → cascade of beneficial trades. AI 에이전트가 oracle manipulation의 증폭기(amplifier)가 됨. |
+| Certora + Aave V4 6년 협력 결과 | 2026-03 | Formal verification이 "검증 가능한 속성"만 증명. OpSec/social engineering은 명시적으로 범위 밖. FV의 한계가 OCHTG 구조적 문제를 역설적으로 확인. |
+| Google DeepMind/SecurityWeek AI Agent Traps | 2026-04-03~07 | Agent Trap 분류 체계: Interaction Traps, Systemic Traps, Human-in-the-Loop Traps. 웹 페이지에 숨겨진 입력을 통해 에이전트 조작. |
 
 ### Phase 2) 갭 분석
 
-**기존 커버**: META-01~47, B50~B51, A105, A52 (Drift social engineering)
+**기존 커버**: META-01~47, B50~B51, A105 (durable nonce mechanism), A52 (Drift social engineering)
 
 **오늘 신규 식별 갭**:
 
@@ -1069,39 +1282,21 @@
 - **현상**: Drift $270M — 코드는 감사 통과, 온체인 로직은 정당한데, 오프체인 OpSec 붕괴로 전체 안전망 무력화. 6개월 social engineering → 장비 침해 → durable nonce pre-signed tx 유출 → 지연 실행으로 온체인 방어 우회.
 - **메타 원인**:
   1. **검증 경계 역설**: 모든 보안 도구(감사, FV, 모니터링)는 온체인 경계에서 작동. 공격 표면은 인간-기계 인터페이스까지 확장.
-  2. **정족수 desync**: 멀티시그 정족수(n/5)와 nonce account 실행 정족수(2/5)가 구조적으로 다를 수 있음.
-  3. **지연 실행의 정당성**: durable nonce tx는 온체인에서 완전한 권한으로 실행됨.
-  4. **감사의 본질적 한계**: 감사는 "코드가 명세대로 동작하는가"를 검증. 팀원 6개월 훈련 ditwing 대응은 검증 대상이 아님.
-  5. **FV의 암묵적 가정**: Certora의 Aave V4 FV는 모든 실행 경로에서 수학적 안전 속성을 증명하지만, 정족수 변경, nonce account 초기화, 장비 보안은 범위 밖.
-- **Purple Team 고유 기여**: META-48은 블랙팀(A105 mechanism), 레드팀(A52 social engineering vector)을 합성하여 "왜 모든 노력이 실패했는가"의 메타 구조를 규명.
-- **A105 강화**: 2/5 nonce account control 추가. nonce account 초기화 시점과 control assignment가 보안 경계의 첫 번째 결정점.
+  2. **정족수 desync**: 멀티시그 정족수(n/5)와 nonce account 실행 정족수(2/5)가 구조적으로 다를 수 있음. 이 분리는 온체인 검증으로 탐지 불가.
+  3. **지연 실행의 정당성**: durable nonce tx는 온체인에서 완전한 권한으로 실행됨. 서명 시점의 의도와 실행 시점의 의도 불일치 → 온체인 검증의盲点.
+  4. **감사의 본질적 한계**: 감사는 "코드가 명세대로 동작하는가"를 검증. "팀원이 6개월간 تدري프트윅당한 장비로 서명하는가"는 검증 대상이 아님.
+  5. **FV의 암묵적 가정**: Certora의 Aave V4 FV는 모든 실행 경로에서 수학적 안전 속성을 증명하지만, 정족수 변경, nonce account 초기화, 장비 보안은 범위 밖. FV가 OCHTG를 "구조적으로" 커버하지 못한다는 것이 확인됨.
+- **Purple Team 고유 기여**: META-48은 블랙팀(A105 mechanism), 레드팀(A52 social engineering vector) 모두의成果를 합성하여 "왜 이 모든努力가 실패했는가"의 메타 구조를 규명. 퍼플팀만 수행 가능한 분석.
+- **A105 강화**: 2/5 nonce account control가 핵심 상세로 추가. nonce account 초기화 시점과 control assignment가 보안 경계의 첫 번째 결정점.
 
 ### Phase 3) 스킬 강화 델타 (2026-04-10)
 - `attack-matrix.md`: META-48 추가 — OCHTG 패턴, 왜 모든 도구가 놓치는지 표 형태 분석, Microstable keeper 아키텍처 관련성, 방어 아키텍처 6가지.
 - `attack-matrix.md`: A105 Durable Nonce 항목 BlockSec detail 추가 — 2/5 nonce account control + nonce account 초기화가 보안 경계의 첫 결정점.
 - Matrix state: META-01~48, 총 172+ entries.
 
-### Phase 4) Microstable 아키텍처 점검 요약
-- **PT-ARCH-2026-0410-01 (MEDIUM)**: Keeper operational security audit 필요 — 코드 수준 "no durable nonce" 확인 + 운영 수준 "keeper device/network security" 확인.
-- **PT-ARCH-2026-0410-02 (MEDIUM)**: Keeper key ceremony 문서화 필요 — hardware signer 사용 여부, dedicated VM 여부.
-- **PT-ARCH-2026-0410-03 (MEDIUM)**: META-48 OCHTG Keeper relevance — keeper OpSec audit Q2 내로 스케줄링.
-- **CRITICAL 없음 (현재 아키텍처 기준).**
-
 ---
 
 ## 2026-04-08 (KST) — Daily Evolution (#26)
-
-**Current Time**: 2026-04-08 04:00 KST | **Run**: #26 | **Analyst**: Purple Team (Miss Kim)
-
-### Phase 1) 수집 소스 요약
-
-| 소스 | 발행일 | 핵심 신호 |
-|------|--------|-----------|
-| Google DeepMind "AI Agent Traps" 분류 | 2026-04-07 | Systemic Traps(다중 에이전트 조정으로 flash crash/DDoS/Sybil 유발), Human-in-the-Loop Traps(에이전트→인간 방향, automation bias/approval fatigue 악용). Interaction Traps, Infrastructure Traps 포함 전체 분류 체계. |
-| KuCoin AI Trading Agent $45M breach 분석 | 2026-04-02 | 기기 침해 → AI 트레이딩 에이전트 증폭. 단일 기기 침해가 AI 에이전트를 통해 시스템 전체 실패로 확장. |
-| NY Times "AI 핸드오프 가속화" | 2026-04-06 | 침해 액세스 핸드오프가 8시간 → 20초로 단축. AI 에이전트가 프로세스 자동화. |
-| Security Boulevard "AI Agent Traps" | 2026-04-06 | 은닉 입력/도구로 자율 에이전트 조작. Hidden inputs, tool misuse 분석. |
-| Reco.ai OpenClaw Crisis | 2026-04-07 | CVE-2026-25253 (CVSS 8.8) — B48(Localhost Trust)이 CVE로 확정. 원클릭 RCE + 2개 커맨드 인젝션. |
 | Microsoft Security Blog "Tycoon2FA" | 2026-04-02 | MFA 우회 피싱 플랫폼. AI 기반 공격 생태계 산업화 확인. |
 
 ### Phase 2) 갭 분석 (팀 간 커버리지)
@@ -1885,31 +2080,8 @@ git push origin main
 | META-23 | Cloud AI Agent Infrastructure IAM Attack Surface (CAAI-IAS) | 2026-03-26 (퍼플팀) |
 | META-24 | Off-Chain Attack Surface Crystallization + Agentic MEV (OACS-AMCW) | 2026-03-28 (퍼플팀) |
 | META-25 | Formal Verification Specification Completeness Gap (FVSC) | 2026-03-29 (퍼플팀) |
-| META-26 | Cross-Chain Interoperability Security Verification Completeness Gap (CISV) | 2026-03-30 (퍼플팀) |
-| META-27 | AI Protocol Oracle Manipulation Amplification Pattern (AIPOMAP) | 2026-03-30 (퍼플팀) |
-| META-28 | On-chain Verification Boundary Attack Class: Valid Tx / Malicious Intent (OVBC) | 2026-03-30 (퍼플팀) |
-| META-29 | Keeper Architecture Operational Security Pattern (KAOSP) | 2026-03-31 (퍼플팀) |
-| META-30 | Economic Security Assumption Unbounded Leverage Pattern (ESAULP) | 2026-03-31 (퍼플팀) |
-| META-31 | Protocol-State-Permission Correlation Failure Pattern (PSPCF) | 2026-03-31 (퍼플팀) |
-| META-32 | Social Engineering + Smart Contract Compound Attack Pattern (SE+SC) | 2026-04-01 (퍼플팀) |
-| META-33 | Incident Response Coordination Gap Pattern (IRCG) | 2026-04-01 (퍼플팀) |
-| META-34 | Fuzzer Benchmark Blind Spot Pattern (FBBP) | 2026-04-02 (퍼플팀) |
-| META-35 | Cross-Protocol Monitoring Latency Gap (CPMLG) | 2026-04-02 (퍼플팀) |
-| META-36 | Approval-Execution Intent Drift (AEID) | 2026-04-03 (퍼플팀) |
-| META-37 | Framework Security-Default Drift (FSDD) | 2026-04-03 (퍼플팀) |
-| META-38 | AI Agent Runtime Governance Framework Gap (AARGFG) | 2026-04-05 (퍼플팀) |
-| META-39 | Incident Response Latency Gap (IRLG) | 2026-04-05 (퍼플팀) |
-| META-40 | AI Security Tool Ambivalence (ASTA) | 2026-04-06 (퍼플팀) |
-| META-41 | Copycat Acceleration (CCA) | 2026-04-06 (퍼플팀) |
-| META-42 | Attack Surface Quantification (ASQ) | 2026-04-06 (퍼플팀) |
-| META-43 | Async Cross-Chain Reentrancy Class (ACCRC) | 2026-04-07 (퍼플팀) |
-| META-44 | Bridge Attestation System Classification Gap (BASC) | 2026-04-07 (퍼플팀) |
-| META-45 | AI Agent Coordination Attack Surface (AARGFG-C) | 2026-04-08 (퍼플팀) |
-| META-46 | AI Agent Self-Learned MEV Pattern (AASLMP) | 2026-04-09 (퍼플팀) |
-| META-47 | Quantum Computing Threat to ECC | 2026-04-10 (블랙팀) |
-| META-48 | Onchain Correctness / Offchain Human Trust Gap (OCHTG) | 2026-04-10 (퍼플팀) |
 
-**총 퍼플팀 메타 인사이트: 47건 (META-47 제외, 블랙팀 제공)**
+**총 퍼플팀 메타 인사이트: 25건**
 
 ### Sources
 - https://dev.to/ohmygod/the-q1-2026-defi-exploit-autopsy-137m-lost-15-protocols-breached-the-5-root-cause-patterns-and-3o92
@@ -3868,3 +4040,284 @@ Brave API 429 rate-limit → `search-fallback.sh` + direct `web_fetch` 사용.
 - https://www.bvp.com/atlas/securing-ai-agents-the-defining-cybersecurity-challenge-of-2026 (BVP privilege accumulation)
 - https://menlovc.com/perspective/agents-for-security-the-tipping-point-for-offensive-ai/ (RSAC 2026 autonomous AI exploitation tipping point)
 - https://dev.to/ohmygod/cross-chain-bridge-message-validation-7-defensive-patterns-that-would-have-stopped-the-3m-p9l (CrossCurve confirmationThreshold analysis)
+
+---
+
+#### META-46 -- AI Agent Self-Learned MEV Pattern (Copycat Acceleration + Certora FV Democratization Meta-Risk)
+
+- **META-41 (CCA)과 구별**: META-41 = 인간 개발자 수동 복제 (시간 창: 수 시간~수 일). META-46 = AI 에이전트 자율 복제 (시간 창: 블록 단위). 인건비 없음.
+- **META-25 (FVSC) 보강**: Certora Prover 오픈소스 (2026-03) — FV 도구 보급과 실제 활용 사이의 격차가 새로운 메타 위험. AI-assisted 코드 + FV 조합에서 AI의 implicit assumption이 명세에 반영되지 않으면 FV도 포착 실패.
+- **신규 등재**: META-46
+- `attack-matrix.md` Why-Audits-Miss 표: META-46 행 추가
+- `attack-matrix.md` 말미: META-46 전체 섹션 추가 (AI Agent Self-Learned MEV Pattern)
+- **PT-0409-01 WATCH (AI tooling 도입 시 elevated)**: Microstable vault 규모>$1M + 사용자Facing DEX interface + AI keeper 도입 중 하나라도 발생 시 META-46 elevated. 현재 stablecoin-only mint/redeem는economically unattractive target (sandwich margin < gas cost).
+- **PT-0409-02 LOW (예방적)**: FV 도입 의사결정 시 PT-ARCH-2026-0329-01 Oracle Security Specification 1-pager을 선행 조건으로 포함. Certora 공개로 FV 접근성은 높아졌으나 명세 정확성 갭(META-25)은 여전히 존재.
+- **PT-0409-03 LOW (예방적 / 브릿지 통합 시)**: A48 방어 패턴 (`onlyGateway` + confirmationThreshold ≥ quorum) 신규 프로토콜 통합 시 의무 구현. 프로토콜 통합 체크리스트에 "최근 12개월 보안 사고 이력" 항목 추가.
+
+### Sources
+- https://cryptonium.cloud/articles/agentic-dark-forest-ai-mev-frontrunning-2026-outlook (AI Agent MEV 2026 outlook)
+- https://olympixai.medium.com/crosscurve-exploit-post-mortem-1-4m-lost-to-a-missing-access-control-check-c128e0aeb360 (CrossCurve post-mortem + copycat analysis)
+- https://sherlock.xyz/post/best-web3-bug-bounties-in-2026-the-highest-paying-programs-on-every-platform (Sherlock bug bounty 2026 trends)
+- https://www.certora.com/blog/certora-prover-open-source (Certora Prover open source March 2026)
+
+| META-01 | Known-Class Fresh-Deployment Blindness | 2026-03-13 |
+| META-02 | Full Attack Surface != Deployed Contract | 2026-03-13 |
+| META-03 | Rust Memory Safety Halo Effect | 2026-03-13 |
+| META-04 | Business Logic UX-Security Boundary | 2026-03-15 |
+| META-05 | Autonomous Wallet Agent AI Attack Surface | 2026-03-15 |
+| META-06 | Deployment Configuration Audit Blindspot | 2026-03-15 |
+| META-07 | AI Security Gatekeeper Adversarial Bypass | 2026-03-16 |
+| META-08 | Governance Patch-and-Forget | 2026-03-16 |
+| META-09 | Block Builder MEV Complicity | 2026-03-17 |
+| META-10 | Multi-Protocol Integration Boundary Accountability Diffusion | 2026-03-18 |
+| META-11 | AI Weaponization Symmetry | 2026-03-19 |
+| META-12 | Fuzzer Monoculture / Stateful Testing Gap | 2026-03-19 |
+| META-13 | OpSec Last-Mile Kill | 2026-03-20 |
+| META-14 | Rogue AI Agent Insider Threat | 2026-03-20 |
+| META-15 | Live-Blockchain Integration Test Gap | 2026-03-21 |
+| META-16 | Multi-Path Attack Asymmetry | 2026-03-22 |
+| META-17 | Cross-Chain Trust Assumption Cascade | 2026-03-22 |
+| META-18 | SIEM/EDR AI Agent Behavioral Blind Spot | 2026-03-23 |
+| META-19 | Off-Chain Privileged Computation Anti-Pattern (OPCA) | 2026-03-24 |
+| META-20 | EIP-1153 Transient Storage Safety Assumption Collapse (TSAC) | 2026-03-25 |
+| META-21 | AI-Driven Autonomous Exploit Synthesis Asymmetry (ADAES) | 2026-03-25 |
+| META-22 | Cloud KMS Trust Boundary Collapse | 2026-03-26 (블랙팀) |
+| META-23 | Cloud AI Agent Infrastructure IAM Attack Surface (CAAI-IAS) | 2026-03-26 (퍼플팀) |
+| META-24 | Off-Chain Attack Surface 80/20 + Agentic MEV | 2026-03-28 (attack-matrix.md 참조) |
+| META-25 | Formal Verification Specification Completeness Gap (FVSC) | 2026-03-29 (attack-matrix.md 참조) |
+| META-26 | Semantic Version Skipping Attack Surface | 2026-03-30 (attack-matrix.md 참조) |
+| META-27 | AI Agent Skill/Plugin Ecosystem Supply Chain Attack (APSC) | 2026-03-30 (attack-matrix.md 참조) |
+| META-28 | On-Chain Prompt Injection via Adversarial Metadata (OCPI) | 2026-03-30 (attack-matrix.md 참조) |
+| META-29 | Commit/Reveal Threshold Circumvention | 2026-03-31 (attack-matrix.md 참조) |
+| META-30 | Keeper Parameter Misconfiguration Evolution | 2026-03-31 (attack-matrix.md 참조) |
+| META-31 | Governance Token Lock Temporal Window Exploitation | 2026-03-31 (attack-matrix.md 참조) |
+| META-32 | Solana Durable Nonce Secret Key Correlation | 2026-04-01 (attack-matrix.md 참조) |
+| META-33 | Anchor Account Deserialization Reentrancy | 2026-04-01 (attack-matrix.md 참조) |
+| META-34 | Keeper Sequential Execution Dependency | 2026-04-02 (attack-matrix.md 참조) |
+| META-35 | Keeper Config Drift Silent Degradation | 2026-04-02 (attack-matrix.md 참조) |
+| META-36 | Cross-Invariant Accounting Mismatch | 2026-04-03 (attack-matrix.md 참조) |
+| META-37 | Economic Security Assumptions in Automated Risk Systems | 2026-04-03 (attack-matrix.md 참조) |
+| META-38 | Governance Flash Loan Temporal Desync | 2026-04-05 (attack-matrix.md 참조) |
+| META-39 | Cross-Chain Messaging Delay Exploitation | 2026-04-05 (attack-matrix.md 참조) |
+| META-40 | AI Security Tool Ambivalence (ASTA) | 2026-04-06 (attack-matrix.md 참조) |
+| META-41 | Copycat Acceleration (CCA) | 2026-04-06 (attack-matrix.md 참조) |
+| META-42 | Attack Surface Quantification (ASQ) | 2026-04-06 (attack-matrix.md 참조) |
+| META-43 | Async Cross-Chain Reentrancy Class (ACCRC) | 2026-04-07 (attack-matrix.md 참조) |
+| META-44 | Bridge Attestation System Classification Gap (BASC) | 2026-04-08 (attack-matrix.md 참조) |
+| META-45 | AI Agent Coordination Attack Surface | 2026-04-08 (attack-matrix.md 참조) |
+| META-46 | AI Agent Self-Learned MEV Pattern + Certora FV Democratization Meta-Risk | 2026-04-09 (퍼플팀) |
+
+**총 퍼플팀 메타 인사이트: 46건** (META-24~META-45는 attack-matrix.md에 별도 문서화됨)
+
+### Sources
+- https://cryptonium.cloud/articles/agentic-dark-forest-ai-mev-frontrunning-2026-outlook (AI Agent MEV 2026 outlook)
+- https://olympixai.medium.com/crosscurve-exploit-post-mortem-1-4m-lost-to-a-missing-access-control-check-c128e0aeb360 (CrossCurve post-mortem + copycat analysis)
+- https://sherlock.xyz/post/best-web3-bug-bounties-in-2026-the-highest-paying-programs-on-every-platform (Sherlock bug bounty 2026 trends)
+- https://www.certora.com/blog/certora-prover-open-source (Certora Prover open source March 2026)
+
+---
+
+## 2026-04-13 (KST) — Daily Evolution (Purple Team)
+
+**Current Time**: 2026-04-13 04:09 KST | **Analyst**: Purple Team (Miss Kim)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| arXiv `Identity-Authenticated Fair Ordering for Proposer-Controlled MEV Mitigation` | 2026-04-08 | fairness proof가 강해질수록 오히려 **admissible set 이전 단계**(threshold receipt, queue fairness)가 별도 공격면으로 드러남 |
+| arXiv `Economic Security of VDF-Based Randomness Beacons` | 2026-04-06 | 평균 상황에선 안전한 delay가 reward spike 구간에서는 경제적으로 붕괴 가능 |
+| Foundry invariant testing guide | current docs | 불변식 테스트는 강력하지만 기본 모델이 이미 admission된 call sequence 중심 |
+| Echidna docs | current docs | grammar/coverage-guided fuzzing도 시스템 내부 실행 경로 최적화 — queue/receipt starvation은 기본 모델 밖 |
+| Immunefi bug-fix review index | current index | 보상과 사례 서술이 여전히 코드-level reproducible bug 중심 |
+| RustSec `logprinter` advisory | 2026-04-09 | 운영자가 debug/trace 경로를 열 때만 발화하는 privileged runtime path가 존재 |
+
+### Phase 2) 갭 분석 (팀 간 커버리지)
+
+**기존 커버**: A110(receipt-threshold poisoning), A111(VDF 경제 공격), META-37(경제 가정 붕괴), META-49(executable config drift).
+
+**오늘 신규 식별 갭**:
+
+#### META-50 — Admissibility Security Gap (ASG)
+- **현상**: 보안 업계의 감사·형식 검증·불변식 테스트·버그바운티는 대부분 **이미 시스템에 들어온 요청이 올바르게 실행되는가** 를 본다. 그러나 최신 fairness/ordering/security 연구가 공통으로 드러내는 약점은 그 이전 — **누가 admission 받는가, queue를 누가 점유하는가, threshold를 누가 먼저 채우는가** — 이다.
+- **메타 원인**:
+  1. liveness/fairness/admission 파라미터를 성능 튜닝값으로 분류하고 보안 경계로 승격하지 않음.
+  2. fuzz/invariant 도구는 시스템 외부의 receipt saturation, validator attention exhaustion, single-slot serialization을 기본 모델에 넣지 않음.
+  3. 형식 검증은 admissible set이 주어졌다고 가정하는 경우가 많아 admission economics를 모델 밖으로 둠.
+  4. bug bounty는 직접 drain이 아닌 구조적 admission choke에 낮은 경제 인센티브를 부여.
+- **기존 패턴과 구별**:
+  - A110/A111 = 구체 공격 기법
+  - META-37 = 경제 모델/파라미터 가정 붕괴
+  - **META-50 = 보안 검증의 시작점 자체가 너무 늦다** 는 메타 실패
+- **신규 등재**: META-50
+
+### Phase 3) 스킬 강화 델타 (2026-04-13)
+
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
+  - 헤더를 `META-01~50`로 갱신
+  - Why Audits Miss It 표에 `META-50` 추가
+  - 말미에 `META-50. Admissibility Security Gap (ASG)` 전체 섹션 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`
+  - Daily Evolution Log에 2026-04-13 Purple meta sweep 추가
+  - Defense Failure Patterns에 `Admissibility Blindness` 추가
+
+### Phase 4) Microstable 아키텍처 점검 요약
+
+- **PT-ARCH-2026-0413-01 — MEDIUM**
+  - `pending_rebalance_commit`, `pending_rebalance_slot`, `pending_rebalance_expiry`가 **single global large-rebalance lane** 으로 동작.
+  - 현재 구조상 explicit cancel/replace path가 없어, 한번 commit이 올라가면 reveal 또는 expiry 전까지 다른 large rebalance admission이 직렬화될 수 있음.
+  - `COMMIT_REVEAL_MAX_VALIDITY = 1000` slots는 평시엔 허용 가능하지만, 급변장/incident response 시 방어 행동 자체를 늦출 수 있는 구조적 choke point.
+- **CRITICAL 없음. HIGH 없음. MEDIUM 1건 — 코드 취약점이 아니라 architecture/liveness-security boundary 이슈.**
+
+### Sources
+- https://arxiv.org/abs/2604.07568
+- https://arxiv.org/abs/2604.04744
+- https://www.getfoundry.sh/guides/invariant-testing
+- https://github.com/crytic/echidna
+- https://immunefi.com/blog/bug-fix-reviews/
+- https://rustsec.org/advisories/RUSTSEC-2026-0084.html
+
+
+## 2026-04-20 (KST) — Daily Evolution (Purple Team)
+
+**Current Time**: 2026-04-20 04:14 KST | **Analyst**: Purple Team (Miss Kim)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 발행일 | 핵심 신호 |
+|------|--------|-----------|
+| DefiPrime `The KelpDAO rsETH Exploit: $292M Minted From a 1-of-1 Bridge` | 2026-04-18 | core restaking contracts는 정상인데, one-of-one DVN bridge 설정 실패가 무담보 rsETH 발행과 다중 lending protocol bad debt로 전이 |
+| CryptoBriefing `Kelp DAO hit by $292M bridge hack...` | 2026-04-18 | Aave/Compound/Euler가 로컬 코드 손상 없이도 외부 자산 오염을 재무적으로 흡수 |
+| CybersecurityDive / Sygnia IR readiness survey coverage | 2026-04-13 | formal IR plan 보유와 실제 대응 실행력 사이의 격차가 여전히 큼 |
+| Ethereum Security Subsidy launch coverage | 2026-04-14 | audit 접근성·공급은 늘지만, accepted asset가 가져오는 외부 control plane 검증은 자동화되지 않음 |
+| Foundry releases | 2026-04-15~19 | invariant/hardening/supply-chain 개선은 진행 중이지만 기본 모델은 여전히 admitted asset semantics 중심 |
+| Anchor `#4216` / `#4228` | 2026-04-16 | constraint enforcement는 좋아지고 있으나, 이는 받아들인 외부 자산의 upstream control plane까지 커버하지 않음 |
+
+**수집 메모**: direct bug-bounty payout / formal-verification vendor-side 7일 내 신호는 검색했으나, 이번 사이클에서는 위 구조적 갭보다 더 강한 신규 메타 변화를 만들 수준의 고신호 델타가 확인되지 않았다. 이번 회차는 **“툴링은 좋아지는데 imported trust surface는 그대로 비어 있다”** 는 대비 자체가 핵심이다.
+
+### Phase 2) 갭 분석 (팀 간 커버리지)
+
+**기존 커버**:
+- A36 = collateral market-quality failure
+- A40 = external valuation/composability read failure
+- META-10 = integration boundary ownership diffusion
+- META-17 = bridge trust assumption cascade
+- META-53 = runbook-to-actuator latency gap
+
+**오늘 신규 식별 갭**:
+
+#### META-56 — Collateral Listing Trust Import Gap (CLTIG)
+- **현상**: 프로토콜은 외부 자산을 담보/상장 자산으로 받을 때 price feed, LTV, liquidity haircut, oracle freshness 위주로 평가한다. 그러나 실제로는 그 자산의 bridge, mint, pause, verifier quorum, issuer governance, incident latency까지 **함께 수입** 한다.
+- **메타 원인**:
+  1. accepted asset review가 자산 가격/유동성 검토에 편중되고 **upstream control-plane integrity** 를 독립 위험 축으로 승격하지 않음
+  2. invariant/FV/audit tooling이 대부분 **이미 시스템이 받아들인 자산의 동작 정합성** 에 최적화돼 있어, 외부 자산의 supply integrity 붕괴를 모델 밖으로 둠
+  3. downstream runbook가 local market freeze까지만 설계되고, upstream invalidation → local bad-debt allocation까지는 리허설하지 않음
+  4. “우리 컨트랙트는 깨지지 않았다”는 사실이 곧 재무적 안전을 의미한다고 오해함
+- **기존 패턴과 구별**:
+  - A36 = 시장 품질 문제
+  - A40 = valuation adapter 문제
+  - META-10 = 통합 경계 소유권 문제
+  - META-17 = bridge trust cascade 문제
+  - **META-56 = accepted asset 하나가 외부 control plane 전체를 balance sheet 안으로 들여오는 문제**
+- **신규 등재**: META-56
+
+### Phase 3) 스킬 강화 델타 (2026-04-20)
+
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
+  - 헤더를 `META-01~56`로 갱신
+  - Why Audits Miss It 표에 `META-56` 추가
+  - 말미에 `META-56. Collateral Listing Trust Import Gap (CLTIG)` 전체 섹션 추가
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`
+  - Daily Evolution Log에 2026-04-20 Purple meta sweep 추가
+  - Defense Failure Patterns에 `Imported-Collateral Control-Plane Drift` 추가
+- `docs/microstable-purple-team-daily-findings.md`
+  - PT-ARCH-2026-0420-01, 02 추가
+
+### Phase 4) Microstable 아키텍처 점검 요약
+
+- **PT-ARCH-2026-0420-01 — LOW (현재) / HIGH (확장 시)**
+  - 현재는 native stablecoin collateral 중심이라 직접 위험은 낮다.
+  - 하지만 bridged LST/LRT 또는 wrapped collateral을 받기 시작하면, local oracle/LTV 검증만으로는 부족하고 `asset trust manifest + invalidation runbook + control-plane import review` 가 필수다.
+- **PT-ARCH-2026-0420-02 — LOW (현재) / MEDIUM (외부 통합 시)**
+  - MSTB 또는 미래 wrapped MSTB가 외부 lending collateral로 쓰일 경우, integrator가 native/wrapped/control-plane 차이를 명시적으로 이해하지 못하면 downstream bad debt가 구조적으로 재현될 수 있다.
+  - listing/export 전에 trust manifest와 incident contact/SLA를 공개해야 한다.
+- **CRITICAL 없음. HIGH 없음. LOW 2건 — 모두 확장 전 예방 통제 과제.**
+
+### Sources
+- https://defiprime.com/kelpdao-rseth-exploit
+- https://cryptobriefing.com/kelp-dao-bridge-hack-292m-loss/
+- https://www.bankless.com/read/news/kelp-dao-bridge-drained-for-292m-in-rseth
+- https://www.cybersecuritydive.com/news/cisos--gaps-incident-response-playbooks/817323/
+- https://bitcoinethereumnews.com/bitcoin/ethereum-foundation-funds-1m-audit-program-for-smart-contract-developers-crypto-news-bitcoin-news/
+- https://github.com/foundry-rs/foundry/releases
+- https://github.com/solana-foundation/anchor/issues/4216
+- https://github.com/solana-foundation/anchor/pull/4228
+
+## 2026-05-29 (KST) — Daily Evolution (Purple Team)
+
+**Current Time**: 2026-05-29 04:00 KST | **Analyst**: Purple Team (Miss Kim)
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| SlowMist Hacked | 2026-05-22 ~ 2026-05-28 | 최근 7일 사고 다수가 코드 한 줄보다 **edge semantics / privileged control-plane / weakly-bound authority object** 에서 발생 |
+| Foundry issue `#14437` | 2026-05-28 확인 | invariant fuzzing이 동일 시간 예산에서 Echidna/Medusa 대비 크게 뒤처지는 사례가 문서화되어, stateful 경제/재귀 공격 탐지 공백이 아직 큼 |
+| Anchor PR `#4603` | 2026-05-28 확인 | shorter writeback tail scrub이 별도 패치로 다뤄질 만큼, “deserialize 성공 = 상태 안전” 가정이 여전히 취약 |
+
+### Phase 2) 최근 7일 메타 인사이트
+
+#### 1. 권한은 키만이 아니라 **설정 객체와 모듈 객체** 로도 새어 나간다
+- **Stake DAO (2026-05-27)**: compromised deployer key로 LayerZero `setPeer()` 구성을 바꿔 forged cross-chain message와 unlimited mint가 이어졌다.
+- **Third-party Gnosis Safe Module / SquidRouterModule (2026-05-25)**: 사용자가 “공식 라우터와 무관한 제3자 모듈” 을 trusted module로 붙인 순간, weak authentication 하나가 서명 없는 임의 calldata 실행권으로 증폭됐다.
+- **Mure (2026-05-23)**: `SignatureChecker` 가 signer source로 공급된 contract를 믿으면서, “누가 서명했는가” 가 아니라 “무엇이 signer처럼 보이는가” 가 권한 기준이 됐다.
+- **메타 해석**: 많은 시스템이 private key 보안은 점검하지만, **peer endpoint / module / signer source / approved contract** 같은 authority object의 타입·출처·코드 동일성은 약하게 묶는다.
+
+#### 2. 최근 손실은 여전히 **재귀 호출 + 상태 보존 + 경제 invariant 부재** 에서 쉽게 난다
+- **Joe Agent (2026-05-28)**: low-level call이 state update보다 먼저 일어나며 단일 함수 reentrancy가 반복됐다.
+- **Fractal Protocol (2026-05-22)**: `deposit`/`withdraw` 재귀 루프와 share-rounding, fixed tokenPrice, invariant 부재가 결합됐다.
+- **Foundry `#14437`**: SCFuzzBench 기준 Foundry invariant engine이 Echidna/Medusa 대비 적은 버그만 찾는 구조적 이유를 공개 추적 중이다.
+- **메타 해석**: “테스트 있음” 과 “재귀적 상태 천이에서 경제 invariant가 닫힘” 은 전혀 같은 말이 아니다.
+
+#### 3. 엣지에서의 의미 불일치가 메인 컨트랙트 정상성을 무력화한다
+- **Stake DAO (2026-05-27)** 는 bridge peer semantics가 바뀌는 순간 local contract correctness가 무의미해졌다.
+- **Anchor `#4603`** 는 shorter writeback 뒤 tail byte가 남으면 logical delete가 physical delete가 아니라는 점을 다시 보여준다.
+- **SlowMist recent board** 는 private key leakage, module confusion, retry-message forgery, signer-source spoofing처럼 “정상 노드들 사이 의미 전달” 이 깨지는 유형이 반복됨을 보여준다.
+- **메타 해석**: 이번 주 신호는 신규 META를 추가하기보다 **META-56 (Collateral Listing Trust Import Gap)** 와 **META-70 (Node-Audit / Edge-Semantics Gap)** 를 강하게 재확인한다.
+
+### Phase 3) 갭 분석 (블랙/레드/블루/퍼플)
+
+**블랙팀 현재 커버**:
+- `attack-matrix.md` 에는 `A125`, `A128`, `META-56`, `META-70`, `B50~B82` 까지 이미 존재한다.
+
+**레드팀 현재 커버**:
+- `2026-05-28 Red Team Daily Evolution — A128 Added` 로 tail-byte / stale-byte reinterpretation 축은 이미 분리됐다.
+
+**블루팀 현재 커버**:
+- `microstable-blue-v14-report.md`, `microstable-blue-v15-report.md` 는 `require_keeper_quorum()`, `enable_manual_oracle_mode()`, `update_oracle()`, `MICROSTABLE_EXPECTED_UPGRADE_AUTHORITY` 같은 직접 통제를 보강했다.
+
+**이번 회차 구조적 빈틈**:
+1. **authority object provenance** 가 별도 체크리스트로 독립 승격돼 있지 않다.
+   - 키/서명 보호는 문서화돼 있어도, trusted module / signer source / peer endpoint / off-chain evidence source의 **객체 동일성** 과 **변경 절차** 는 약하다.
+2. **runtime conservation / recursive invariant** 가 운영 텔레메트리까지 내려와 있지 않다.
+   - 감사와 테스트는 있어도, 운영 중 `/redeem/liquidation`·oracle·mint/redeem 흐름에 대한 상시 보존량 감시는 별도 요구사항으로 고정돼 있지 않다.
+3. **dashboard / RPC view semantics** 가 충분히 독립 검증되지 않는다.
+   - node-level 이중화는 있어도, critical runtime method 전반의 edge-level cross-check는 좁게 남아 있다.
+
+**Admission decision**:
+- **이번 회차 신규 META / 신규 black-team vector는 추가하지 않는다.**
+- 이유: 최근 신호는 새로운 클래스라기보다, 이미 문서화된 `META-56`, `META-70`, `A125`, `A128` 을 **실전 사고로 재입증** 하는 성격이 더 강하다.
+- 따라서 이번 사이클은 global matrix 확장보다 **Microstable 아키텍처 액션화** 에 집중한다.
+
+### Phase 4) Microstable action focus
+
+- `keeper ↔ on-chain`: quorum 자체보다 **quorum이 승인하는 source object의 provenance** 를 문서화해야 한다.
+- `oracle ↔ price ↔ mint/redeem`: `/redeem/liquidation` 포함 핵심 가치 이동 경로에 대해 runtime conservation view를 운영 레벨에서 상시 확인해야 한다.
+- `dashboard ↔ RPC ↔ on-chain`: bootstrap용 `getGenesisHash` 단일 cross-check로는 부족하며, operator가 보는 runtime semantics의 독립성도 별도 관리가 필요하다.
+- `agent ↔ governance ↔ parameter`: future automation/agent 도입 시 prompt·context보다 먼저 **tool/output provenance** 와 parameter-change manifest를 고정해야 한다.
+
+### Sources
+- https://hacked.slowmist.io/
+- https://github.com/foundry-rs/foundry/issues/14437
+- https://github.com/otter-sec/anchor/pull/4603
+- https://x.com/Phalcon_xyz/status/2039211832947408928
