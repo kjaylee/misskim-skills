@@ -109,13 +109,15 @@ let result = (a as u128).checked_mul(b as u128)?.checked_div(c as u128)?;
 ### A6. Account Substitution (Solana)
 **Historical**: Cashio ($52M — fake collateral account), multiple Solana exploits
 **Mechanism**: Attacker passes a different account than expected. If program doesn't verify account address/owner/discriminator, wrong data is used.
+**2026 reinforcement (Raydium deprecated AMM V3, 2026-06-10)**: SlowMist's public mechanism summary says Raydium's old AMM V3 withdraw logic performed **insufficient validation of LP mint addresses** on five inactive pools. The attacker created a **fake LP mint**, passed it into the legacy flow, and bypassed pool proportion checks to withdraw real assets. **Key pattern**: for Solana pool/vault logic, verifying that an input is merely *a* valid SPL mint is not enough — the LP/share mint identity must be bound to the exact pool state/PDA being serviced.
 **Code pattern to find**:
 ```rust
 // VULNERABLE: no address/owner verification
 pub collateral_mint: Account<'info, Mint>,
 // Attacker passes their own fake mint with inflated supply
 ```
-**Defense**: `constraint = collateral_mint.key() == EXPECTED_MINT`, `has_one`, seed derivation checks.
+**Defense**: `constraint = collateral_mint.key() == EXPECTED_MINT`, `has_one`, seed derivation checks. For LP/share assets, also bind the mint to the exact pool/vault state (`pool.lp_mint == lp_mint.key()`) instead of accepting any structurally valid mint.
+**Source**: https://hacked.slowmist.io/en/ | https://x.com/0xINFRA/status/2064738005697384476
 
 ### A7. Signature Replay
 **Historical**: Wintermute ($160M), multiple
@@ -148,11 +150,11 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 **Defense**: Multisig upgrade authority, timelock, freeze authority, eventual immutability.
 
 ### A10. Logic Bug
-**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap), ApeBond (2026 duplicate-pool migration inflation)
+**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap), ApeBond (2026 duplicate-pool migration inflation), NovaBox (2026 reward-ordering phantom dividend drain)
 **Mechanism**: Incorrect business logic allows unintended state transitions or value extraction.
-**2026 reinforcement (Moonwell + Stake Nova + ApeBond)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission (Moonwell), unchecked redeem-path validation (`RedeemNovaSol`) that becomes flash-loan-amplified (Stake Nova), or batch-migration code that treats attacker-supplied identifiers as a set when the implementation actually accepts a multiset. In the ApeBond case, `migrateToVotingEscrow` accepted duplicate pool IDs, so one economic position was counted multiple times and an approximately `1.71 quadrillion ABOND` lock was inflated to roughly `29 quadrillion ABOND` before claim/unlock.
-**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`), redeem invariant assertions (`min_out`, vault/account binding, and per-tx flow caps), and **batch uniqueness assertions** (`pool_id`/`position_id`/`vault_id` lists must be deduplicated or hard-fail on duplicates before value aggregation).
-**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/en/
+**2026 reinforcement (Moonwell + Stake Nova + ApeBond + NovaBox)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission (Moonwell), unchecked redeem-path validation (`RedeemNovaSol`) that becomes flash-loan-amplified (Stake Nova), batch-migration code that treats attacker-supplied identifiers as a set when the implementation actually accepts a multiset (ApeBond), or **reward distribution that snapshots dividends before deposit/withdraw balance updates settle** (NovaBox). In the NovaBox case, the attacker first triggered dividend logic with a small NOVA position, then injected a large ETH deposit while payout math still referenced the old share state, generating **phantom dividends** against an inconsistent before/after balance view.
+**Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`), redeem invariant assertions (`min_out`, vault/account binding, and per-tx flow caps), **batch uniqueness assertions** (`pool_id`/`position_id`/`vault_id` lists must be deduplicated or hard-fail on duplicates before value aggregation), and **reward-ordering invariants** (deposit/withdraw paths must update principal/share state before any dividend or reward snapshot can be consumed).
+**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/en/ | https://x.com/f12sec/status/2064610827554922679
 
 ### A11. Rent/Lamport Drain (Solana)
 **Historical**: Multiple small-scale

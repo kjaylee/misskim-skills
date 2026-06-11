@@ -1,3 +1,48 @@
+## 2026-06-12 Daily Check
+
+### Source Sweep (24h~7d window: 2026-06-05 to 2026-06-12 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus direct current Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Raydium (2026-06-10)** is admissible as an **A6 Account Substitution (Solana) reinforcement**, not a new vector. SlowMist's public mechanism summary is specific: deprecated AMM V3 withdraw logic accepted an attacker-controlled **fake LP mint** because **LP mint identity was not rebound to the pool state**, letting the attacker bypass proportion checks and drain five inactive pools.
+  2. **NovaBox (2026-06-09)** is admissible as an **A10 Logic Bug reinforcement**, not a new vector. The reusable bug is precise enough: **dividends were distributed before deposit/withdraw balance state updated**, so the attacker mixed an old reward snapshot with a new capital state and extracted **phantom dividends**.
+  3. rekt's current front page sharpened **Syscoin / Gravity Bridge / TESSERA** narrative context but did **not** expose a new code-mechanism cut beyond already-admitted **A125 / B15** families.
+  4. GitHub Advisory `solana` query and Trail of Bits / OtterSec / Neodyme / Immunefi rechecks did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory requiring another matrix delta today.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **2 reinforcements**: **A6**, **A10**
+- Updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`, and `SKILL.md`
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's reinforced vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A6 account substitution / fake LP mint** (Raydium reinforcement) | on-chain mint / vault binding / token-account identity | ✅ NOT ACTIVE | `solana/programs/microstable/src/lib.rs:1067-1114` still re-binds the selected `collateral_mint`, canonical user ATA, and canonical protocol vault ATA before `token::transfer_checked`. Repo scan did **not** find any LP mint, AMM pool-share, or withdraw-by-share path where an attacker-supplied mint could inherit pool semantics. |
+| **A10 reward-ordering phantom dividends** (NovaBox reinforcement) | on-chain reward / dividend / share-accounting paths | ✅ NOT ACTIVE | Repo scan across `solana/programs/microstable/src/lib.rs`, `solana/keeper/src/`, and `docs/app.js` did **not** reveal a dividend/reward-distribution mechanism that snapshots entitlement before deposit/withdraw balance updates. The closest path, `solana/programs/microstable/src/lib.rs:636-665` `claim_stake()`, is a fixed escrow release that zeroes `record.stake` after exact lamport transfer rather than proportional reward math. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/price_feed.rs:27-69` still cross-validates external prices within **50 bps**, and `solana/keeper/src/oracle.rs:744-873` still enables manual oracle mode then submits `ix_update_oracle`. I still do **not** see an explicit keeper-side max-drift clamp versus the last trusted on-chain anchor / TWAP before those writes. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1534-1605` still escalates large **single-call** turnover with commit/reveal, but I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal small moves from composing into a larger unreviewed shift. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:208-212` still restricts strict runtime cross-check semantics to `getGenesisHash`, and `docs/app.js:1275` still binds the dashboard to one selected `Connection` for live reads after bootstrap. Wrong-network bootstrap is guarded, but provider-independent runtime integrity is still incomplete. |
+| **B15 / META-70 signer edge trust** | keeper key storage + quorum discipline | ⚠️ MEDIUM PARTIAL DEFENSE | `solana/keeper/src/utils.rs:330-376` still rejects duplicate keeper keypairs and enforces `O_NOFOLLOW`, while on-chain `solana/programs/microstable/src/lib.rs:3380-3401` still requires 2-of-3 keeper quorum. But the signer model is still **host filesystem hot key**, not HSM/MPC-backed. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` is still meta-only CSP, and `docs/app.js:46,1645` still ships the devnet faucet keypair in browser code. Devnet-only scope lowers severity, but the trust boundary remains in a static client. |
+
+### Today's Verdict
+- New incidents found: **2 admissible as reinforcements only**
+- New attack vectors added: **0**
+- Reinforcements applied: **2** (**A6**, **A10**)
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: 오늘 창은 **새 번호 추가보다 Solana LP mint identity와 reward-ordering invariants를 더 날카롭게 만드는 날** 이었다. Microstable은 Raydium류 **fake LP mint / proportion-check bypass lane** 과 NovaBox류 **reward-before-balance-update lane** 을 현재 공개 코드 기준으로 직접 노출하지 않지만, **`/security/audit-attestation.json` 부재**, **manual oracle anchor-relative drift clamp 부재**, **runtime RPC quorum 생략**, **hot-key keeper trust** 는 계속 남아 있다.
+
+---
+
 ## 2026-06-08 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-06-01 to 2026-06-08 KST)

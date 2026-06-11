@@ -4,6 +4,16 @@
 
 ## 2026
 
+- **2026-06-10 — Raydium deprecated AMM V3 (Solana — fake LP mint passed legacy withdraw checks and bypassed proportion validation)** — SlowMist's public incident summary says a deprecated Raydium AMM V3 program still servicing five inactive pools performed **insufficient validation of LP mint addresses**. The attacker created a **fake LP token**, passed it into the legacy withdraw path, bypassed pool proportion checks, and drained about **$1.34M** from the inactive pools.
+  **Root cause**: the program treated a structurally valid SPL mint as if that were enough to prove pool-share legitimacy. It did not re-bind the LP mint to the exact pool state it was serving, so a **fake mint could inherit share semantics** inside withdrawal math.
+  **Vector mapping**: **A6 Account Substitution (Solana)** reinforcement (pool-share / LP-mint identity binding sub-pattern).
+  **Source**: https://hacked.slowmist.io/en/ | https://x.com/0xINFRA/status/2064738005697384476
+
+- **2026-06-09 — NovaBox reward pool (Ethereum — dividends distributed before deposit/withdraw balance state settled, creating phantom payout)** — SlowMist's public incident summary says the attacker used an **Aave V3 flash loan**, triggered dividend calculation with a small NOVA position, then made a large ETH deposit while the reward mechanism still computed against the **old share state**, producing about **145.82 ETH** in **phantom dividends** and draining the pool.
+  **Root cause**: reward logic consumed a stale principal/share snapshot before deposit/withdraw balance updates finished. The system therefore mixed **old entitlement state** with **new capital state**, turning ordering mismatch into extractable value.
+  **Vector mapping**: **A10 Logic Bug** reinforcement (reward-ordering / stale-share payout sub-pattern).
+  **Source**: https://hacked.slowmist.io/en/ | https://x.com/f12sec/status/2064610827554922679
+
 - **2026-06-04 — ATM token (BSC — `transferFrom()` side-effect auto-swap became attacker-triggerable drain primitive)** — SlowMist's public incident summary says the ATM token's custom `transferFrom()` automatically swapped roughly **20%** of each transferred amount into **BSC-USD**. The attacker repeatedly triggered that hook and drained about **$243,500**.
   **Root cause**: token transfer semantics were not just balance movement; `transferFrom()` carried a hidden **AMM-interacting side effect**. Once an attacker could repeatedly trigger that side effect, transfer-time tokenomics became a liquidity-manipulation primitive rather than a passive fee/burn feature.
   **Vector mapping**: **A91 Token Supply Externalities — Burn-on-Transfer / Fee-on-Transfer AMM Reserve Manipulation** reinforcement. The public wording is broader than a literal burn, but it is the same reusable class: **transfer-time token logic mutates pool economics outside normal user-facing transfer assumptions**.

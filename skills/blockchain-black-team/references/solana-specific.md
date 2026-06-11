@@ -103,6 +103,28 @@ If two different account types use overlapping seed patterns, they may derive to
 require!(mint.mint_authority == Some(protocol_pda));
 ```
 
+### LP Mint Identity Must Be Bound to Pool State
+Raydium's deprecated AMM V3 incident (2026-06-10) showed that Solana pool logic can fail even when the attacker supplies a perfectly valid SPL mint account. The missing check was not “is this a mint?” but **“is this the exact LP mint that belongs to this pool?”**.
+
+```rust
+// VULNERABLE: accepts any mint-shaped account as the pool share mint
+pub lp_mint: Account<'info, Mint>,
+// MISSING: require_keys_eq!(lp_mint.key(), pool_state.lp_mint, ErrorCode::InvalidLpMint);
+
+// SAFE: pool state and LP/share mint identity are rebound explicitly
+require_keys_eq!(ctx.accounts.lp_mint.key(), ctx.accounts.pool_state.lp_mint, ErrorCode::InvalidLpMint);
+```
+
+- **Solana review checklist**:
+  1. pool/vault withdraw or redeem path가 `Mint` owner/discriminator만 확인하고 끝나지 않는지 본다.
+  2. LP/share mint가 반드시 **pool state / vault config / PDA** 와 동일한 identity로 다시 결박되는지 본다.
+  3. deprecated pool/program path에서도 동일한 mint-binding 검증이 유지되는지 본다.
+  4. proportion check가 `lp_mint` 신뢰에 기대면, 그 신뢰가 exact-address binding까지 닫혀 있는지 확인한다.
+
+**Sources**:
+- https://hacked.slowmist.io/en/
+- https://x.com/0xINFRA/status/2064738005697384476
+
 ### Close Authority Drain
 When closing a token account, remaining tokens + lamports go to destination. Verify destination is correct.
 
