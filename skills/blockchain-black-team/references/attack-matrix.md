@@ -1,4 +1,4 @@
-# Attack Matrix — 138+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13) | META-01~71
+# Attack Matrix — 139+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13) | META-01~71
 
 ## A. Smart Contract Vectors
 
@@ -7416,8 +7416,70 @@ function _transfer(address from, address to, uint256 amount) internal {
 | Vector | Mechanism | Impact | Microstable relevance |
 |---|---|---|---|
 | A131 Forgeable Liquidity-Addition Intent Detection / Pair-Balance Heuristic Spoofing | attacker pre-seeds paired asset into the AMM pair so token-side `isAddLiquidity()` / similar heuristic misclassifies a large sell as a liquidity-add action, skipping sell-side controls | sell-fee bypass, anti-dump bypass, materially improved attacker exit, pool drain without needing classic reserve-desync signatures | current Microstable repo shows **no DEX / AMM / sell-fee classifier path** in reviewed on-chain/keeper code, so **NOT ACTIVE today**; future AMM-facing automation must prove LP-mint semantics rather than infer intent from pair balances |
+| A132 Anchor Custom Discriminator Nullification / Empty-Prefix Type Boundary Collapse | developer ships `#[account(discriminator = ...)]` with an empty or all-zero equivalent expression (`b""`, `[]`, `[0; N]`, ref-wrapped zero literal), collapsing typed-prefix separation so same-owner sibling accounts with compatible bodies can be reinterpreted as the protected type | account-type confusion, uninitialized/typed boundary erosion, migration admission bypass, same-owner crafted-body privilege escalation | current Microstable repo shows **no** custom discriminator override usage and its keeper decoders require explicit 8-byte discriminators, so **NOT ACTIVE today**; any future custom discriminator usage must forbid empty/all-zero overrides and add same-owner wrong-type negative tests |
 
 **Matrix state as of 2026-06-11 (red-team daily update)**: **A131** added to separate **pair-balance-based liquidity-intent spoofing** from A91/A107 reserve-manipulation families. Matrix is now **138+ named vectors + META-01~71 + B73~B82 = 209+ total entries**. Microstable has **no new active CRITICAL/HIGH from A131**, and requested `microstable_core` path remains absent while the live `microstable` program path stays unaffected.
+
+---
+
+### A132. Anchor Custom Discriminator Nullification / Empty-Prefix Type Boundary Collapse
+
+**Published**: 2026-06-13 | **Severity**: HIGH | **Red Team**
+
+**Signal**: otter-sec/anchor commit `e47eda0` (`fix account zeroed discriminator detection (#4645)`, fetched 2026-06-13) tightened compile-time rejection for **empty and all-zero-equivalent custom account discriminators** such as `b""`, `[]`, `&[0, (0)]`, `b"\x00\x00"`, and `[0; N]`.
+
+**Key insight**: custom discriminator override는 많은 팀이 "호환성용 prefix tweak" 정도로 생각한다. 하지만 discriminator가 비어 있거나 전부 0으로 수렴하면, typed account boundary 자체가 약해진다. 즉 문제는 단순히 "이 값이 예쁘지 않다" 가 아니라 **type admission이 더 이상 non-empty identity prefix에 의존하지 못한다** 는 점이다.
+
+**Attack chain**:
+1. protocol intentionally or accidentally ships `#[account(discriminator = ...)]` with an empty or all-zero-equivalent expression that old validation fails to reject.
+2. downstream code keeps trusting `Account<T>`, `InterfaceAccount<T>`, migration helper, or keeper-side typed decode as if a unique type prefix still exists.
+3. attacker supplies a **same-owner sibling account** whose body layout is compatible enough for the target deserialize path, or reuses a zero-prefixed buffer that preserves a favorable body.
+4. because the protected type has no meaningful discriminator boundary, the admission gate degrades from **"this exact type"** to roughly **"same owner + body decodes"**.
+5. privileged logic consumes attacker-chosen state as the protected type and executes the wrong branch.
+
+**Why distinct from existing vectors**:
+- **A122** = `AccountLoader` / zero-copy path trusts data without sufficient runtime validation.
+- **A126** = discriminator is present but **body length admission** collapses to an 8-byte prefix check.
+- **A132** = the **type identity prefix itself is nullified at compile time**, so multiple same-owner states can become indistinguishable to typed admission.
+- **A124** = owner-only interface trust collapse. **A132** is narrower and Solana/Anchor-specific: even non-interface account types can lose separation when the discriminator is made empty or zero-equivalent.
+
+**왜 감사가 놓치는가**:
+1. reviewers often read custom discriminator override as a compatibility/migration feature, not as a first-class auth boundary.
+2. old guard logic caught only obvious `0` literals and missed byte strings, empty arrays, parenthesized forms, and repeat expressions.
+3. happy-path tests usually prove "correct type passes" but omit **same-owner / wrong-type** negatives once a custom discriminator is introduced.
+4. if deserialize succeeds, teams misread that as proof of type identity instead of mere body compatibility.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: type boundary is effectively removed.
+#[account(discriminator = b"")]
+pub struct Config {
+    pub admin: Pubkey,
+    pub limit: u64,
+}
+
+// Also suspicious: [] / &[0, (0)] / [0; N] / b"\x00\x00"-style forms.
+```
+
+**Defense**:
+1. forbid custom account discriminators that are empty or all-zero in any syntactic form.
+2. treat custom discriminator overrides as **security-sensitive API surface**, not cosmetic compatibility knobs.
+3. add negative tests for **same-owner / wrong-discriminator**, **same-owner / wrong-type body**, and **short-or-empty-prefix** cases.
+4. keeper/off-chain decoders should require the exact expected discriminator bytes and fail closed on zero-length or custom-override ambiguity.
+
+**Sources**:
+- https://github.com/otter-sec/anchor/commit/e47eda0a5b35a7182ba4cabae64a8b9bf8a93049
+- https://github.com/otter-sec/anchor/commits/master.atom
+
+**Microstable relevance**:
+- requested path `/microstable/solana/programs/microstable_core/src/lib.rs` is absent; live review path remains `/microstable/solana/programs/microstable/src/lib.rs` plus `/microstable/solana/keeper/src/`.
+- current scan found **no** `#[account(discriminator = ...)]` custom override usage in the live program path.
+- `programs/microstable/src/lib.rs:3230-3238` (`read_pyth_price_update()`) requires `data.len() >= 8` and exact discriminator equality before Borsh decode.
+- `keeper/src/wire.rs:165-185` requires an explicit 8-byte anchor discriminator and rejects mismatches before decode.
+- therefore **NOT ACTIVE today**.
+- however any future compatibility migration that touches custom discriminators must treat **empty-prefix type collapse** as a release-blocking class.
+
+**Matrix state as of 2026-06-13 (red-team daily update)**: **A132** was added to separate **custom-discriminator identity nullification** from A122/A124/A126 validation and size-admission families. Matrix is now **139+ named vectors + META-01~71 + B73~B82 = 210+ total entries**. Microstable has **no new active CRITICAL/HIGH from A132**, and the live codepath stays on explicit non-empty discriminator checks.
 
 ---
 

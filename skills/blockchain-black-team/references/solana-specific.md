@@ -1775,6 +1775,29 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 81. ☐ CPI return-data helper는 `program_id` 검증만으로 충분하다고 보지 말고, trusted CPI 직후 `(program_id, bytes)` 를 snapshot/decode한 뒤 later same-program CPI overwrite 회귀 테스트를 필수화할 것
 
+## 2026-06-13 Anchor Custom Discriminator Nullification Pattern
+
+### A132 — Anchor Custom Discriminator Nullification / Empty-Prefix Type Boundary Collapse
+- **Solana context**: Anchor의 account discriminator는 단순 메타데이터가 아니라 **typed account admission boundary** 다. custom discriminator override를 허용하는 순간, 그 prefix 자체가 auth/type separation의 일부가 된다.
+- **핵심 패턴**: old validation이 `0` literal만 막고 `b""`, `[]`, `[0; N]`, `&[0, (0)]`, `b"\x00\x00"` 같은 empty/all-zero-equivalent 표현을 놓치면, 개발자나 악성 변경이 **비어 있거나 의미 없는 discriminator** 를 가진 account type을 ship할 수 있다. 그러면 runtime gate는 `exact type identity` 보다 `same owner + decodable body` 에 가까운 형태로 약화된다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Solana program은 같은 owner 아래 여러 PDA/state variant를 많이 두므로, discriminator prefix가 약해지면 sibling account confusion이 바로 현실 surface가 된다.
+  2. migration / backward-compat 작업에서 "구버전과 맞추려고 discriminator를 조절" 하는 유혹이 크다.
+  3. keeper/off-chain decoder도 Anchor typed layout을 전제로 삼는 경우가 많아, on-chain과 off-chain이 함께 잘못된 안전감에 빠질 수 있다.
+  4. deserialize success가 곧 type authenticity라는 착각을 만들기 쉽다.
+- **Source signals**:
+  - otter-sec/anchor commit `e47eda0` — `fix account zeroed discriminator detection (#4645)` (fetched 2026-06-13)
+- **Microstable current status**:
+  - reviewed live path `programs/microstable/src/lib.rs` 에 `#[account(discriminator = ...)]` override 사용은 보이지 않았다.
+  - `read_pyth_price_update()` 는 `data.len() >= 8` + exact discriminator equality를 먼저 강제한다.
+  - keeper `wire::decode_account()` 역시 explicit 8-byte discriminator mismatch를 먼저 reject한다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 future compatibility migration이나 foreign-account shim에서 custom discriminator override를 도입하면 즉시 재평가 대상이다.
+- **Checklist item 82**: ☐ custom discriminator override를 도입할 때는 empty/all-zero equivalent (`b""`, `[]`, `[0; N]`, ref-wrapped zero forms) 금지 + same-owner/wrong-type negative tests + off-chain decoder exact-prefix regression을 함께 묶을 것
+
+### Solana-Specific Defense Checklist Update
+82. ☐ custom discriminator override를 도입할 때는 empty/all-zero equivalent (`b""`, `[]`, `[0; N]`, ref-wrapped zero forms) 금지 + same-owner/wrong-type negative tests + off-chain decoder exact-prefix regression을 함께 묶을 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
