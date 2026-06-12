@@ -9,10 +9,20 @@
   **Vector mapping**: **A6 Account Substitution (Solana)** reinforcement (pool-share / LP-mint identity binding sub-pattern).
   **Source**: https://hacked.slowmist.io/en/ | https://x.com/0xINFRA/status/2064738005697384476
 
+- **2026-06-09 — Haedal Vault (Sui — deprecated deposit path stayed live and minted inflated LP shares across versions)** — SlowMist's public incident summary says Haedal's vault upgrade left an **old deposit entrypoint** callable. The attacker minted **inflated LP shares** through the deprecated lane, then redeemed via the newer path against current vault assets, causing about **$915K** in losses.
+  **Root cause**: the upgrade changed the preferred path but did not fully kill the old authority surface. The system therefore allowed **cross-version share semantics** to remain live: old-path share creation, new-path redemption.
+  **Vector mapping**: **META-68 Decommission-Semantics / Legacy-Liveness Gap** reinforcement, with adjacent **A119/A10** family relevance.
+  **Source**: https://hacked.slowmist.io/en/ | https://x.com/HaedalProtocol/status/2064337754969055568
+
 - **2026-06-09 — NovaBox reward pool (Ethereum — dividends distributed before deposit/withdraw balance state settled, creating phantom payout)** — SlowMist's public incident summary says the attacker used an **Aave V3 flash loan**, triggered dividend calculation with a small NOVA position, then made a large ETH deposit while the reward mechanism still computed against the **old share state**, producing about **145.82 ETH** in **phantom dividends** and draining the pool.
   **Root cause**: reward logic consumed a stale principal/share snapshot before deposit/withdraw balance updates finished. The system therefore mixed **old entitlement state** with **new capital state**, turning ordering mismatch into extractable value.
   **Vector mapping**: **A10 Logic Bug** reinforcement (reward-ordering / stale-share payout sub-pattern).
   **Source**: https://hacked.slowmist.io/en/ | https://x.com/f12sec/status/2064610827554922679
+
+- **2026-06-08 — Syscoin Bridge (cross-chain bridge — malformed SPV proof semantics admitted unbacked value release)** — SlowMist's incident summary and rekt's write-up say a malformed SPV proof slipped through Syscoin's bridge relay/parser semantics, leading to roughly **5 billion unauthorized SYS** being minted on the UTXO side before a coordinated whitehat recovery.
+  **Root cause**: the failure was not broken signatures or broken finality. The exploit worked because the bridge relay/parser accepted a **truthful-looking but semantically malformed proof path** as sufficient, opening a release/mint path that was **not economically backed** by the intended source-side conservation logic.
+  **Vector mapping**: **A125 Cross-Chain Export Semantic Completeness / Economically-Unbacked Validated Release** reinforcement.
+  **Source**: https://hacked.slowmist.io/en/ | https://x.com/syscoin/status/2063749418365665413 | https://rekt.news/syscoin-rekt
 
 - **2026-06-04 — ATM token (BSC — `transferFrom()` side-effect auto-swap became attacker-triggerable drain primitive)** — SlowMist's public incident summary says the ATM token's custom `transferFrom()` automatically swapped roughly **20%** of each transferred amount into **BSC-USD**. The attacker repeatedly triggered that hook and drained about **$243,500**.
   **Root cause**: token transfer semantics were not just balance movement; `transferFrom()` carried a hidden **AMM-interacting side effect**. Once an attacker could repeatedly trigger that side effect, transfer-time tokenomics became a liquidity-manipulation primitive rather than a passive fee/burn feature.
