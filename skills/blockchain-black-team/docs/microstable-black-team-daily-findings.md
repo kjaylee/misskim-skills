@@ -1,3 +1,46 @@
+## 2026-06-15 Daily Check
+
+### Source Sweep (24h~7d window: 2026-06-08 to 2026-06-15 KST)
+- Sources checked: `https://hacked.slowmist.io/en/`, `https://rekt.news/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search and direct current Microstable code re-read
+- **Confirmed in-window items**:
+  1. fallback search over the current Solana exploit window returned **no new 24h~7d incident** with a reusable code-level mechanism beyond what the matrix already covers.
+  2. GitHub / RustSec revalidation of **`GHSA-c6rc-8jpp-2fgc` / `RUSTSEC-2026-0144`** and **`GHSA-429q-fhh4-r6hj` / `RUSTSEC-2026-0146`** confirmed they are already admitted as **A123** and **A124**; they do **not** create a new daily matrix delta today.
+  3. Trail of Bits / OtterSec / Neodyme / Immunefi rechecks did **not** surface a fresh Solana / Anchor / SPL exploit-class write-up in the current window that would justify a new vector or reinforcement.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `docs/microstable-black-team-daily-findings.md`, `SKILL.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md` (no admissible new mechanism today)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's revalidated vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A123 Anchor `Program<'info, System>` identity collapse** | on-chain `system_program` call-sites + Anchor version pin | ✅ NOT AFFECTED | `solana/programs/microstable/Cargo.toml:24` still pins `anchor-lang = 0.31.1`, while the admitted bug affects Anchor `1.0.0/1.0.1`. The vulnerable shape exists at `solana/programs/microstable/src/lib.rs:2129,2196,2334,2429,2624,2995`, but current dependency state keeps this lane inactive today. |
+| **A124 Anchor `InterfaceAccount` cross-type substitution** | on-chain + keeper interface-wrapper usage | ✅ NOT ACTIVE | Direct repo scan still shows **no `InterfaceAccount` usage** in `solana/programs/microstable/src/lib.rs` or `solana/keeper/src/`, so the admitted Anchor RC bug has no live attachment point in current Microstable code. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/oracle.rs:735-822` still fetches off-chain validated prices, enables manual oracle mode, then sends `ix_update_oracle`. The on-chain manual path `solana/programs/microstable/src/lib.rs:671-760` still does **not** call `validate_spot_vs_twap()`, unlike the Pyth path at `solana/programs/microstable/src/lib.rs:942-1000`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1538-1588` still escalates only **large single-call** turnover into commit/reveal. I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal small moves from composing into a larger unreviewed allocation shift. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` is still meta-only CSP, `docs/index.html:994-996` still loads scripts without SRI, and `docs/app.js:46,1645` still ships the devnet faucet keypair into browser code. |
+
+### Today's Verdict
+- New incidents found: **0 admissible for matrix change**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: 오늘 창은 **새 admission 없이 기존 A123/A124를 다시 검증한 날** 이었다. Microstable은 현재 **Anchor 0.31.1 + no `InterfaceAccount` usage** 덕분에 그 두 framework-class bug에는 직접 노출되지 않지만, **B45 HIGH**, **A75 MEDIUM**, **A43 MEDIUM**, **D26 LOW** 는 그대로 남아 있다.
+
+---
+
 ## 2026-06-12 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-06-05 to 2026-06-12 KST)
