@@ -7485,6 +7485,73 @@ pub struct Config {
 
 ---
 
+### A133. Anchor Inner-Instruction Event Elision / CPI Event-Plane Blindness
+
+**Published**: 2026-06-16 | **Severity**: HIGH | **Red Team**
+
+**Signal**: otter-sec/anchor issue `#4450` plus commit `0bc86d6` (`Fix inner instruction events not being detected (#4451)`, merged 2026-06-11) show that old Anchor event parsing could miss or misattribute **events emitted inside inner instructions / CPI depth**.
+
+**Key insight**: 많은 팀이 event stream을 단순 observability라고 생각하지만, 실제 운영에서는 그것이 keeper trigger, anomaly detector, reconcile worker, settlement sidecar의 **조건문 입력** 이 된다. 이때 취약점은 "이벤트가 안 보인다" 는 UX 문제가 아니라, **privileged off-chain follow-up을 발사하는 authority plane이 CPI depth에서 끊어진다** 는 점이다.
+
+**Attack chain**:
+1. protocol or ops stack promotes Anchor events into a privileged off-chain decision input (pause, unlock, settle, reconcile, alert suppression, etc.).
+2. a security-relevant event is emitted from an inner instruction / CPI helper path rather than from the outer instruction log lane.
+3. legacy event parser or listener misses the event or attributes it to the wrong execution depth/program.
+4. watcher concludes "nothing happened" or fails to bind the event to the privileged action source.
+5. attacker gains monitoring evasion, delayed containment, missed reconciliation, or bypass of an automation gate that assumed event visibility was complete.
+
+**Why distinct from existing vectors**:
+- **A116** = CPI return-data **program-id provenance** confusion.
+- **A130** = return-data **invoke-time freshness** collapse.
+- **A133** = neither value spoofing nor return-data; it is **event-plane completeness failure** where CPI depth breaks the off-chain authority input.
+- generic observability gaps are too broad. **A133** is narrower: Anchor/Solana event consumers specifically over-trust outer-log parsing while inner CPI emit paths remain security-relevant.
+
+**Why audits miss this**:
+1. event listeners are treated as telemetry plumbing, not as part of the privileged control plane.
+2. tests usually confirm that the on-chain instruction succeeds, not that **all security-relevant events are visible at every CPI depth**.
+3. manual log review often checks human-readable outer logs and never compares parsed events against raw inner instruction traces.
+4. teams assume SDK helpers (`addEventListener`, `EventParser`) define the full trust boundary correctly.
+
+**Code / architecture pattern to find**:
+
+```text
+VULNERABLE SHAPE:
+- off-chain bot performs privileged follow-up when an Anchor event is observed
+- event may be emitted from CPI/inner instruction depth
+- consumer trusts parser output as complete ground truth
+- no cross-check with raw logs, account diffs, or source-program/depth provenance
+
+SAFER SHAPE:
+- inner-instruction events are covered by regression tests
+- event consumer records source program + depth + signature + slot
+- privileged follow-up requires event + state/account evidence, not event alone
+```
+
+**Defensive heuristic**:
+- event-driven automation을 설계할 때 **event plane completeness** 를 first-class security invariant로 둘 것
+- privileged branch는 `event observed` 단독 근거가 아니라 account diff / signature / source-program-depth proof와 함께 묶을 것
+- raw log와 parsed event 결과를 대조하는 regression을 두고, inner CPI emit도 outer emit와 같은 신뢰도로 잡히는지 검증할 것
+- parser failure 시 fail-open 하지 말고 **manual review / degraded mode** 로 전환할 것
+
+**Sources**:
+- https://api.github.com/repos/solana-foundation/anchor/issues/4450
+- https://github.com/otter-sec/anchor/commit/0bc86d6ec9b6f72c03a45733f965bb43285ad816
+- https://github.com/otter-sec/anchor/commits/master.atom
+
+**Microstable relevance**:
+- requested path `/microstable/solana/programs/microstable_core/src/lib.rs` is absent; live review path remains `/microstable/solana/programs/microstable/src/lib.rs` plus `/microstable/solana/keeper/src/`.
+- current scan found **no** `program.addEventListener`, `EventParser`, `onLogs`, `logsSubscribe`, `emit!`, or `emit_cpi!` driven privileged actuator path in reviewed on-chain/keeper/scripts/tests paths.
+- therefore **NOT ACTIVE today**.
+- however any future dashboard, ops bot, reconciliation worker, or circuit breaker that consumes Anchor events must treat **inner-instruction visibility** as release-blocking.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A133 Anchor Inner-Instruction Event Elision / CPI Event-Plane Blindness | old Anchor event parser misses or misattributes inner-instruction/CPI-emitted events, so event-driven off-chain control logic treats a real state transition as invisible | monitoring evasion, missed pause/reconcile trigger, delayed containment, silent automation bypass | current Microstable repo shows **no event-driven privileged actuator path** in reviewed on-chain/keeper/scripts/tests code, so **NOT ACTIVE today**; any future Anchor-event-driven ops path must add inner-CPI detection regression and non-event corroboration |
+
+**Matrix state as of 2026-06-16 (red-team daily update)**: **A133** was added to separate **inner-instruction event-plane blindness** from A116/A130 return-data families and generic observability gaps. Matrix is now **140+ named vectors + META-01~71 + B73~B82 = 211+ total entries**. Microstable has **no new active CRITICAL/HIGH from A133**, while Anchor `#4633` was logged as **A126 reinforcement only** rather than a new vector.
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**

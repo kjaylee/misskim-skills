@@ -1798,6 +1798,29 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 82. ☐ custom discriminator override를 도입할 때는 empty/all-zero equivalent (`b""`, `[]`, `[0; N]`, ref-wrapped zero forms) 금지 + same-owner/wrong-type negative tests + off-chain decoder exact-prefix regression을 함께 묶을 것
 
+## 2026-06-16 Anchor Inner-Instruction Event Elision Pattern
+
+### A133 — Anchor Inner-Instruction Event Elision / CPI Event-Plane Blindness
+- **Solana context**: Solana 팀은 Anchor `emit!`, `emit_cpi!`, `program.addEventListener()`, log subscription을 종종 단순 observability가 아니라 **keeper trigger / anomaly detector / settlement reconciler / ops actuator input** 으로 승격시킨다. 이때 event plane은 읽기 전용 로그가 아니라 **off-chain privileged branch의 조건문** 이 된다.
+- **핵심 패턴**: old event parser가 inner instruction(CPI)에서 emit된 이벤트를 누락하거나 wrong program/depth로 귀속하면, 공격자는 privileged state transition을 **직접 outer log가 아닌 CPI 내부 emit 경로** 로 밀어 넣어 watcher가 "이 이벤트는 없었다" 고 오판하게 만들 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. 많은 팀이 on-chain access control은 엄격하게 보면서도, event consumer는 SDK helper가 알아서 맞게 파싱한다고 믿는다.
+  2. Solana의 CPI-heavy 구조에서는 outer instruction만 보면 정상처럼 보이지만, 실제 business signal은 inner helper에서 emit될 수 있다.
+  3. alert/pause/reconcile bot이 event 감지를 근거로 움직이면, parser blind spot은 단순 telemetry miss가 아니라 **automation non-trigger** 로 이어진다.
+  4. 포렌식에서도 "이벤트가 안 찍혔다" 는 관찰이 곧 "그 경로가 실행되지 않았다" 는 증거처럼 오해되기 쉽다.
+- **Source signals**:
+  - otter-sec/anchor issue `#4450` — `Events not being detected in inner instruction logs`
+  - otter-sec/anchor commit `0bc86d6` — `Fix inner instruction events not being detected (#4451)` (merged 2026-06-11)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs`, `keeper/src/`, `scripts/`, `tests/` live-path scan에서 `program.addEventListener`, `EventParser`, `onLogs`, `logsSubscribe`, `emit!`, `emit_cpi!` 기반 privileged actuator path는 확인되지 않았다.
+  - 현재 keeper는 RPC/quorum/oracle freshness 중심 로직이며, Anchor event stream을 pause/reconcile/settlement authority 입력으로 쓰는 흐름은 보이지 않는다.
+  - 따라서 **NOT ACTIVE today**.
+  - 다만 future dashboard / ops bot / reconciliation worker가 Anchor events를 보안 경계로 승격하면 즉시 재평가 대상이다.
+- **Checklist item 83**: ☐ event-driven keeper / monitor / reconciler가 있으면 outer log만 믿지 말고 **inner CPI event detection regression** 을 고정하며, privileged action은 `event observed` 단독 근거가 아니라 account/state diff·signature·source program/depth 검증과 함께 묶을 것
+
+### Solana-Specific Defense Checklist Update
+83. ☐ event-driven keeper / monitor / reconciler가 있으면 outer log만 믿지 말고 **inner CPI event detection regression** 을 고정하며, privileged action은 `event observed` 단독 근거가 아니라 account/state diff·signature·source program/depth 검증과 함께 묶을 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
