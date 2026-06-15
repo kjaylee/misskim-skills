@@ -7451,6 +7451,7 @@ function _transfer(address from, address to, uint256 amount) internal {
 2. old guard logic caught only obvious `0` literals and missed byte strings, empty arrays, parenthesized forms, and repeat expressions.
 3. happy-path tests usually prove "correct type passes" but omit **same-owner / wrong-type** negatives once a custom discriminator is introduced.
 4. if deserialize succeeds, teams misread that as proof of type identity instead of mere body compatibility.
+5. release reviews frequently validate migration success on one canonical account and never force an adversarial corpus of empty/zero-equivalent expressions plus sibling same-owner accounts.
 
 **Code pattern to find**:
 ```rust
@@ -7512,6 +7513,7 @@ pub struct Config {
 2. tests usually confirm that the on-chain instruction succeeds, not that **all security-relevant events are visible at every CPI depth**.
 3. manual log review often checks human-readable outer logs and never compares parsed events against raw inner instruction traces.
 4. teams assume SDK helpers (`addEventListener`, `EventParser`) define the full trust boundary correctly.
+5. ownership is split: protocol auditors review on-chain auth, while bot/ops reviewers assume parser completeness is an SDK concern, so no single reviewer owns the event-plane threat model end to end.
 
 **Code / architecture pattern to find**:
 

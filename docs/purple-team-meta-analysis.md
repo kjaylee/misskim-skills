@@ -3,67 +3,59 @@
 ## 2026-06-16 (KST) — Daily Evolution (Purple Team)
 
 ### Current state / Verification criteria / Completion criteria / Artifact path
-- **Current state**: `2026-06-15` 기준 reinforcement-only 판정과 기존 Microstable architecture finding `PT-ARCH-2026-0515-01`, `PT-ARCH-2026-0526-01`, `PT-ARCH-2026-0606-01` 이 유지되고 있었다.
-- **Verification criteria**: 최근 7일 창의 사건군이 기존 `META-68`, `META-70`, `A10`, `META-53`, `META-66` 설명력을 넘어서는 새 admission을 여는지, 아니면 **조합 취약점 / legacy-live surface / pre-settlement entitlement / ops containment** 체크리스트를 더 날카롭게 만드는 reinforcement-only 인지 재판정한다.
-- **Completion criteria**: 새 상위 구조가 아니면 억지 신규 번호를 만들지 않고 reinforcement-only 로 누적하며, purple 누적 문서와 black-team skill / matrix 의 감사 실패 체크리스트를 최근 7일 사건군 기준으로 정밀 보강한다.
+- **Current state**: `2026-06-15` 기준 `A125`, `META-70`, `META-66` reinforcement-only 판정과 red 신규 `A133` admission이 이미 누적돼 있었다.
+- **Verification criteria**: 최근 7일 창의 Anchor/assurance-plane 신호가 별도 신규 META admission을 요구하는지, 아니면 기존 `A133`, `A132`, `META-66`, `META-70` 의 감사 실패 의미론을 더 날카롭게 만드는 reinforcement-only 인지 재판정한다.
+- **Completion criteria**: 새 구조가 아니면 신규 번호를 만들지 않고 purple 누적 문서와 black-team skill / matrix 의 audit-miss wording만 최소 보강한다.
 - **Artifact path**: `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/SKILL.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
 
 ### Phase 1) 수집 소스 요약
 
 | 소스 | 날짜/윈도우 | 핵심 신호 |
 |------|-------------|-----------|
-| SlowMist / public incident cross-read — **Raydium / Haedal Vault / NovaBox / Humanity Protocol / Syscoin Bridge** | 2026-06-08 ~ 2026-06-16 창 | 최근 7일 strongest cluster는 여전히 **legacy-live surface**, **edge-semantics binding**, **pre-settlement entitlement**, **ops containment** 네 축이었다. Raydium/Haedal은 `deprecated` 와 `dead authority` 가 다름을, NovaBox는 settlement 이전 entitlement 계산이 payout 권한 오판으로 이어질 수 있음을, Humanity는 code-core 밖 key compromise와 containment tempo가 손실 규모를 좌우함을, Syscoin은 parser acceptance가 곧 economically-backed release가 아님을 다시 보여줬다. |
-| `rekt.news/syscoin-rekt` + linked Halborn/Syscoin public material | 2026-06-08 ~ 2026-06-16 창 | bridge relay/parser가 malformed proof를 semantic truth로 오인하면 **forged signature 없이도 unbacked release** 가 열릴 수 있다. 이는 `proof accepted` 와 `backing preserved` 를 분리해서 봐야 한다는 기존 A125/META-70 축을 재강화한다. |
-| Binance square / SlowMist / incident repost cross-check for **Haedal / NovaBox / Humanity** | 2026-06-09 ~ 2026-06-11 incidents, 2026-06-16 re-check | old package, new package, upgrade audit가 각각 green 이어도 **cross-version composition bug**, **reward-settlement ordering gap**, **operator-side key compromise + delayed actuator launch** 는 별도 공격면으로 남는다. |
+| Anchor commit `0bc86d6` + issue `#4450` | 2026-06-11, 최근 7일 창 포함 | **inner instruction / CPI depth 이벤트 누락** 은 단순 DX 이슈가 아니라, event-driven watcher·reconcile worker·automation gate가 신뢰하는 **authority input plane completeness** 문제다. |
+| Anchor commit `e47eda0` | 2026-06-11, 최근 7일 창 포함 | empty / all-zero-equivalent custom discriminator reject 강화는 custom discriminator를 단순 호환성 prefix로 보면 안 되고, **typed identity boundary** 자체로 다뤄야 함을 재확인했다. |
+| Immunefi metrics page | last updated `2026-06-15 16:00 UTC` | 메트릭은 daily update처럼 보이지만 **resolved report 기준 2주 지연** 이다. 즉 `bounty live` 는 곧 **즉시성 있는 assurance plane** 이 아니다. |
+| Foundry / Certora / incident-response / AI-agent security re-check | 최근 7일 재검색 | 오늘 창에서는 위 세 신호를 넘어서는 새 퍼플 admission-grade 구조는 확인되지 않았다. |
 
 ### Phase 2) 갭 분석
 
-**판정: 오늘도 신규 named vector나 신규 META admission은 없다. reinforcement-only. 다만 최근 7일 사건군이 `감사가 왜 놓치는가` 를 더 구조적으로 묶어 보여줬다. strongest cluster는 `Raydium + Haedal + NovaBox + Humanity + Syscoin` 이다.**
+**판정: 오늘은 신규 named vector도 신규 META admission도 없다. reinforcement-only. strongest purple cluster는 `A133 + A132 + META-66` 이고, 핵심은 "감사가 control plane이라고 믿는 표면" 과 실제 authority / assurance plane 사이의 오판이다.**
 
-#### Reinforcement A — META-68: deprecated 라벨은 authority retirement 증거가 아니다
-- **Raydium** 과 **Haedal Vault** 는 공통으로 `새 경로가 있다` 와 `옛 권한이 죽었다` 가 다르다는 점을 다시 보여줬다.
-- 특히 **Haedal** 은 old package, new package, upgrade가 각각 review를 통과해도 **cross-version composition** 이 별도 공격면이 될 수 있음을 보여준다. 퍼플팀 체크리스트는 `current path review` 가 아니라 **legacy path hard-fail evidence + version-interleaving simulation** 까지 요구해야 한다.
+#### Reinforcement A — A133 / META-70: `event parsed` 와 `authority input complete` 는 다르다
+- `#4450` 와 `0bc86d6` 은 inner instruction(CPI depth) 이벤트가 parser/viewer에 안 잡힐 수 있음을 보여줬다.
+- 퍼플 관점에서 감사 실패는 on-chain auth bug보다, **보안상 중요한 event plane이 control plane review 바깥의 telemetry plumbing으로 취급된 것** 에 더 가깝다.
 
-#### Reinforcement B — A10 + META-70: settled balance 이전 entitlement 계산은 privileged branch다
-- **NovaBox** 는 배당/보상 계산이 deposit/withdraw 정산보다 먼저 실행되면, old-share snapshot과 new-balance state가 어긋난 채 **phantom payout** 이 발생할 수 있음을 재확인했다.
-- 이는 단순 reward math bug가 아니라, **로컬하게 그럴듯한 snapshot을 semantic payout authority로 승격** 한 문제다. 즉 `state observed` 와 `state settled` 는 다른 predicate다.
+#### Reinforcement B — A132: custom discriminator는 cosmetic tweak가 아니라 typed boundary다
+- `e47eda0` 은 empty/all-zero-equivalent discriminator가 reject돼야 하는 이유를 다시 분명히 했다.
+- 핵심은 deserialize success가 type identity의 증거가 아니라는 점이며, reviewer가 이를 migration/compat 편의로 보면 **same-owner / wrong-type negative space** 가 통째로 빠진다.
 
-#### Reinforcement C — A125 + META-70: locally valid proof는 economically backed release가 아니다
-- **Syscoin** 은 malformed-but-parseable proof가 parser acceptance를 통과하면 forged signature 없이도 release lane이 열릴 수 있음을 다시 보여줬다.
-- 공통 교훈은 **`valid locally` 를 곧 `privileged semantically admissible` 로 번역하면 경계가 무너진다** 는 점이다. Raydium의 `valid mint`, NovaBox의 `snapshot balance`, Syscoin의 `accepted proof` 가 모두 이 문제를 다른 층에서 드러낸다.
-
-#### Reinforcement D — META-53 + META-66: operator compromise는 여전히 runbook이 아니라 actuator tempo 싸움이다
-- **Humanity Protocol** 은 code-core보다 foundation wallet/private-key compromise와 containment tempo가 실제 손실 규모를 좌우했다.
-- 오늘 교훈은 `incident plan exists`, `wallet hygiene policy exists` 가 아니라, **누가 몇 분 안에 어떤 키/민트/출금 경로를 실제로 끊을 수 있는가** 를 별도 자산으로 고정해야 한다는 점이다.
+#### Reinforcement C — META-66: assurance plane은 존재보다 지연·가시성·실패 semantics가 중요하다
+- Immunefi page는 daily update처럼 보여도 resolved report 기준 2주 지연을 내장한다.
+- 따라서 `metrics alive`, `bounty exists`, `scanner integrated` 같은 표면은 **coverage lag** 와 **what failed to surface** 를 숨길 수 있다.
 
 #### 왜 신규 admission이 아닌가
-1. Raydium/Haedal은 이미 `META-68` 과 `META-70` 조합으로 충분히 설명된다.
-2. NovaBox는 중요한 live signal이지만, 새 퍼플 META보다는 기존 `A10` 과 `META-70` 강화가 더 정확하다.
-3. Humanity는 새 메타보다 기존 `META-53` / `META-66` 축의 실전 강화 사례다.
-4. Syscoin 역시 기존 `A125` / `META-70` 설명력을 넘는 별도 상위 admission까지는 열지 않는다.
+1. event-plane blind spot은 오늘 이미 red가 `A133` 으로 admission 했고, purple 쪽에서는 그 **감사 실패 이유** 만 더 선명해졌다.
+2. discriminator signal은 `A132` 의 typed-boundary 해석을 강화하지만 별도 상위 META까지는 열지 않는다.
+3. Immunefi 지연 메트릭은 중요하지만 기존 `META-66` 범위를 넘는 새 메타 구조는 아니다.
 
 ### Phase 3) 스킬 강화 델타 (2026-06-16)
-- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 최근 7일 cluster 기반 audit-miss checklist 누적.
-- `misskim-skills/docs/purple-team-meta-analysis.md`: workspace 누적 문서와 미러 동기화.
-- `misskim-skills/skills/blockchain-black-team/SKILL.md`: **방어 실패 패턴** 섹션에 `deprecated ≠ retired authority`, `snapshot entitlement ≠ settled balance` 를 추가하고 `2026-06-16` purple meta sweep 로그를 누적.
-- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: `A10` 강화 메모와 header timeline/date를 최신 상태로 보강.
+- `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`: 오늘 reinforcement-only 판정과 source mapping 누적.
+- `misskim-skills/docs/purple-team-meta-analysis.md`: workspace 문서와 미러 동기화.
+- `misskim-skills/skills/blockchain-black-team/SKILL.md`: 방어 실패 패턴 표와 daily evolution log 에 `A133 / A132 / META-66` reinforcement 추가.
+- `misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`: `A132`, `A133` 의 **왜 감사가 놓치는가** 노트 보강.
 
 ### Phase 4) Microstable 아키텍처 점검 요약
-- reviewed live paths: `programs/microstable/src/lib.rs`, `keeper/src/oracle.rs`, `keeper/src/utils.rs`, `docs/app.js` (carry-forward read 기준 재판정)
-- 재확인 결과:
-  1. current repo에서 live bridge/export release, LP-mint identity, reward-dividend entitlement 계열 surface는 여전히 확인되지 않았다.
-  2. `manual oracle mode`, quorum gate, explicit decode path는 기존 판정 범위 안이다.
-  3. 신규 architecture finding으로 승격할 delta는 없고, 기존 `PT-ARCH-2026-0515-01`, `PT-ARCH-2026-0526-01`, `PT-ARCH-2026-0606-01` carry-forward가 가장 정확하다.
-  4. 다만 future expansion gate에서는 **legacy path hard-fail proof**, **version-interleaving simulation**, **settled-before-entitled payout invariant**, **ops containment SLA** 네 가지를 release checklist로 묶어야 한다.
-- 현재 판정: **CRITICAL 없음. HIGH 없음. 신규 architecture finding 없음.**
+- reviewed live paths: `programs/microstable/src/lib.rs`, `keeper/src/`, `scripts/`, `tests/`
+- 현재 판정:
+  1. Anchor `EventParser` / `addEventListener` / `onLogs` 기반 privileged actuator path는 이번 sweep에서 확인되지 않았다.
+  2. custom discriminator override를 이용한 typed boundary surface도 현재 live path에서 직접 확인되지 않았다.
+  3. 따라서 **A133 / A132 모두 NOT ACTIVE today** 이며, 신규 `PT-ARCH-*` 추가는 없다.
 
 ### Sources
-- https://hacked.slowmist.io/en/
-- https://rekt.news/syscoin-rekt
-- https://www.binance.com/en/square/post/06-10-2026-haedal-reports-haedal-vault-security-incident-estimates-915-179-loss-332472429751297
-- https://www.panewslab.com/en/articles/019eb438-7df6-7139-9e56-f4ae220a04f8
-- https://www.coindesk.com/tech/2026/06/09/humanity-protocol-token-crashes-more-than-80-after-a-usd32-million-private-key-hack
-
+- https://github.com/otter-sec/anchor/issues/4450
+- https://api.github.com/repos/solana-foundation/anchor/commits/0bc86d6ec9b6f72c03a45733f965bb43285ad816
+- https://api.github.com/repos/otter-sec/anchor/commits/e47eda0a5b35a7182ba4cabae64a8b9bf8a93049
+- https://immunefi.com/bug-bounty/
 ## 2026-06-15 (KST) — Daily Evolution (Purple Team)
 
 ### Current state / Verification criteria / Completion criteria / Artifact path
