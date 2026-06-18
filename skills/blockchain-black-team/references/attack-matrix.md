@@ -9387,6 +9387,8 @@ Microstable은 오늘 새 live exploit이 확인된 것은 아니다. 다만 blu
 
 **Reinforcement note (2026-06-15)**: Syscoin bridge는 같은 메타를 bridge relay parser에서 재확인한다. contract, relay, proof system을 node별로 보면 각각 그럴듯해 보일 수 있지만, 실제 손실은 **파싱된 외부 증거가 언제 privileged mint/release authority로 승격되는가** 라는 edge semantics에서 났다. 감사가 놓치는 이유는 이 acceptance lane을 단순 plumbing/serialization 문제로 낮춰 보기 때문이다. 퍼플팀 기준으로는 **parser acceptance 자체가 authority transition** 이다.
 
+**Reinforcement note (2026-06-19)**: Aztec Connect / **A134** 는 META-70을 proof system까지 더 밀어붙인다. verifier, circuit, settlement code를 각각 node처럼 보면 모두 locally plausible할 수 있다. 하지만 실제 손실은 **proof가 승인한 effect domain** 과 **settlement가 실제 자산 의미를 확정한 effect domain** 이 같다고 조직이 가정한 경계에서 났다. 퍼플팀 체크리스트는 이제 `proof valid?` 에서 멈추면 안 되고, **`proven_rows == credited_rows == settled_rows == withdrawable_rows` 를 끝까지 같은 객체로 묶었는가** 를 별도 edge invariant로 요구해야 한다. deprecated immutable exit lane 위에서 이 invariant가 비면, green proof는 오히려 triage를 늦추는 false assurance가 된다.
+
 **Matrix state as of 2026-05-26 (purple daily update)**: **134+ named vectors + META-01~70 + B73~B81 = 204+ total entries**. META-70 added by Purple Team 2026-05-26: **Node-Audit / Edge-Semantics Gap (NAESG)**. Cloudflare Glasswing, Foundry invariant-gap signal, 그리고 SlowMist의 recent edge-driven incidents를 하나의 `node reviewed, edge under-specified` 패턴으로 상위 구조화한다.
 
 ---
