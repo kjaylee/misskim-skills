@@ -307,6 +307,39 @@ require!(public_inputs.version == EXPECTED_CIRCUIT_VERSION, ErrorCode::CircuitVe
 - https://hacked.slowmist.io/
 - https://www.cryptotimes.io/2026/02/26/foomcash-loses-2-26m-in-copycat-zksnark-exploit/
 
+### Proof Domain ≠ Settlement Domain (Aztec Connect Pattern)
+Aztec Connect (2026-06-14, ~$2.19M + residual follow-on drain) showed that a Solana-adjacent proof integration can fail even when the proof system itself remains cryptographically honest. The danger is **scope mismatch**: the verifier accepts a wider batch/effect domain than the executor actually settles.
+
+**Solana-specific risk**:
+- Solana programs that adopt zk rollup exits, proof-verification CPI, compressed-state settlement, or merkle/attestation batch processors can accidentally let `verified rows` diverge from `credited/withdrawable rows`.
+- If a `count`, `active_rows`, `processed_prefix`, or sparse-row flag lives outside the proven statement, a valid proof may still authorize phantom credit.
+
+**Pattern to detect in codebase**:
+```rust
+// RISKY: proof covers batch_rows, but settlement only executes caller-supplied processed_rows
+require!(verify_proof(&proof, &batch_rows), ErrorCode::InvalidProof);
+for row in batch_rows.iter().take(processed_rows as usize) {
+    settle_row(row)?;
+}
+
+// SAFER: processed/effective row set is part of the proven statement and every
+// credited row must be fully settled or the batch aborts.
+require!(verify_proof(&proof, &statement_with_processed_rows), ErrorCode::InvalidProof);
+require_eq!(statement_with_processed_rows.processed_rows, batch_rows.len());
+for row in batch_rows.iter() {
+    settle_row(row)?;
+}
+```
+
+**Mitigation**:
+1. Make `processed_rows == proven_rows == credited_rows == withdrawable_rows` an explicit invariant.
+2. Bind batch cardinality / sparse-row semantics inside the proof statement, not as unchecked executor input.
+3. Add adversarial regression: **valid proof + mismatched executed subset must fail**.
+4. Unused/filler rows in fixed-size proof chunks must be forced to zero-effect semantics.
+
+**Sources**:
+- https://aztec-labs.com/blog/aztec-connect-incident.html
+
 ## Hot Key & Stake Authority Patterns (2026 Addition)
 
 ### Social-Engineering-to-Stake-Authority-Hijack
@@ -354,6 +387,7 @@ Step Finance (2026-01-31, $27.3M): Executive device phished → stake delegation
 17. ☐ Audit scope exclusions tracked as open backlog items (never ship with known-excluded vectors)
 18. ☐ Transitive dependency review enforced (`cargo tree --locked`) + newly published crate quarantine window for keeper builds
 19. ☐ ZK verifier integrations pin verification-key hash/circuit version and enforce canary-proof checks on upgrades
+20. ☐ Any proof-backed batch settlement or attestation executor proves **effect-set equality** (`processed == proven == credited == withdrawable`) and rejects valid-proof / partial-settlement mismatch cases
 
 ## Third-Party Staking Provider Authority Risk (Cross-Customer Blast Radius)
 
@@ -1817,6 +1851,7 @@ archive_or_forward(tx)?; // delayed execution risk
   - 따라서 **NOT ACTIVE today**.
   - 다만 future dashboard / ops bot / reconciliation worker가 Anchor events를 보안 경계로 승격하면 즉시 재평가 대상이다.
 - **Checklist item 83**: ☐ event-driven keeper / monitor / reconciler가 있으면 outer log만 믿지 말고 **inner CPI event detection regression** 을 고정하며, privileged action은 `event observed` 단독 근거가 아니라 account/state diff·signature·source program/depth 검증과 함께 묶을 것
+- **Checklist item 84**: ☐ zk/attestation/bridge batch settlement를 도입할 때는 `processed_rows == proven_rows == credited_rows == withdrawable_rows` effect-set equality invariant를 강제하고, **valid proof + partial executor subset** 회귀 테스트를 필수화할 것
 
 ### Solana-Specific Defense Checklist Update
 83. ☐ event-driven keeper / monitor / reconciler가 있으면 outer log만 믿지 말고 **inner CPI event detection regression** 을 고정하며, privileged action은 `event observed` 단독 근거가 아니라 account/state diff·signature·source program/depth 검증과 함께 묶을 것

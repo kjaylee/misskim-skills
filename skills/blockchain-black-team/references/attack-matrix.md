@@ -7555,6 +7555,74 @@ SAFER SHAPE:
 
 ---
 
+### A134. Validity-Proof / Settlement Scope Cardinality Mismatch
+
+**Published**: 2026-06-19 | **Severity**: HIGH | **Red Team**
+
+**Signal**: Aztec Labs incident disclosure for the deprecated Aztec Connect rollup (2026-06-14) shows a truthful validity proof can still authorize unbacked value extraction when the **proof-accepted row set** and the **settlement-executed row set** are not the same object. The exploit used `numRealTxs` so settlement only acted on row 0 while the proof still accepted additional rows that mutated internal balance semantics.
+
+**Key insight**: 많은 팀이 `proof valid` 와 `effects settled` 를 같은 것으로 본다. 하지만 배치형 시스템에서는 **무엇이 증명되었는가** 와 **무엇이 실제 자산 정산 경로에 들어갔는가** 가 cardinality·index 범위·subset rule까지 정확히 같아야 한다. 그렇지 않으면 forged proof 없이도 **unsettled row가 phantom credit** 를 만든다.
+
+**Attack chain**:
+1. protocol has a batched proof/attestation system where one component validates a superset or fixed-size chunk of rows/operations.
+2. settlement/executor applies only an attacker-influenced subset (`numRealTxs`, active count, processed prefix, filtered operations, etc.).
+3. an operation outside the executed subset is still accepted by the proof and can mutate internal entitlement/balance semantics.
+4. later operations inside the executed subset withdraw, release, or realize value that was never source-backed or externally settled.
+5. attacker drains assets with a valid proof and a green verifier, so incident triage is delayed because there is no forged signature or obviously invalid cryptography to point at.
+
+**Why distinct from existing vectors**:
+- **A121** = verifier omits commitment/opening checks, so proofs themselves become forgeable.
+- **A125** = bridge/export path validates a message/root but fails to bind release to source-side reserve conservation.
+- **A134** = the proof can be honest and the reserve model can be conceptually sound, yet **executor scope is narrower than proof scope**, so a proven-but-unsettled row manufactures entitlement.
+- **META-68** explains why deprecated surfaces stay live. **A134** is the concrete mechanism by which a batch/proof system can leak value even after the proof verifier says everything is fine.
+
+**Why audits miss this**:
+1. zk/validity review focuses on soundness of the proof system, not equality of the **effect set** consumed by settlement code.
+2. tests usually check valid batches and invalid proofs, but not **valid proof + mismatched executed subset** adversarial cases.
+3. reviewers mentally compress `numTxs`, `activeRows`, `proofRows`, `processedRows`, and `settledRows` into one concept even when the code treats them separately.
+4. batching optimizations (fixed 32-row groups, sparse rows, filtered execution) are treated as performance details rather than trust-boundary changes.
+5. if the vulnerable system is deprecated, teams may stop threat-modeling it once admin keys are renounced, even though users can still exit through it.
+
+**Code / architecture pattern to find**:
+
+```text
+VULNERABLE SHAPE:
+- proof/verifier accepts rows/ops over domain D
+- settlement/executor acts on attacker-declared subset S where S ⊂ D
+- rows outside S can still influence internal balances, notes, claims, or credits
+- later withdrawal/release path trusts those credits as settled truth
+
+SAFER SHAPE:
+- settlement effect domain is provably identical to proof domain
+- every credited row/op is either fully settled or hard-fails the batch
+- subset/count fields are derived inside the verified statement, not trusted from a side channel
+```
+
+**Defensive heuristic**:
+- `proof accepted` 와 `settlement applied` 를 separate predicate로 모델링하고, 둘의 **effect-set equality invariant** 를 명시할 것
+- 배치형 시스템에서는 `processed_rows == proven_rows == credited_rows == withdrawable_rows` 류 invariant를 테스트와 spec에 직접 박을 것
+- fixed-size chunk proof를 쓰면 unused/sparse rows가 **아무 entitlement도 만들 수 없도록** zeroized semantics를 강제할 것
+- `count`, `prefix`, `activeRows`, `numRealTxs` 같은 cardinality 필드는 verifier 바깥 입력이 아니라 **증명문(statement) 안의 제약** 으로 묶을 것
+- deprecated rollup/bridge/exit path라도 withdrawal authority가 남아 있으면 same invariant를 계속 회귀 테스트할 것
+
+**Sources**:
+- https://aztec-labs.com/blog/aztec-connect-incident.html
+
+**Microstable relevance**:
+- requested path `/microstable/solana/programs/microstable_core/src/lib.rs` is absent; live review path remains `/microstable/solana/programs/microstable/src/lib.rs` plus `/microstable/solana/keeper/src/`.
+- current repo shows **no zk rollup, batch proof settlement, row-subset executor, or proof-backed withdrawal lane** comparable to Aztec Connect.
+- `batch_slot` usage in rebalance is a timing/commit window control, not a proof-domain vs settlement-domain split.
+- keeper `hermes.rs` handles VAA/merkle price-update ingestion, but reviewed code does **not** credit withdrawable value based on a wider proof domain than the executed settlement domain.
+- therefore **NOT ACTIVE today**.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A134 Validity-Proof / Settlement Scope Cardinality Mismatch | proof/verifier accepts a wider batch/domain than the settlement executor actually processes, so proven-but-unsettled rows can create phantom credit or entitlement | unbacked withdrawals, reserve drain, delayed incident triage because proof/verifier remain green | current Microstable repo shows **no proof-backed batch-settlement or row-subset executor path** in reviewed on-chain/keeper code, so **NOT ACTIVE today**; any future zk/attestation/bridge settlement feature must prove effect-set equality |
+
+**Matrix state as of 2026-06-19 (red-team daily update)**: **A134** was added to separate **proof/settlement cardinality mismatch** from A121 forged-proof families, A125 reserve-conservation failures, and generic deprecation risk. Matrix is now **141+ named vectors + META-01~71 + B73~B82 = 212+ total entries**. Microstable has **no new active CRITICAL/HIGH from A134**.
+
+---
+
 ### META-43. Async Cross-Chain Reentrancy Class (ACCRC) — The Reentrancy Renaissance
 
 **Published**: 2026-04-07 | **Severity**: HIGH | **Purple Team**
