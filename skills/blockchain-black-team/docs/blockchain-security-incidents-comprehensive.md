@@ -4,6 +4,22 @@
 
 ## 2026
 
+- **2026-06-20 — MEV Bot / JaredFromSubway.eth (Ethereum — fake wrapper/pool discovery steered automated approval generation into attacker-controlled spenders)** — SlowMist's public incident summary says attackers deployed **fake token wrappers and liquidity pools** to trick the bot's automated MEV execution system into granting **token approvals to attacker-controlled contracts**, then used the resulting unrevoked approvals to pull out roughly **$7.5M** in **WETH, USDC, and USDT** via `transferFrom()`.
+  **Root cause**: the approval lane authenticated that the bot *should approve something*, but did not cryptographically bind **which spender / wrapper / pool identity** the approval was being granted to. Adversarial discovery data therefore nominated attacker-controlled approval targets, turning automation into authority confusion.
+  **Vector mapping**: **A4 Access Control** reinforcement (automated approval-generation / spender-identity binding sub-pattern).
+  **Source**: https://hacked.slowmist.io/en/
+
+- **2026-06-20 — LABUBU / OLPC pool (BSC — delayed config poison burned pool-held balances to dead address and desynchronized reserves)** — SlowMist's public incident summary says the OLPC owner had changed `decimalsValue` to an extreme value **46 days earlier**, later renounced ownership, and a small transfer then triggered `_update()` to burn massive **OLPC and LABUBU balances from the pool to the dead address**. The pair's cached reserves stayed stale long enough for the attacker to drain about **$1.1M** worth of LABUBU and unwind into **~1.115M USDT**.
+  **Root cause**: the token contract could mutate **pair-held balances out-of-band** and serialize that damage into exploitable pricing before the AMM truth was re-bound. The notable twist is the **delayed-armed configuration poison**: the malicious parameter change happened long before the exploit and survived ownership renounce.
+  **Vector mapping**: **A107 AMM Reserve Desync via Permanent Token Destruction to Dead Address** reinforcement.
+  **Source**: https://hacked.slowmist.io/en/
+
+- **2026-06-17 — Little Boy Plus (BSC — zero-value `transferFrom()` side effect minted rewards directly into the pair without reserve update)** — SlowMist's public incident summary says the attacker used a **zero-value `transferFrom()`** call to trigger a vulnerable `_update()` path in `LBPHashrate`, bypassed intended authorization, and reached `_harvest` / `mintReward` so fresh **LBP was minted directly to the PancakeSwap LBP/USDT pair**. Because reserves were not updated to match the new pair balance, the attacker drained roughly **$367K** through `PancakePair.swap()`.
+  **Root cause**: the protocol let a nominally harmless token path trigger **pool-balance-changing reward mint side effects** outside the AMM's normal `swap` / `mint` / `burn` / `sync` accounting paths.
+  **Vector mapping**: **A91 Token Supply Externalities — Burn-on-Transfer / Fee-on-Transfer AMM Reserve Manipulation** reinforcement (direct pair-balance inflation side-effect sub-pattern).
+  **Source**: https://hacked.slowmist.io/en/
+
+
 - **2026-06-10 — Raydium deprecated AMM V3 (Solana — fake LP mint passed legacy withdraw checks and bypassed proportion validation)** — SlowMist's public incident summary says a deprecated Raydium AMM V3 program still servicing five inactive pools performed **insufficient validation of LP mint addresses**. The attacker created a **fake LP token**, passed it into the legacy withdraw path, bypassed pool proportion checks, and drained about **$1.34M** from the inactive pools.
   **Root cause**: the program treated a structurally valid SPL mint as if that were enough to prove pool-share legitimacy. It did not re-bind the LP mint to the exact pool state it was serving, so a **fake mint could inherit share semantics** inside withdrawal math.
   **Vector mapping**: **A6 Account Substitution (Solana)** reinforcement (pool-share / LP-mint identity binding sub-pattern).
