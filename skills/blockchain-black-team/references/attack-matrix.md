@@ -1,4 +1,4 @@
-# Attack Matrix — 140+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16) | META-01~71
+# Attack Matrix — 140+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16 | B83 Red 2026-06-23 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16 | B83 Red 2026-06-23) | META-01~71
 
 ## A. Smart Contract Vectors
 
@@ -7164,6 +7164,57 @@ SAFER SHAPE:
 | B82 Out-of-Order Control-Plane ACK Identity Rebinding / Trusted-Peer Rewrite | asynchronous ACK/control-plane message is accepted out of phase and rewrites the trusted peer/arbitrator/node identity for a live session, so later deposits or privileged flows execute against an attacker-controlled endpoint | compromised multisig/session bootstrap, deposit redirection, peer impersonation, authority rebinding without direct key theft, hard-to-triage pre-fund compromise | current Microstable keeper path shows **no ACK-driven peer/arbitrator rebinding state machine** and pins reviewed RPC/Hermes endpoints from local config, so **NOT ACTIVE today**; any future remote coordinator / dynamic failover control plane should treat message-order binding as a first-class trust boundary |
 
 **Matrix state as of 2026-05-27 (red-team daily update)**: prior coverage retained; **B82** was added to separate **out-of-order ACK driven trusted-peer rebinding** from generic races, config injection, and authorization-root injection. Matrix is now **135+ named vectors + META-01~70 + B73~B82 = 205+ total entries**. Microstable has **no new active CRITICAL/HIGH finding** from this cycle; result is future-facing unless dynamic peer/coordinator control-plane paths are introduced.
+
+---
+
+
+### B83. QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill
+
+**Published**: 2026-06-22 | **Severity**: HIGH | **Red Team**
+
+**Signal**: RustSec `RUSTSEC-2026-0185` / `GHSA-4w2j-m93h-cj5j` (`quinn-proto`, issued 2026-06-22) reports **remote memory exhaustion** when unordered stream fragments arrive with many early gaps, causing receiver-side reassembly overhead to grow until memory is exhausted.
+
+**Key insight**: 기존 **B58** 은 malformed QUIC transport parameters가 즉시 panic을 일으키는 **parser crash / connection-drop** 계열이었다. 이번 신호의 핵심은 crash가 아니라, **형식상 유효한 out-of-order fragment stream** 을 gap-heavy하게 보내 receiver memory를 계속 태워 **프로세스가 살아 있는 채로 RPC path를 마비** 시킬 수 있다는 점이다.
+
+**Attack chain**:
+1. attacker reaches keeper-facing Solana QUIC/RPC path or same underlying `quinn-proto` transport.
+2. attacker sends stream fragments while intentionally withholding early bytes, creating many non-contiguous gaps.
+3. receiver-side assembler buffers sparse fragments with disproportionate metadata/heap overhead because contiguous progress cannot happen.
+4. process RSS rises, allocator pressure grows, and QUIC/RPC liveness degrades before any explicit parser fault appears.
+5. keeper stalls on oracle refresh / tx confirmation / rebalance coordination and protocol can fall into stale-price fail-closed mode without any on-chain bug.
+
+**Why distinct vectors**:
+- **B58** is malformed-transport-parameter **panic DoS**. **B83** is **resource exhaustion via sparse fragment-hole shaping**; no invalid transport parameter or immediate unwrap crash is required.
+- **D20/D35** are HTTP / proxy path failures. **B83** lives in QUIC stream reassembly itself.
+- **B47/B65** are chain-liveness / slot-ordering phenomena. **B83** is keeper-side client transport degradation.
+
+**Why audits miss it**:
+1. teams patch the first QUIC advisory and mentally close the entire class.
+2. tests cover malformed packets or reconnect logic, not **valid-but-gap-heavy** fragment schedules.
+3. operators alert on crash / disconnect, not sustained RSS growth or allocator pressure in a still-running keeper.
+4. Solana reviews often stop at on-chain code and miss RPC transport libraries as part of the asset-safety boundary.
+
+**Mitigations**:
+- bump the dependency chain so lockfile resolves **`quinn-proto >= 0.11.15`**.
+- fail CI / SBOM checks whenever `quinn-proto < 0.11.15` appears in the keeper lockfile.
+- alert on keeper RSS growth, repeated QUIC reconnect churn, and rising RPC latency even when process health checks still pass.
+- prepare a non-QUIC / patched-provider fallback path for incident response.
+
+**Sources**:
+- https://rustsec.org/advisories/RUSTSEC-2026-0185.html
+- https://github.com/quinn-rs/quinn/pull/2694
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock` currently resolves **`quinn-proto 0.11.13`**, below the patched floor **`>= 0.11.15`**.
+- the same lockfile shows **`solana-client 2.3.13`** → **`solana-quic-client 2.3.13`** → `quinn` / `quinn-proto`, so the vulnerable transport remains in the keeper dependency tree.
+- reviewed keeper path uses `solana_client::rpc_client::RpcClient` across `main.rs`, `oracle.rs`, `rebalance.rs`, `monitor.rs`, `hermes.rs`, and `agent_loop.rs`, so QUIC/RPC transport stays in the live control plane.
+- therefore this is **ACTIVE LATENT / HIGH** for Microstable until patched and re-verified.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B83 QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill | attacker sends many sparse out-of-order QUIC stream fragments leaving early gaps, so `quinn-proto` reassembly accumulates high overhead and exhausts memory without malformed transport parameters | keeper memory pressure, stalled RPC/oracle loops, degraded tx confirmation, fail-closed stale-price outage, difficult partial-liveness loss | current Microstable lockfile still resolves **`quinn-proto 0.11.13`** through `solana-client 2.3.13` / `solana-quic-client 2.3.13`, so this is **ACTIVE LATENT / HIGH** until patched and re-verified |
+
+**Matrix state 2026-06-23 (red-team daily update)**: **B83** was added to separate **QUIC sparse-fragment memory exhaustion** from the earlier **B58 panic-on-malformed-transport-parameters** class. Matrix is now **142+ named vectors + META-01~71 + B73~B83 = 213+ total entries**. Microstable inherits a **HIGH active-latent keeper dependency risk** because current lockfile still resolves `quinn-proto 0.11.13`.
 
 ---
 

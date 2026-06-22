@@ -1856,6 +1856,30 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 83. ☐ event-driven keeper / monitor / reconciler가 있으면 outer log만 믿지 말고 **inner CPI event detection regression** 을 고정하며, privileged action은 `event observed` 단독 근거가 아니라 account/state diff·signature·source program/depth 검증과 함께 묶을 것
 
+
+## 2026-06-23 QUIC Sparse-Fragment Reassembly Memory Exhaustion Pattern
+
+### B83 — QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill
+- **Solana context**: Solana keeper와 RPC stack은 `solana-client` 아래에서 QUIC(`quinn` / `quinn-proto`)를 깊게 의존한다. 따라서 on-chain logic이 안전해도, QUIC reassembly가 깨지면 oracle freshness, tx confirmation, rebalance liveness가 함께 흔들린다.
+- **핵심 패턴**: malformed packet이 아니라 **early-gap를 남긴 out-of-order fragment stream** 을 반복 주입해 receiver-side assembler가 sparse fragment를 과도한 메모리 오버헤드와 함께 계속 붙잡게 만든다. 프로세스는 즉시 죽지 않아도 RSS가 늘고 RPC path가 사실상 마비된다.
+- **왜 Solana에서 특히 위험한가**:
+1. 많은 Solana 팀이 `quinn-proto` 를 직접 쓰지 않더라도 `solana-client` 전이 의존성으로 이미 끌고 들어온다.
+2. 장애가 crash가 아니라 **부분적 liveness 저하** 로 나타나면, operator는 RPC provider flake나 chain congestion으로 오판하기 쉽다.
+3. stale oracle / confirm timeout / failover churn은 결국 protocol safety gate를 발동시켜 **가치 탈취 없이도 서비스 정지** 를 유발한다.
+4. 기존 B58을 패치했더라도, 이번 클래스는 **panic이 아닌 memory exhaustion** 이라 별도 regression과 버전 문턱이 필요하다.
+- **Source signals**:
+- RustSec `RUSTSEC-2026-0185` / `GHSA-4w2j-m93h-cj5j` (issued 2026-06-22)
+- quinn PR `#2694`
+- **Microstable current status**:
+- `microstable/solana/Cargo.lock` 는 여전히 **`quinn-proto 0.11.13`** 을 해석하며, patch floor는 **`>= 0.11.15`** 다.
+- 같은 lockfile에는 **`solana-client 2.3.13` → `solana-quic-client 2.3.13` → `quinn-proto 0.11.13`** 경로가 남아 있다.
+- reviewed keeper path는 `main.rs`, `oracle.rs`, `rebalance.rs`, `monitor.rs`, `hermes.rs`, `agent_loop.rs` 전반에서 `RpcClient` 를 사용하므로, 취약 transport는 여전히 live control plane 일부다.
+- 따라서 오늘 기준 **ACTIVE LATENT / HIGH** 다.
+- **Checklist item 85**: ☐ keeper lockfile / SBOM gate에서 **`quinn-proto >= 0.11.15`** 를 강제하고, QUIC reconnect churn + RSS growth + RPC latency 상승을 함께 모니터링하며, incident mode에서는 patched/non-QUIC fallback 경로를 즉시 전환 가능하게 둘 것
+
+### Solana-Specific Defense Checklist Update
+85. ☐ keeper lockfile / SBOM gate에서 **`quinn-proto >= 0.11.15`** 를 강제하고, QUIC reconnect churn + RSS growth + RPC latency 상승을 함께 모니터링하며, incident mode에서는 patched/non-QUIC fallback 경로를 즉시 전환 가능하게 둘 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
