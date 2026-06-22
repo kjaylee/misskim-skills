@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-06-21 — Gitcoin (`files.gitcoin.co`) (Web3 frontend infrastructure — malicious drainer code served from trusted subdomain)** — rekt's current incident feed says Blockaid detected a front-end attack on Gitcoin's `files.gitcoin.co` subdomain and found malicious **"Eleven drainer"** code on the compromised site. Users were warned not to interact with the affected host while remediation was underway.
+  **Root cause**: a **brand-trusted subdomain** was enough to inherit wallet trust and serve drain logic. The attacker did not need an on-chain bug or even the primary dApp hostname; compromising a trusted web origin under the protocol's namespace was sufficient to create a canonical-looking signing surface.
+  **Vector mapping**: **D26 Frontend XSS/Injection** reinforcement (trusted subdomain / static-asset host compromise sub-pattern).
+  **Source**: https://rekt.news/
+
 - **2026-06-20 — MEV Bot / JaredFromSubway.eth (Ethereum — fake wrapper/pool discovery steered automated approval generation into attacker-controlled spenders)** — SlowMist's public incident summary says attackers deployed **fake token wrappers and liquidity pools** to trick the bot's automated MEV execution system into granting **token approvals to attacker-controlled contracts**, then used the resulting unrevoked approvals to pull out roughly **$7.5M** in **WETH, USDC, and USDT** via `transferFrom()`.
   **Root cause**: the approval lane authenticated that the bot *should approve something*, but did not cryptographically bind **which spender / wrapper / pool identity** the approval was being granted to. Adversarial discovery data therefore nominated attacker-controlled approval targets, turning automation into authority confusion.
   **Vector mapping**: **A4 Access Control** reinforcement (automated approval-generation / spender-identity binding sub-pattern).

@@ -1,3 +1,88 @@
+## 2026-06-23 Daily Check
+
+### Source Sweep (24h~7d window: 2026-06-16 → 2026-06-23 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus raw HTML spot-parse on current feeds and direct current Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Gitcoin / `files.gitcoin.co` (2026-06-21)** is admissible as **existing D26 reinforcement**, not a new vector. Public mechanism is strong enough: a **trusted Gitcoin subdomain** served malicious **"Eleven drainer"** code, proving the exploit surface is not only the primary dApp hostname but also any brand-trusted web origin that can inherit wallet trust.
+  2. **MEV Bot / JaredFromSubway.eth**, **LABUBU/OLPC**, **Little Boy Plus**, **Aztec Connect**, and **Namada** remain already absorbed or insufficient for a fresh admission beyond existing coverage in the current public detail window.
+  3. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory that justifies a new matrix slot or Solana-specific pattern today.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **D26 Frontend XSS/Injection** now explicitly covers **brand-trusted subdomain / static-asset-host compromise** via **Gitcoin `files.gitcoin.co`**
+- Updated: `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`, `SKILL.md`
+- Not updated: `references/solana-specific.md` (today's admissible delta is web trust-boundary reinforcement, not Solana-specific)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` still absent in direct filesystem inspection
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source/artifact deltas ride the normal build/release path without a machine-checkable **audited-commit ↔ deployed-artifact** binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's changed vector first)
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **D26 frontend trust-anchor drift** (Gitcoin reinforcement) | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` still uses **meta-only CSP**, `docs/index.html:996` still loads local JS without SRI, and `docs/app.js:46` still embeds a **devnet faucet keypair** in browser code. Current repo does **not** expose Permit2 / spend approvals, so Gitcoin's exact drain lane is **NOT ACTIVE**, but the broader **trusted web-origin = signing surface** lesson remains live. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/oracle.rs:744+` still fetches externally validated prices, enables manual oracle mode, then submits `ix_update_oracle`; on-chain manual path `solana/programs/microstable/src/lib.rs:25852+` still does **not** apply the mint-path `validate_spot_vs_twap()` style anchor before writing. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1534+` still gates commit/reveal off **single-call turnover** (`WEIGHT_STEP_LIMIT`, `TURNOVER_LIMIT`, `LARGE_REBALANCE_THRESHOLD`), but I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal small moves from composing into a larger unreviewed allocation shift. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:210+` explicitly keeps strict quorum only for bootstrap `getGenesisHash`, then **skips runtime quorum checks** for normal reads to avoid dashboard false negatives. Wrong-network bootstrap is guarded; provider-independent runtime integrity is still incomplete. |
+| **B15 / META-70 signer edge trust** | keeper key storage + quorum discipline | ⚠️ MEDIUM PARTIAL DEFENSE | `solana/keeper/src/utils.rs:320+` securely loads filesystem keys with `O_NOFOLLOW`, and `solana/keeper/src/config.rs:845+` forces three distinct parent directories for blast-radius reduction, but the keeper model is still **host filesystem hot keys**, not HSM/MPC-backed signer isolation. |
+
+### Today's Verdict
+- New incidents found: **1 admissible reinforcement only** (**Gitcoin → D26**)
+- New attack vectors added: **0**
+- Reinforcements applied: **1**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: 오늘 창의 실질 delta는 **Gitcoin이 D26를 "메인 도메인" 에서 "브랜드 신뢰를 상속받는 모든 서브도메인" 으로 확장했다는 점** 이다. Microstable은 그 exact drain lane은 없지만, **meta-only CSP / SRI 부재 / browser-embedded faucet keypair** 때문에 frontend trust surface는 여전히 깨끗하게 닫히지 않았다.
+
+## 2026-06-21 Daily Check
+
+### Source Sweep (24h~7d window: 2026-06-14 to 2026-06-21 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search attempts and direct current Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Namada Shielded Pools (2026-06-19)** is **not admissible yet** as a new matrix delta. SlowMist currently gives a reusable headline — **IBC Transfer Logic Exploit + stale indexer vs live RPC divergence** — but not enough code-level boundary detail to split it cleanly beyond existing **A125 / META-70** families.
+  2. **Aztec Connect (2026-06-14)** remains already absorbed as **A134**; rekt’s current front page still describes the same core mechanism: **proof-valid / settlement-invalid transaction-set mismatch**.
+  3. **Humanity Protocol** and **Gravity Bridge** remain important live references, but today’s window did **not** reveal a fresh code-level mechanism beyond already-admitted **B15 / A125 / META-70** coverage.
+  4. Solana Foundation’s **STRIDE / SIRN** page is a defensive ecosystem update, not a new exploit primitive.
+  5. OtterSec’s **`The Goldmine of Insecure WebView Integrations`** (`2026-06-18`) is a meaningful new research signal, but current Microstable reviewed surfaces do **not** expose an embedded mobile wallet WebView / JS bridge lane, so I did **not** admit a new vector today.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md` (no admissible new code-level mechanism today)
+
+### Immediate High-Priority Finding
+- **Vector**: **B45 Audit Attestation Gap / Post-Audit Deployment Delta**
+- **Severity**: **HIGH**
+- **Location**: `microstable/security/audit-attestation.json` is still absent
+- **Bypass / abuse path**: reviewed invariants can still be bypassed operationally if unaudited source or artifact deltas ride the normal build/release path with no machine-checkable audited-commit ↔ deployed-artifact binding
+- **Immediate blue-team fix**: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch
+
+### Microstable Code Sweep (today's revalidated vectors first)
+
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A134 validity-proof / settlement-scope mismatch** | on-chain settlement / batch / proof path | ✅ NOT ACTIVE | Direct re-read of `solana/programs/microstable/src/lib.rs`, `solana/keeper/src/`, and `docs/app.js` still shows **no zk proof-backed settlement subset executor**, no `processed_rows == proven_rows == credited_rows` style lane, and no bridge/export release path where proof scope can diverge from credited scope. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/oracle.rs:742-855` still fetches external prices, enables manual oracle mode, and submits `ix_update_oracle`; the on-chain manual write path at `solana/programs/microstable/src/lib.rs:680-735` still lacks the `validate_spot_vs_twap()` guard used in the mint path at `solana/programs/microstable/src/lib.rs:979-980`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1571-1595` still escalates only **single-call** turnover into commit/reveal. I still do **not** see a stateful cumulative drift accumulator that would stop many individually legal small moves from composing into a larger unreviewed allocation shift. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:208-212` still limits strict runtime cross-checking to `getGenesisHash`, and the dashboard continues on one selected `Connection` for most live reads after bootstrap. Wrong-network bootstrap is guarded; provider-independent runtime integrity is still incomplete. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6,994-996` still keeps meta-only CSP and unsafeguarded local scripts, while `docs/app.js:43-49,1645` still reconstructs a devnet faucet signer in browser code. Devnet-only scope lowers severity, but the trust boundary remains client-side. |
+
+### Today's Verdict
+- New incidents found: **0 admissible for matrix change**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **1** — **B45 Audit Attestation Gap**
+- Focused conclusion: 오늘 창은 **새 admission 없이 기존 실전 벡터를 재검증한 날** 이다. Microstable은 Aztec류 **proof-scope mismatch lane** 은 현재 공개 코드 기준으로 보이지 않지만, **B45 HIGH**, **A75 MEDIUM**, **A43 MEDIUM**, **D27 MEDIUM**, **D26 LOW** 는 그대로 남아 있다.
+
+---
+
 ## 2026-06-15 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-06-08 to 2026-06-15 KST)
