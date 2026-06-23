@@ -1,3 +1,38 @@
+## 2026-06-24 Daily Check
+### Source Sweep (24h~7d window: 2026-06-17 → 2026-06-24 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search on Gitcoin frontend attack / Quinn RustSec and direct current Microstable code re-read
+- **Confirmed in-window items**:
+  1. **Gitcoin / `files.gitcoin.co` (2026-06-21)** remains an **existing D26 reinforcement**, not a new vector. Public mechanism is still the same: a **brand-trusted subdomain/static asset host** inherited wallet trust and served drainer logic.
+  2. **Aztec Connect**, **Namada Shielded Pools**, **MEV Bot / JaredFromSubway.eth**, **Little Boy Plus** stayed inside already-admitted matrix families during this window; current public detail did **not** justify another named-vector split.
+  3. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md` (no admissible new mechanism today)
+### Immediate High-Priority Finding
+- **Vector**: **B83 QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill**
+- **Severity**: **HIGH (active-latent)**
+- **Location**: `microstable/solana/Cargo.lock:2984-2998` (`quinn-proto 0.11.13`)
+- **Bypass / abuse path**: attacker can push sparse out-of-order QUIC stream fragments into vulnerable RPC transport, forcing receiver-side reassembly overhead and memory growth until keeper oracle / confirmation / rebalance loops degrade into stale-price fail-closed behavior without any on-chain bug.
+- **Immediate blue-team fix**: upgrade dependency chain until `quinn-proto >= 0.11.15` is actually resolved in `Cargo.lock`, then re-run lockfile verification and keeper liveness drills against fragmented-stream / RPC failover conditions.
+### Microstable Code Sweep
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B83 QUIC sparse-fragment memory exhaustion** | keeper RPC / lockfile dependency lane | ❌ HIGH ACTIVE-LATENT | `solana/Cargo.lock:2984-2998` still resolves **`quinn-proto 0.11.13`** through Solana client stack. No evidence of patched floor yet. |
+| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/price_feed.rs:7-58` only cross-validates CoinGecko/Binance within **50 bps**, `solana/keeper/src/oracle.rs:735-835` still enables manual oracle mode and submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:671-706` still writes manual oracle prices **without** mint-path `validate_spot_vs_twap()` anchor used at `lib.rs:997`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1534-1580` still escalates only **single-call** turnover into commit/reveal; I still do **not** see a stateful cumulative drift accumulator. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:209-212` still keeps strict cross-RPC validation only for `getGenesisHash`, then intentionally skips runtime quorum checks for normal reads. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` remains meta-only CSP and `docs/app.js:46,1645` still embeds a devnet faucet keypair in browser code. |
+### Today's Verdict
+- New incidents found: **0 admissible matrix delta**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘 cycle은 **새 벡터 추가가 아니라 기존 high-risk carry set을 다시 검증한 날** 이었다. 특히 keeper transport lane의 **`quinn-proto 0.11.13`** 와 release-integrity lane의 **audit attestation 부재** 는 여전히 높은 우선순위다.
+
 ## 2026-06-23 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-06-16 → 2026-06-23 KST)
