@@ -1,37 +1,68 @@
+## 2026-06-25 Daily Check
+### Source Sweep (24h~7d window: 2026-06-18 → 2026-06-25 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search and current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. **Yield Yak / `vote.yieldyak.com` (2026-06-24)** is an admissible **D26 reinforcement**. Public mechanism is explicit: **Eleven Drainer** code on a **brand-trusted voting subdomain**.
+  2. **Taiko Bridge (2026-06-21~22)** is an admissible **A32 reinforcement**. Current public mechanism is specific enough: **forged SGX proof → malicious prover registration → fake bridge messages → ERC20 Vault drain**.
+  3. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes still did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **2 reinforcements**: **D26** (Yield Yak), **A32** (Taiko Bridge SGX-prover registration forgery)
+- Updated: `SKILL.md`, `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/solana-specific.md` (today's delta is cross-chain/frontend reinforcement, not Solana-specific)
+
+### Immediate High-Priority Findings
+- **B83 QUIC Out-of-Order Stream Gap Memory Exhaustion** — **HIGH active-latent**
+  - Evidence: `solana/Cargo.lock` still contains **`quinn-proto 0.11.13`** and **`rustls-webpki 0.103.9 / 0.101.7`**.
+  - Immediate blue-team fix: upgrade Solana client dependency chain until `quinn-proto >= 0.11.15` is verified in lockfile, then re-run keeper startup / oracle cycle verification.
+- **B45 Audit Attestation Gap / Post-Audit Deployment Delta** — **HIGH carry-forward**
+  - Evidence: `microstable/security/audit-attestation.json` is still absent in direct filesystem inspection.
+  - Immediate blue-team fix: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity; fail CI/release on absence or mismatch.
+
+### Microstable Code Sweep (today's changed vectors first)
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **D26 frontend trust-anchor drift** (Yield Yak reinforcement) | dashboard static client | ⚠️ **LOW carry-forward** | `docs/index.html:6` still relies on a single trusted origin policy, and `docs/app.js:46,1645` still embeds a **devnet faucet keypair** in browser code. Yield Yak confirms that **vote/docs/campaign subdomains** must be treated as signing surface once wallets can connect there. |
+| **A32 bridge message forgery** (Taiko SGX-prover variant) | on-chain / keeper cross-chain trust roots | ✅ **NOT ACTIVE today** | Re-read of `solana/programs/microstable/src/lib.rs`, `solana/keeper/src/`, `docs/app.js` shows **no bridge asset-release path**, **no SGX / enclave attestation gate**, and **no prover-registration lane**. `keeper/src/hermes.rs` posts Pyth/Wormhole price updates but does **not** locally admit an attested prover that can authorize value release. |
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984` still pins **`quinn-proto 0.11.13`**; `rustls-webpki 0.103.9 / 0.101.7` are also still present. Dependency risk remains live until lockfile changes are verified. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` is still missing. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs` still enables manual oracle mode and submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:671+` manual `update_oracle` path still does **not** apply the mint-path `validate_spot_vs_twap()` anchor used at `lib.rs:997+`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1534+` still limits **single-call** turnover but I still do **not** see a stateful cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ **MEDIUM partial defense** | `docs/app.js:208-212` still keeps strict cross-RPC validation only for `getGenesisHash`, then intentionally skips runtime quorum checks for normal reads. |
+
+### Today's Verdict
+- New incidents found: **2 admissible reinforcements only** (**Yield Yak → D26**, **Taiko Bridge → A32**)
+- New attack vectors added: **0**
+- Reinforcements applied: **2**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘 cycle의 핵심은 **새 번호 추가가 아니라 trust boundary의 가장자리 두 곳을 더 날카롭게 만든 것** 이다. **Yield Yak** 은 `main app` 밖의 **brand-trusted subdomain** 도 지갑 서명면이라는 점을, **Taiko** 는 bridge security에서 **message verification 이전의 prover/attestation enrollment** 자체가 이미 인증 경계라는 점을 다시 확인시켰다.
+
 ## 2026-06-24 Daily Check
 ### Source Sweep (24h~7d window: 2026-06-17 → 2026-06-24 KST)
-- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search on Gitcoin frontend attack / Quinn RustSec and direct current Microstable code re-read
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search on Gitcoin frontend attack / Quinn RustSec and current Microstable code re-read.
 - **Confirmed in-window items**:
-  1. **Gitcoin / `files.gitcoin.co` (2026-06-21)** remains an **existing D26 reinforcement**, not a new vector. Public mechanism is still the same: a **brand-trusted subdomain/static asset host** inherited wallet trust and served drainer logic.
-  2. **Aztec Connect**, **Namada Shielded Pools**, **MEV Bot / JaredFromSubway.eth**, **Little Boy Plus** stayed inside already-admitted matrix families during this window; current public detail did **not** justify another named-vector split.
-  3. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+  1. **Gitcoin / `files.gitcoin.co` (2026-06-21)** remained an **existing D26 reinforcement**, not a new vector.
+  2. **Aztec Connect**, **Namada Shielded Pools**, **MEV Bot / JaredFromSubway.eth**, **Little Boy Plus** stayed inside already-admitted matrix families during that window.
+  3. Current public Solana / Anchor / SPL sources did **not** surface a fresh exploit-class advisory that changed the matrix on that day.
+
 ### Skill Delta Today
 - **0 NEW vectors**
 - **0 reinforcements**
 - Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
-- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md` (no admissible new mechanism today)
-### Immediate High-Priority Finding
-- **Vector**: **B83 QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill**
-- **Severity**: **HIGH (active-latent)**
-- **Location**: `microstable/solana/Cargo.lock:2984-2998` (`quinn-proto 0.11.13`)
-- **Bypass / abuse path**: attacker can push sparse out-of-order QUIC stream fragments into vulnerable RPC transport, forcing receiver-side reassembly overhead and memory growth until keeper oracle / confirmation / rebalance loops degrade into stale-price fail-closed behavior without any on-chain bug.
-- **Immediate blue-team fix**: upgrade dependency chain until `quinn-proto >= 0.11.15` is actually resolved in `Cargo.lock`, then re-run lockfile verification and keeper liveness drills against fragmented-stream / RPC failover conditions.
-### Microstable Code Sweep
-| Vector | Code Target | Verdict | Notes |
-|--------|-------------|---------|-------|
-| **B83 QUIC sparse-fragment memory exhaustion** | keeper RPC / lockfile dependency lane | ❌ HIGH ACTIVE-LATENT | `solana/Cargo.lock:2984-2998` still resolves **`quinn-proto 0.11.13`** through Solana client stack. No evidence of patched floor yet. |
-| **B45 Audit Attestation Gap** | all critical paths | ❌ HIGH CARRY-FORWARD | `microstable/security/audit-attestation.json` remains absent in direct filesystem inspection. |
-| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ MEDIUM CARRY-FORWARD | `solana/keeper/src/price_feed.rs:7-58` only cross-validates CoinGecko/Binance within **50 bps**, `solana/keeper/src/oracle.rs:735-835` still enables manual oracle mode and submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:671-706` still writes manual oracle prices **without** mint-path `validate_spot_vs_twap()` anchor used at `lib.rs:997`. |
-| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ MEDIUM CARRY-FORWARD | `solana/programs/microstable/src/lib.rs:1534-1580` still escalates only **single-call** turnover into commit/reveal; I still do **not** see a stateful cumulative drift accumulator. |
-| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ MEDIUM PARTIAL DEFENSE | `docs/app.js:209-212` still keeps strict cross-RPC validation only for `getGenesisHash`, then intentionally skips runtime quorum checks for normal reads. |
-| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ LOW CARRY-FORWARD | `docs/index.html:6` remains meta-only CSP and `docs/app.js:46,1645` still embeds a devnet faucet keypair in browser code. |
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md`
+
+### Immediate High-Priority Findings
+- **B83 QUIC Out-of-Order Stream Gap Memory Exhaustion** — **HIGH active-latent** (`quinn-proto 0.11.13` still present)
+- **B45 Audit Attestation Gap / Post-Audit Deployment Delta** — **HIGH carry-forward** (`microstable/security/audit-attestation.json` absent)
+
 ### Today's Verdict
 - New incidents found: **0 admissible matrix delta**
 - New attack vectors added: **0**
 - Reinforcements applied: **0**
 - New CRITICAL findings: **0**
 - Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
-- Focused conclusion: 오늘 cycle은 **새 벡터 추가가 아니라 기존 high-risk carry set을 다시 검증한 날** 이었다. 특히 keeper transport lane의 **`quinn-proto 0.11.13`** 와 release-integrity lane의 **audit attestation 부재** 는 여전히 높은 우선순위다.
 
 ## 2026-06-23 Daily Check
 
