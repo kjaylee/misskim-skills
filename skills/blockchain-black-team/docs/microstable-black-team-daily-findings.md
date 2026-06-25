@@ -2180,3 +2180,45 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - META-22 added (Cloud KMS Trust Boundary Collapse synthesis)
 - Findings: **0 CRITICAL / 0 HIGH new** / **1 MEDIUM new (A75)** / **1 LOW new (D26 SRI)**
 - Matrix: **93 vectors** (A74, A75 full + A72 reinforcement + META-22)
+
+## 2026-06-26 Daily Check
+### Source Sweep (24h~7d window: 2026-06-19 → 2026-06-26 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search and current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. **Yield Yak / `vote.yieldyak.com` (2026-06-24)** remains an already-admitted **D26 reinforcement**, not a new vector today.
+  2. **Taiko Bridge (2026-06-21~22)** remains an already-admitted **A32 reinforcement**, not a new vector today.
+  3. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes still did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md`
+
+### Immediate High-Priority Findings
+- **B83 QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill** — **HIGH active-latent**
+  - Evidence: `solana/Cargo.lock:2984-2985` still pins `quinn-proto 0.11.13`; `solana/Cargo.lock:3296-3318,7164` still retains `rustls-webpki 0.103.9 / 0.101.7`.
+  - Immediate blue-team fix: upgrade the Solana client dependency chain until `quinn-proto >= 0.11.15` is verified in lockfile, then re-run keeper startup / oracle cycle verification.
+- **B45 Audit Attestation Gap / Post-Audit Deployment Delta** — **HIGH carry-forward**
+  - Evidence: `microstable/security/audit-attestation.json` is still absent in direct filesystem inspection.
+  - Immediate blue-team fix: add `security/audit-attestation.json` with audited commit hash, covered paths, artifact hashes, reviewer identity, and CI/release failure on absence or mismatch.
+
+### Microstable Code Sweep
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984-2985` still pins **`quinn-proto 0.11.13`**. The lockfile has not yet moved to the patched floor. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` is still missing. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs:744-815` still enables manual oracle mode and sends `ix_update_oracle`; `solana/programs/microstable/src/lib.rs:1571-1594,997+` still leaves manual update path without the same `validate_spot_vs_twap()` style anchor used on mint flow. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1571-1594` still gates commit/reveal on **single-call** `turnover >= LARGE_REBALANCE_THRESHOLD`. I still do **not** see a stateful cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ **MEDIUM partial defense** | `docs/app.js:208-212` still keeps strict cross-RPC validation only for `getGenesisHash`, while ordinary runtime reads fall back to single-endpoint success. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ **LOW carry-forward** | `docs/index.html:6` remains **meta-only CSP**, and `docs/app.js:46,1645` still embeds a **devnet faucet keypair** in browser code. |
+| **A32 bridge message forgery (Taiko SGX-prover variant)** | on-chain / keeper cross-chain trust roots | ✅ **NOT ACTIVE today** | Re-read of `solana/programs/microstable/src/lib.rs`, `solana/keeper/src/`, `docs/app.js` still shows **no bridge asset-release path**, **no SGX / enclave attestation gate**, and **no prover-registration lane**. |
+
+### Today's Verdict
+- New incidents found: **0 admissible matrix delta**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘은 매트릭스를 더 넓히는 날이 아니라, **이미 흡수한 최근 사고들이 현재 코드에 새 공격면을 열지 않았는지 재검증한 날** 이다. 다만 **B83** 과 **B45** 는 여전히 HIGH 상태로 남아 있어, blue-team 수정 없이는 daily sweep만으로 닫혔다고 볼 수 없다.
+
