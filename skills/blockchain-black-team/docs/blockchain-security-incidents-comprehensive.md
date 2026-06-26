@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-06-10 — Secret Network / Axelar-connected modified CW20-ICS20 fork (Secret — counterfeit-chain IBC deposit packets minted unbacked bridge assets)** — rekt and SlowMist's public incident write-ups say a modified Secret-side bridge contract had removed the equivalent of **source-channel provenance validation** and **channel-balance reduction / conservation tracking**. The attacker created a counterfeit Cosmos chain, opened a fresh permissionless IBC channel to the Secret-side contract, sent forged deposit packets carrying approved denoms, minted roughly **$4.67M** in unbacked saTokens, then redeemed them through the legitimate Axelar-connected escrow for real assets.
+**Root cause**: the bridge authenticated **allowlisted token denominations**, but did not authenticate **the exact source chain/channel/path** or enforce **per-channel conserved value** before minting bridge representations.
+**Vector mapping**: **A32 Cross-Chain Bridge Message Forgery** reinforcement (fake-chain packet provenance / channel-balance binding sub-pattern).
+**Source**: https://rekt.news/secret-network-rekt | https://hacked.slowmist.io/en/
+
 - **2026-06-24 — Yield Yak (`vote.yieldyak.com`) (Web3 frontend infrastructure — malicious drainer code served from governance/voting subdomain)** — SlowMist's public incident summary says `vote.yieldyak.com` was injected with **Eleven Drainer** malicious code, exposing users to wallet-draining transactions through a trusted subdomain. **Root cause**: the protocol's **brand-trusted voting/governance host** inherited enough wallet trust to become a live signing surface once compromised. This confirms that not only primary dApp hosts but also **vote/docs/campaign/download subdomains** must be treated as production wallet surfaces. **Vector mapping**: **D26 Frontend XSS/Injection** reinforcement (brand-trusted subdomain / governance-host compromise sub-pattern). **Source**: https://hacked.slowmist.io/en/
 
 - **2026-06-21 — Gitcoin (`files.gitcoin.co`) (Web3 frontend infrastructure — malicious drainer code served from trusted subdomain)** — rekt's current incident feed says Blockaid detected a front-end attack on Gitcoin's `files.gitcoin.co` subdomain and found malicious **"Eleven drainer"** code on the compromised site. Users were warned not to interact with the affected host while remediation was underway.

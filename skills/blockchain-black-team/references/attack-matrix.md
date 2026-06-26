@@ -381,6 +381,13 @@ function handleIBCDeposit(bytes calldata payload) external {
 3. Review prover-registration and attestation-validation code inside the same audit scope as bridge message verification
 **Source**: https://hacked.slowmist.io/en/ | https://x.com/taikoxyz/status/2068858818352865626
 
+### A32 — 2026-06-27 Reinforcement: Secret Network Forked CW20-ICS20 / Fake-Chain Deposit Forgery
+**Historical Reinforcement**: Secret Network / Axelar-connected modified CW20-ICS20 bridge fork (exploit 2026-06-10, publicly detailed 2026-06-26, ~$4.67M).
+**Mechanism**: rekt and SlowMist's public write-ups say a fork of Secret's standard CW20-ICS20 path removed the equivalent of **source-channel provenance validation** and **channel-balance reduction / conservation tracking**. The contract effectively asked only whether an inbound denom was allowlisted. Because IBC channel creation is permissionless, the attacker stood up a counterfeit Cosmos chain, opened a fresh channel to the Secret-side contract, sent forged deposit packets carrying approved denoms, minted unbacked saTokens, then redeemed them through the legitimate Axelar-connected escrow for real assets.
+**Why reinforces A32**: this is still **cross-chain message forgery**, but the trust collapse is sharper than a generic proof bug: **asset allowlisting was treated as packet authentication**. If a bridge validates “supported token/denom” but not **exact source chain/channel/path** and not **per-channel conserved value**, a fake chain's packets can inherit the same authority as real deposits.
+**Audit delta**: 1. Bind inbound packets to exact expected source chain / client / channel / denom path, not token symbol or allowlist alone 2. Track per-channel escrow or minted-balance conservation and reject credits beyond authenticated source-side capacity 3. Test fake-chain / fresh-channel flows explicitly anywhere channel or client creation is permissionless
+**Source**: https://rekt.news/secret-network-rekt | https://hacked.slowmist.io/en/
+
 ### B36. Social-Engineering-to-Stake-Authority-Hijack
 **Historical**: Step Finance (2026-01-31, $27.3M) — executive device compromised via spear-phish; stake delegation authority transferred to attacker wallet; 261,854 SOL unstaked in ~90 minutes.
 **Mechanism**: Attacker does not need a smart contract exploit. Solana's stake delegation model separates stake authority from withdrawal authority, both reassignable unilaterally by the current controller. If an operator's hot device (laptop, workstation) is compromised, the attacker can sign a `StakeAuthorize` instruction to redirect staking rights to their wallet, then unstake and drain. The on-chain action looks legitimate — no program exploit, no anomalous CPI.

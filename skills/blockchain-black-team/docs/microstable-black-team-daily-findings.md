@@ -1,3 +1,36 @@
+## 2026-06-27 Daily Check
+### Source Sweep (24h~7d window: 2026-06-20 → 2026-06-27 KST)
+- Sources checked: `https://rekt.news/secret-network-rekt`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search and current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. **Secret Network / modified CW20-ICS20 fork (public detail 2026-06-26; exploit 2026-06-10)** is an admissible **A32 reinforcement**. Public mechanism is now explicit: **counterfeit chain + fresh permissionless IBC channel + missing source-channel validation + missing channel-balance conservation** → unbacked saToken mint → Axelar-connected escrow drain.
+  2. **Polymarket (2026-06-25)** remains an existing **D28 / D26** family signal only. Current public detail is still “third-party vendor compromised, malicious script injected for some users,” which is important operationally but does **not** sharpen a new reusable code-level exploit class beyond already-admitted supply-chain / frontend compromise patterns.
+  3. GitHub Advisory `solana` query, Solana security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes still did **not** surface fresh **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **1 reinforcement**: **A32** (Secret Network fake-chain IBC packet forgery / channel-balance binding failure)
+- Updated: `SKILL.md`, `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/solana-specific.md` (today's admissible delta is cross-chain bridge trust-boundary reinforcement, not Solana-specific)
+
+### Immediate High-Priority Findings
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A32 bridge message forgery** (Secret fake-chain / channel-provenance variant) | on-chain / keeper cross-chain trust roots | ✅ **NOT ACTIVE today** | Re-read of `solana/programs/microstable/src/lib.rs`, `solana/keeper/src/`, `docs/app.js` shows **no bridge asset-release path**, **no IBC channel admission path**, and **no counterfeit-chain packet acceptance surface**. `keeper/src/hermes.rs` ingests price updates but does **not** credit user assets from cross-chain packets. |
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984` still pins **`quinn-proto 0.11.13`**; `rustls-webpki 0.103.9 / 0.101.7` also still present. Dependency risk remains live until lockfile changes verified. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` still missing. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs` still enables manual oracle mode and submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:671+` manual `update_oracle` path still does **not** apply mint-path `validate_spot_vs_twap()` guard used at `lib.rs:997+`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1571+` still enforces turnover on a **single-call** basis and commit/reveal on `LARGE_REBALANCE_THRESHOLD`, but I still do **not** see a stateful cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ **MEDIUM partial defense** | `docs/app.js:203+` still validates `getGenesisHash` at bootstrap, but runtime path intentionally skips normal-read quorum checks. Wrong-network bootstrap is guarded; provider-independent runtime integrity is still incomplete. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ **LOW carry-forward** | `docs/index.html:6,994` still uses **meta-only CSP** and local vendor script load, while `docs/app.js:46,1645` still reconstructs a **browser-embedded devnet faucet keypair**. Secret's exact bridge lane is absent, but web trust surface remains unnecessarily wide. |
+
+### Today's Verdict
+- New incidents found: **1 admissible reinforcement only** (**Secret Network → A32**)
+- New attack vectors added: **0**
+- Reinforcements applied: **1**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘 창의 실질 delta는 **A32를 proof/parser 위조에서 fake-chain packet provenance / channel-balance conservation failure까지 더 분명히 확장했다는 점** 입니다. Microstable에는 그 exact bridge lane이 없어서 오늘도 신규 CRITICAL/HIGH는 없고, 실제 우선순위는 여전히 **B83** 와 **B45** 입니다.
+
 ## 2026-06-25 Daily Check
 ### Source Sweep (24h~7d window: 2026-06-18 → 2026-06-25 KST)
 - Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search and current Microstable code / lockfile re-read.
