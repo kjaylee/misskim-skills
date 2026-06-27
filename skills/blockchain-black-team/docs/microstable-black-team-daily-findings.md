@@ -1,3 +1,35 @@
+## 2026-06-28 Daily Check
+### Source Sweep (24h~7d window: 2026-06-21 → 2026-06-28 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. `rekt.news` latest public surface is still dominated by already-admitted classes (**Secret / Aztec / Syscoin / Humanity / Gravity**) and does **not** expose a new Solana / Anchor / SPL mechanism beyond the current matrix.
+  2. SlowMist latest window is still **Polymarket / Yield Yak / Gitcoin / Taiko / Secret**, all of which remain either already-absorbed **D26 / D28 / A32** signals or prior admissions rather than a fresh exploit-class delta today.
+  3. GitHub Advisory `solana` query, Solana ecosystem security page, Trail of Bits / OtterSec / Neodyme / Immunefi current indexes did **not** surface a fresh **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md`
+
+### Immediate High-Priority Findings
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984-2985` still pins **`quinn-proto 0.11.13`**; `rustls-webpki 0.103.9 / 0.101.7` also still present. Dependency risk remains live until lockfile changes verified. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` still missing. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs:822+` still submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:671+` manual `update_oracle` path still does **not** apply mint-path `validate_spot_vs_twap()` guard used at `lib.rs:997+`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1579+` still enforces turnover on a **single-call** basis and commit/reveal on `LARGE_REBALANCE_THRESHOLD`, but I still do **not** see a stateful cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads | ⚠️ **MEDIUM partial defense** | `docs/app.js:203+` still validates `getGenesisHash` at bootstrap, but runtime path intentionally skips normal-read quorum checks. Wrong-network bootstrap is guarded; provider-independent runtime integrity is still incomplete. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ **LOW carry-forward** | `docs/index.html:5` still uses **meta-only CSP**, while `docs/app.js:46+` still reconstructs a **browser-embedded devnet faucet keypair**. |
+
+### Today's Verdict
+- New incidents found: **0 admissible matrix delta**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘은 **매트릭스 확장보다 carry-forward HIGH 재확인** 이 핵심이었습니다. 새 실사고 패턴 admission은 없었고, 실제 우선순위는 여전히 **B83 dependency upgrade 검증** 과 **B45 audit-attestation artifact 도입** 입니다.
+
 ## 2026-06-27 Daily Check
 ### Source Sweep (24h~7d window: 2026-06-20 → 2026-06-27 KST)
 - Sources checked: `https://rekt.news/secret-network-rekt`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/`, `https://github.com/advisories?query=solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/2026/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus fallback search and current Microstable code / lockfile re-read.
