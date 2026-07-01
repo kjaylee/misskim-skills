@@ -1902,6 +1902,28 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 86. ☐ privileged keeper / relayer / settlement flow에서 commitment policy를 설정했으면, account fetch·blockhash fetch·send-confirm·signature polling이 **같은 commitment를 실제로 사용한다는 propagation regression** 을 고정하고, hard-coded `processed()` / `confirmed()` default가 config policy를 몰래 약화시키지 못하게 할 것
 
+## 2026-07-02 Anchor Subtractive-Realloc Refund Pattern
+
+### A135 — Anchor Subtractive Realloc Rent-Refund Siphon / Extra-Lamport Payer Reassignment
+- **Solana context**: Solana PDA는 metadata와 lamports를 한 계정에 함께 들고 있기 쉬워, 개발자가 `realloc` 를 단지 layout helper로 오해하기 쉽다. 그런데 shrink 방향 `realloc` 는 바이트만 줄이는 것이 아니라 **새 rent floor 위 lamports를 `realloc::payer` 로 돌려보내는 transfer primitive** 다.
+- **핵심 패턴**: value-bearing PDA가 extra lamports를 들고 있을 때 subtractive `realloc` 를 허용하면, 공격자는 shrink path와 `realloc::payer` binding을 이용해 **rent savings가 아니라 surplus lamports 전체** 를 payer 쪽으로 빼낼 수 있다. 계정은 살아남기 때문에 감사/운영이 “단순 schema update” 로 착각하기 쉽다.
+- **왜 Solana에서 특히 위험한가**:
+  1. rent, close, realloc semantics가 계정 생명주기 API로 흩어져 있어 value transfer 관점이 약해지기 쉽다.
+  2. migration / metadata compaction / variable-length state trim은 보통 low-risk maintenance code로 분류돼 vault threat model 밖으로 밀린다.
+  3. `realloc::payer` 는 비용 지불자처럼 보여도 shrink 시점에는 **refund recipient authority** 가 된다.
+  4. shrink 후 계정 discriminator와 owner가 멀쩡하면, value가 이미 빠졌다는 사실이 사후 점검에서 늦게 드러난다.
+- **Source signals**:
+  - Anchor commit `3958d5b` — `warn about subtractive realloc refund footgun in v1 (#4664)` (merged 2026-06-29)
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 와 `keeper/src/` repo-wide scan에서 Anchor `realloc`, `realloc::payer`, `AccountLoader` 기반 shrink path는 확인되지 않았다.
+  - current live path의 lamport mutation은 escrow/treasury claim 정산과 rent top-up helper에 국한되며, framework-mediated shrink refund surface는 보이지 않는다.
+  - 따라서 오늘 기준 **A135는 NOT ACTIVE today** 다.
+  - 다만 future PDA migration에서 lamports를 쥔 state account를 in-place shrink하면 즉시 재평가 대상이다.
+- **Checklist item 87**: ☐ value-bearing PDA에는 subtractive `realloc` 를 금지하고, shrink가 불가피하면 `post_lamports == pre_lamports - exact_rent_delta` 와 refund recipient binding을 테스트로 고정하며, `realloc::payer` 를 임의 caller 입력으로 받지 말 것
+
+### Solana-Specific Defense Checklist Update
+87. ☐ value-bearing PDA에는 subtractive `realloc` 를 금지하고, shrink가 불가피하면 `post_lamports == pre_lamports - exact_rent_delta` 와 refund recipient binding을 테스트로 고정하며, `realloc::payer` 를 임의 caller 입력으로 받지 말 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
