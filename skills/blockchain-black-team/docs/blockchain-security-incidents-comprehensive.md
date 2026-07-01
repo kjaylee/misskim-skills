@@ -4,6 +4,26 @@
 
 ## 2026
 
+- **2026-06-30 — SecondFi (Cardano wallet — missing signing secret exposed per-address private keys during transaction flow)** — rekt's front-page incident summary says **a single missing secret in SecondFi's signing code made every on-chain transaction a private key disclosure**, while SlowMist's incident feed says the proprietary web wallet generation / signing path exposed **private keys at the address level**, leading to about **16 million ADA (~$2.4M)** drained from **374 wallets** across three attacks.
+**Root cause**: the wallet's client-side signing / key-generation flow failed to preserve a required secret boundary, so ordinary transaction use leaked enough information to reconstruct or disclose the user's private key material.
+**Vector mapping**: **B15 Key Compromise** reinforcement (signature-generation / client-side secret-disclosure sub-pattern).
+**Source**: https://rekt.news/ | https://hacked.slowmist.io/en/
+
+- **2026-06-25 — Polymarket (frontend infrastructure — malicious third-party dependency injected drainer logic into the live web surface)** — SlowMist's public incident summary says Polymarket suffered a **third-party supply chain attack** in which attackers injected a **malicious script** into the platform's frontend and drained about **$3.1M in PUSD** from **11 user wallets**.
+**Root cause**: the attacker did not need to compromise on-chain contracts. Compromising a trusted third-party frontend dependency was enough to inherit Polymarket's canonical wallet-connection surface and deliver malicious transaction logic to users.
+**Vector mapping**: **D28 Supply Chain** + adjacent **D26 Frontend XSS/Injection** reinforcement.
+**Source**: https://hacked.slowmist.io/en/
+
+- **2026-06-25 — Lixir Finance (Ethereum vault wrappers — broken EIP-2612 permit verification let a reusable dummy signature authorize arbitrary approvals)** — SlowMist's public incident summary says Lixir's `lv_*` vault-token wrappers accepted a **single dummy signature** because the EIP-2612 permit verification path was broken. The attacker reused that signature to grant approval over many holders' positions and drained underlying **WETH, USDC, USDT, and LIX** via `withdrawFrom` / `withdrawETHFrom`, causing about **$12.3K** in losses.
+**Root cause**: the permit path failed to bind signature validity tightly enough to the actual approval semantics, so a nominally invalid or context-free signature became **replayable authority** across multiple holders.
+**Vector mapping**: **A7 Signature Replay** reinforcement (permit-verification collapse / reusable dummy-signature sub-pattern).
+**Source**: https://hacked.slowmist.io/en/
+
+- **2026-06-23 — Royal.io legacy royalties contract (Polygon — zero-value ERC1155 transfers polluted pro-rata reward accounting and enabled over-withdrawal)** — SlowMist's public incident summary says a legacy `Royal1155LD` royalties contract was exploited after the attacker used a **flash loan** and about **100 zero-value ERC1155 transfers** to manipulate `beforeLdaTransfer` accounting, inflate royalty balances, and withdraw about **$263K USDC**.
+**Root cause**: the reward / pro-rata accounting path treated **zero-value transfer side effects** as state-changing balance truth, letting the attacker distort entitlement calculations without paying real economic cost for the underlying transfer activity.
+**Vector mapping**: **A10 Logic Bug** reinforcement (zero-value side-effect accounting / phantom entitlement sub-pattern).
+**Source**: https://hacked.slowmist.io/en/
+
 - **2026-06-10 — Secret Network / Axelar-connected modified CW20-ICS20 fork (Secret — counterfeit-chain IBC deposit packets minted unbacked bridge assets)** — rekt and SlowMist's public incident write-ups say a modified Secret-side bridge contract had removed the equivalent of **source-channel provenance validation** and **channel-balance reduction / conservation tracking**. The attacker created a counterfeit Cosmos chain, opened a fresh permissionless IBC channel to the Secret-side contract, sent forged deposit packets carrying approved denoms, minted roughly **$4.67M** in unbacked saTokens, then redeemed them through the legitimate Axelar-connected escrow for real assets.
 **Root cause**: the bridge authenticated **allowlisted token denominations**, but did not authenticate **the exact source chain/channel/path** or enforce **per-channel conserved value** before minting bridge representations.
 **Vector mapping**: **A32 Cross-Chain Bridge Message Forgery** reinforcement (fake-chain packet provenance / channel-balance binding sub-pattern).
