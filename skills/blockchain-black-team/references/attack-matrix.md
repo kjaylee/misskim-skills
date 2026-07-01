@@ -7237,6 +7237,56 @@ SAFER SHAPE:
 
 ---
 
+### B84. Commitment Shadow-Downgrade / Finality-Policy Desynchronization
+
+**Published**: 2026-07-01 | **Severity**: HIGH | **Red Team**
+
+**Signal**: Anchor commit `ab55fe8` / PR `#4666` (`client: Fix ignored commitment level`, merged 2026-06-29) shows that client helpers could silently ignore the caller's configured commitment policy and fall back to harder-coded `processed` / mismatched confirmation paths.
+
+**Key insight**: 많은 팀은 `confirmed` 나 `finalized` commitment를 한 번 설정하면 그 정책이 account fetch, latest blockhash, send-and-confirm, signature polling 전 구간에 자동으로 유지된다고 믿는다. 이번 신호의 핵심은 **정책을 더 강하게 설정해도 helper 내부가 더 약한 commitment로 몰래 읽으면, operator가 믿는 finality threshold와 실제 privileged automation threshold가 분리될 수 있다** 는 점이다.
+
+**Attack chain**:
+1. keeper / relayer / settlement bot configures a stronger commitment policy and assumes privileged decisions are bound to it.
+2. a convenience client helper internally fetches account state, latest blockhash, or transaction status with `processed` or another weaker default.
+3. the surrounding state machine treats that response as if it satisfied the configured finality threshold.
+4. attacker exploits the provisional-state / soft-finality window to trigger a follow-up action, race a rollback, or make automation act on state that was never truly settled.
+5. by the time a stronger finality check would have failed, the off-chain side effect or cross-system action has already fired.
+
+**Why distinct vectors**:
+- **B50** is chain-side structural finality lag under Firedancer-era voting conditions. **B84** is a **client-side policy downgrade** that can happen even on a healthy chain.
+- **B79** assumes the system explicitly grants service before settlement. **B84** is different because the team may believe they already enforced a stronger settlement threshold, but the helper silently undercuts it.
+- **B14** is malicious or incorrect RPC data. **B84** can happen with an honest RPC provider; the boundary failure is in the client plumbing.
+
+**Why audits miss it**:
+1. reviewers see a top-level commitment setting and stop tracing which helper methods actually honor it.
+2. integration tests usually run on localnet/devnet where rollback pressure and commitment differences rarely surface.
+3. `processed` / `confirmed` defaults are often framed as UX or performance knobs, not as authorization-boundary inputs.
+4. libraries hide multiple finality-sensitive steps behind a single convenience call, so policy drift is easy to miss in review.
+
+**Mitigations**:
+- add regression tests that assert configured commitment propagates through account fetch, latest-blockhash fetch, signature polling, and send-confirm helpers.
+- ban hard-coded `processed()` / `confirmed()` in privileged paths unless the weaker threshold is explicitly documented and justified.
+- separate provisional reads from irrevocable action triggers; do not let one convenience helper define both.
+- if using affected Anchor client helpers, wrap raw `RpcClient` calls or upgrade to a version that preserves configured commitment semantics end-to-end.
+
+**Sources**:
+- https://api.github.com/repos/otter-sec/anchor/commits/ab55fe8dae8832f303e92042527d37de75b19df0
+- https://api.github.com/repos/solana-foundation/anchor/commits?since=2026-06-24T00:00:00Z&per_page=30
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock` currently resolves **`anchor-client 0.31.1`**, so the dependency exists in the tree.
+- however, reviewed live keeper code path does **not** import `anchor_client`; `keeper/src/` uses raw `solana_client::rpc_client::RpcClient` directly instead.
+- current keeper also **intentionally** uses `CommitmentConfig::confirmed()` in `main.rs` and transaction confirmation helpers, with `processed()` only for readiness-style checks. That is a separate **B50 / soft-finality policy** question, not a hidden downgrade.
+- therefore **B84 itself is NOT ACTIVE today** for Microstable. The new lesson is future-facing unless the repo starts routing privileged flows through Anchor client helpers that shadow commitment.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B84 Commitment Shadow-Downgrade / Finality-Policy Desynchronization | client helper accepts a stronger commitment/finality policy but performs state reads or confirmation steps with weaker hard-coded defaults, so automation acts on provisional state while believing policy was enforced | false finality assumption, rollback-race follow-up actions, off-chain privileged branch execution on unsettled state, hard-to-triage policy drift | current Microstable live keeper path uses raw `RpcClient` and intentionally-coded `confirmed` / `processed` thresholds, so **B84 is NOT ACTIVE today**; risk becomes real if Anchor client helpers are promoted into privileged keeper or ops flows |
+
+**Matrix state 2026-07-01 (red-team daily update)**: **B84** was added to separate **hidden client-side commitment downgrade** from chain-level finality lag (**B50**), explicit grant-before-settlement (**B79**), and generic RPC falsification (**B14**). Matrix is now **143+ named vectors + META-01~71 + B73~B84 = 214+ total entries**. Microstable has **no new active CRITICAL/HIGH finding** from B84; today's active-high carry-forward remains centered on **B83** and prior confirmed repo-specific risks.
+
+---
+
 ### A128. Anchor Serialized-Account Shrink-Tail Ghost Bytes / Post-Shrink Stale-Byte Reinterpretation
 
 **Published**: 2026-05-27 | **Severity**: MEDIUM | **Red Team**

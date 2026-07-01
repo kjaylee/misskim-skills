@@ -1880,6 +1880,28 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 85. ☐ keeper lockfile / SBOM gate에서 **`quinn-proto >= 0.11.15`** 를 강제하고, QUIC reconnect churn + RSS growth + RPC latency 상승을 함께 모니터링하며, incident mode에서는 patched/non-QUIC fallback 경로를 즉시 전환 가능하게 둘 것
 
+## 2026-07-01 Anchor Commitment Shadow-Downgrade Pattern
+
+### B84 — Commitment Shadow-Downgrade / Finality-Policy Desynchronization
+- **Solana context**: Solana keeper나 relayer는 흔히 `confirmed` / `finalized` commitment를 safety policy처럼 설정하고, 그 설정이 account fetch, latest blockhash, signature polling, send-and-confirm 전 구간에 동일하게 적용된다고 믿는다. 하지만 client helper가 내부에서 더 약한 commitment를 박아두면, 보안 경계는 config 파일에 적힌 정책이 아니라 **실제로 호출된 helper의 숨은 default** 로 결정된다.
+- **핵심 패턴**: 코드가 stronger commitment를 설정해도 helper 내부가 `processed()` 또는 다른 약한 경로로 state/confirmation을 읽고, 상위 로직은 그것을 이미 policy-compliant 결과처럼 취급한다. 그러면 팀은 `finalized` 를 쓴다고 생각하지만 실제 privileged branch는 **provisional state** 를 근거로 열릴 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. `processed` / `confirmed` / `finalized` 차이가 속도 문제처럼 보이기 쉬워, 이 설정이 auth boundary라는 감각이 약하다.
+  2. Anchor / SDK helper는 여러 RPC 단계를 convenience API 하나로 감싸므로, 내부 downgrade가 코드 리뷰에서 잘 안 보인다.
+  3. Solana는 빠른 슬롯 덕분에 localnet/devnet에서는 이런 drift가 잘 드러나지 않아 test green이 false confidence를 준다.
+  4. keeper가 follow-up tx, settle, unlock, pause 해제를 자동으로 이어 붙이면 provisional-state 오판이 곧 value-sensitive action으로 이어진다.
+- **Source signals**:
+  - Anchor commit `ab55fe8` — `client: Fix ignored commitment level (#4666)` (merged 2026-06-29)
+- **Microstable current status**:
+  - `microstable/solana/Cargo.lock` 는 `anchor-client 0.31.1` 를 포함하지만, reviewed `keeper/src/` live path에서 `anchor_client` import/use는 확인되지 않았다.
+  - current keeper는 raw `RpcClient` 를 직접 쓰며 `CommitmentConfig::confirmed()` 와 일부 `processed()` 호출을 **명시적으로** 사용한다.
+  - 따라서 오늘 기준 B84는 **NOT ACTIVE today** 다. 현재 노출은 숨은 downgrade가 아니라, 의도된 soft-finality policy(B50 carry-forward)에 더 가깝다.
+  - 다만 future refactor가 Anchor client helper를 privileged keeper path에 다시 올리면 즉시 재평가 대상이다.
+- **Checklist item 86**: ☐ privileged keeper / relayer / settlement flow에서 commitment policy를 설정했으면, account fetch·blockhash fetch·send-confirm·signature polling이 **같은 commitment를 실제로 사용한다는 propagation regression** 을 고정하고, hard-coded `processed()` / `confirmed()` default가 config policy를 몰래 약화시키지 못하게 할 것
+
+### Solana-Specific Defense Checklist Update
+86. ☐ privileged keeper / relayer / settlement flow에서 commitment policy를 설정했으면, account fetch·blockhash fetch·send-confirm·signature polling이 **같은 commitment를 실제로 사용한다는 propagation regression** 을 고정하고, hard-coded `processed()` / `confirmed()` default가 config policy를 몰래 약화시키지 못하게 할 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
