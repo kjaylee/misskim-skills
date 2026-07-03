@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-07-02 — Altura (RWA / HyperEVM — claimed reserve-verification surface never actually bound off-chain gold custody to on-chain depositor truth)** — rekt's July 2, 2026 write-up says Altura routed large USDT flows through **Tron wallets and instant-exchange rails**, relied on a **"verifier" tied to the COO's own project**, and exposed an **Accountable dashboard that admitted it verified nothing** while depositors waited for redemptions by bank wire.
+**Root cause**: the protocol's trust story treated **dashboard/verifier presence** as if it proved reserve backing, but the admitted evidence surface never hard-bound **who controlled the downstream settlement path**, **what reserve/custody state was being verified**, or **whether off-chain gold inventory and on-chain liability remained continuously matched**.
+**Vector mapping**: **META-70 Node-Audit / Edge-Semantics Gap** reinforcement (dashboard/verifier surface exists ≠ reserve-backing semantics are owned), with adjacent **META-66 Assurance-Plane Failure Semantics Gap** relevance.
+**Source**: https://rekt.news/digging-for-gold
+
 - **2026-06-30 — SecondFi (Cardano wallet — missing signing secret exposed per-address private keys during transaction flow)** — rekt's front-page incident summary says **a single missing secret in SecondFi's signing code made every on-chain transaction a private key disclosure**, while SlowMist's incident feed says the proprietary web wallet generation / signing path exposed **private keys at the address level**, leading to about **16 million ADA (~$2.4M)** drained from **374 wallets** across three attacks.
 **Root cause**: the wallet's client-side signing / key-generation flow failed to preserve a required secret boundary, so ordinary transaction use leaked enough information to reconstruct or disclose the user's private key material.
 **Vector mapping**: **B15 Key Compromise** reinforcement (signature-generation / client-side secret-disclosure sub-pattern).
