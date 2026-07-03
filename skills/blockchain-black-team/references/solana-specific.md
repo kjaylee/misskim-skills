@@ -1946,6 +1946,28 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 88. ☐ off-chain issuer / attestation / reserve-proof validator에 strong registry path와 fallback path가 공존하면, **path selector 자체를 auth-critical input** 으로 취급하고 untrusted metadata가 stronger verification을 비활성화하지 못하게 하며, forged-but-self-consistent fallback artifact negative test를 릴리스 게이트로 둘 것
 
+## 2026-07-04 Anchor Custom-Cluster Scheme Boundary Reinforcement
+
+- **Solana context**: Solana 개발/운영 툴은 `Anchor.toml`, CLI flag, test harness, local script를 통해 custom cluster URL을 자주 받는다. 팀은 대개 이를 "HTTP(S) RPC endpoint string" 으로 이해하지만, parser가 `starts_with("http")` 같은 느슨한 판정을 쓰면 **transport boundary 자체** 가 흐려질 수 있다.
+- **핵심 패턴**: 입력이 `http://` 나 `https://` 인지 **정확히** 검증하지 않고, 단지 `http*` prefix만 보면 `httpx://`, `http+unix://`, `https+foo://` 류 custom scheme가 통과할 수 있다. 그러면 리뷰어와 operator는 여전히 "HTTP RPC만 받는다" 고 믿는데, 실제 parser/output path는 **예상과 다른 connector / socket / ws-derivation lane** 으로 흘러갈 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Anchor/SDK helper는 cluster URL 하나에서 HTTP RPC + WebSocket URL을 함께 파생시키므로, input parser bug가 **두 transport plane** 을 동시에 오염시킨다.
+  2. localnet/devnet 스크립트는 편의상 custom endpoint를 자주 받아들이므로, production-grade exact-scheme validation이 빠지기 쉽다.
+  3. 이 클래스는 generic config injection(B18)보다 더 좁고 교활하다. endpoint host를 바꾸지 않아도, **허용된 것처럼 보이는 문자열 형태만으로 transport semantics** 를 바꿀 수 있다.
+  4. "URL parse 성공" 과 "우리가 의도한 RPC transport boundary 안에 있다" 는 다른 명제다.
+- **Source signals**:
+  - Anchor commit `3f0255a` — `fix(client): reject non-http custom cluster URL schemes (#4741)` (merged 2026-07-03)
+- **Microstable current status**:
+  - `microstable/solana/keeper/src/config.rs` 는 `extract_https_host()` 에서 **정확히 `https://` prefix** 만 허용하고, allowlist도 parsed host에 다시 결박한다.
+  - live keeper path는 `main.rs` 에서 raw `RpcClient::new_with_commitment(...)` 를 직접 만들며, reviewed code에서는 `anchor_client::Cluster::from_str` 사용이 보이지 않았다.
+  - `Anchor.toml` 의 provider는 static `localnet` 이고, current live runtime RPC path는 custom scheme이 아니라 allowlisted HTTPS URL로 제한된다.
+  - 따라서 오늘 기준 이 reinforcement는 **NOT ACTIVE today** 다.
+  - 다만 future tool/script/test helper가 Anchor client의 custom cluster parsing에 다시 의존하면 즉시 재평가 대상이다.
+- **Checklist item 89**: ☐ cluster / RPC URL parser는 `http` prefix가 아니라 **exact `http`/`https` scheme equality** 를 강제하고, 파생 WebSocket URL 생성 전에도 scheme을 재검증하며, allowlist를 raw string이 아니라 **parsed scheme + host + port policy** 에 묶을 것
+
+### Solana-Specific Defense Checklist Update
+89. ☐ cluster / RPC URL parser는 `http` prefix가 아니라 **exact `http`/`https` scheme equality** 를 강제하고, 파생 WebSocket URL 생성 전에도 scheme을 재검증하며, allowlist를 raw string이 아니라 **parsed scheme + host + port policy** 에 묶을 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
