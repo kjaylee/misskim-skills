@@ -220,10 +220,11 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 **2026 reinforcement (Comet)**: Real exploit chains combined (a) fake CAPTCHA/security validator flows, (b) fake system-message delimiters, (c) fake user-request delimiters, and (d) multi-step "fragment assembly" prompts. Result: agent navigated from attacker page to authenticated Gmail context and exfiltrated mailbox contents to attacker endpoint.
 **2026 reinforcement (LLM routers, CoinDesk 2026-04-13)**: 최근 연구자들은 **중간 LLM router / relay layer** 가 benign tool call을 attacker-controlled call로 치환하거나, prompt/tool payload 안의 credential을 수집하고, 지갑 관련 비밀을 탈취할 수 있음을 공개했다. 핵심은 confused deputy가 모델 프롬프트 내부에만 있는 것이 아니라, **사용자와 모델 사이 routing layer** 에도 생길 수 있다는 점이다. 사용자는 OpenAI/Anthropic 같은 상위 모델과 직접 대화한다고 느끼지만, 실제로는 중간 relay가 tool response와 secret-bearing prompt를 모두 읽고 바꿀 수 있다.
 **2026 reinforcement (CyberChainBench, submitted 2026-06-24)**: 공개 벤치마크는 best config 가 **37.5% detection / 43.7% exploitation / 23.4% patching** 에 머무는 모습을 보여줬다. 퍼플팀 교훈은 단순하다. **AI agent가 취약점을 잘 찾거나 무기화한다는 사실은, 그 agent가 안전하게 수정안을 만들고 privileged remediation 을 발사할 자격이 있다는 뜻이 아니다.** 연구용/탐지용 agent 와 signing/governance/patch-deploy agent 는 권한 경계를 분리해야 한다.
+**2026 reinforcement (Prompt Injection as Role Confusion, ICML 2026 / June 2026 writeup)**: 최근 역할 혼동 연구는 `<system>`, `<user>`, `<tool>`, `<think>` 같은 role tag 가 모델 내부에서 hard boundary 로 유지되지 않고, **텍스트가 어떻게 들리는가(style / voice)** 에 따라 authority 가 상속될 수 있음을 보여줬다. 즉 tool output 이나 fetched webpage 가 `trusted user` 혹은 `model reasoning` 처럼 보이게 쓰이면, 태그는 그대로여도 agent 가 그 명령을 자기 내부 권한처럼 받아들일 수 있다. 퍼플팀 교훈은 `role label exists` 와 `authority preserved` 가 다르다는 점이며, 이는 B29를 새 번호 없이 더 정밀하게 만든다.
 **Bypass insight**: Even when model rejects simple direct prompts, semi-structured wrappers (`[BEGIN SYSTEM MESSAGE]`, "policy update", "abuse prevention") and staged tasks can still hijack tool execution.
 **Defense**: Tool-level authorization policy (not prompt-only), data/command channel separation, strict side-effect allowlists, authenticated provenance tags for instructions, and human approval for privileged actions.
-**Why audits miss (2026-04 / 2026-07 reinforcement)**: 많은 감사는 agent의 system prompt, tool allowlist, on-chain action surface만 본다. 하지만 **router/relay/provider-of-provider** 경로는 보통 SaaS plumbing 또는 infra로 분리되어 감사를 벗어나며, prompt와 tool payload가 그 경계를 지날 때의 **credential visibility / mutation right** 는 거의 검증하지 않는다. 여기에 **agent benchmark 점수** 가 높다는 이유로 patch drafting, governance proposal generation, auto-remediation 권한까지 같은 런타임에 승격하면, `탐지 능력` 과 `수정 권한` 의 경계가 무너진다.
-**Source**: https://blog.trailofbits.com/2026/02/20/using-threat-modeling-and-prompt-injection-to-audit-comet/ | https://arxiv.org/abs/2602.20156 | https://www.coindesk.com/tech/2026/04/13/ai-agents-are-set-to-power-crypto-payments-but-a-hidden-flaw-could-expose-wallets
+**Why audits miss (2026-04 / 2026-07 reinforcement)**: 많은 감사는 agent의 system prompt, tool allowlist, on-chain action surface만 본다. 하지만 **router/relay/provider-of-provider** 경로는 보통 SaaS plumbing 또는 infra로 분리되어 감사를 벗어나며, prompt와 tool payload가 그 경계를 지날 때의 **credential visibility / mutation right** 는 거의 검증하지 않는다. 여기에 **role tag / message label** 을 hard trust boundary 로 오인하면, tool output·retrieved page·fabricated CoT 가 **trusted voice** 를 흉내 내는 순간 authority inheritance 가 발생할 수 있다는 점을 놓친다. 또 **agent benchmark 점수** 가 높다는 이유로 patch drafting, governance proposal generation, auto-remediation 권한까지 같은 런타임에 승격하면, `탐지 능력` 과 `수정 권한` 의 경계가 무너진다.
+**Source**: https://blog.trailofbits.com/2026/02/20/using-threat-modeling-and-prompt-injection-to-audit-comet/ | https://arxiv.org/abs/2602.20156 | https://www.coindesk.com/tech/2026/04/13/ai-agents-are-set-to-power-crypto-payments-but-a-hidden-flaw-could-expose-wallets | https://role-confusion.github.io/ | https://arxiv.org/abs/2603.12277
 
 ## C. Economic Vectors
 
@@ -1033,7 +1034,7 @@ location /rpc {
 | B18 Config Injection | 설정값 변경을 배포 파이프라인 문제로 분리해 런타임 위협으로 연결 안 함. |
 | B19 Memory/Log Leak | 기능 로그 우선 문화로 비밀정보 마스킹이 보안 요구로 강제되지 않음. |
 | B20 DoS | 자금 탈취 중심 리뷰로 가용성 공격 경제성 분석이 후순위. |
-| B29 AI Agent Confused-Deputy | 프롬프트 방어를 정책으로 착각하고 tool 권한 분리/승인 경계를 누락. |
+| B29 AI Agent Confused-Deputy | 프롬프트 방어와 role tag를 hard trust boundary로 착각하고, style-mimicry·tool-output voice hijack·tool 권한 분리/승인 경계를 함께 검증하지 않음. |
 | C21 Bank Run | 코드 정확성은 확인하지만 집단행동/신뢰 붕괴 동학을 모델링하지 않음. |
 | C22 Collateral Manipulation | 단일 자산 기준 정상장 시나리오만 검증, 상관붕괴·급변장 스트레스 미흡. |
 | C23 Governance Attack | voting logic 검증은 해도 자금조달(플래시론) 기반 장악 비용을 계산 안 함. |

@@ -1,5 +1,70 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-07-03 (KST) — Daily Evolution (Purple Team)
+### Current state / Verification criteria / Completion criteria / Artifact path
+- **Current state**: `2026-07-02` 기준 퍼플팀은 신규 named vector / 신규 META admission 없이 **`B15 + B29 + META-66` reinforcement-only**, 그리고 Microstable 쪽 **신규 `PT-ARCH-*` 없음** 판정을 유지하고 있었다.
+- **Verification criteria**: 최근 7일 창의 **SecondFi**, **Prompt Injection as Role Confusion**, **Immunefi metrics freshness**, **Foundry #14437**, **CyberChainBench**, 그리고 current formal-verification / post-mortem public window re-check가 신규 META admission 을 요구하는지, 아니면 기존 구조를 더 또렷하게 만드는 reinforcement-only 인지 재판정한다.
+- **Completion criteria**: 새 상위 구조가 아니면 신규 META 번호를 만들지 않고, purple cumulative docs / black-team skill / attack-matrix notes / Microstable architecture carry-forward만 동기화한다.
+- **Artifact path**: `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/docs/microstable-purple-team-daily-findings.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/SKILL.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/references/attack-matrix.md`
+
+### Phase 1) 수집 소스 요약
+| 소스 | 날짜/윈도우 | 핵심 신호 |
+|------|-------------|-----------|
+| `rekt.news/secondfi-rekt` | `2026-06-30` 공개, 최근 7일 창 포함 | **signing code 한 줄 누락** 만으로 매 트랜잭션이 private-key disclosure 가 될 수 있음을 못 박는다. `who can sign` 이전에 **`sign()` 구현 자체가 secret boundary** 다. |
+| `role-confusion.github.io/` + arXiv `2603.12277` | June 2026 writeup / current ICML 2026 page, 최근 7일 창 재부상 | **role tag가 곧 trust boundary가 아니다.** 모델은 `<tool>` / `<user>` / `<think>` 라벨보다 **문장이 어떻게 들리는가** 를 따라 authority 를 잘못 상속할 수 있다. |
+| `immunefi.com/bug-bounty/` | **Last updated `2026-07-02 16:00 UTC`** | metrics 는 daily 처럼 갱신되지만 **resolved report 2주 지연** 을 여전히 명시한다. `bounty visible` 과 `assurance timely/owned` 는 다르다. |
+| `github.com/foundry-rs/foundry/issues/14437` | current open signal (`2026-07-03` 재확인) | Foundry invariant engine gap closure plan은 계속 진행 중이고, 공개 baseline도 **Foundry 3 vs Echidna 10 / Medusa 10** 으로 남아 있다. `tool integrated` 를 `coverage achieved` 로 읽으면 안 된다. |
+| arXiv `CyberChainBench` | submitted `2026-06-24`, 최근 7일 창 포함 | best config 가 **37.5% detection / 43.7% exploitation / 23.4% patching** 에 그쳐, agent security eval 에서 `exploit competence` 와 `safe remediation competence` 를 분리해야 함을 보여준다. |
+| Runtime Verification `When the Software Holds but the Money Leaves Anyway` | current public context re-check | audited / formally-verified core 가 살아 있어도 **operational layer** 와 **off-chain trust boundary** 가 빈 채로 남으면 실제 손실은 계속 난다. 새 admission보다는 기존 `META-66 / META-70 / META-53` 을 강화한다. |
+
+### Phase 2) 분석
+**판정: 오늘도 신규 named vector도 신규 META admission도 없다. 다만 `B29` 와 `META-66` reinforcement 는 반영할 가치가 있다. strongest purple cluster는 `B29 + META-66`, 그리고 운영 실행면의 `META-53` 유지다.**
+
+#### Reinforcement A — `role tag present` 는 `authority preserved` 를 뜻하지 않는다
+- **Prompt Injection as Role Confusion** 은 모델이 role label 보다 **style / voice** 를 따라 `누가 말하는가` 를 추론할 수 있음을 보여줬다.
+- 퍼플 관점에서 중요한 건 `tool output is labeled`, `page content is untrusted`, `system prompt exists` 같은 정적 구조만이 아니라, **실제 모델이 그 텍스트를 어느 권한의 목소리로 읽는가** 다.
+- 이 신호는 새 META 라기보다 기존 **`B29`** 와 **`META-66`** 를 더 정밀하게 만드는 reinforcement 로 보는 편이 맞다.
+
+#### Reinforcement B — `agent found it` 는 `agent may patch it` 를 뜻하지 않는다
+- **CyberChainBench** 결과는 exploit 쪽 성능이 patch synthesis 보다 훨씬 앞선다는 점을 수치로 보여줬다.
+- 즉 `agent can detect/exploit` 와 `agent can patch safely` 를 같은 보증면으로 압축하면 안 된다.
+- 이 신호는 새 META 보다는 기존 **`META-66 Assurance-Plane Failure Semantics Gap`** 과 운영면의 **`META-53`** 강화로 읽는 것이 더 정확하다.
+
+#### Reinforcement C — `bounty visible` / `audited core` 는 `boundary owned` 를 뜻하지 않는다
+- **Immunefi** metrics page 의 2주 지연 문구는 public bounty surface 가 존재해도 그 신호가 **지금 무엇이 닫혔는가** 를 말해주지 않는다는 점을 고정한다.
+- **Runtime Verification** 의 KelpDAO 해설은 audited / formally-verified core 가 살아 있어도, signing service·RPC·relay 같은 **operational layer** 가 비어 있으면 돈은 그대로 빠져나갈 수 있음을 요약한다.
+- 이 둘은 모두 새 공격 primitive 가 아니라 기존 **`META-66` / `META-70` / `META-53`** 보강이다.
+
+#### 왜 신규 admission 이 아닌가
+1. **Role confusion** 은 새 공격 클래스보다 기존 **B29 prompt-injection confused-deputy** 의 메커니즘 설명력을 높인다.
+2. **CyberChainBench** 는 공격 능력 대비 remediation 신뢰성 격차를 보여주지만, 이는 기존 **`META-66` / `META-53`** 범위를 벗어나지 않는다.
+3. **Immunefi / Runtime Verification** 은 새 공격 클래스보다 **보증면 지연·부분성·운영 경계 비대칭** 을 강화한다.
+4. current public **formal-verification window** 에서도 기존 `scope carveout / off-chain asymmetry / exception lane` 을 넘어서는 7일 창 신규 admission-grade 구조는 확인되지 않았다.
+
+### Phase 3) 팀 간 커버리지 갭
+- **블랙팀** 은 prompt injection 을 여전히 `명시적 악성 문장` 중심으로 읽기 쉬워, **role tag / tool output / style-mimicry authority inheritance** 를 별도 체크리스트 자산으로 더 강하게 고정할 필요가 있다.
+- **레드팀** 은 exploit path 와 active-latent dependency risk 는 잘 분리하지만, `agent benchmark 점수` 와 `safe auto-remediation 권한` 의 비대칭을 구조적으로 붙잡는 문맥은 아직 약하다.
+- **블루팀** 은 로컬 방어를 늘렸지만, **어떤 agent/context가 governance·keeper·manual-mode actuator 에 접근 가능한가** 를 한 장으로 증명하는 artifact 는 여전히 없다.
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- reviewed live paths: `microstable/solana/Cargo.lock`, `microstable/solana/keeper/src/`, `microstable/docs/index.html`, `microstable/docs/app.js`, `microstable/solana/programs/microstable/src/lib.rs`, `docs/red-team-techniques.md`, `docs/microstable-blue-v14-report.md`, `docs/microstable-blue-v15-report.md`
+- 재확인 결과:
+  1. current repo 에는 **agent-driven signer / auto-remediation / governance copilot** live lane이 보이지 않아 **role-confusion exact variant 는 NOT ACTIVE** 다.
+  2. 다만 dashboard 는 여전히 **browser-embedded devnet faucet keypair** 를 포함하고 있어, `secret should not cross client boundary` 라는 구조 냄새 자체는 사라지지 않았다. devnet-only 라서 severity uplift 까지는 아니다.
+  3. keeper dependency chain 은 여전히 **`quinn-proto 0.11.13`** 와 **`rustls-webpki 0.103.9 / 0.101.7`** 를 유지해 red **`B83` active-latent HIGH** 가 그대로다.
+  4. dashboard 는 계속 **meta-only CSP** 와 **bootstrap `getGenesisHash` 외 runtime quorum skip** 흐름을 유지해 **D26 / D27** carry-forward 를 닫지 못했다.
+  5. `security/audit-attestation.json` 부재와 manual oracle write path / cumulative sub-threshold drift 의미론은 계속 **B45 / A75 / A43** carry-forward 범위다.
+- **판정**: **CRITICAL 없음. 신규 HIGH 없음. 신규 PT-ARCH 없음.** 오늘은 새 번호를 늘릴 날이 아니라, **역할 라벨·평가 점수·공개 보증면이 실제 권한 소유를 대체하지 못한다는 점을 재확인한 날** 이다.
+
+### Sources
+- https://rekt.news/secondfi-rekt
+- https://role-confusion.github.io/
+- https://arxiv.org/abs/2603.12277
+- https://immunefi.com/bug-bounty/
+- https://github.com/foundry-rs/foundry/issues/14437
+- https://arxiv.org/abs/2606.26216
+- https://runtimeverification.com/blog/when-the-software-holds-but-the-money-leaves-anyway
+
 ## 2026-07-02 (KST) — Daily Evolution (Purple Team)
 ### Current state / Verification criteria / Completion criteria / Artifact path
 - **Current state**: `2026-07-01` 기준 퍼플팀은 신규 named vector / 신규 META admission 없이 **`META-66` + `META-70` + `META-53` reinforcement-only**, 그리고 Microstable 쪽 **신규 `PT-ARCH-*` 없음** 판정을 유지하고 있었다.
