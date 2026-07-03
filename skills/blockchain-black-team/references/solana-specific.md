@@ -1924,6 +1924,28 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 87. ☐ value-bearing PDA에는 subtractive `realloc` 를 금지하고, shrink가 불가피하면 `post_lamports == pre_lamports - exact_rent_delta` 와 refund recipient binding을 테스트로 고정하며, `realloc::payer` 를 임의 caller 입력으로 받지 말 것
 
+## 2026-07-03 Hybrid Validator Path-Downgrade Pattern
+
+### A136 — Hybrid Validation-Path Selector Downgrade / Self-Asserted Issuer Fallback Forgery
+- **Solana context**: Solana 팀도 점점 on-chain state만 보지 않고 **off-chain attestation / issuer registry / proof-of-reserve artifact / partner credential** 를 keeper나 dashboard gate에 연결한다. 이때 validator가 `registry-backed strict path` 와 `decentralized fallback path` 를 함께 가지면, selector 하나가 **authority strength** 자체를 바꿀 수 있다.
+- **핵심 패턴**: canonical validator는 그대로인데, untrusted metadata가 **"이번 검증은 약한 fallback으로 해도 된다"** 는 선택을 내려 strong issuer-binding path를 건너뛴다. 그러면 공격자는 issuer branding + self-hosted profile/URL + own wallet/keypair만으로도 **validator-passed artifact** 를 만들 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. Solana 앱은 dashboard / keeper / partner bridge / reserve monitor에 off-chain JSON, PDF metadata, DID, registry payload를 섞어 쓰기 쉬워 path selector가 UI plumbing처럼 숨는다.
+  2. `proof anchored on-chain` 이라는 사실이 issuer authenticity까지 보장하는 것처럼 오해되기 쉽다.
+  3. fallback path는 "decentralized mode" 나 "offline survivability" 라는 좋은 이름으로 들어오므로, stronger path보다 약한 provenance guarantees가 릴리스에서 정상화되기 쉽다.
+  4. validator code는 하나라서 리뷰어가 **"검증기는 바뀌지 않았다"** 고 안심하지만, 실제 공격면은 **무슨 검증을 생략하게 만들 수 있느냐** 에 있다.
+- **Source signals**:
+  - arXiv `2606.31462` — *A forgery attack on the Block.co blockchain-based digital credential certification system* (published 2026-06-30)
+- **Microstable current status**:
+  - reviewed live path `programs/microstable/src/lib.rs`, `keeper/src/`, `keeper/src/hermes.rs` 에 issuer DID / URL / wallet provenance validator나 registry-vs-fallback selector surface는 보이지 않았다.
+  - current Pyth / Hermes / write-authority flow는 untrusted payload가 **더 약한 trust root로 downgrade** 할 수 있는 구조가 아니라, feed allowlist와 trusted authority pinning 쪽에 가깝다.
+  - 따라서 **NOT ACTIVE today** 다.
+  - 다만 future partner attestation, reserve certificate ingestion, proof-of-reserve PDF/JSON, DID/issuer registry를 붙이면 즉시 재평가 대상이다.
+- **Checklist item 88**: ☐ off-chain issuer / attestation / reserve-proof validator에 strong registry path와 fallback path가 공존하면, **path selector 자체를 auth-critical input** 으로 취급하고 untrusted metadata가 stronger verification을 비활성화하지 못하게 하며, forged-but-self-consistent fallback artifact negative test를 릴리스 게이트로 둘 것
+
+### Solana-Specific Defense Checklist Update
+88. ☐ off-chain issuer / attestation / reserve-proof validator에 strong registry path와 fallback path가 공존하면, **path selector 자체를 auth-critical input** 으로 취급하고 untrusted metadata가 stronger verification을 비활성화하지 못하게 하며, forged-but-self-consistent fallback artifact negative test를 릴리스 게이트로 둘 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.
