@@ -1,3 +1,42 @@
+## 2026-07-04 Daily Check
+### Source Sweep (24h~7d window: 2026-06-27 → 2026-07-04 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/research/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news`, `https://solana.com/news/solana-ecosystem-security`, X/Twitter 검색면, plus current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. `rekt.news` latest public surface is still **Altura** (`2026-07-02`) plus **SecondFi** (`2026-06-30`). Altura only reinforces existing **META-66 / META-70**, and SecondFi only reinforces existing **B15 key/signing-secret disclosure**.
+  2. SlowMist current front page now leads with **Quicksilver Zone / OLPC-LABUBU / Namada / mySwap**, but none expose a fresh **Solana / Anchor / SPL** code-mechanism class beyond already-admitted **A32 / A10 / D26 / B15** families.
+  3. GitHub Advisory `solana` query still tops out at the **2026-05-13 Anchor advisories**: **CVE-2026-45137** (`Program<'info, System>` validation bypass) and **GHSA-429q-fhh4-r6hj** (`InterfaceAccount` substitution). Current Microstable live path uses **`anchor-lang 0.31.1`** and repo-wide scan found **no live `InterfaceAccount` usage**, so neither advisory creates a new active lane today. Solana official security/news surfaces and X/Twitter search also did **not** produce a fresher admission-grade advisory.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md`
+
+### Immediate High-Priority Findings
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984` still pins **`quinn-proto 0.11.13`**; `rustls-webpki 0.103.9 / 0.101.7` also remain present. Dependency risk stays live until lockfile upgrade is verified. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` is still missing in direct filesystem inspection. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs:716-848` still enables external-price manual fallback and submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:687-759` manual `update_oracle` path still does **not** apply the mint-path `validate_spot_vs_twap()` guard used at `lib.rs:997`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1571-1604` still enforces turnover on a **single-call** basis and commit/reveal only above `LARGE_REBALANCE_THRESHOLD`; I still do **not** see a stateful cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads + keeper helper path | ⚠️ **MEDIUM partial defense** | `docs/app.js:212,243` still keeps strict cross-RPC validation only for bootstrap `getGenesisHash`, then intentionally skips runtime quorum checks for normal reads. Keeper helper/preflight paths still include `processed()` probes at `keeper/src/main.rs:510`, `keeper/src/rebalance.rs:1055`, and `keeper/src/utils.rs:1655`. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ **LOW carry-forward** | `docs/index.html:5` still uses **meta-only CSP**, while `docs/app.js:1645` still reconstructs a **browser-embedded devnet faucet keypair**. |
+
+### Blue-Team Immediate Fix Order
+1. **B83** — `solana/Cargo.lock` 기준 `quinn-proto` / `rustls-webpki` 체인을 패치 버전으로 올리고, `cargo tree | rg 'quinn-proto|rustls-webpki'` 결과를 findings에 다시 첨부할 것.
+2. **B45** — `security/audit-attestation.json` 을 생성해 **감사 대상 커밋 / 배포 대상 바이너리 / 프로그램 ID / 감사 보고서 해시** 를 한 파일로 결속할 것.
+3. **A75** — `update_oracle()` 수동 경로에도 `validate_spot_vs_twap()` 급의 **spot↔TWAP 편차 상한** 을 강제하고, keeper manual fallback 진입 시 별도 rate-limit / quorum evidence를 남길 것.
+4. **A43** — 단일 호출 한도 외에 **rolling-window cumulative turnover accumulator** 를 추가해 연속 sub-threshold rebalances를 차단할 것.
+5. **D27/D26** — 대시보드에서 **런타임 다중 RPC quorum 재검증** 을 기본값으로 켜고, **브라우저 내 faucet keypair 내장** 을 제거해 서버/ephemeral signer 또는 완전 비활성화로 전환할 것.
+
+### Today's Verdict
+- New incidents found: **0 admissible matrix delta**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘은 **새 admission 없이 framework advisory와 carry-forward HIGH를 교차검증한 날** 이었습니다. Anchor 2026-05 advisory는 current Microstable live path에 직접 맞닿지 않았고, 실제 우선순위는 여전히 **B83 dependency upgrade 검증** 과 **B45 audit-attestation artifact 도입** 입니다.
+
 ## 2026-07-02 Daily Check
 ### Source Sweep (24h~7d window: 2026-06-25 → 2026-07-02 KST)
 - Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/bug-bounty/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, X/Twitter 검색면, plus current Microstable code / lockfile re-read.
