@@ -8902,6 +8902,8 @@ Microstable builder path는 오늘 기준 다음 구조를 가진다.
 
 **Purple Team verdict**: redundancy를 몇 개 적어놓았는지는 중요하지 않다. 공격자는 항상 **그중 무엇이 선택되는지** 를 노린다. META-57은 이 구조를 **Counted-Redundancy / Correlated-Failover Gap** 으로 고정한다.
 
+**Reinforcement note (2026-07-06)**: **Aptos / Hexens** 공개 사례가 today signal을 더 날카롭게 만든다. CoinDesk 보도에 따르면 연구자들은 **`$3,000`** 급 서버로 **`~1/3 validator network`** 를 시뮬레이션했고, 실제 네트워크 조건에서 **`>90%` success** 를 기록했다. 아직 public mechanism detail이 신규 exploit class를 독립 admission 할 만큼 충분히 열리진 않았지만, 퍼플팀 관점 핵심은 이미 명확하다. 조직은 `validator count`, `decentralized set`, `large TVL` 같은 수량 신호를 곧 **independent fault cost** 로 오인하기 쉽다. 그러나 공격자가 일부 subset을 **싸게 재현 / 상관 장악 / 실험 가능** 하면, nominal redundancy는 보호 가치와 비례한 방어 비용을 뜻하지 않는다. 오늘 reinforcement 의 핵심은 **counted validators ≠ adversarially expensive independence** 라는 META-57의 재확인이다.
+
 **Matrix state as of 2026-04-22 (purple daily update)**: **122+ named vectors + META-01~57 + B73~B78 = 180+ total entries**. META-57 added by Purple Team 2026-04-22: **Counted-Redundancy / Correlated-Failover Gap (CRCFG)**. Black Team의 D27 reinforcement를 퍼플 관점에서 “redundancy count와 independent truth plane의 불일치”로 상위 구조화한다.
 
 ### META-58. Default-Path / Scope-Carveout Responsibility Gap (DSCRG)
