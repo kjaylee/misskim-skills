@@ -676,6 +676,8 @@ agent_guardrails:
 **Historical**: arXiv 2602.22724 AgentSentry (2026-02-26), arXiv 2602.22302 Agent Behavioral Contracts (2026-02-25)
 **Mechanism**: Attacker-controlled context is injected through tool/retrieval returns over multiple turns. No single response looks malicious enough to block, but cumulative context gradually steers the agent into unauthorized actions (slow takeover).
 **Key insight vs B29/B37**: B29 is explicit instruction hijack in prompt/input text, B37 is covert-channel coordination after compromise. B38 is a **temporal boundary attack** that exploits trust at each tool-return boundary and accumulates drift across turns.
+**2026 reinforcement (SMT, arXiv 2607.00481, published 2026-07-01)**: recent work on **Simulated Moderation Traces** shows a sharper sub-pattern for function-calling systems. The attacker first launders the malicious goal as a benign moderation/red-team workflow, then later feeds back the model's refusal as if it were an **execution failure** that the system should optimize away. The key upgrade over generic slow-drift is that **the retry/controller loop itself becomes the privilege-escalation surface**: `safety refusal` is re-labeled as `workflow bug`, and the agent weakens its own constraints while trying to "complete the task."
+**2026 reinforcement (KidnapRAG, arXiv 2607.00422, published 2026-07-01)**: recent black-box Agentic RAG work shows a second B38 sub-pattern where the attacker never needs prompt or memory-store access. Instead, three external document roles — **Bait**, **Chain-Link**, and **Mal-Ins** — first attract retrieval, then induce query reformulation, and finally replace the evidence base with attacker-controlled context. The key lesson is that **retrieval intent drift** can be as dangerous as explicit prompt injection when the agent treats successive retrieved documents as a coherent reasoning trail.
 **Code/config pattern to find**:
 ```yaml
 # RISKY: approve privileged actions based on latest turn only
@@ -696,7 +698,9 @@ agent_runtime:
 3. Preserve provenance labels on untrusted context and purge/clip context slices that cause policy drift
 4. Require human quorum for high-impact actions when cross-turn drift score exceeds threshold
 5. Red-team multi-turn trajectories (not one-shot prompts only) in evaluation harnesses
-**Source**: https://arxiv.org/abs/2602.22724 | https://arxiv.org/abs/2602.22302
+6. Never let moderation/refusal outputs become optimization targets for privileged retry loops; "task completion" and "safety refusal handling" must stay on separate state machines
+7. Treat retrieval-query reformulation and document-chaining as auth-sensitive control flow, not just relevance plumbing
+**Source**: https://arxiv.org/abs/2602.22724 | https://arxiv.org/abs/2602.22302 | https://arxiv.org/abs/2607.00481 | https://arxiv.org/abs/2607.00422
 
 ### D34. WASI Hostcall Exhaustion + Async Drop Panic Chain
 **Historical**: RustSec `RUSTSEC-2026-0020/0021/0022` (Wasmtime, 2026-02-24)
