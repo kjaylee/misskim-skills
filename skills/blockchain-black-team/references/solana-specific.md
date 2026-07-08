@@ -1968,6 +1968,29 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 89. ☐ cluster / RPC URL parser는 `http` prefix가 아니라 **exact `http`/`https` scheme equality** 를 강제하고, 파생 WebSocket URL 생성 전에도 scheme을 재검증하며, allowlist를 raw string이 아니라 **parsed scheme + host + port policy** 에 묶을 것
 
+## 2026-07-09 Async Share-Mint Lifecycle Pattern
+
+### A137 — External Share-Mint Lifecycle Authority / Async Claim-Path Brick
+- **Solana context**: Solana의 Token-2022 extension surface는 direct drain만 문제가 아니다. 특히 **async deposit/redemption vault** 가 외부 share mint를 받아 queue를 나중에 settle하는 구조에서는, share mint가 곧 **claim/refund/redeem completion authority surface** 가 된다.
+- **핵심 패턴**: protocol이 pre-configured share mint를 받지만 `MintCloseAuthority`, freeze authority, `default-frozen` 같은 adjacent lifecycle authority를 죽이지 않는다. 그러면 attacker/compromised operator는 vault core accounting을 깨지 않고도 **mint close** 또는 **reserve/pending-vault freeze** 로 queue settlement를 브릭할 수 있다.
+- **왜 Solana에서 특히 위험한가**:
+  1. many teams stop after moving **mint authority** to a PDA and forget that `MintCloseAuthority` / freeze / default-frozen are separate levers.
+  2. sync vault에서는 nuisance처럼 보이는 권한이 async vault에서는 **future completion precondition** 이 된다.
+  3. Solana token accounts / mints / queue extensions가 분리돼 있어, authority inventory가 한 곳에 안 모이면 adjacent lifecycle control이 빠지기 쉽다.
+  4. 포렌식 때도 “queue just failed to settle” 로 보일 뿐, root cause가 share mint lifecycle authority였다는 점이 늦게 드러난다.
+- **Distinct from B44**: B44는 active delegate / `PermanentDelegate` 로 **token movement authority** 가 남아 direct drain이 가능한 패턴이다. A137은 **async queue completion이 external lifecycle authority에 hostage 되는 liveness-collapse** 패턴이다.
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs` 는 classic SPL Token via `anchor_spl::token` 을 쓰고, protocol-owned mint/vault를 직접 초기화한다.
+  - reviewed live path에는 external share mint onboarding, async deposit/redemption queue, `pending_vault`, Token-2022 extension acceptance가 없다.
+  - 따라서 **NOT ACTIVE today** 다.
+  - 다만 future RWA / queued redemption / external share-token integration을 붙이면 즉시 재평가 대상이다.
+- **Checklist item 90**: ☐ async vault / queued redemption 구조에서 external share mint를 받으면 **mint authority 외에** `MintCloseAuthority`, freeze authority, `default-frozen`, external lifecycle controller까지 inventory하고, protocol-owned or burned 상태를 release gate로 고정할 것
+- **Checklist item 91**: ☐ `request created` 와 `request can still settle later` 를 다른 invariant로 분리하고, zero-supply close / reserve freeze / pending-vault freeze가 queued claim/refund/redeem을 브릭하지 못한다는 negative test를 필수화할 것
+
+### Solana-Specific Defense Checklist Update
+90. ☐ async vault / queued redemption 구조에서 external share mint를 받으면 **mint authority 외에** `MintCloseAuthority`, freeze authority, `default-frozen`, external lifecycle controller까지 inventory하고, protocol-owned or burned 상태를 release gate로 고정할 것
+91. ☐ `request created` 와 `request can still settle later` 를 다른 invariant로 분리하고, zero-supply close / reserve freeze / pending-vault freeze가 queued claim/refund/redeem을 브릭하지 못한다는 negative test를 필수화할 것
+
 ## 2026-06-05 Token-2022 `init_if_needed` Constraint-Carveout Reinforcement
 
 - **Anchor PR #4632** (`Document that Token2022 extension constraints are not checked with init_if_needed`, merged 2026-06-04) 는 새 exploit primitive를 추가했다기보다, 팀이 `init_if_needed` 를 "create-or-validate" 로 읽으며 놓치기 쉬운 **scope carveout** 을 공식 문서에 못 박았다.

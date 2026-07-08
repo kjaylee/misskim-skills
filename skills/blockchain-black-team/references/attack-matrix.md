@@ -1,4 +1,4 @@
-# Attack Matrix — 140+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16 | B83 Red 2026-06-23 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16 | B83 Red 2026-06-23 | A32+D26 reinforce 2026-06-25 | A32 reinforce 2026-06-27 | B84 Red 2026-07-01 | A135 Red 2026-07-02 | A136 Red 2026-07-03 | C31 Red 2026-07-04) | META-01~71
+# Attack Matrix — 140+ Named Vectors with Historical Mechanisms & Defense Patterns (+ 3 new 2026-03-23 | + 3 new 2026-03-24 | META-19 Purple 2026-03-24 | sweep 2026-03-25 | META-20~21 Purple 2026-03-25 | A74~A75 full+A72 reinforce+META-22 2026-03-26 | META-23 Purple 2026-03-26 | META-24 Purple 2026-03-28 | incidents-log backfill + META-24 stats reinforce 2026-03-29 | META-25 Purple 2026-03-29 | META-26 Red 2026-03-30 | META-27~28 Purple 2026-03-30 | META-29~31 Purple 2026-03-31 | META-32~33 Purple 2026-04-01 | META-34~35 Purple 2026-04-02 | META-36~37 Purple 2026-04-03 | META-38~39 Purple 2026-04-05 | META-40~42 Purple 2026-04-06 | META-43~44 Purple 2026-04-07 | B50~B51 + META-45 Purple 2026-04-08 | META-46 Purple 2026-04-09 | META-47 2026-04-10 | META-48 Purple 2026-04-10 | A105 reinforce 2026-04-10 | META-49 Purple 2026-04-11 | META-50 Purple 2026-04-13 | META-51 Purple 2026-04-14 | META-52 Purple 2026-04-15 | META-53 Purple 2026-04-17 | META-54 Purple 2026-04-18 | D51 Red + META-55 Purple 2026-04-19 | META-56 Purple 2026-04-20 | META-57 Purple 2026-04-22 | A118 Red 2026-04-24 | META-58 Purple 2026-04-24 | A7+A77 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16 | B83 Red 2026-06-23 reinforce 2026-04-25 | META-59 Purple 2026-04-25 | D53 Red 2026-04-26 | META-60 Purple 2026-04-26 | META-61 Purple 2026-04-27 | D28 reinforce 2026-04-27 | A119 + D54 Red 2026-04-28 | A120 Red 2026-04-29 | META-62 Purple 2026-04-29 | META-63 Purple 2026-04-30 | A4 reinforce 2026-04-30 | A121 Red 2026-05-01 | META-64 Purple 2026-05-01 | META-65 Purple 2026-05-03 | D55 Red 2026-05-06 | META-66 Purple 2026-05-06 | META-67 Purple 2026-05-07 | A4 reinforce 2026-05-11 | A4 reinforce 2026-05-12 | META-68 Purple 2026-05-15 | A119 reinforce 2026-05-15 | B79 Red 2026-05-17 | META-69 Purple 2026-05-17 | A123~A124 Red 2026-05-20 | A125 Purple 2026-05-20 | A126 Red 2026-05-22 | META-70 Purple 2026-05-26 | B82 Red 2026-05-27 | A129 Red 2026-06-01 | META-71 Purple 2026-06-01 | A130 Red 2026-06-05 | A131 Red 2026-06-11 | META-68+70 reinforce 2026-06-11 | A125 reinforce 2026-06-13 | A132 Red 2026-06-13 | A133 Red 2026-06-16 | A10 reinforce 2026-06-16 | B83 Red 2026-06-23 | A32+D26 reinforce 2026-06-25 | A32 reinforce 2026-06-27 | B84 Red 2026-07-01 | A135 Red 2026-07-02 | A136 Red 2026-07-03 | C31 Red 2026-07-04 | A137+D56 Red 2026-07-09) | META-01~71
 
 ## A. Smart Contract Vectors
 
@@ -10755,3 +10755,142 @@ validate_authority_scope(&response, query.name())?;
 | D53 Recursive DNS Sibling-Zone NS Cache Poisoning / Parent-Pool Zone-Context Elevation | vulnerable recursive resolver caches AUTHORITY-section NS records for a sibling zone under parent-pool context, poisoning authoritative delegation for later lookups | false endpoint resolution, service-discovery poisoning, allowlisted-host trust bypass precursor, potential pairing with TLS/verifier bugs | current Microstable dependency scan found no `hickory` / `trust-dns` path and no custom recursive resolver; **NOT ACTIVE today**, but any future local recursor or DNS sidecar would make this immediately relevant |
 
 **Matrix state as of 2026-04-26 (red-team daily update)**: prior coverage retained; **D53** added after classifying `RUSTSEC-2026-0106` as a resolver-cache authority-binding bug distinct from D27 routing takeover and A115 certificate validation failures. Microstable has **no new CRITICAL/HIGH/MEDIUM active finding** in this cycle; the new pattern is future-facing unless a custom recursive resolver layer is introduced.
+
+## 2026-07-09 Async Vault Share-Mint Lifecycle Pattern Addition
+
+### A137. External Share-Mint Lifecycle Authority / Async Claim-Path Brick
+
+**Source signals (2026-07-09 sweep)**:
+- Solana Foundation `vault` README (current public repo surface, observed in the recent 7-day window)
+
+**Key insight**: 많은 Solana 팀이 `bring-your-own share mint` 를 upgrade 회피용 유연성으로만 본다. 하지만 async deposit/redemption vault에서는 share mint가 단순 token metadata가 아니라 **queued claim/refund/redeem settlement를 이어 주는 lifecycle authority object** 다. 외부 share mint에 `MintCloseAuthority`, `freeze authority`, `default-frozen` 같은 Token-2022 권한이 남아 있으면, attacker는 vault core를 깨지 않고도 **claim path 자체를 영구 또는 장기적으로 브릭** 시킬 수 있다.
+
+**Attack chain**:
+1. protocol accepts a pre-configured external share mint and settles deposits/redemptions asynchronously rather than atomically.
+2. users submit deposit or redeem requests that land in a queue and must later mint, burn, or transfer shares/assets to complete.
+3. attacker compromises or legitimately controls a residual mint lifecycle authority that the vault did not neutralize (`MintCloseAuthority`, `freeze authority`, `default-frozen`, or equivalent external authority on the share/asset side).
+4. attacker closes the share mint when supply temporarily reaches zero, or freezes `reserve` / `pending_vault` style token accounts before queued settlement executes.
+5. queued refund / claim / redeem paths can no longer mint, burn, or transfer the required token, so the protocol enters manual-recovery mode or selective liveness collapse even though the core vault code and accounting state remain “correct.”
+
+**Why this is distinct from existing vectors**:
+- **B44** 는 active delegate / `PermanentDelegate` 로 **token movement authority** 가 남아 direct drain이 가능한 패턴이다. **A137** 은 delegate drain이 아니라 **share-mint lifecycle authority가 async settlement liveness를 인질로 잡는 패턴** 이다.
+- **A6** 는 wrong account acceptance다. **A137** 은 계정이 맞아도, 그 계정에 남아 있는 **external lifecycle authority** 때문에 queue completion이 무너진다.
+- **A10** 같은 generic logic bug로 뭉개면 중요한 교훈을 놓친다. 핵심은 vault code 자체가 아니라 **external mint lifecycle ownership이 business completion semantics를 좌우한다** 는 점이다.
+
+**왜 감사가 놓치는가**:
+1. share mint를 “이미 존재하는 외부 자산” 으로 취급해 vault scope 밖으로 밀어내기 쉽다.
+2. sync vault에서는 freeze/close authority가 nuisance처럼 보이지만, async queue에서는 **후행 settlement completion 조건** 이 된다.
+3. 많은 리뷰가 `mint authority moved to vault PDA` 에서 멈추고, `MintCloseAuthority` / freeze / default-frozen 같은 **adjacent lifecycle authority** 를 끝까지 inventory하지 않는다.
+4. 사고가 나도 “코드 버그가 아니라 운영상 mint 설정 문제” 로 축소돼 재발 방지 체크리스트에 잘 안 남는다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: protocol accepts an external share mint and later assumes
+// queued claims can always mint/burn/transfer against it.
+pub fn initialize_vault(ctx: Context<InitializeVault>) -> Result<()> {
+    vault.share_mint = ctx.accounts.share_mint.key();
+    // MISSING: reject MintCloseAuthority / freeze authority / default-frozen
+    // MISSING: prove lifecycle authorities are burned or protocol-owned
+    Ok(())
+}
+
+// Later, async settlement assumes the mint still exists and is transferable.
+pub fn settle_claim(ctx: Context<SettleClaim>) -> Result<()> {
+    token_2022::mint_to(ctx.accounts.into_mint_ctx(), claim_amount)?;
+    Ok(())
+}
+
+// SAFER SHAPE: external mint lifecycle authorities are neutralized or protocol-owned.
+require!(share_mint.close_authority.is_none(), ErrorCode::ShareMintCloseAuthorityNotAllowed);
+require!(share_mint.freeze_authority.is_none(), ErrorCode::ShareMintFreezeAuthorityNotAllowed);
+require!(!share_mint.default_frozen, ErrorCode::ShareMintDefaultFrozenNotAllowed);
+```
+
+**Defensive heuristic**:
+- async vault / queued settlement 구조에서는 `mint authority` 뿐 아니라 **`MintCloseAuthority`, freeze authority, default-frozen, external lifecycle controller` 전체** 를 release gate로 inventory할 것
+- external share mint를 받더라도 **protocol-owned or burned authorities only** 원칙을 기본값으로 둘 것
+- `queued request created` 와 `queued request can still settle` 를 다른 불변식으로 분리하고, share mint lifecycle regression test를 추가할 것
+- asset side에서 `PermanentDelegate` 같은 direct-drain 권한은 **B44** 로, share/queue liveness-kill 권한은 **A137** 로 따로 추적할 것
+- zero-supply 순간에도 close authority가 future issuance lane을 영구 차단하지 못한다는 negative test를 둘 것
+
+**Microstable relevance**:
+- reviewed live path `microstable/solana/programs/microstable/src/lib.rs` 는 classic SPL Token via `anchor_spl::token` 을 사용하고, protocol-owned mint/vault를 직접 초기화한다.
+- current codebase에는 external share mint onboarding, async deposit/redemption queue, `pending_vault`, Token-2022 mint extension path가 없다.
+- 따라서 **NOT ACTIVE today** 다.
+- 다만 future RWA / queued redemption / external collateral share-token integration을 붙이면 A137은 즉시 first-class review item이 된다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A137 External Share-Mint Lifecycle Authority / Async Claim-Path Brick | async vault relies on an externally supplied share mint whose residual close/freeze/default-frozen authority can later brick queued mint/burn/transfer settlement without breaking core vault accounting | queued refund/claim deadlock, selective liveness collapse, manual recovery, hidden dependence on adjacent mint authority surface | current Microstable live path has no external share mint or async queue, so **NOT ACTIVE today**; future queued-settlement / RWA vault features must inventory share-mint lifecycle authorities explicitly |
+
+**Matrix state as of 2026-07-09 (red-team daily update)**: prior coverage retained; **A137** added to separate **async settlement liveness collapse through external share-mint lifecycle authority** from B44 delegate-drain and generic config/logic bugs. Matrix is now **147+ named vectors + META-01~71 + B73~B84 = 218+ total entries** before same-day D56. Microstable has **no new CRITICAL/HIGH active finding from A137 itself**; current result is future-facing unless async queued vault semantics are introduced.
+
+## 2026-07-09 XML Parser Validation-Cost Ceiling Pattern Addition
+
+### D56. XML Start-Tag Validation Core-Pin / Namespace Heap Balloon
+
+**Source signals (2026-07-09 sweep)**:
+- RustSec `RUSTSEC-2026-0194` (issued 2026-07-02)
+- RustSec `RUSTSEC-2026-0195` (issued 2026-07-02)
+
+**Key insight**: 많은 keeper / verifier / attestation consumer는 parser를 단순 decode helper로 본다. 하지만 이번 신호의 핵심은 **validation path inside the parser** 자체가 attack surface라는 점이다. `quick-xml` 의 old duplicate-attribute check는 하나의 huge start tag만으로 **pure CPU quadratic core pin** 을 만들고, `NsReader` namespace resolution은 consumer가 event를 보기 전부터 **숨은 heap balloon** 을 만들어 OOM을 유도한다. 즉 문제는 malformed XML crash가 아니라, **정상처럼 보이는 start tag 하나가 assurance layer를 cost-amplification actuator로 바꾼다** 는 데 있다.
+
+**Attack chain**:
+1. victim control-plane service accepts untrusted XML for oracle metadata, attestation, RPKI-style proofs, validator manifests, or any adjacent ingest path.
+2. attacker sends a single start tag with either (a) a huge number of distinct attributes or (b) a huge number of `xmlns` declarations.
+3. parser performs duplicate-name validation with quadratic comparisons or pushes namespace bindings into internal buffers/Vec without an enforceable ceiling.
+4. the expensive CPU loop or hidden allocation happens **before** the caller can reject the element or before ordinary I/O timeout logic can interrupt it.
+5. worker thread pins a core for minutes/hours or multiple workers stack heap growth until the process is OOM-killed, taking oracle / verifier / relayer liveness down with no cryptographic break.
+
+**Why this is distinct from existing vectors**:
+- **D55** 는 DNSSEC proof-validation state machine이 root-stall/OOM kill-switch가 되는 패턴이다. **D56** 은 XML parser start-tag validation path라는 다른 assurance layer를 겨냥한다.
+- **B20** generic DoS는 너무 넓다. **D56** 은 **single-tag, parser-internal, validation-cost asymmetry** 가 핵심 primitive다.
+- **META-67** 은 구조적 퍼플 패턴이다. **D56** 은 그 cost-ceiling gap이 실제 구현에서 어떻게 악용되는지 보여주는 **실전 red-team 번호** 다.
+
+**왜 감사가 놓치는가**:
+1. 많은 리뷰가 XML parser를 “library risk” 로만 보고, 실제 business-critical ingest plane과 연결된 availability boundary로 보지 않는다.
+2. input-size limit만 있으면 충분하다고 착각하기 쉽지만, `NsReader` 사례처럼 **consumer가 보는 bytes bound와 parser 내부 heap bound가 다를 수 있다**.
+3. request timeout은 I/O 위주라 pure CPU loop를 끊지 못하는데, 운영자는 timeout이 있으니 안전하다고 오판한다.
+4. parser correctness test는 많아도 **adversarial cost test** 는 거의 없다.
+
+**Code pattern to find**:
+```rust
+// VULNERABLE SHAPE: untrusted XML is parsed on a privileged worker with
+// default duplicate checks / namespace resolution and no element-level ceiling.
+let mut reader = quick_xml::NsReader::from_reader(input);
+loop {
+    match reader.read_event_into(&mut buf)? {
+        Event::Start(tag) => {
+            for attr in tag.attributes() {
+                let _ = attr?;
+            }
+        }
+        Event::Eof => break,
+        _ => {}
+    }
+}
+
+// SAFER SHAPE: patched parser + explicit per-element ceilings + isolation.
+let mut reader = quick_xml::NsReader::from_reader(input);
+reader.resolver_mut().set_max_declarations_per_element(256);
+// plus external tag/attribute count ceilings and process isolation
+```
+
+**Defensive heuristic**:
+- `quick-xml >= 0.41.0` 로 올리고, namespace declaration ceiling을 명시적으로 설정할 것
+- input byte-size limit와 별도로 **per-element attribute count / namespace declaration count / parse CPU budget** 을 둘 것
+- XML ingest는 signer/RPC/oracle main thread와 같은 privileged hot path에서 분리하고, OOM/CPU pin이 나도 fail-stop 되는 sandbox/worker로 격리할 것
+- “timeout exists” 를 충분조건으로 보지 말고, **pure CPU / pre-consumer allocation** 경로를 따로 테스트할 것
+- attestation / proof / manifest parser에서는 correctness뿐 아니라 **validation cost ceiling** 을 release artifact로 남길 것
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock` 와 `keeper/Cargo.toml` 스캔에서 `quick-xml` 의존성은 확인되지 않았다.
+- reviewed live ingest paths `keeper/src/hermes.rs` 와 `keeper/src/price_feed.rs` 는 fixed-schema JSON/base64를 사용하며 XML parser 경로가 없다.
+- 따라서 **NOT ACTIVE today** 다.
+- 다만 future reserve attestation / custody manifest / off-chain verifier import가 XML 계열 형식으로 들어오면 D56은 즉시 relevant 해진다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D56 XML Start-Tag Validation Core-Pin / Namespace Heap Balloon | a single crafted XML start tag triggers quadratic duplicate-attribute CPU burn or hidden namespace-binding heap growth inside the parser before the consumer can intervene | worker-core pin, process OOM, oracle/verifier liveness loss, false confidence from request-size limits and I/O timeouts | current Microstable live path has no `quick-xml`/XML ingest surface, so **NOT ACTIVE today**; future XML-based attestation or manifest imports must treat parser cost ceilings as a first-class boundary |
+
+**Matrix state as of 2026-07-09 (red-team daily update)**: prior coverage retained; **D56** added after classifying RustSec `0194` and `0195` as a **parser-internal validation-cost ceiling failure** distinct from D55 DNSSEC proof-validation liveness and generic DoS. Matrix is now **148+ named vectors + META-01~71 + B73~B84 = 219+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from D56 itself**; the new pattern is future-facing unless XML ingest is introduced.
