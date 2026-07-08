@@ -5385,6 +5385,8 @@ function _transfer(address from, address to, uint256 amount) internal {
 
 **Historical**: Moonwell Moonriver (2026-03-26, $1.08M at risk, $0 lost) — attacker spent ~$1,808 to buy 40M MFAM, submitted malicious proposal, passed initial quorum in 11 minutes, targeting 7 lending markets + comptroller + oracle admin control. Community counter-mobilized; "No" votes eventually prevailed.
 
+**2026 reinforcement (BonkDAO, 2026-07-06 / Solana)**: Coindesk's July 7, 2026 reporting says the attacker spent about **$4.4M** to buy just over **1% of BONK supply**, crossed the DAO's quorum threshold, and used a low-turnout vote (**7 wallets**, **2.9% turnout**) to automatically transfer about **$20M** in BONK from the treasury. The reusable lesson is that rapid-quorum governance is not limited to a failed admin-grab rehearsal. If the proposal path already has **direct treasury transfer authority**, cheap majority acquisition plus auto-execution becomes a completed treasury-drain lane rather than a warning shot.
+
 **Mechanism**: The attacker exploits a combination of:
 1. **Low token liquidity** → governance token cheaply acquirable on secondary markets (often <$2K to acquire majority)
 2. **Low quorum threshold** → small number of votes needed to reach quorum
@@ -5415,7 +5417,7 @@ function _transfer(address from, address to, uint256 amount) internal {
 
 **2026 amplification factor**: AI-powered monitoring tools now detect governance proposals in real time, compressing the "window before community notices." However, DAO member coordination (especially across time zones) remains slow, leaving 12–24h windows exploitable for proposals with short voting periods.
 
-**Source**: https://capwolf.com/moonwell-governance-attack-1-08m-at-risk-for-just-1800/ | https://dev.to/ohmygod/the-1808-governance-heist-how-an-attacker-nearly-drained-1m-from-moonwell-2o1
+**Source**: https://capwolf.com/moonwell-governance-attack-1-08m-at-risk-for-just-1800/ | https://dev.to/ohmygod/the-1808-governance-heist-how-an-attacker-nearly-drained-1m-from-moonwell-2o1 | https://www.coindesk.com/markets/2026/07/07/bonk-faces-usd20-million-treasury-drain-after-attacker-spends-usd4-million-to-pass-malicious-proposal
 
 ### META-29. Infrastructure Key + On-chain Mint Authority: The Lethal Combination
 **Date**: 2026-03-31 | **Team**: Purple | **Category**: Audit Scope Exclusion × Key Management Architecture

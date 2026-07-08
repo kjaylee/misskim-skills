@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-07-06 — BonkDAO (Solana — token-weighted governance quorum was cheaply bought, then auto-executed a treasury transfer)** — CoinDesk's July 7, 2026 report says the attacker spent about **$4.4M** buying BONK until they controlled just over the **1% quorum threshold**, then passed **`BIP #76`** with only **7 wallets** voting and about **2.9% turnout**. The proposal automatically transferred about **$20M** in BONK from the DAO treasury to the attacker's wallet.
+**Root cause**: the treasury execution path was reachable by **temporary token-majority acquisition alone**. The governance system did not require any deeper signer ceremony, delayed execution review, or treasury-specific out-of-band authorization once quorum was met.
+**Vector mapping**: **A92 Low-Cost Governance Attack with Rapid Quorum Exploitation** reinforcement (rapid-quorum Solana treasury-drain completion case).
+**Source**: https://www.coindesk.com/markets/2026/07/07/bonk-faces-usd20-million-treasury-drain-after-attacker-spends-usd4-million-to-pass-malicious-proposal
+
 - **2026-07-02 — Altura (RWA / HyperEVM — claimed reserve-verification surface never actually bound off-chain gold custody to on-chain depositor truth)** — rekt's July 2, 2026 write-up says Altura routed large USDT flows through **Tron wallets and instant-exchange rails**, relied on a **"verifier" tied to the COO's own project**, and exposed an **Accountable dashboard that admitted it verified nothing** while depositors waited for redemptions by bank wire.
 **Root cause**: the protocol's trust story treated **dashboard/verifier presence** as if it proved reserve backing, but the admitted evidence surface never hard-bound **who controlled the downstream settlement path**, **what reserve/custody state was being verified**, or **whether off-chain gold inventory and on-chain liability remained continuously matched**.
 **Vector mapping**: **META-70 Node-Audit / Edge-Semantics Gap** reinforcement (dashboard/verifier surface exists ≠ reserve-backing semantics are owned), with adjacent **META-66 Assurance-Plane Failure Semantics Gap** relevance.
