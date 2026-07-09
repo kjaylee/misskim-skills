@@ -1,3 +1,42 @@
+## 2026-07-10 Daily Check
+### Source Sweep (24h~7d window: 2026-07-03 → 2026-07-10 KST)
+- Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. `rekt.news` now publishes **Summer Finance** (`2026-07-10`) with an explicit mechanism: a stale Silo Varlamore Ark that had been capped for offboarding since **2025-10-30** still remained in vault NAV, direct donation inflated share price without minting offsetting shares, and redemption paid out from liquid Morpho / Spark / Sky legs. This is best treated as **A40 reinforcement** with adjacent **META-68 / A10** semantics, not a clean new named vector.
+  2. SlowMist's current front page in this window leads with **Lazy Summer** (`2026-07-06`), **BonkDAO** (`2026-07-06`), **Hinkal** (`2026-07-02`), and **Edel Finance** (`2026-07-01`). `BonkDAO` was already absorbed as **A92** on 2026-07-09; `Hinkal` still lacks enough public code-level detail for a fresh admission; **Edel** is strong enough to reinforce **A68** because the attacker inflated **`wGOOGLx/GOOGLx`** collateral about **78x** while **Chainlink's** external Google price remained correct.
+  3. GitHub Advisory `solana` query, official Solana security/news surfaces, and current Trail of Bits / OtterSec / Neodyme blog surfaces still do **not** expose a fresher July 2026 **Solana / Anchor / SPL** exploit-class advisory that changes today's matrix.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **2 reinforcements**: **A40**, **A68**
+- Updated: `SKILL.md`, `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/solana-specific.md`
+
+### Immediate High-Priority Findings
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984` still pins **`quinn-proto 0.11.13`**; **`rustls-webpki 0.103.9 / 0.101.7`** still remain in the dependency chain. Advisory-era dependency risk stays live until the lockfile is upgraded and re-verified. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` is still missing in direct filesystem inspection. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs:716-753` still enables manual fallback and later submits `ix_update_oracle`, while `solana/programs/microstable/src/lib.rs:687-759` manual `update_oracle` path still does **not** call the mint-path `validate_spot_vs_twap()` guard used at `lib.rs:997`. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1579-1603` still gates commit/reveal on **single-call** turnover only; I still do **not** see a stateful cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D27 RPC poisoned-failover / trust-layer takeover** | dashboard live RPC reads + keeper helper path | ⚠️ **MEDIUM partial defense** | `docs/app.js:210-311` still keeps strict cross-RPC validation only for bootstrap `getGenesisHash`, then intentionally skips runtime quorum checks for normal reads. Keeper helper/preflight paths still include `processed()` probes at `keeper/src/main.rs:510`, `keeper/src/rebalance.rs:1055`, and `keeper/src/utils.rs:1655`. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ **LOW carry-forward** | `docs/index.html:6` still relies on **meta-only CSP**, while `docs/app.js:1645` still reconstructs a **browser-embedded devnet faucet keypair**. |
+
+### Blue-Team Immediate Fix Order
+1. **B83** — `solana/Cargo.lock` 기준 `quinn-proto` / `rustls-webpki` 체인을 패치 버전으로 올리고, `cargo tree | rg 'quinn-proto|rustls-webpki'` 결과를 findings에 다시 첨부할 것.
+2. **B45** — `security/audit-attestation.json` 을 생성해 **감사 대상 커밋 / 배포 대상 바이너리 / 프로그램 ID / 감사 보고서 해시** 를 한 파일로 결속할 것.
+3. **A75** — `update_oracle()` 수동 경로에도 **explicit `validate_spot_vs_twap()` 급 spot↔TWAP 편차 상한** 을 강제하고, keeper manual fallback 진입 시 별도 rate-limit / quorum evidence를 남길 것.
+4. **A43** — 단일 호출 한도 외에 **rolling-window cumulative turnover accumulator** 를 추가해 연속 sub-threshold rebalances를 차단할 것.
+5. **D27/D26** — 대시보드에서 **런타임 다중 RPC quorum 재검증** 을 기본값으로 켜고, **브라우저 내 faucet keypair 내장** 을 제거해 서버/ephemeral signer 또는 완전 비활성화로 전환할 것.
+
+### Today's Verdict
+- New incidents found: **2 documented / 0 admissible new vectors**
+- New attack vectors added: **0**
+- Reinforcements applied: **2** — **A40**, **A68**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘은 **새 번호 admission 없이 기존 분류를 더 정밀하게 문서화한 날** 이었습니다. Lazy Summer는 **stale offboarding + NAV donation**, Edel은 **internal wrapper/index inflation** 으로 정리됐고, 실제 우선순위는 여전히 **B83 dependency upgrade 검증** 과 **B45 audit-attestation artifact 도입** 입니다.
+
 ## 2026-07-06 Daily Check
 ### Source Sweep (24h~7d window: 2026-06-29 → 2026-07-06 KST)
 - Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://immunefi.com/blog/research/`, `https://immunefi.com/bug-bounty/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, X/Twitter 검색면, plus current Microstable code / lockfile re-read.
