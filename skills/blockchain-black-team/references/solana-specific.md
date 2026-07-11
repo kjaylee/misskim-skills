@@ -176,6 +176,39 @@ Mitigation:
 - Fast rollback for feed misconfiguration
 - Deployment-time invariant checks (unit tests + on-chain sanity range)
 
+### Upstream Oracle Verifier Trust Boundary
+Bonzo Lend's July 11, 2026 incident on Hedera showed a different oracle failure mode: the consumer protocol did not misread the price itself. The upstream oracle verifier accepted a **zero / identity BLS signature context** and wrote a forged price on-chain, so the consumer later read a value that looked canonical but had never been semantically authenticated correctly.
+
+**Solana-specific risk**:
+- Teams often treat `PriceUpdateV2 exists on-chain` as if it automatically means `the whole upstream authentication story held`.
+- Even when Pyth/Switchboard-style infrastructure does the heavy verification, the consumer still must bind **owner, discriminator, verification level, write authority, feed identity, freshness, confidence, and sanity drift** at the last trust boundary it controls.
+- If a future Solana oracle adapter, bridge-fed price lane, or verifier CPI path ever accepts identity/sentinel values, wrong program ownership, downgraded verification level, or mismatched feed identity, the protocol can recreate the Bonzo class while "reading the oracle exactly as designed."
+
+```rust
+// VULNERABLE: assumes any oracle-shaped on-chain account is semantically authenticated truth
+let price = read_external_price_update(&ctx.accounts.oracle_account)?;
+// MISSING: owner / discriminator / verification level / write authority / feed_id / staleness / drift checks
+
+// SAFE: re-bind the oracle truth boundary at the consumer edge
+require_keys_eq!(ctx.accounts.oracle_account.owner, PYTH_RECEIVER_PROGRAM, ErrorCode::BadOwner);
+require!(verification_level == Full, ErrorCode::WeakVerification);
+require!(write_authority == TRUSTED_WRITE_AUTHORITY || write_authority == oracle_account.key(), ErrorCode::BadAuthority);
+require!(feed_id == EXPECTED_FEED_ID, ErrorCode::WrongFeed);
+require!(publish_age <= MAX_AGE, ErrorCode::StaleOracle);
+require!(confidence_bps <= MAX_CONFIDENCE_BPS, ErrorCode::WideConfidence);
+require!(spot_vs_twap_deviation_bps <= MAX_DEVIATION_BPS, ErrorCode::BadOracleDrift);
+```
+
+**Mitigation**:
+1. Treat the consumer's oracle-read path as the last authorization boundary, not mere plumbing.
+2. Reject zero/identity/sentinel-like authority results before interpreting them as successful verification outcomes.
+3. Pin exact feed identity and trusted write authority, not just "a valid oracle account".
+4. Add spot-vs-TWAP / cross-source sanity guards so an upstream verifier bug cannot instantly become borrowable collateral truth.
+
+**Sources**:
+- https://bonzo.finance/blog/bonzo-lend-incident-report-oracle-provider-exploit
+- https://cryptobriefing.com/bonzo-lend-9m-oracle-exploit-hedera/
+
 ## New 2026 Patterns (Anchor/SPL/Jito Surface)
 
 ### Anchor IDL External-Account Overtrust
