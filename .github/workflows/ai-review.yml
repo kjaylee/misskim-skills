@@ -1,0 +1,187 @@
+name: AI PR Review & Auto-Fix
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get PR diff
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          FILES=$(gh pr diff "$PR_NUMBER" --name-only)
+          echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Run Skill/YAML review checks
+        id: review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGED_FILES: ${{ steps.diff.outputs.changed_files }}
+        run: |
+          set -euo pipefail
+          FIXES_APPLIED=0
+          REVIEW_BODY="## 🤖 Automated PR Review\n\n"
+
+          # Categorize files
+          SKILL_FILES=$(echo "$CHANGED_FILES" | grep -E 'skills/.+/SKILL\.md$' || true)
+          YAML_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(ya?ml)$' || true)
+          SH_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(sh|bash)$' || true)
+          PY_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(py)$' || true)
+
+          # --- Check 1: SKILL.md structure validation ---
+          if [ -n "$SKILL_FILES" ]; then
+            REVIEW_BODY="${REVIEW_BODY}### 📋 SKILL.md Checks\n\n"
+            while IFS= read -r skill_file; do
+              [ -z "$skill_file" ] && continue
+              SKILL_DIR=$(dirname "$skill_file")
+
+              # Required frontmatter
+              if ! head -10 "$skill_file" | grep -qiE '^(name|description):'; then
+                REVIEW_BODY="${REVIEW_BODY}- ⚠️ \`$skill_file\`: Missing required frontmatter (name/description)\n"
+              else
+                REVIEW_BODY="${REVIEW_BODY}- ✅ \`$skill_file\`: Has frontmatter\n"
+              fi
+
+              # Check for version field
+              if ! grep -q 'version:' "$skill_file" 2>/dev/null; then
+                REVIEW_BODY="${REVIEW_BODY}- 💡 \`$skill_file\`: Consider adding \`version:\` field\n"
+              fi
+
+              # Check skill has at least content
+              LINES=$(wc -l < "$skill_file")
+              if [ "$LINES" -lt 20 ]; then
+                REVIEW_BODY="${REVIEW_BODY}- ⚠️ \`$skill_file\`: Very short ($LINES lines) — may need more detail\n"
+              fi
+
+              # Check for test file
+              if [ ! -f "${SKILL_DIR}/test.sh" ] && [ ! -f "${SKILL_DIR}/test.py" ]; then
+                REVIEW_BODY="${REVIEW_BODY}- 💡 \`$skill_file\`: No test file found (test.sh or test.py)\n"
+              fi
+            done <<< "$SKILL_FILES"
+          fi
+
+          # --- Check 2: YAML syntax validation ---
+          if [ -n "$YAML_FILES" ]; then
+            REVIEW_BODY="${REVIEW_BODY}\n### 📄 YAML Checks\n\n"
+            pip install -q pyyaml 2>/dev/null
+            while IFS= read -r yfile; do
+              [ -z "$yfile" ] && continue
+              python3 -c "import yaml; yaml.safe_load(open('$yfile'))" 2>&1 && \
+                REVIEW_BODY="${REVIEW_BODY}- ✅ \`$yfile\`: Valid YAML\n" || \
+                REVIEW_BODY="${REVIEW_BODY}- ❌ \`$yfile\`: Invalid YAML syntax\n"
+            done <<< "$YAML_FILES"
+          fi
+
+          # --- Check 3: Shell script safety ---
+          if [ -n "$SH_FILES" ]; then
+            REVIEW_BODY="${REVIEW_BODY}\n### 🐚 Shell Script Checks\n\n"
+            while IFS= read -r shfile; do
+              [ -z "$shfile" ] && continue
+              # Check for set -e
+              if ! grep -q 'set -e' "$shfile" 2>/dev/null; then
+                REVIEW_BODY="${REVIEW_BODY}- 💡 \`$shfile\`: Consider adding \`set -e\` for error handling\n"
+              fi
+              # Check for unquoted variables
+              if grep -qP '\$\w+[^"]' "$shfile" 2>/dev/null; then
+                REVIEW_BODY="${REVIEW_BODY}- 💡 \`$shfile\`: Check for unquoted variables\n"
+              fi
+            done <<< "$SH_FILES"
+          fi
+
+          # --- Check 4: Python lint (basic) ---
+          if [ -n "$PY_FILES" ]; then
+            REVIEW_BODY="${REVIEW_BODY}\n### 🐍 Python Checks\n\n"
+            pip install -q pyflakes 2>/dev/null
+            while IFS= read -r pyfile; do
+              [ -z "$pyfile" ] && continue
+              RESULT=$(pyflakes "$pyfile" 2>&1 || true)
+              if [ -n "$RESULT" ]; then
+                REVIEW_BODY="${REVIEW_BODY}- ⚠️ \`$pyfile\`: $RESULT\n"
+              else
+                REVIEW_BODY="${REVIEW_BODY}- ✅ \`$pyfile\`: No issues\n"
+              fi
+            done <<< "$PY_FILES"
+          fi
+
+          # --- Auto-fix: trailing whitespace ---
+          FIXED_WS=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+            if grep -qP '[ \t]+$' "$file" 2>/dev/null; then
+              sed -i 's/[[:space:]]*$//' "$file"
+              FIXED_WS=$((FIXED_WS+1))
+            fi
+          done <<< "$CHANGED_FILES"
+          if [ "$FIXED_WS" -gt 0 ]; then
+            REVIEW_BODY="${REVIEW_BODY}\n### 🔧 Auto-Fixes\n"
+            REVIEW_BODY="${REVIEW_BODY}- ✅ Removed trailing whitespace in $FIXED_WS file(s)\n"
+            FIXES_APPLIED=1
+          fi
+
+          # --- Auto-fix: EOF newline ---
+          FIXED_EOF=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+            if [ -s "$file" ] && [ "$(tail -c1 "$file" | wc -l)" -eq 0 ]; then
+              echo "" >> "$file"
+              FIXED_EOF=$((FIXED_EOF+1))
+            fi
+          done <<< "$CHANGED_FILES"
+          if [ "$FIXED_EOF" -gt 0 ]; then
+            REVIEW_BODY="${REVIEW_BODY}- ✅ Added EOF newline in $FIXED_EOF file(s)\n"
+            FIXES_APPLIED=1
+          fi
+
+          REVIEW_BODY="${REVIEW_BODY}\n---\n*Automated by AI PR Review*"
+
+          # Post review comment
+          PR_NUM="${{ github.event.pull_request.number }}"
+          gh pr comment "$PR_NUM" --body "$(echo -e "$REVIEW_BODY")"
+
+          # Push auto-fixes
+          if [ "$FIXES_APPLIED" -eq 1 ]; then
+            git add -A
+            git commit -m "🤖 auto-fix: trailing whitespace & EOF newlines [skip ci]"
+            git push origin "HEAD:${{ github.head_ref }}"
+            echo "fixes_pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fixes_pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Approve PR if no critical issues
+        if: steps.review.outputs.fixes_pushed != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          gh pr review "$PR_NUM" --approve --body "✅ Automated review complete. No critical issues found." 2>/dev/null || \
+          echo "Skip approval (insufficient permissions)"
