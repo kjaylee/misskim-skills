@@ -55,6 +55,7 @@ let price = pyth_price.price;
 let usd_price = cbeth_eth_ratio; // missing * eth_usd
 ```
 **Defense**: `max_staleness_slots`, `min_confidence_ratio`, `price_status == Trading`, explicit unit normalization (`ratio * base_usd`), non-zero/non-identity signature-public-key rejection inside verifier paths, exact feed-id / write-authority / owner binding on consumer side, on-chain price sanity bands, multi-oracle fallback.
+**Red-team bypass note (2026-07-12)**: Canonical oracle-read hardening alone is not enough. A protocol can still recreate the Bonzo loss class if `manual oracle`, `fallback oracle`, or `recovery price` paths accept **cross-source-close but semantically weaker** prices and then treat them as equivalent to the canonical authenticated feed. The attacker goal shifts from breaking the main verifier to steering the system into an exception lane where `externally validated quote` is silently promoted to `borrowable collateral truth`.
 **META-12 Fuzzer Note (2026-03-19)**: Oracle price manipulation requires specific timing sequences that Foundry fuzz cannot model (timeout at 10M+ runs). Use Echidna with time-advancing mock oracle and property: `echidna_oracle_price_bounded()` with sequence length ≥ 3 and block-time stepping. Solana variant: test across slot transitions with simulated staleness boundary crossings.
 
 ### A4. Access Control

@@ -183,6 +183,7 @@ Bonzo Lend's July 11, 2026 incident on Hedera showed a different oracle failure 
 - Teams often treat `PriceUpdateV2 exists on-chain` as if it automatically means `the whole upstream authentication story held`.
 - Even when Pyth/Switchboard-style infrastructure does the heavy verification, the consumer still must bind **owner, discriminator, verification level, write authority, feed identity, freshness, confidence, and sanity drift** at the last trust boundary it controls.
 - If a future Solana oracle adapter, bridge-fed price lane, or verifier CPI path ever accepts identity/sentinel values, wrong program ownership, downgraded verification level, or mismatched feed identity, the protocol can recreate the Bonzo class while "reading the oracle exactly as designed."
+- The highest-probability bypass after teams harden the canonical Pyth path is the **exception lane**: `manual oracle mode`, external fallback writers, or recovery scripts that accept a price because it is merely cross-source-consistent. That silently downgrades **semantically authenticated oracle truth** into **close-enough off-chain quote truth**.
 
 ```rust
 // VULNERABLE: assumes any oracle-shaped on-chain account is semantically authenticated truth
@@ -204,6 +205,7 @@ require!(spot_vs_twap_deviation_bps <= MAX_DEVIATION_BPS, ErrorCode::BadOracleDr
 2. Reject zero/identity/sentinel-like authority results before interpreting them as successful verification outcomes.
 3. Pin exact feed identity and trusted write authority, not just "a valid oracle account".
 4. Add spot-vs-TWAP / cross-source sanity guards so an upstream verifier bug cannot instantly become borrowable collateral truth.
+5. Make `manual oracle` / `fallback oracle` paths inherit the same parity checklist as the canonical path where possible: explicit activation reason, bounded lifetime, slot monotonicity, TWAP-drift cap, rollback condition, and proof of which weaker trust assumptions are being accepted.
 
 **Sources**:
 - https://bonzo.finance/blog/bonzo-lend-incident-report-oracle-provider-exploit
@@ -830,8 +832,9 @@ Exploitation of the gap between "technically correct code" and "economically saf
 - Multi-transaction oracle manipulation + deposit + mint + price-restore + withdraw sequence crosses audit scope boundary
 - Detection: for every oracle-price-dependent function, enumerate the profit path when price deviates N%
 - For MANUAL_ORACLE_MODE protocols: on-chain TWAP sanity gate is mandatory (reject writes > ±2% from TWAP)
+- 2026-07-12 Bonzo-inspired bypass sharpening: if the canonical oracle path has strong provenance checks but the fallback lane only proves "two external quotes are close," attacker pressure shifts to **forcing entry into the exception lane** rather than breaking the main oracle verifier.
 
-**Microstable-specific gap**: `write_oracle_price` in MANUAL_ORACLE_MODE has no TWAP deviation cap on-chain. Add `MAX_MANUAL_PRICE_DEVIATION = 200bps` constant + pre-write check.
+**Microstable-specific gap**: `write_oracle_price` in MANUAL_ORACLE_MODE has no TWAP deviation cap on-chain, and the fallback path does not carry the same feed-identity / write-authority semantics as the canonical Pyth lane by design. Add `MAX_MANUAL_PRICE_DEVIATION = 200bps` constant + pre-write check, and treat fallback provenance downgrade as an explicit release-gated assumption rather than hidden ops plumbing.
 
 <!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-25 -->
 
