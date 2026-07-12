@@ -1,3 +1,41 @@
+## 2026-07-13 Daily Check
+### Source Sweep (24h~7d window: 2026-07-06 → 2026-07-13 KST)
+- Sources checked: `https://rekt.news/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news`, `https://osec.io/blog/`, plus current Microstable code / lockfile re-read.
+- **Confirmed in-window items**:
+  1. `rekt.news` home as fetched on **2026-07-13 KST** still shows **BonkDAO** (`published 2026-07-10`) and **Summer Finance** (`published 2026-07-09`) as the freshest admission-grade public writeups. Both are already absorbed as **A92** and **A40/A68 reinforcement** respectively, so they do **not** create a fresh named-vector delta today.
+  2. Current `osec.io/blog` still tops out at **Save CTFs Fund** (`2026-07-07`) and **Hyperliquid risk engine reverse-engineering** (`2026-06-22`); there is **no fresher July 2026 Solana / Anchor / SPL exploit-class research admission** in the visible OtterSec index.
+  3. GitHub Advisory `solana`/`anchor-lang`/`spl-token` spot checks still surface previously-known May 2026 Anchor advisories, not a new July 2026 admission-grade issue. Official Solana news likewise does **not** add a fresher in-window exploit-class postmortem.
+
+### Skill Delta Today
+- **0 NEW vectors**
+- **0 reinforcements**
+- Updated: `SKILL.md`, `docs/microstable-black-team-daily-findings.md`
+- Not updated: `references/attack-matrix.md`, `references/solana-specific.md`, `docs/blockchain-security-incidents-comprehensive.md`
+
+### Immediate High-Priority Findings
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **B83 QUIC fragment-hole liveness kill** | keeper dependency chain | ❌ **HIGH active-latent** | `solana/Cargo.lock:2984-2985` still pins **`quinn-proto 0.11.13`**; **`rustls-webpki 0.103.9 / 0.101.7`** still remain in the reviewed dependency chain. |
+| **B45 audit attestation gap** | all critical paths | ❌ **HIGH carry-forward** | `microstable/security/audit-attestation.json` is still missing in direct filesystem inspection. Audited-commit ↔ deployed-artifact binding remains absent. |
+| **A75 manual-oracle drift guard** | keeper manual fallback + on-chain oracle write path | ⚠️ **MEDIUM carry-forward** | `solana/keeper/src/oracle.rs:735-873` still enables external-price fallback and submits `ix_update_oracle(...)`, while `solana/programs/microstable/src/lib.rs:671-747` manual `update_oracle` path still does **not** inherit the canonical Pyth-path `feed_id / verification_level / write_authority / publish_time` semantics. |
+| **A43 cumulative sub-threshold rebalance drift** | on-chain rebalance admission | ⚠️ **MEDIUM carry-forward** | `solana/programs/microstable/src/lib.rs:1578-1604` still gates commit/reveal on **single-call** turnover only; I still do **not** see a rolling cumulative drift accumulator across repeated sub-threshold rebalances. |
+| **D26 frontend trust-anchor drift** | dashboard static client | ⚠️ **LOW carry-forward** | `docs/app.js:46` still embeds a **browser-usable faucet keypair**, and `docs/app.js:1645` reconstructs it with `Keypair.fromSecretKey(...)`. |
+
+### Blue-Team Immediate Fix Order
+1. **B83** — `solana/Cargo.lock` 기준 `quinn-proto` / `rustls-webpki` 체인을 패치 버전으로 올리고, `cargo tree | rg 'quinn-proto|rustls-webpki'` 결과를 findings에 다시 첨부할 것.
+2. **B45** — `security/audit-attestation.json` 을 생성해 **감사 대상 커밋 / 배포 대상 바이너리 / 프로그램 ID / 감사 보고서 해시** 를 한 파일로 결속할 것.
+3. **A75** — manual fallback 진입 시에도 **last trusted anchor / TWAP drift / cross-source sanity** 상한을 강제할 것.
+4. **A43** — 단일 호출 한도 외에 **rolling-window cumulative turnover accumulator** 를 추가해 연속 sub-threshold rebalances를 차단할 것.
+5. **D26** — 브라우저 빌드에서 faucet signer 내장을 제거할 것.
+
+### Today's Verdict
+- New incidents found: **0 admissible matrix delta**
+- New attack vectors added: **0**
+- Reinforcements applied: **0**
+- New CRITICAL findings: **0**
+- Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
+- Focused conclusion: 오늘은 **새 admission 없이 existing carry set을 재확인한 날** 이었습니다. 우선순위는 여전히 **B83 dependency uplift 검증** 과 **B45 audit-attestation artifact 도입** 입니다.
+
 ## 2026-07-10 Daily Check
 ### Source Sweep (24h~7d window: 2026-07-03 → 2026-07-10 KST)
 - Sources checked: `https://rekt.news/`, `https://hacked.slowmist.io/en/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news`, `https://solana.com/news/solana-ecosystem-security`, `https://blog.trailofbits.com/`, `https://osec.io/blog/`, `https://neodyme.io/en/blog/`, plus current Microstable code / lockfile re-read.
