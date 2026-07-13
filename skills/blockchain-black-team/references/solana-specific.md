@@ -2039,3 +2039,25 @@ archive_or_forward(tx)?; // delayed execution risk
 - https://github.com/otter-sec/anchor/commit/e5a4715e9cad1d7e66f18244325b82aa880a0ecd
 - https://github.com/otter-sec/anchor/pull/4632
 - https://github.com/otter-sec/anchor/commit/94df365f8442a3acb6403ba4348d1b5b0a90f3ed
+
+---
+
+## A138 Checklist — QUIC Stream Reassembly Memory Exhaustion via RPC Peer
+
+**RUSTSEC-2026-0185 / quinn-proto < 0.11.15**
+
+- [ ] 67. Verify `quinn-proto` version in Cargo.lock >= 0.11.15. If older, flag as HIGH.
+- [ ] 68. Check if keeper connects to RPC via QUIC (`solana-connection-cache` / `quinn`). If yes, RPC peer is a post-handshake attack surface.
+- [ ] 69. Monitor keeper RSS memory during normal operation. Set OOM-kill threshold and alert.
+- [ ] 70. Verify that secondary/failover RPC does not also use the same vulnerable quinn-proto path.
+- [ ] 71. If RPC is self-hosted, verify the RPC server is not itself compromised to inject QUIC fragmentation.
+
+## D57 Checklist — Vault Collateral Shadow-Asset Valuation Drag
+
+**Pattern from Summer Finance incident (July 2026, $6.04M loss)**
+
+- [ ] 72. For each collateral type, verify that a deprecated/disabled vault has **zero weight** in global TVL computation.
+- [ ] 73. Verify that oracle feeds for deprecated collateral are explicitly unregistered or zeroed.
+- [ ] 74. Run daily invariant: `sum(active_collateral_balances * active_oracle_prices) == reported_tvl`, where active excludes deprecated.
+- [ ] 75. Alert on any price update for a collateral type flagged as deprecated or deposits-paused.
+- [ ] 76. Before deprecating a collateral type, explicitly flush remaining balances to a safe asset and zero the accounting weight.

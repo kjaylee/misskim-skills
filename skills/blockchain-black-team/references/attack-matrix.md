@@ -10910,3 +10910,74 @@ reader.resolver_mut().set_max_declarations_per_element(256);
 | D56 XML Start-Tag Validation Core-Pin / Namespace Heap Balloon | a single crafted XML start tag triggers quadratic duplicate-attribute CPU burn or hidden namespace-binding heap growth inside the parser before the consumer can intervene | worker-core pin, process OOM, oracle/verifier liveness loss, false confidence from request-size limits and I/O timeouts | current Microstable live path has no `quick-xml`/XML ingest surface, so **NOT ACTIVE today**; future XML-based attestation or manifest imports must treat parser cost ceilings as a first-class boundary |
 
 **Matrix state as of 2026-07-09 (red-team daily update)**: prior coverage retained; **D56** added after classifying RustSec `0194` and `0195` as a **parser-internal validation-cost ceiling failure** distinct from D55 DNSSEC proof-validation liveness and generic DoS. Matrix is now **148+ named vectors + META-01~71 + B73~B84 = 219+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from D56 itself**; the new pattern is future-facing unless XML ingest is introduced.
+
+### A138. QUIC Stream Reassembly Memory Exhaustion via Malicious RPC Peer (quinn-proto RUSTSEC-2026-0185)
+
+**Source**: RUSTSEC-2026-0185 / GHSA-4w2j-m93h-cj5j (June 22, 2026)
+**Affected**: `quinn-proto >= 0.11.0, < 0.11.15` — patched in 0.11.15
+**Historical precedent**: general QUIC transport DoS; this advisory formalizes the stream-reassembly memory amplification primitive.
+
+**Mechanism**:
+The Assembler component in quinn-proto that reassembles unordered QUIC stream fragments incurs unbounded buffer overhead for non-contiguous fragments. A peer (e.g., an RPC endpoint) that sends fragments while deliberately leaving out early parts of the stream — especially fragments with many gaps that cannot be defragmented — causes the receiving connection to accumulate high buffer overhead, enabling memory exhaustion on the victim.
+
+**Why this is a distinct vector**:
+- B20 (generic DoS) is too broad. A138 specifically targets the **QUIC transport layer memory amplification asymmetry** — the attacker sends relatively small fragments but causes disproportionate memory accumulation in the reassembly buffer.
+- The attacker is the **RPC server** (not the network), meaning TLS/authentication does not help — the attack surface is post-handshake.
+- Unlike bandwidth-based DoS, this is **memory-based** and survives through legitimate authenticated QUIC connections.
+
+**Real-world incident pattern**:
+Solana validators and RPC providers increasingly use QUIC (port 8009) for transaction submission. A malicious or compromised RPC provider can exploit quinn-proto to OOM-kill keeper processes that rely on `solana-connection-cache` → `quinn` → `quinn-proto`.
+
+**Defense**:
+1. Upgrade `quinn-proto` to >= 0.11.15 in Cargo.lock.
+2. Monitor keeper process RSS and set OOM-kill thresholds.
+3. Use multiple independent RPC providers and rotate connections on anomalous memory growth.
+4. Implement application-level heartbeat timeouts that detect stalled QUIC streams.
+
+**Microstable relevance**:
+- `microstable/solana/Cargo.lock` contains `quinn-proto 0.11.13` — **directly affected**.
+- `quinn-proto` enters via `quinn` → `solana-connection-cache` → keeper RPC client.
+- Keeper connects to RPC endpoints for every cycle (account reads, transactions). A compromised RPC can trigger this.
+- **Severity: HIGH** — active dependency vulnerability in production path.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A138 QUIC Stream Reassembly Memory Exhaustion via Malicious RPC Peer | post-handshake QUIC peer sends fragmented stream data with deliberate gaps causing unbounded reassembly buffer growth in quinn-proto < 0.11.15 | keeper process OOM, liveness loss, transaction submission failure, oracle stale due to killed keeper | `Cargo.lock` has quinn-proto 0.11.13 (< 0.11.15 patched); keeper uses QUIC via solana-connection-cache for all RPC — **HIGH / ACTIVE** |
+
+### D57. Vault Collateral Shadow-Asset Valuation Drag
+
+**Source**: rekt.news — Summer Finance ($6.04M loss, July 2026)
+**Historical precedent**: Summer Finance incident where a capped-for-removal Ark was still counted in vault value computation.
+
+**Mechanism**:
+A collateral asset that has been officially deprecated, capped, or scheduled for removal — but whose oracle feed, valuation weight, or accounting path remains active in the vault — can be exploited by an attacker who donates or inflates the stale asset's apparent value. The vault counts the inflated deprecated asset at face value, inflating the total vault share price, and enabling the attacker to redeem real liquidity at the inflated rate.
+
+**Why this is a distinct vector**:
+- A3/A68 cover oracle price manipulation — the oracle returns a wrong price.
+- D57 targets the **collateral lifecycle deprecation gap**: the oracle may be perfectly correct, but the vault should not be counting this asset anymore. The bug is in the **asset lifecycle vs. valuation path desynchronization**.
+- The attacker does not need to manipulate any oracle — they only need to find a deprecated-but-still-counted collateral slot and inflate it through a swap, donation, or market purchase.
+
+**Attack scenario for a multi-collateral stablecoin**:
+1. Collateral asset X is deprecated (new mints disabled, peg weakened) but still held in vault and counted at oracle price.
+2. Attacker acquires a large position in X cheaply (market is thin post-deprecation).
+3. Attacker donates/swaps to create a temporary price spike or exploits a thin Pyth/switchboard feed for X.
+4. Vault total TVL appears higher → attacker mints/redeems stablecoin at inflated rates.
+5. When X price reverts, real collateral has been drained.
+
+**Defense**:
+1. Deprecated collateral assets must be **zeroed in valuation** before disabling deposits — not merely disabled for new mints.
+2. Run a daily invariant check: `sum(collateral_balances * active_oracle_prices) == reported_tvl` with `active_oracle_prices` excluding deprecated feeds.
+3. Treat any collateral type with `is_active=false` or `deposits_paused=true` as having **zero contribution** to vault TVL until explicitly removed.
+4. Alert on any price update for a collateral type flagged as deprecated.
+
+**Microstable relevance**:
+- Microstable has 4 collateral types: USDC, USDT, DAI, USDS, each with its own vault, Pyth feed, and accounting path.
+- If any collateral type were deprecated (e.g., USDS delisted) but its vault balance and oracle feed remained active in the global TVL computation, the Summer Finance pattern would apply directly.
+- Current code has per-vault `init_vault()` and individual collateral accounting, but no explicit `is_deprecated` flag or zero-weight enforcement on deprecated vaults.
+- **Severity: MEDIUM** — requires a collateral deprecation event to trigger, but the code structure does not prevent it.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| D57 Vault Collateral Shadow-Asset Valuation Drag | deprecated-but-still-counted collateral asset with active oracle feed is inflated by attacker through donation or thin-market manipulation, inflating vault TVL and enabling real-liquidity drain at inflated rates | stablecoin over-mint, real collateral drain, share-price inflation, silent insolvency | Microstable has 4 collateral vaults with no explicit deprecation zero-weight enforcement; if a collateral is deprecated but vault remains active, the pattern applies — **MEDIUM / CONDITIONAL** |
+
+**Matrix state as of 2026-07-14 (red-team daily update)**: prior coverage retained; **A138** added for quinn-proto QUIC reassembly memory exhaustion (RUSTSEC-2026-0185, HIGH/ACTIVE in current Cargo.lock), **D57** added for collateral shadow-asset valuation drag inspired by Summer Finance incident. Matrix is now **150+ named vectors + META-01~71 + B73~B84 = 221+ total entries**. Microstable has **1 HIGH active finding (A138)** requiring dependency upgrade.
