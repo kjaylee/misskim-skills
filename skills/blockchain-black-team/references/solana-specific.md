@@ -1909,8 +1909,8 @@ archive_or_forward(tx)?; // delayed execution risk
 - **Microstable current status**:
 - `microstable/solana/Cargo.lock` 는 여전히 **`quinn-proto 0.11.13`** 을 해석하며, patch floor는 **`>= 0.11.15`** 다.
 - 같은 lockfile에는 **`solana-client 2.3.13` → `solana-quic-client 2.3.13` → `quinn-proto 0.11.13`** 경로가 남아 있다.
-- reviewed keeper path는 `main.rs`, `oracle.rs`, `rebalance.rs`, `monitor.rs`, `hermes.rs`, `agent_loop.rs` 전반에서 `RpcClient` 를 사용하므로, 취약 transport는 여전히 live control plane 일부다.
-- 따라서 오늘 기준 **ACTIVE LATENT / HIGH** 다.
+- 2026-07-15 reachability 재검토에서 current keeper source는 HTTP JSON-RPC `RpcClient` 와 `send_transaction_with_config` 만 구성하며, `TpuClient`, QUIC client, WebSocket, PubSub client 생성 경로는 확인되지 않았다.
+- 따라서 dependency는 남아 있지만 현재 원격 공격 경계는 **NOT REACHABLE / INFO-LATENT** 다. 향후 TPU/QUIC 제출 경로를 도입하기 전 패치 버전을 강제해야 한다.
 - **Checklist item 85**: ☐ keeper lockfile / SBOM gate에서 **`quinn-proto >= 0.11.15`** 를 강제하고, QUIC reconnect churn + RSS growth + RPC latency 상승을 함께 모니터링하며, incident mode에서는 patched/non-QUIC fallback 경로를 즉시 전환 가능하게 둘 것
 
 ### Solana-Specific Defense Checklist Update
@@ -2041,23 +2041,3 @@ archive_or_forward(tx)?; // delayed execution risk
 - https://github.com/otter-sec/anchor/commit/94df365f8442a3acb6403ba4348d1b5b0a90f3ed
 
 ---
-
-## A138 Checklist — QUIC Stream Reassembly Memory Exhaustion via RPC Peer
-
-**RUSTSEC-2026-0185 / quinn-proto < 0.11.15**
-
-- [ ] 67. Verify `quinn-proto` version in Cargo.lock >= 0.11.15. If older, flag as HIGH.
-- [ ] 68. Check if keeper connects to RPC via QUIC (`solana-connection-cache` / `quinn`). If yes, RPC peer is a post-handshake attack surface.
-- [ ] 69. Monitor keeper RSS memory during normal operation. Set OOM-kill threshold and alert.
-- [ ] 70. Verify that secondary/failover RPC does not also use the same vulnerable quinn-proto path.
-- [ ] 71. If RPC is self-hosted, verify the RPC server is not itself compromised to inject QUIC fragmentation.
-
-## D57 Checklist — Vault Collateral Shadow-Asset Valuation Drag
-
-**Pattern from Summer Finance incident (July 2026, $6.04M loss)**
-
-- [ ] 72. For each collateral type, verify that a deprecated/disabled vault has **zero weight** in global TVL computation.
-- [ ] 73. Verify that oracle feeds for deprecated collateral are explicitly unregistered or zeroed.
-- [ ] 74. Run daily invariant: `sum(active_collateral_balances * active_oracle_prices) == reported_tvl`, where active excludes deprecated.
-- [ ] 75. Alert on any price update for a collateral type flagged as deprecated or deposits-paused.
-- [ ] 76. Before deprecating a collateral type, explicitly flush remaining balances to a safe asset and zero the accounting weight.

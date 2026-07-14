@@ -7052,6 +7052,8 @@ require!(data.len() >= required, ErrorCode::AccountDidNotDeserialize);
 
 **Signal**: SlowMist Hacked incident feed — **Mure** exploit summary (2026-05-23)
 
+**2026-07-15 reinforcement (Lumi Finance / Sodium smart accounts, incident 2026-07-13, ~$270K)**: Public incident analyses describe an ERC-4337 `validateUserOp` path that passed an attacker-controlled address as the signer to `isValidSignatureNow`. When ECDSA recovery failed, the path did not fail closed; it fell back to the attacker's ERC-1271 `isValidSignature`, accepted the returned magic value, and then performed ERC-20 `approve` calls as a validation side effect. A malicious Paymaster/spender thereby obtained allowances from multiple smart accounts and batch-swept their tokens. This sharpens A127 in two ways: **attacker-chosen signer/verifier provenance can turn a standard signature helper into an always-true oracle**, and **validation must not mutate balances or allowances before execution authorization is finalized**. Required negative tests now include ECDSA failure followed by a malicious ERC-1271 `MAGICVALUE`, attacker-selected Paymaster/spender, and any `approve`/asset-state mutation during `validateUserOp`.
+
 **Key insight**: 많은 팀이 `SignatureChecker`, smart-wallet signer, verifier module, registry contract 같은 인증 보조 장치를 붙이면 권한 검증이 더 유연하고 안전해진다고 생각한다. 그러나 이번 신호의 핵심은 **서명을 어떻게 검증하느냐보다, 그 검증의 진실 근원(authority root)을 누가 고르느냐** 다. 공격자가 `signer source` / verifier contract / auth module 자체를 주입할 수 있으면, 올바른 digest 검증조차 **공격자 소유의 "항상 참" 오라클** 로 바뀐다.
 
 **Attack chain**:
@@ -7102,6 +7104,8 @@ function claim(
 - 권한 결정에 쓰이는 외부 contract/account/program은 price oracle처럼 **trust root asset** 으로 취급해 provenance/upgrade/owner drift를 별도 감시할 것
 
 **Sources**: https://hacked.slowmist.io/
+
+**2026-07-15 sources**: https://www.cryptotimes.io/2026/07/14/lumi-finance-drained-of-270k-on-arbitrum-via-smart-account-exploit/ | https://www.kucoin.com/news/flash/lumi-finance-on-arbitrum-suffers-270-000-attack-due-to-smart-contract-vulnerability
 
 **Microstable relevance**:
 - 요청 경로 `/microstable/solana/programs/microstable_core/src/lib.rs` 는 여전히 absent 이므로, 실제 검토는 `programs/microstable/src/lib.rs` 와 `keeper/src/` 기준으로 수행했다.
@@ -7286,15 +7290,15 @@ SAFER SHAPE:
 
 **Microstable relevance**:
 - `microstable/solana/Cargo.lock` currently resolves **`quinn-proto 0.11.13`**, below the patched floor **`>= 0.11.15`**.
-- the same lockfile shows **`solana-client 2.3.13`** → **`solana-quic-client 2.3.13`** → `quinn` / `quinn-proto`, so the vulnerable transport remains in the keeper dependency tree.
-- reviewed keeper path uses `solana_client::rpc_client::RpcClient` across `main.rs`, `oracle.rs`, `rebalance.rs`, `monitor.rs`, `hermes.rs`, and `agent_loop.rs`, so QUIC/RPC transport stays in the live control plane.
-- therefore this is **ACTIVE LATENT / HIGH** for Microstable until patched and re-verified.
+- the same lockfile shows **`solana-client 2.3.13`** → **`solana-quic-client 2.3.13`** → `quinn` / `quinn-proto`, so the vulnerable transport remains in the dependency graph.
+- however, the 2026-07-15 current-code reachability review found only `solana_client::rpc_client::RpcClient` construction plus HTTP JSON-RPC `send_transaction_with_config`; keeper source contains no `TpuClient`, QUIC client, WebSocket, or PubSub construction path.
+- therefore the vulnerable package is currently **NOT REACHABLE / INFO-LATENT**, not an active remote HIGH. It should still be upgraded before any TPU/QUIC submission path is introduced and kept under dependency-policy monitoring.
 
 | Vector | Mechanism | Impact | Microstable relevance |
 |---|---|---|---|
-| B83 QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill | attacker sends many sparse out-of-order QUIC stream fragments leaving early gaps, so `quinn-proto` reassembly accumulates high overhead and exhausts memory without malformed transport parameters | keeper memory pressure, stalled RPC/oracle loops, degraded tx confirmation, fail-closed stale-price outage, difficult partial-liveness loss | current Microstable lockfile still resolves **`quinn-proto 0.11.13`** through `solana-client 2.3.13` / `solana-quic-client 2.3.13`, so this is **ACTIVE LATENT / HIGH** until patched and re-verified |
+| B83 QUIC Out-of-Order Stream Gap Memory Exhaustion / Solana RPC Fragment-Hole Liveness Kill | attacker sends many sparse out-of-order QUIC stream fragments leaving early gaps, so `quinn-proto` reassembly accumulates high overhead and exhausts memory without malformed transport parameters | keeper memory pressure, stalled RPC/oracle loops, degraded tx confirmation, fail-closed stale-price outage, difficult partial-liveness loss | lockfile still resolves **`quinn-proto 0.11.13`**, but current keeper source constructs only HTTP JSON-RPC `RpcClient` paths and no TPU/QUIC client, so **NOT REACHABLE / INFO-LATENT** today; upgrade remains a precondition for any future QUIC path |
 
-**Matrix state 2026-06-23 (red-team daily update)**: **B83** was added to separate **QUIC sparse-fragment memory exhaustion** from the earlier **B58 panic-on-malformed-transport-parameters** class. Matrix is now **142+ named vectors + META-01~71 + B73~B83 = 213+ total entries**. Microstable inherits a **HIGH active-latent keeper dependency risk** because current lockfile still resolves `quinn-proto 0.11.13`.
+**Matrix state 2026-06-23 (red-team daily update; reachability corrected 2026-07-15)**: **B83** was added to separate **QUIC sparse-fragment memory exhaustion** from the earlier **B58 panic-on-malformed-transport-parameters** class. The advisory remains valid, but Microstable's current keeper path is **INFO-latent** because it does not instantiate the vulnerable QUIC client surface; dependency presence alone is not runtime reachability.
 
 ---
 
@@ -10911,76 +10915,7 @@ reader.resolver_mut().set_max_declarations_per_element(256);
 
 **Matrix state as of 2026-07-09 (red-team daily update)**: prior coverage retained; **D56** added after classifying RustSec `0194` and `0195` as a **parser-internal validation-cost ceiling failure** distinct from D55 DNSSEC proof-validation liveness and generic DoS. Matrix is now **148+ named vectors + META-01~71 + B73~B84 = 219+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from D56 itself**; the new pattern is future-facing unless XML ingest is introduced.
 
-### A138. QUIC Stream Reassembly Memory Exhaustion via Malicious RPC Peer (quinn-proto RUSTSEC-2026-0185)
-
-**Source**: RUSTSEC-2026-0185 / GHSA-4w2j-m93h-cj5j (June 22, 2026)
-**Affected**: `quinn-proto >= 0.11.0, < 0.11.15` — patched in 0.11.15
-**Historical precedent**: general QUIC transport DoS; this advisory formalizes the stream-reassembly memory amplification primitive.
-
-**Mechanism**:
-The Assembler component in quinn-proto that reassembles unordered QUIC stream fragments incurs unbounded buffer overhead for non-contiguous fragments. A peer (e.g., an RPC endpoint) that sends fragments while deliberately leaving out early parts of the stream — especially fragments with many gaps that cannot be defragmented — causes the receiving connection to accumulate high buffer overhead, enabling memory exhaustion on the victim.
-
-**Why this is a distinct vector**:
-- B20 (generic DoS) is too broad. A138 specifically targets the **QUIC transport layer memory amplification asymmetry** — the attacker sends relatively small fragments but causes disproportionate memory accumulation in the reassembly buffer.
-- The attacker is the **RPC server** (not the network), meaning TLS/authentication does not help — the attack surface is post-handshake.
-- Unlike bandwidth-based DoS, this is **memory-based** and survives through legitimate authenticated QUIC connections.
-
-**Real-world incident pattern**:
-Solana validators and RPC providers increasingly use QUIC (port 8009) for transaction submission. A malicious or compromised RPC provider can exploit quinn-proto to OOM-kill keeper processes that rely on `solana-connection-cache` → `quinn` → `quinn-proto`.
-
-**Defense**:
-1. Upgrade `quinn-proto` to >= 0.11.15 in Cargo.lock.
-2. Monitor keeper process RSS and set OOM-kill thresholds.
-3. Use multiple independent RPC providers and rotate connections on anomalous memory growth.
-4. Implement application-level heartbeat timeouts that detect stalled QUIC streams.
-
-**Microstable relevance**:
-- `microstable/solana/Cargo.lock` contains `quinn-proto 0.11.13` — **directly affected**.
-- `quinn-proto` enters via `quinn` → `solana-connection-cache` → keeper RPC client.
-- Keeper connects to RPC endpoints for every cycle (account reads, transactions). A compromised RPC can trigger this.
-- **Severity: HIGH** — active dependency vulnerability in production path.
-
-| Vector | Mechanism | Impact | Microstable relevance |
-|---|---|---|---|
-| A138 QUIC Stream Reassembly Memory Exhaustion via Malicious RPC Peer | post-handshake QUIC peer sends fragmented stream data with deliberate gaps causing unbounded reassembly buffer growth in quinn-proto < 0.11.15 | keeper process OOM, liveness loss, transaction submission failure, oracle stale due to killed keeper | `Cargo.lock` has quinn-proto 0.11.13 (< 0.11.15 patched); keeper uses QUIC via solana-connection-cache for all RPC — **HIGH / ACTIVE** |
-
-### D57. Vault Collateral Shadow-Asset Valuation Drag
-
-**Source**: rekt.news — Summer Finance ($6.04M loss, July 2026)
-**Historical precedent**: Summer Finance incident where a capped-for-removal Ark was still counted in vault value computation.
-
-**Mechanism**:
-A collateral asset that has been officially deprecated, capped, or scheduled for removal — but whose oracle feed, valuation weight, or accounting path remains active in the vault — can be exploited by an attacker who donates or inflates the stale asset's apparent value. The vault counts the inflated deprecated asset at face value, inflating the total vault share price, and enabling the attacker to redeem real liquidity at the inflated rate.
-
-**Why this is a distinct vector**:
-- A3/A68 cover oracle price manipulation — the oracle returns a wrong price.
-- D57 targets the **collateral lifecycle deprecation gap**: the oracle may be perfectly correct, but the vault should not be counting this asset anymore. The bug is in the **asset lifecycle vs. valuation path desynchronization**.
-- The attacker does not need to manipulate any oracle — they only need to find a deprecated-but-still-counted collateral slot and inflate it through a swap, donation, or market purchase.
-
-**Attack scenario for a multi-collateral stablecoin**:
-1. Collateral asset X is deprecated (new mints disabled, peg weakened) but still held in vault and counted at oracle price.
-2. Attacker acquires a large position in X cheaply (market is thin post-deprecation).
-3. Attacker donates/swaps to create a temporary price spike or exploits a thin Pyth/switchboard feed for X.
-4. Vault total TVL appears higher → attacker mints/redeems stablecoin at inflated rates.
-5. When X price reverts, real collateral has been drained.
-
-**Defense**:
-1. Deprecated collateral assets must be **zeroed in valuation** before disabling deposits — not merely disabled for new mints.
-2. Run a daily invariant check: `sum(collateral_balances * active_oracle_prices) == reported_tvl` with `active_oracle_prices` excluding deprecated feeds.
-3. Treat any collateral type with `is_active=false` or `deposits_paused=true` as having **zero contribution** to vault TVL until explicitly removed.
-4. Alert on any price update for a collateral type flagged as deprecated.
-
-**Microstable relevance**:
-- Microstable has 4 collateral types: USDC, USDT, DAI, USDS, each with its own vault, Pyth feed, and accounting path.
-- If any collateral type were deprecated (e.g., USDS delisted) but its vault balance and oracle feed remained active in the global TVL computation, the Summer Finance pattern would apply directly.
-- Current code has per-vault `init_vault()` and individual collateral accounting, but no explicit `is_deprecated` flag or zero-weight enforcement on deprecated vaults.
-- **Severity: MEDIUM** — requires a collateral deprecation event to trigger, but the code structure does not prevent it.
-
-| Vector | Mechanism | Impact | Microstable relevance |
-|---|---|---|---|
-| D57 Vault Collateral Shadow-Asset Valuation Drag | deprecated-but-still-counted collateral asset with active oracle feed is inflated by attacker through donation or thin-market manipulation, inflating vault TVL and enabling real-liquidity drain at inflated rates | stablecoin over-mint, real collateral drain, share-price inflation, silent insolvency | Microstable has 4 collateral vaults with no explicit deprecation zero-weight enforcement; if a collateral is deprecated but vault remains active, the pattern applies — **MEDIUM / CONDITIONAL** |
-
-**Matrix state as of 2026-07-14 (purple-team daily update)**: prior coverage retained; **META-72** added for Code-Audit Boundary / Governance-Economic Authority Gap (BonkDAO $20M governance attack). A92 reinforced. Matrix is now **150+ named vectors + META-01~72 + B73~B84 = 222+ total entries**. Microstable: **1 HIGH active finding (A138)** requiring dependency upgrade; META-72 applies to future governance expansion only.
+**Matrix integrity correction as of 2026-07-15 (black-team daily update)**: **A138 is retired as a duplicate alias of canonical B83** because both describe `RUSTSEC-2026-0185` / `GHSA-4w2j-m93h-cj5j` sparse QUIC fragment reassembly memory exhaustion. **D57 is retired as a duplicate classification of canonical A40 with META-68 lifecycle context** because both describe Lazy Summer's capped-for-offboarding Ark remaining in NAV and accepting donation-driven share-price inflation. The conflicting Solana checklist numbers introduced with those aliases are retired with them. Today's Lumi Finance incident reinforces **A127** but does not add a new vector. Inventory is restored to **148+ named vectors + META-01~72 = 220+ total entries**; B73~B84 are already included in the named-vector count. Current-code reachability review downgrades Microstable's canonical **B83** to **INFO-latent**; active HIGH findings are the new Hermes false-success/oracle-non-update path and **B45** attestation carry-forward.
 
 ### META-72. Code-Audit Boundary / Governance-Economic Authority Gap
 **Source**: BonkDAO governance attack ($20M, 2026-07-06)
