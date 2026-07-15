@@ -1,3 +1,64 @@
+## 2026-07-16 Daily Check
+
+### Source Sweep (24h~7d window: 2026-07-09 → 2026-07-16 KST)
+
+- Sources checked: `rekt.news`, Immunefi disclosures/metrics, SlowMist Hacked, GitHub Advisory Database (`solana` / `anchor` / `spl-token`), official Solana/Anza security surfaces, Trail of Bits, OtterSec, Neodyme, and X/community fallback through `web_search` + direct `web_fetch`.
+- **New named vectors from today's black-team intake: 0.** Bonzo's July 14 rekt article is already absorbed under A3/META-70, and no new Solana/Anchor/SPL disclosure appeared.
+- **Reinforcement: Chi Protocol → A2 + A10.** On 2026-07-13, `ArbitrageV5.burn()` valued discounted USC at the hardcoded `$1` target without the peg predicate enforced by `mint()`. A 5 WETH flash loan bought depegged USC and redeemed it for full-value reserves, causing about `$8.5K` loss.
+- Concurrent red-team evolution commit `44649bf` added A139~A141 before this sweep. Current canonical inventory is therefore **151+ named vectors + META-01~72 = 223+ total entries**.
+
+### Full 223-Entry Current-Code Sweep
+
+- **✅ DEFENDED / NOT ACTIVE: 198** — every canonical entry except the 23 partial and 2 open entries listed below.
+- **⚠️ PARTIAL: 23** — `A43`, `A75`, `A141`, `B14`, `B15`, `B18`, `B20`, `B40`, `B84`, `C21`, `C22`, `C24`, `C30`, `D26`, `D27`, `D28`, `META-25`, `META-53`, `META-57`, `META-59`, `META-61`, `META-63`, `META-70`.
+- **❌ UNDEFENDED: 2** — Hermes oracle false-success (`META-66` primary mapping) and `B45` post-audit deployment continuity gap.
+- Severity rollup: **CRITICAL 0 / HIGH 2 / MEDIUM 4 / LOW 2 / INFO-latent 1**. No new or upgraded HIGH was found today.
+
+### Today's New-Matrix Focus
+
+| Vector | Verdict | Current-code evidence |
+|---|---|---|
+| A139 — Collateral-Factor Zeroing Liquidation Dead Path | ✅ NOT ACTIVE | No borrow/debt/health-factor/liquidation surface exists. `redeem()` pays from tracked `total_deposits / supply_before` independently of portfolio weight (`lib.rs:1378-1401`). |
+| A140 — Duplicate Registration Accounting Reset | ✅ NOT ACTIVE (default build) | Canonical accounts use Anchor `init`; legacy migration rejects an existing `ProtocolState` discriminator (`lib.rs:268-315,2133-2186`). The analogous force-reinit path is behind non-default `devnet-admin` (`lib.rs:2006-2013`, `Cargo.toml:11-21`). |
+| A141 — Sponsored Self-Churn Volume Quota Poisoning | ⚠️ LOW / CONDITIONAL | Global per-slot gross counters and velocity fee are controller-blind (`lib.rs:3671-3751,3818-3851`). One controller can briefly consume shared capacity through multiple signers, but per-tx/per-slot caps, fees, haircuts, capital cost, and slot reset bound the effect. |
+| A2 + A10 — Chi Protocol redeem-at-par asymmetry | ✅ EXACT PATH NOT ACTIVE | Microstable burns MSTB, deducts fees, and pays each vault pro rata from tracked deposits and supply with an oracle-derived discount (`lib.rs:1208-1475,3784-3816,3884-3892`). It has no hardcoded external MSTB `$1` redemption formula. |
+
+### ❌ HIGH — Hermes Post Success ≠ Vault Oracle Update Success
+
+- **Current-code evidence**: `keeper/src/hermes.rs:197-243` posts each feed to a fresh temporary PriceUpdate account with `Partial` verification. The normal consumer path requires the vault's fixed account and `Full` verification (`programs/microstable/src/lib.rs:3154-3162,3244-3247`). The wrapper then re-runs the old fixed-feed cycle; zero updates return `Ok(Vec)` (`keeper/src/oracle.rs:296-306,332-384`) and even an error is converted from Hermes post receipts into success (`oracle.rs:669-701`). Main logs any `Ok`, including zero, as complete (`keeper/src/main.rs:861-874`).
+- **Attack scenario**: stale or lifecycle-changed fixed vault feed → Hermes successfully posts fresh data elsewhere → fixed-feed retry yields zero/error → keeper reports success and skips manual fallback → vault oracle slot does not advance while health appears green.
+- **Why defense failed**: receiver acceptance, consumer account selection, and vault state advancement were compressed into one success meaning. Component checks exist, but the `posted account → consumed account → vault slot advanced` edge invariant does not.
+- **Recovery path**: disable Hermes fallback; fail the cycle unless every configured vault advances on primary+secondary RPC; enter breaker/manual recovery or emergency shutdown on repeated zero-update cycles; re-enable only after an end-to-end stale-feed regression passes.
+- **Blue-team directive**: preserve the posted account pubkey, pass that exact account into `update_oracle_pyth`, align Full/Partial policy explicitly, require non-zero expected update count plus post-state slot advance, remove receipt-to-success conversion, and continue fallback on zero/error.
+
+### ❌ HIGH — B45 Audit-to-Deployment Attestation Gap
+
+- **Current-code evidence**: `security/audit-attestation.json` is absent. Cargo.lock self-hash/source checks and upgrade-authority checks exist, but they do not bind the approved audit commit to the program ELF, keeper binary, dashboard artifact, and deployed ProgramData. Current critical paths also contain substantial uncommitted work, making provenance impossible to reconstruct from a signed root.
+- **Attack scenario**: audit 이후 source/artifact가 변경됨 → build가 현재 lockfile hash를 자기 일관적으로 embed함 → startup checks 통과 → 감사되지 않은 program/keeper/frontend가 정상 release처럼 실행됨.
+- **Why defense failed**: dependency integrity was treated as deployment provenance. The current checks prove internal consistency of some build inputs, not approval of the running artifacts.
+- **Recovery path**: freeze privileged mutations with uncompromised 2-of-3; preserve current artifact hashes; rotate keeper/upgrade/deploy credentials; reproducibly rebuild from the approved commit; compare ProgramData/binary/dashboard hashes; resume only after signed attestation verification succeeds.
+- **Blue-team directive**: create a signed manifest containing audit report hash, source commit, Cargo.lock/SBOM, program ELF and ProgramData identity, keeper binary, dashboard artifact, builder identity, and approvals; make CI/release and production startup fail closed on absence or mismatch.
+
+### Carry-Forward Priority
+
+| Severity | Vector | Verdict |
+|---|---|---|
+| MEDIUM | A43 cumulative sub-threshold rebalance drift | ⚠️ rolling accumulator/cooldown absent |
+| MEDIUM | A75 manual-oracle exception lane | ⚠️ canonical Pyth-equivalent trust story absent |
+| MEDIUM | B84/D27 correlated confirmed-RPC failover | ⚠️ secondary degradation can reduce reads to primary-only |
+| MEDIUM | META-53/META-63 actuator promotion | ⚠️ emergency actuator defaults/warning-only paths remain |
+| LOW | A141 controller-blind gross-flow capacity | ⚠️ bounded one-slot starvation/fee influence |
+| LOW | D26 frontend trust surface | ⚠️ meta-only CSP and scripts without SRI |
+| INFO | B83 `quinn-proto 0.11.13` | ✅ latent only; no direct TPU/QUIC/WebSocket client path |
+
+### Today's Verdict
+
+- **Skill delta**: 0 new black-team vectors, 1 real-incident reinforcement (`Chi Protocol → A2 + A10`); `attack-matrix.md`, incident timeline, findings, and `SKILL.md` updated. No Solana-specific delta from today's intake.
+- **Microstable**: **CRITICAL 0 / HIGH 2**. Both HIGH findings are carry-forward and remain open; no new HIGH was introduced by A139~A141 or Chi.
+- **Immediate fix order**: Hermes end-to-end account/state-success semantics → B45 signed audit/deploy continuity → A43/A75/D27 operational hardening.
+
+---
+
 ## 2026-07-13 Daily Check
 ### Source Sweep (24h~7d window: 2026-07-06 → 2026-07-13 KST)
 - Sources checked: `https://rekt.news/`, `https://github.com/advisories?query=ecosystem%3Arust+solana`, `https://solana.com/news`, `https://osec.io/blog/`, plus current Microstable code / lockfile re-read.

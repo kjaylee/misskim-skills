@@ -20,11 +20,12 @@ transfer(attacker, amount);
 **Defense**: Checks-Effects-Interactions (CEI), reentrancy guards, token program ID pinning.
 
 ### A2. Flash Loan + Price Manipulation
-**Historical**: Mango Markets (2022, $114M), Euler (2023, $197M), Harvest (2020, $25M), PancakeBunny (2021, $45M), BonqDAO (2023, $120M), Stake Nova (2026-02-27, $2.39M)
+**Historical**: Mango Markets (2022, $114M), Euler (2023, $197M), Harvest (2020, $25M), PancakeBunny (2021, $45M), BonqDAO (2023, $120M), Stake Nova (2026-02-27, $2.39M), Chi Protocol (2026-07-13, ~$8.5K)
 **Mechanism**: Borrow massive capital in single TX → manipulate AMM/oracle price or redeem path invariants → exploit mispriced mint/redeem/liquidation → repay loan with profit.
 **Key insight**: Any protocol that reads price from a manipulable source *or* executes redeem logic without strict invariant checks can be flash-loan-amplified in one transaction.
 **2026 reinforcement (Stake Nova)**: Unchecked validation in `RedeemNovaSol()` enabled a flash-loan-assisted liquidity drain.
-**Source**: https://hacked.slowmist.io/
+**2026-07-13 reinforcement (Chi Protocol)**: `ArbitrageV5.burn()` valued USC at the hardcoded `$1` target without the peg check used by `mint()`. An attacker flash-borrowed 5 WETH, bought heavily depegged USC from a thin Uniswap V2 pool, and burned the discounted liability for full-value weETH/stETH/WETH reserves. The flash loan amplified an A10 mint/burn predicate asymmetry; it does not require a new vector.
+**Source**: https://hacked.slowmist.io/ | https://t.me/s/defimon_alerts | https://chi-protocol.gitbook.io/docs/overview/dual-stability-mechanism-minting-and-redeeming-usc
 **Code pattern to find**:
 ```
 // VULNERABLE: same-block price read for critical operation
@@ -154,12 +155,13 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 **Defense**: Multisig upgrade authority, timelock, freeze authority, eventual immutability.
 
 ### A10. Logic Bug
-**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap), ApeBond (2026 duplicate-pool migration inflation), NovaBox (2026 reward-ordering phantom dividend drain)
+**Historical**: Compound ($147M — distribution logic), Cream ($130M — accounting), Popsicle ($20M — fee tracking), Moonwell (2026 oracle wiring regression), Stake Nova (2026 redeem-path validation gap), ApeBond (2026 duplicate-pool migration inflation), NovaBox (2026 reward-ordering phantom dividend drain), Chi Protocol (2026 mint/burn peg-check asymmetry)
 **Mechanism**: Incorrect business logic allows unintended state transitions or value extraction.
 **2026 reinforcement (Moonwell + Stake Nova + ApeBond + NovaBox)**: Governance-approved deployment can still ship a one-line arithmetic/wiring omission (Moonwell), unchecked redeem-path validation (`RedeemNovaSol`) that becomes flash-loan-amplified (Stake Nova), batch-migration code that treats attacker-supplied identifiers as a set when the implementation actually accepts a multiset (ApeBond), or **reward distribution that snapshots dividends before deposit/withdraw balance updates settle** (NovaBox). In the NovaBox case, the attacker first triggered dividend logic with a small NOVA position, then injected a large ETH deposit while payout math still referenced the old share state, generating **phantom dividends** against an inconsistent before/after balance view.
 **Reinforcement note (2026-06-16)**: NovaBox와 Haedal Vault를 함께 보면 감사 실패 지점이 더 선명해진다. **old package, new package, upgrade review가 각각 green 이어도, legacy entry path와 new settlement/redeem path를 interleave 하면 stale snapshot entitlement가 열린다.** 즉 `share/reward snapshot observed` 와 `principal/share state settled` 는 다른 predicate다. 퍼플팀 체크리스트는 version-local unit test가 아니라 **legacy/new path interleaving simulation**, **settled-before-entitled payout invariant**, **deprecated path hard-fail proof** 를 함께 요구해야 한다.
+**Reinforcement note (2026-07-13, Chi Protocol)**: `mint()`가 USC 현물가와 목표가의 근접성을 검사했지만 `burn()`은 동일한 predicate 없이 `amount * USC_TARGET_PRICE / reservePrice`로 상환했다. 공격자는 디페그된 USC를 할인 매수해 액면가 담보로 바꿨다. 재사용 가능한 결함은 **경제적으로 대칭이어야 하는 mint/burn 경로가 서로 다른 admission predicate를 가진 것**이다. 모든 대칭 자산 경로에 동일한 불변식을 양방향으로 강제하고, 심한 디페그에서도 `payout <= claimant pro-rata backing`을 검증해야 한다.
 **Defense**: Formal spec → test cases → implementation. Invariant tests. Fuzzing. Add explicit unit tests for oracle composition and deploy-time sanity assertions (`min_price <= feed <= max_price`), redeem invariant assertions (`min_out`, vault/account binding, and per-tx flow caps), **batch uniqueness assertions** (`pool_id`/`position_id`/`vault_id` lists must be deduplicated or hard-fail on duplicates before value aggregation), and **reward-ordering invariants** (deposit/withdraw paths must update principal/share state before any dividend or reward snapshot can be consumed).
-**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/en/ | https://x.com/f12sec/status/2064610827554922679
+**Source**: https://rekt.news/moonwell-rekt | https://hacked.slowmist.io/en/ | https://x.com/f12sec/status/2064610827554922679 | https://hacked.slowmist.io/?c=ETH | https://t.me/s/defimon_alerts
 
 ### A11. Rent/Lamport Drain (Solana)
 **Historical**: Multiple small-scale
