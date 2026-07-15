@@ -2040,4 +2040,36 @@ archive_or_forward(tx)?; // delayed execution risk
 - https://github.com/otter-sec/anchor/pull/4632
 - https://github.com/otter-sec/anchor/commit/94df365f8442a3acb6403ba4348d1b5b0a90f3ed
 
+## 2026-07-16 State-Transition and Controller-Blind Flow Patterns
+
+### A139 — Collateral-Factor Zeroing Liquidation Dead Path
+
+- A Solana risk/governance instruction that sets a collateral weight or factor to zero must not accidentally disable liquidation, redemption, or forced unwind for positions created under the old factor.
+- Model `new entry disabled`, `existing exposure can exit`, and `asset fully removed` as three different states.
+- Current Microstable has no debt/liquidation engine and zero weight does not block pro-rata redemption, so this is **NOT ACTIVE**.
+- **Checklist item 92**: ☐ for every collateral-offboarding transition, prove that existing debt/claims remain liquidatable or redeemable after new entry is disabled
+
+### A140 — Duplicate Registration Accounting Reset
+
+- Solana program registration instructions must reject an already-initialized PDA/key instead of reserializing a zero/default accounting record over live state.
+- Retry-safe automation should distinguish create, configure, and migrate instructions; cumulative accounting fields must never be reset by a registration retry.
+- Current Microstable canonical PDAs use `init`; the only analogous force-reinit path is excluded from the default build behind `devnet-admin`.
+- **Checklist item 93**: ☐ replay every initialize/register/migrate instruction against existing state and assert failure or strict accounting preservation
+
+### A141 — Sponsored Self-Churn Volume Quota Poisoning / Controller-Blind Flow Inflation
+
+- **Signal**: arXiv `2607.12575` measured x402 settlements and showed how gas sponsorship plus meta-transaction indirection lets one linked operator manufacture apparently independent activity.
+- **Solana-specific path**: low transaction fees, fee-payer separation, address fan-out, and priority-fee sponsorship make signer count a weak proxy for economic independence. A bot can cycle the same SPL-token principal across wallets while each transaction remains valid.
+- If an Anchor program increments a global gross-flow counter and uses it as a hard quota, fee curve, or circuit-breaker input, the attacker can consume the shared safety budget before honest users arrive.
+- Current Microstable's per-slot gross counters are controller-blind. A first 1.5%-of-supply redemption followed by a second redemption consuming the remaining recalculated allowance (about 1.455% of initial supply) can fill the slot cap. The effect is bounded to a slot and repeated cycling incurs protocol and capital costs, so the current rating is **LOW / CONDITIONAL**.
+- Keeper `should_throttle_redemptions` is not currently amplified by this path because production evaluation passes `recent_volume = 0`; wiring real volume into it later must include adversarial self-churn tests.
+- **Checklist item 94**: ☐ test global flow/rate limits against one beneficial controller cycling the same principal through many fee-payer/signer addresses; do not equate signer count with independent demand
+- **Checklist item 95**: ☐ pair controller-blind gross safety caps with net-flow, short-horizon capital-reuse, sponsor concentration, and bounded-starvation monitoring before using volume for fees or automated risk state
+
+### Solana-Specific Defense Checklist Update
+92. ☐ for every collateral-offboarding transition, prove that existing debt/claims remain liquidatable or redeemable after new entry is disabled
+93. ☐ replay every initialize/register/migrate instruction against existing state and assert failure or strict accounting preservation
+94. ☐ test global flow/rate limits against one beneficial controller cycling the same principal through many fee-payer/signer addresses; do not equate signer count with independent demand
+95. ☐ pair controller-blind gross safety caps with net-flow, short-horizon capital-reuse, sponsor concentration, and bounded-starvation monitoring before using volume for fees or automated risk state
+
 ---

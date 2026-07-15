@@ -10915,6 +10915,73 @@ reader.resolver_mut().set_max_declarations_per_element(256);
 
 **Matrix state as of 2026-07-09 (red-team daily update)**: prior coverage retained; **D56** added after classifying RustSec `0194` and `0195` as a **parser-internal validation-cost ceiling failure** distinct from D55 DNSSEC proof-validation liveness and generic DoS. Matrix is now **148+ named vectors + META-01~71 + B73~B84 = 219+ total entries**. Microstable has **no new CRITICAL/HIGH active finding from D56 itself**; the new pattern is future-facing unless XML ingest is introduced.
 
+## 2026-07-16 State-Transition Backfill and Sponsored Self-Churn Pattern Addition
+
+### A139. Collateral-Factor Zeroing Liquidation Dead Path
+
+**Source signal**: Certora, *Aave V4 Spoke Formal Verification Report*, M-01 (published 2026-07-08).
+
+**Mechanism**: a governance or risk-manager transition changes an existing collateral factor from non-zero to zero while debt remains, but the liquidation path itself requires a non-zero factor. New risk is disabled while old risk becomes impossible to liquidate. Treat entry disablement, existing-position unwind, and final asset removal as separate state transitions.
+
+**Microstable relevance**: current Microstable has no per-user debt, health-factor, or liquidation engine. A zero portfolio weight does not disable pro-rata redemption, so this vector is **NOT ACTIVE today**.
+
+### A140. Duplicate Registration Accounting Reset
+
+**Source signal**: Certora, *Aave V4 Hub Formal Verification Report*, M-03 (published 2026-07-08).
+
+**Mechanism**: an authorized registration call accepts an already-registered asset/module key and overwrites accumulated supply, withdrawal, premium, or offset accounting with zero defaults. Authorization is valid, but the non-idempotent retry becomes an accounting-delete primitive. Registration must fail on an existing key; configuration updates must preserve cumulative accounting and live-balance invariants.
+
+**Microstable relevance**: canonical PDAs use Anchor `init`, and legacy migration refuses an existing `ProtocolState` discriminator. The similar `devnet_force_reinit` path is feature-gated behind `devnet-admin`, so A140 is **NOT ACTIVE in the default build**.
+
+### A141. Sponsored Self-Churn Volume Quota Poisoning / Controller-Blind Flow Inflation
+
+**Source signal**: arXiv `2607.12575`, *How Agentic Is Agentic Commerce? A Population-Scale Measurement of x402 Adoption and Authenticity* (submitted 2026-07-14). The study shows that gas-sponsored, meta-transaction-based settlements can be manufactured by a linked operator: 21.20% of measured settlements were fictitious and 63.78% were internal to a linked cluster.
+
+**Key insight**: a gross transaction or settlement counter is not proof of independent economic demand. If gas can be sponsored and the protocol does not bind payer, recipient, facilitator, and beneficial controller, one operator can recycle the same capital through many addresses. When that gross counter drives a rate limit, fee curve, circuit breaker, reputation score, or capacity allocation, self-churn becomes a control-plane attack rather than mere analytics fraud.
+
+**Attack chain**:
+1. Identify a protocol control that consumes gross mint, redeem, payment, or settlement volume without controller-level deduplication or net-flow accounting.
+2. Split one economic actor across payer/recipient wallets or facilitator-sponsored meta-transactions.
+3. Recycle the same principal through reversible or near-reversible operations while the sponsor absorbs transaction fees.
+4. Fill the shared volume quota or move a velocity-based fee/risk curve before honest users transact.
+5. Exploit the induced denial, fee spike, false-adoption signal, or defensive mode while the payment graph still appears to contain many independent users.
+
+**Why this is distinct**:
+- **B79** concerns grant-before-final-settlement and payment-service correspondence. A141 assumes settlement succeeds; the deception is that settled flows are not economically independent.
+- **A52** uses wash trading to manufacture token legitimacy and price history. A141 targets a protocol's own **controller-blind operational counter** and can directly consume defensive capacity.
+- Generic Sybil defenses count identities. A141 requires **beneficial-controller and capital-reuse analysis**, because every address and transaction may be valid.
+
+**Code pattern to find**:
+```rust
+// Vulnerable shape: gross directional flow directly consumes a global quota.
+state.redeemed_in_window = state.redeemed_in_window.checked_add(amount)?;
+require!(state.redeemed_in_window <= state.redeem_cap, Error::FlowLimit);
+
+// Safer shape: use gross caps only as a last-resort safety fuse, and pair them
+// with net-flow/controller-aware signals plus per-principal economic costs.
+let net_outflow = state.gross_redeem.saturating_sub(state.gross_mint);
+assess_flow_risk(net_outflow, linked_controller_volume, capital_reuse_rate)?;
+```
+
+**Defensive heuristic**:
+- do not interpret transaction count, wallet count, or gross flow as independent adoption or unique risk demand
+- separate hard solvency fuses from reputation/velocity controls; document which are intentionally controller-blind
+- measure net outflow, short-horizon capital reuse, payer-recipient-facilitator linkage, and sponsor concentration
+- add an adversarial test where one principal cycles the same capital through many wallets and attempts to exhaust the global quota
+- if a gross global cap must remain, make starvation bounded and observable, and price repeated same-controller churn above the harm it can impose
+
+**Microstable relevance**:
+- `programs/microstable/src/lib.rs` tracks gross `minted_in_flow_slot` and `redeemed_in_flow_slot` globally, with default per-slot caps of 6% and 3% of supply and per-transaction caps of 2% and 1.5%.
+- A holder controlling roughly 3% of supply can redeem 1.5% first and then consume the remaining recalculated allowance (about 1.455% of the initial supply) early in the same slot; cycling collateral back through mint can repeat the pattern across slots.
+- The window resets each slot and the attacker pays mint/redeem fees, collateral haircut, priority fees, and capital cost. Therefore this is **LOW / CONDITIONAL**, not a current HIGH-impact drain.
+- The keeper's `should_throttle_redemptions` currently receives a hard-coded `recent_volume = 0`, so the off-chain throttle is not an additional active amplification path today.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A141 Sponsored Self-Churn Volume Quota Poisoning / Controller-Blind Flow Inflation | one beneficial controller recycles principal through sponsored/meta-transacted identities so valid gross flows consume a shared control quota or falsify a risk/adoption signal | bounded redemption starvation, progressive-fee manipulation, false defensive-mode activation, fabricated adoption/reputation | gross per-slot mint/redeem counters are controller-blind; current exploitability is **LOW / CONDITIONAL** because the window is one slot and churn bears protocol/capital costs |
+
+**Matrix state as of 2026-07-16 (red-team daily update)**: A139 and A140 were backfilled from the 2026-07-15 daily assessment; **A141** is today's new technique. No new CRITICAL/HIGH Microstable finding was confirmed.
+
 **Matrix integrity correction as of 2026-07-15 (black-team daily update)**: **A138 is retired as a duplicate alias of canonical B83** because both describe `RUSTSEC-2026-0185` / `GHSA-4w2j-m93h-cj5j` sparse QUIC fragment reassembly memory exhaustion. **D57 is retired as a duplicate classification of canonical A40 with META-68 lifecycle context** because both describe Lazy Summer's capped-for-offboarding Ark remaining in NAV and accepting donation-driven share-price inflation. The conflicting Solana checklist numbers introduced with those aliases are retired with them. Today's Lumi Finance incident reinforces **A127** but does not add a new vector. Inventory is restored to **148+ named vectors + META-01~72 = 220+ total entries**; B73~B84 are already included in the named-vector count. Current-code reachability review downgrades Microstable's canonical **B83** to **INFO-latent**; active HIGH findings are the new Hermes false-success/oracle-non-update path and **B45** attestation carry-forward.
 
 ### META-72. Code-Audit Boundary / Governance-Economic Authority Gap
