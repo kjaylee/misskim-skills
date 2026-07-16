@@ -2073,3 +2073,31 @@ archive_or_forward(tx)?; // delayed execution risk
 95. ☐ pair controller-blind gross safety caps with net-flow, short-horizon capital-reuse, sponsor concentration, and bounded-starvation monitoring before using volume for fees or automated risk state
 
 ---
+
+## 2026-07-17 Stake-Account Reincarnation and Anchor Reload Drift
+
+### A142 — Solana Account Reincarnation + Cached Lifecycle Desync
+
+- **Source**: Certora Solana Stake Pool report (`2026-07-16`)
+- **Solana context**: closed/reinitialized account lifecycle에서 계정 역할/소유권/퍼시스턴트 캐시가 분리되면, 다시 할당된 같은 pubkey 또는 같은 슬롯 연계 자원이 이전 권한/형태를 떠안아 잘못된 계정 타입 경로로 들어갈 수 있다.
+- **Mechanism**: close/close-like transition 직후에도 캐시/인터페이스 단의 이전 owner/discriminator 기대치가 남아 있으면, 재초기화된 상태를 “기존 라이프사이클 연속체”로 처리하게 된다. 특히 수치형 라이프사이클 상태와 잔고 보존이 결합되면, 오인한 쿼터 계산/결제 경로/권한 판정이 가능한 경로가 열린다.
+- **Microstable current status**:
+  - `microstable/solana/programs/microstable/src/lib.rs`와 `keeper/src/`에서 스테이크형 close/reinit 또는 닫힘 후 재초기화 패턴은 발견되지 않았다.
+  - `AccountLoader`/`new_unchecked`/`try_from_unchecked`가 직접적으로 재초기화 캐시 데싱크를 유도하는 형태로 쓰이지 않는다.
+  - 따라서 **NOT ACTIVE today**.
+  - 향후 지표형 스테이크/펀딩/재초기화 계정 설계를 붙이면 **A142를 즉시 재평가**할 것.
+- **Checklist item 96**: ☐ account lifecycle mutation (`close`/`reinit`/`force_reset`) 이후 동일 지점에서 owner/discriminator/cached state를 동기화하고 재시도 가능성이 없음을 state-machine test로 고정할 것
+- **Checklist item 97**: ☐ close-reinitialize 경계에서 이전 캐시 기반 계정 재활용을 block하고, 실제 계정 타입·서명·권한 재생성 경로를 각각 분리해 테스트할 것
+
+### A95 reinforcement — Anchor `LazyAccount::unload()` 재검증 보류점
+
+- **Source/trigger**: non-public release Anchor boundary scan (reload/unload 경계) and `anchor-lang` history from recent reports.
+- **Solana context**: `LazyAccount::unload()` 계열 패턴은 Anchor 마이그레이션 시점에서 owner/discriminator 재검증/캐시 정합성을 다시 점검해야 한다.
+- **Microstable status**: 현재 Microstable은 Anchor `0.31.1` 고정이고 `LazyAccount::unload()` 경로가 보이지 않아 즉시 적용 경로는 없음.
+- **Reinforcement guidance**:
+  - Anchor 1.0/1.1 업그레이드 시 프레임워크-기본값 변화(`reload`/`unload` 신뢰 경계)가 `protocol-level` 권한 판단을 건드리지 않는지 확인.
+  - 라이프사이클 경계 재검증을 문서화하고, `owner`/`discriminator` 불일치 시 fail-fast 테스트를 릴리스 게이트에 넣을 것.
+
+### Solana-Specific Defense Checklist Update
+96. ☐ account lifecycle mutation (`close`/`reinit`/`force_reset`) 이후 동일 지점에서 owner/discriminator/cached state를 동기화하고 재시도 가능성이 없음을 state-machine test로 고정할 것
+97. ☐ close-reinitialize 경계에서 이전 캐시 기반 계정 재활용을 block하고, 실제 계정 타입·서명·권한 재생성 경로를 각각 분리해 테스트할 것

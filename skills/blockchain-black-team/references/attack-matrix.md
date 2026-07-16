@@ -11000,3 +11000,48 @@ assess_flow_risk(net_outflow, linked_controller_volume, capital_reuse_rate)?;
 3. Supermajority requirements for treasury-moving proposals
 4. Circuit breaker: treasury outflow 가 시간당 X% 초과 시 자동 일시정지
 5. Cost-to-attack 모니터링: 시장가 기준 quorum 매수 비용 vs treasury 가치 실시간 추정
+
+## 2026-07-17 Stake-Account Reincarnation and Anchor Reload Boundary Update
+
+### A142. Solana Account Reincarnation + Cached Lifecycle Desync
+
+**Source signal**: Certora, *Solana Stake Pool* (published 2026-07-16).
+
+**Mechanism**: a previously initialized stake account can be force-closed/recreated with a different lifecycle expectation while stale cache assumptions remain. If the program then follows cached/derived lifecycle data (owner/authority/discriminator assumptions) and assumes post-receipt cache is still authoritative, replayed state can migrate into a control-critical path without re-authenticating true current ownership and authority state.
+
+**Attack chain**:
+1. Identify an instruction path that assumes account lifecycle has only expanded forward, and does not fully recompute/canonicalize owner/discriminator/context after close-like lifecycle mutation.
+2. Reinitialize/rebind the target account under a different state role or owner profile within one valid transition boundary.
+3. Re-enter downstream logic that reads cached assumptions (directly or through CPI helpers) and misrouted bookkeeping/authority checks.
+4. Use mismatch between recorded lifecycle and current account semantics to induce false mint/burn/redemption accounting or stale authority acceptance.
+
+**Why this is distinct from existing vectors**:
+- differs from A140/A139-style explicit accounting resets because this is a lifecycle re-binding + cache desync failure, not repeated registration logic.
+- differs from D27-style liveness paths by targeting **ownership/lifecycle cache freshness** in normal accounting lanes.
+
+**Code pattern to find**:
+```rust
+// vulnerable shape: lifecycle state is inferred from prior assumptions after explicit ownership transition
+let account_info: &AccountInfo = ...;
+require_keys_eq!(account_info.owner, expected_owner, ErrorCode::WrongOwner);
+let state: CachedState = cache.get(account_info.key);
+state.apply_transition(...); // without re-reading and revalidating fresh discriminator/owner lifecycle state
+```
+
+**Defensive heuristic**:
+- treat every account lifecycle mutating path (close/reinit/reseed/rebind) as requiring fresh ownership/discriminator re-validation in the same instruction
+- clear/refresh derived lifecycle caches in keeper/on-chain adapters after lifecycle transition events
+- split transition tests for: close path, force-close path, reinit path, and mixed role transition path
+- ensure one principal cannot be treated as valid in two mutually-exclusive roles across adjacent slots
+
+**Microstable relevance**:
+- `microstable/solana/programs/microstable/src/lib.rs` and `keeper/src/`에 현재 확인되는 스테이크/재초기화 혼용 생명주기 경로는 없다.
+- `LazyAccount::unload()`나 계정 재초기화 경계 캐시 디싱크를 유도할 수 있는 anchor 패턴도 현재 코드에서 직접 확인되지 않는다.
+- 따라서 **NOT ACTIVE today**.
+- 다만 Anchor 또는 stake-like 계정 생명주기 패턴이 붙으면 **A142를 즉시 프레임워크 + 운영 체크리스트에 등록**해야 한다.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A142 Solana Account Reincarnation + Cached Lifecycle Desync | close/reinit lifecycle mutation + stale cached ownership/discriminator assumptions creates false positive authorization and stale accounting state progression | false entitlement, authority skew, protocol-state drift, governance-like liveness confusion | requested/현재 경로에서 close/reinit 혼용 경로가 없어 **NOT ACTIVE today**; Anchor 1.0 도입 또는 stake-lifecycle feature 추가 시 HIGH/LOW 경로로 전환 가능 |
+
+**Matrix state as of 2026-07-17 (red-team daily update)**: **A142** is added as a new vector from Certora stake-pool report. **A95** is reinforced as a **framework upgrade / API-version readiness** item because the `LazyAccount::unload()` boundary issue is still not public-released in current Anchor pin state. No new CRITICAL/HIGH Microstable findings confirmed.
