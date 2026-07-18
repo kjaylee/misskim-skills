@@ -2101,3 +2101,31 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 96. ☐ account lifecycle mutation (`close`/`reinit`/`force_reset`) 이후 동일 지점에서 owner/discriminator/cached state를 동기화하고 재시도 가능성이 없음을 state-machine test로 고정할 것
 97. ☐ close-reinitialize 경계에서 이전 캐시 기반 계정 재활용을 block하고, 실제 계정 타입·서명·권한 재생성 경로를 각각 분리해 테스트할 것
+
+---
+
+## 2026-07-19 Encrypted-Ordering Reaction Gap and Anchor Namespace Reinforcement
+
+### A143 — Encrypted-Mempool Correction Exclusion / Self-Authored State-Distortion Claim
+
+- **Solana context**: Jito/BAM, private bundles, encrypted orderflow, commit/open execution을 도입하면 public frontrunning은 줄어도 **reveal 후 adaptive correction이 들어갈 시간** 도 함께 사라질 수 있다. 공격자는 자기 transaction payload를 이미 알고 있으므로 victim-order visibility가 없어도 된다.
+- **Mechanism**: attacker가 sealed batch 안에서 mark/oracle-adjacent state, pool skew, dynamic-fee input, auction signal을 움직이고, 그 state를 소비하는 funding/rebate/redemption/keeper-reward claim도 보유한다. 공개 후 정직한 searcher는 왜곡을 보지만 committed batch에 들어갈 수 없고, settlement가 먼저 실행되면 attacker가 uncorrected state로 지급받는다.
+- **Distinct from A110**: A110은 receipt admission을 spam으로 막는다. A143은 admission/decryption이 정상이어도 **information schedule이 correction을 settlement 뒤로 미루는 문제** 다.
+- **Microstable current status**:
+  - live program에는 large rebalance용 `pending_rebalance_commit` / reveal이 있다.
+  - 그러나 private/encrypted batch, Jito submission, perpetual funding, auction settlement은 없고, reveal된 target weight로 같은 window에 지급되는 claim도 없다.
+  - `redeem()`은 actual vault deposits 기준 pro-rata payout이라 새 weight reveal이 공격자 payout을 직접 키우지 않는다.
+  - 따라서 **NOT ACTIVE today**. future private ordering + dynamic fee/reward/settlement 결합 시 즉시 재평가한다.
+- **Checklist item 98**: ☐ encrypted/private ordering을 도입하면 attacker-known/honest-unknown self-authored transaction을 threat model에 넣고, state-linked payout은 `reveal → correction window → settle` 순서를 강제할 것
+
+### A112/D52 Reinforcement — Anchor `declare_program!` Foreign-IDL Namespace Collision
+
+- **Signal**: Anchor commit `d2b2c0a` (`fix(declare-program): preserve IDL namespace boundaries`, merged 2026-07-16).
+- foreign IDL의 `Key` 같은 defined type가 `anchor_lang::Key` prelude item과 충돌해 generated binding을 깨뜨릴 수 있어, Anchor가 IDL-defined account/event/type를 `__defined` namespace로 격리했다.
+- 현재 공개 diff가 입증하는 영향은 **compile/build integrity failure** 이며 runtime authority confusion exploit은 아니다. 따라서 새 번호를 만들지 않고 A112(raw IDL trust)와 D52(generated parser/schema ambiguity)를 강화한다.
+- Microstable은 Anchor `0.31.1`을 사용하고 repo scan에서 `declare_program!`이 보이지 않아 **NOT ACTIVE**다.
+- **Checklist item 99**: ☐ foreign IDL codegen은 untrusted compiler input으로 취급하고 prelude/reserved-name collision corpus를 빌드 테스트하며, generated definitions를 명시적 namespace 밖으로 glob-import하지 말 것
+
+### Solana-Specific Defense Checklist Update
+98. ☐ encrypted/private ordering의 state-linked payout은 attacker-known self-authored mutation을 포함해 `reveal → correction window → settle` 순서를 검증할 것
+99. ☐ foreign IDL codegen은 reserved/prelude-name collision 테스트와 explicit generated namespace 격리를 릴리스 게이트로 둘 것

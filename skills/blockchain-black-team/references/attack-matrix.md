@@ -238,11 +238,12 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 **2026 reinforcement (SecFid + Vera, submitted 2026-06-29 / 2026-07-02)**: 최신 agent security 연구는 **`prompt injection defense score` 자체도 충분한 보증면이 아님** 을 못 박았다. SecFid 는 최고-fidelity 설정이 **96.5% fidelity / 47.8% security**, 최고-security 설정이 **99.3% security / 71.0~73.9% fidelity** 로 갈라짐을 보여줬고, Vera 는 production agent framework 상에서 **multi-channel attack success rate 93.9%** 와 **1,600 executable safety cases** 를 공개했다. 퍼플팀 교훈은 `defense passed` 와 `task-safe deployment`, `agent red-teamed` 와 `deployment-safe authority` 가 다르다는 점이다.
 **2026 reinforcement (Zscaler IPI web-content campaigns, published 2026-07-02)**: ThreatLabz는 **SEO poisoning + JSON-LD + CSS-hidden off-screen DOM** 을 이용해 AI agent를 **결제 실행** 또는 **가짜 DeBank authority 판정** 으로 유도하는 실제 캠페인 두 건을 공개했다. internal validation 에서 **26개 모델 중 4개가 결제를 실행** 했고, 다른 조건에서는 **GPT-5.4** 와 **Claude Sonnet 4.5** 가 fake DeBank page를 legitimate로 잘못 분류했다. 퍼플팀 교훈은 `visible webpage looks normal` 과 `agent-consumed context is safe` 가 다르다는 점이다. 사람이 보는 정상 문서와 agent가 읽는 **structured metadata / hidden DOM** 은 서로 다른 권한 채널이며, manual screenshot review는 후자를 거의 덮지 못한다.
 **2026 reinforcement (Adversarial HalluSquatting, arXiv 2026-07-08)**: 최신 연구는 direct injection channel 이 없어도, 공격자가 **agent가 hallucinate 하기 쉬운 repository / skill 이름** 을 선점 등록해 untargeted promptware 를 대규모로 증폭할 수 있음을 보였다. 논문은 **repository cloning 시나리오에서 최대 85%**, **skill installation 에서 최대 100%** 의 hallucinated resource generation 을 보고했고, integrated terminal 이 있는 production LLM applications 상대로 **remote tool execution / RCE** 실증까지 제시했다. 퍼플팀 교훈은 `resource name looks right` 와 `origin is trusted`, `agent resolved a dependency` 와 `safe capability boundary held` 가 다르다는 점이다.
+**2026 reinforcement (Setup-Instruction Dependency Redirection, arXiv 2026-07-16)**: `README`, requirements file, 또는 `Makefile` 만 바꿔도 coding agent가 attacker registry, known-vulnerable version, 또는 separator-confusion package name을 설치하도록 유도할 수 있다는 production-harness 실험이 공개됐다. 특히 npm/Cargo의 **source/registry redirection은 거의 모든 harness-model 조합이 놓쳤다**. 이는 새 번호보다 B29/D38의 delivery-path 강화다: prompt-like 문장이 없어도 ordinary setup documentation이 privileged install action으로 번역될 수 있다. 방어는 모델 경고문이 아니라 install 직전 deterministic gate에서 package name, registry/source, version, lockfile provenance를 검증하는 것이다.
 **2026 reinforcement (ADI + DualView + aiAuthZ, 2026-07-04 / 2026-07-06)**: **Agent Data Injection Attacks are Realistic Threats to AI Agents** 는 prompt-like instruction이 없어도 **resource identifier, data origin, tool call/response format** 같은 metadata-looking input만으로 arbitrary click, RCE, supply-chain attack이 가능하다고 적는다. **DualView** 는 context 안에서만 untrusted-data tracking을 해서는 부족하며, 파일시스템/셸/네트워크에 저장된 뒤 다시 읽힌 데이터가 **stored IPI** 로 재신뢰될 수 있음을 보여준다. **aiAuthZ** 는 반대로, 모델이 여전히 속더라도 **off-host, identity-bound authorization** 으로 action edge를 고정하면 tool 실행은 막을 수 있다고 주장한다. 퍼플팀 교훈은 `prompt filtered` 와 `authority-bearing data isolated`, `model deceived` 와 `action executed` 가 각각 다른 predicate 라는 점이다.
 **Bypass insight**: Even when model rejects simple direct prompts, semi-structured wrappers (`[BEGIN SYSTEM MESSAGE]`, "policy update", "abuse prevention") and staged tasks can still hijack tool execution.
 **Defense**: Tool-level authorization policy (not prompt-only), data/command channel separation, strict side-effect allowlists, authenticated provenance tags for instructions, and human approval for privileged actions.
 **Why audits miss (2026-04 / 2026-07 reinforcement)**: 많은 감사는 agent의 system prompt, tool allowlist, on-chain action surface만 본다. 하지만 **router/relay/provider-of-provider** 경로는 보통 SaaS plumbing 또는 infra로 분리되어 감사를 벗어나며, prompt와 tool payload가 그 경계를 지날 때의 **credential visibility / mutation right** 는 거의 검증하지 않는다. 또 **instruction-looking text** 만 차단하면 안전하다고 오인해, 실제로는 **resource identifier / data origin / tool I/O format / persisted file content** 같은 metadata-looking input이 authority-bearing data로 남는다는 점을 놓친다. 여기에 **role tag / message label** 을 hard trust boundary 로 오인하면, tool output·retrieved page·fabricated CoT 가 **trusted voice** 를 흉내 내는 순간 authority inheritance 가 발생할 수 있다는 점을 놓친다. 또 **사람에게 보이는 웹페이지** 와 **agent가 DOM / JSON-LD / hidden block으로 실제 소비하는 컨텍스트** 를 같은 것으로 취급하면, screenshot/manual QA 는 machine-readable instruction plane 을 통째로 놓친다. 마지막으로 **agent benchmark 점수** 나 **prompt-defense leaderboard** 가 높다는 이유로 patch drafting, governance proposal generation, auto-remediation 권한까지 같은 런타임에 승격하면, `탐지 능력`, `fidelity preservation`, `수정 권한`, `response ownership`, `action-edge authorization` 의 경계가 무너진다.
-**Source**: https://blog.trailofbits.com/2026/02/20/using-threat-modeling-and-prompt-injection-to-audit-comet/ | https://arxiv.org/abs/2602.20156 | https://www.coindesk.com/tech/2026/04/13/ai-agents-are-set-to-power-crypto-payments-but-a-hidden-flaw-could-expose-wallets | https://role-confusion.github.io/ | https://arxiv.org/abs/2603.12277 | https://arxiv.org/abs/2606.30783 | https://arxiv.org/abs/2607.01793 | https://www.zscaler.com/blogs/security-research/indirect-prompt-injection-web-content-targets-ai-agents | https://arxiv.org/abs/2607.07433 | https://arxiv.org/abs/2607.05120 | https://arxiv.org/abs/2607.03821 | https://arxiv.org/abs/2607.05518
+**Source**: https://blog.trailofbits.com/2026/02/20/using-threat-modeling-and-prompt-injection-to-audit-comet/ | https://arxiv.org/abs/2602.20156 | https://www.coindesk.com/tech/2026/04/13/ai-agents-are-set-to-power-crypto-payments-but-a-hidden-flaw-could-expose-wallets | https://role-confusion.github.io/ | https://arxiv.org/abs/2603.12277 | https://arxiv.org/abs/2606.30783 | https://arxiv.org/abs/2607.01793 | https://www.zscaler.com/blogs/security-research/indirect-prompt-injection-web-content-targets-ai-agents | https://arxiv.org/abs/2607.07433 | https://arxiv.org/abs/2607.05120 | https://arxiv.org/abs/2607.03821 | https://arxiv.org/abs/2607.05518 | https://arxiv.org/abs/2607.15143
 
 ## C. Economic Vectors
 
@@ -11056,3 +11057,63 @@ state.apply_transition(...); // without re-reading and revalidating fresh discri
 | A142 Solana Account Reincarnation + Cached Lifecycle Desync | close/reinit lifecycle mutation + stale cached ownership/discriminator assumptions creates false positive authorization and stale accounting state progression | false entitlement, authority skew, protocol-state drift, governance-like liveness confusion | requested/현재 경로에서 close/reinit 혼용 경로가 없어 **NOT ACTIVE today**; Anchor 1.0 도입 또는 stake-lifecycle feature 추가 시 HIGH/LOW 경로로 전환 가능 |
 
 **Matrix state as of 2026-07-17 (red-team daily update)**: **A142** is added as a new vector from Certora stake-pool report. **A95** is reinforced as a **framework upgrade / API-version readiness** item because the `LazyAccount::unload()` boundary issue is still not public-released in current Anchor pin state. No new CRITICAL/HIGH Microstable findings confirmed.
+
+---
+
+### A143. Encrypted-Mempool Correction Exclusion / Self-Authored State-Distortion Claim
+
+**Published**: 2026-07-15 | **Severity**: MEDIUM (design-dependent) | **Red Team**
+
+**Signal**: arXiv `2607.13832`, *Reveal, Correct, Then Pay: Encrypted Mempools and Perpetual Funding Security*.
+
+**Key insight**: encrypted mempools hide victim transactions from front-runners, but they also hide an attacker's **self-authored state mutation** from honest arbitrageurs until ordering is already closed. If the attacker owns a downstream claim whose payout uses that mutated state, privacy creates a reaction gap: the market learns the distortion only after corrective transactions are barred from the committed batch, while settlement can still pay against the uncorrected state.
+
+**Attack chain**:
+1. a protocol seals transaction order before payload reveal and computes a funding payment, redemption rate, rebate, auction mark, or other claim from state inside or immediately after that batch.
+2. the attacker owns both (a) a transaction that predictably distorts the relevant state and (b) a receiving-side claim whose payout grows with that distortion.
+3. the attacker submits the state-mutating transaction into the encrypted/committed batch; only the attacker knows its own payload before reveal.
+4. after reveal, ordinary arbitrageurs can see the correction opportunity but cannot insert an adaptive corrective transaction into the already committed batch.
+5. settlement executes before an open correction window, so the attacker captures payment against a distortion that public ordering would have partially arbitraged away.
+
+**Why this is distinct**:
+- **A110** targets admission fairness by receipt spam or selective non-open. A143 assumes admission and decryption work correctly; the vulnerability is that **corrective capacity becomes actionable too late**.
+- **B81** is privileged builder defection after observing a private bundle. A143 needs no dishonest builder: the protocol's honest privacy schedule itself shields the attacker's own mutation from adaptive correction.
+- generic sandwich/MEV vectors require observing a victim. A143 is **self-authored**: the attacker already knows the hidden transaction because they created it and monetizes a separate downstream claim.
+
+**PoC-level scenario**:
+```text
+closed batch N:
+  attacker position already receives positive funding / state-linked payout
+  hidden attacker order pushes the mark/funding signal farther in that direction
+  batch order is committed
+
+reveal:
+  arbitrageurs discover the distortion but cannot join batch N
+  protocol settles funding/claim using the still-distorted signal
+
+batch N+1:
+  correction finally arrives after the attacker has already been paid
+```
+
+**Defensive heuristic**:
+- separate `reveal`, `correction`, and `pay`: do not settle a state-linked claim in the first moment honest adaptive correction becomes possible
+- snapshot settlement inputs before the sealed stage, or provide an explicit post-reveal correction window before payment
+- cap the influence of one batch/order on the settlement signal and exclude self-authored volume where payer/receiver control is linked
+- model encrypted ordering as a new information schedule, not as a drop-in privacy wrapper; test attacker-known/honest-unknown transactions explicitly
+- measure both correction shielding and price-capitalization shielding rather than assuming lower public MEV implies lower economic attack surface
+
+**Sources**:
+- https://arxiv.org/abs/2607.13832
+- https://collective.flashbots.net/t/the-mev-letter-147/5838
+
+**Microstable relevance**:
+- the requested `microstable/solana/programs/microstable_core/src/lib.rs` path is absent; the live program is `programs/microstable/src/lib.rs`.
+- current code has a multi-slot commit/reveal path for large target-weight changes, but no encrypted mempool, Jito/BAM private batch, perpetual funding, auction mark, or same-window state-linked reward settlement.
+- reveal currently changes target weights only; `redeem()` pays pro rata from actual vault deposits and does not pay a claim from the newly revealed weights. The direct A143 chain therefore stops before monetization.
+- current status is **NOT ACTIVE today**. It becomes relevant if private/encrypted ordering is later combined with dynamic fees, keeper rewards, auction settlement, or any payout computed from state first revealed after batch closure.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A143 Encrypted-Mempool Correction Exclusion / Self-Authored State-Distortion Claim | attacker hides a self-authored state mutation inside a sealed batch and owns a downstream claim that settles before honest adaptive correction can enter | amplified funding/rebate/redemption/auction payout without victim-order visibility or dishonest builder behavior | current commit/reveal only hides target weights and no same-window claim is paid from those weights, so **NOT ACTIVE today**; future private ordering plus state-linked settlement must insert reveal→correct→pay separation |
+
+**Matrix state as of 2026-07-19 (red-team daily update)**: **A143** added as a new information-schedule attack distinct from A110 admission poisoning and B81 builder defection. Setup-instruction registry redirection was classified as a B29/D38 reinforcement, and Anchor IDL namespace preservation as A112/D52 reinforcement rather than duplicate new vectors. No new active CRITICAL/HIGH Microstable finding was confirmed.
