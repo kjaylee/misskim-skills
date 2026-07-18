@@ -5017,6 +5017,26 @@ META-25 is to specification what META-24 is to scope: it operates at the **meta-
 4. **"Wrong spec" fuzzing**: Write invariant tests that specifically probe for "is this formula dimensionally correct?" — not just "does this formula compute consistently?" (e.g., `oracle_price > 1e6` for any USD-denominated asset, regardless of what the formula computes).
 5. **Audit RFPs must include**: "Independently derive the security-critical mathematical specifications (oracle formulas, rate-limit bounds, collateral factor logic) and compare to the implemented and stated specifications. Report any discrepancy as a finding, regardless of implementation correctness."
 
+### 2026-07-19 Reinforcement — Agentic Spec Generation / Self-Referential Proof Loop
+
+Certora announced AutoProver beta on `2026-07-15`: the system reads repository code and documentation, generates formal properties, Foundry tests and CVL rules, then runs and triages the resulting proofs. This lowers the cost of formal verification, but it also sharpens META-25's central failure mode.
+
+**New composition risk**: `implementation + repository docs → AI-inferred specification → proof against the same implementation context` can become a self-referential assurance loop. If code and docs share the same missing economic assumption, wrong unit model, incomplete authority boundary, or happy-path bias, the generated property can faithfully encode that omission. A valid proof then certifies code-to-generated-spec correspondence while reviewers misread it as independent validation of intended behavior.
+
+**Why audits miss**:
+1. Generated specifications look like durable, reviewable security artifacts, so provenance from the same repository is easy to forget.
+2. Automated proof status is binary and legible, while omitted requirements remain invisible and uncounted.
+3. Human review often checks whether the generated rule matches the code, not whether an independent product/economic/operations model contradicts both.
+4. Iterative agent feedback can converge code and spec together without ever introducing an external specification oracle.
+
+**Required negative controls**:
+- tag every property with provenance: `independent requirement`, `repository-derived`, `incident-derived`, or `tool-suggested`;
+- require at least one independent reviewer/model to derive safety properties without reading implementation details first;
+- mutation-test the **specification** by deliberately deleting units, liveness, authority, degraded-mode, and economic-bound assumptions and confirming review gates detect the omission;
+- never use generated property count or green proof count as release evidence unless uncovered-requirement coverage is separately owned.
+
+**Classification**: reinforcement only. This is not a new META because META-25 already defines the distinction between proof correctness and specification correctness. It composes with META-52 (metric-optimized assurance) and META-66 (assurance-plane failure semantics).
+
 ### Microstable Architecture Implication
 
 **PT-ARCH-2026-0329-01 (LOW) — Oracle Formula Specification Independence**
