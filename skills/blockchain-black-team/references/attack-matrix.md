@@ -11167,6 +11167,8 @@ batch N+1:
 
 **Incident**: DeFiTuna Lending on Solana, exploited `2026-07-16` for about **$569,601 USDC**; transaction and code-level analysis published by CertiK on `2026-07-16` and updated through `2026-07-20`.
 
+**Black-team admission grade**: **exploited-loss, transaction- and source-backed**. A144 is the sole new incident-admitted vector in this black-team cycle; the adjacent B85 addition is a separately labeled preventive purple-team research pattern and is not counted as a verified-loss admission.
+
 **Mechanism**: a positive but sub-unit collateral valuation was rounded down to integer zero, and a separate empty-position shortcut interpreted `total == 0` as healthy even when debt was non-zero. The attacker created a nearly empty TUNA/USDC pool, placed attacker-owned liquidity at an extreme tick, opened a zero-collateral leveraged spot position, and routed about **569,601 USDC** of borrowed funds through an embedded Jupiter path. The thin pool returned only **494 raw TUNA units**. At the reference price, that position was worth about **0.9077417** in the integer-valued quote unit; `to_num::<u64>()` discarded the fractional part and produced zero. `is_healthy()` then evaluated `total == 0 || debt <= threshold(total)` and returned healthy solely because `total == 0`, letting the attacker withdraw the USDC captured by the malicious liquidity positions.
 
 **Attack chain**:
