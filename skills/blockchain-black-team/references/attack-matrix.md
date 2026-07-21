@@ -1,6 +1,6 @@
-# Attack Matrix — 203 Named-Vector Headings / 196 Unique Named IDs + META-01~72
+# Attack Matrix — 212 Active Named-Vector Headings / 204 Unique Named IDs + META-01~72
 
-> Inventory reconciled 2026-07-18. Duplicate IDs `A52`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
+> Inventory reconciled 2026-07-22. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
 ## A. Smart Contract Vectors
 
@@ -22,12 +22,13 @@ transfer(attacker, amount);
 **Defense**: Checks-Effects-Interactions (CEI), reentrancy guards, token program ID pinning.
 
 ### A2. Flash Loan + Price Manipulation
-**Historical**: Mango Markets (2022, $114M), Euler (2023, $197M), Harvest (2020, $25M), PancakeBunny (2021, $45M), BonqDAO (2023, $120M), Stake Nova (2026-02-27, $2.39M), Chi Protocol (2026-07-13, ~$8.5K)
+**Historical**: Mango Markets (2022, $114M), Euler (2023, $197M), Harvest (2020, $25M), PancakeBunny (2021, $45M), BonqDAO (2023, $120M), Stake Nova (2026-02-27, $2.39M), Chi Protocol (2026-07-13, ~$8.5K), Allbridge Core Solana (2026-07-19, ~$1.1M-$1.65M)
 **Mechanism**: Borrow massive capital in single TX → manipulate AMM/oracle price or redeem path invariants → exploit mispriced mint/redeem/liquidation → repay loan with profit.
 **Key insight**: Any protocol that reads price from a manipulable source *or* executes redeem logic without strict invariant checks can be flash-loan-amplified in one transaction.
 **2026 reinforcement (Stake Nova)**: Unchecked validation in `RedeemNovaSol()` enabled a flash-loan-assisted liquidity drain.
 **2026-07-13 reinforcement (Chi Protocol)**: `ArbitrageV5.burn()` valued USC at the hardcoded `$1` target without the peg check used by `mint()`. An attacker flash-borrowed 5 WETH, bought heavily depegged USC from a thin Uniswap V2 pool, and burned the discounted liability for full-value weETH/stETH/WETH reserves. The flash loan amplified an A10 mint/burn predicate asymmetry; it does not require a new vector.
-**Source**: https://hacked.slowmist.io/ | https://t.me/s/defimon_alerts | https://chi-protocol.gitbook.io/docs/overview/dual-stability-mechanism-minting-and-redeeming-usc
+**2026-07-19 reinforcement (Allbridge Core, Solana)**: the attacker flash-borrowed about **$1.12M USDC** from Kamino, repeatedly swapped USDC/USDT inside Allbridge Core's two-stablecoin Solana pool to distort its internal balance ratio, then withdrew at the synthetic rate and bridged the proceeds to Ethereum. The same class had hit Allbridge's BNB Chain deployment in 2023. The published remediation included one asset per chain and automatic imbalance shutdown, but the Solana deployment again exposed two swappable stablecoins and no control fired before atomic settlement. This is an **A2 + A3 reinforcement**, not a new primitive; the new lesson is operational: a postmortem fix that is not encoded and monitored as a cross-deployment invariant can silently disappear on the next chain (**META-63**).
+**Source**: https://hacked.slowmist.io/ | https://t.me/s/defimon_alerts | https://chi-protocol.gitbook.io/docs/overview/dual-stability-mechanism-minting-and-redeeming-usc | https://www.theblock.co/post/408855/allbridge-core-exploit | https://allbridge.medium.com/allbridge-core-updates-following-the-relaunch-9f7716eeb5da
 **Code pattern to find**:
 ```
 // VULNERABLE: same-block price read for critical operation
@@ -432,6 +433,26 @@ function handleIBCDeposit(bytes calldata payload) external {
 1. Never hash multiple attacker-controlled dynamic fields with packed/ambiguous serialization in bridge auth or retry-verification paths; use canonical length-delimited encoding and explicit domain tags
 2. Bind retry authorization to a unique tuple such as `source chain + source app + nonce + payload type + canonical payload hash + finalized root/context`
 3. Treat `retry`, `resubmit`, `replay-safe` convenience paths as the same critical trust boundary as the primary proof-verification path
+
+#### A32 — 2026-07-21 Reinforcement: Wanchain Cardano Bridge Non-Injective Signed-Message Encoding
+**Historical Reinforcement**: Wanchain Cardano↔BNB bridge / NIGHT treasury (`2026-07-21`, about **515.2M NIGHT**, roughly **$9M-$10M** at incident prices).
+
+**Mechanism**: BlockSec's transaction and on-chain Plutus V2 bytecode analysis identified a non-injective encoding in the Cardano-side `TreasuryCheck` validator. The signed message was built by folding `AppendByteString` over **14 variable-length redeemer fields** with no delimiter, length prefix, or canonical container encoding. Different field tuples could therefore serialize to the same bytes and hash. The attacker reused a legitimate BSC authorization for about **3,110 NIGHT** as a Cardano withdrawal of **203,001,692 NIGHT** in one observed leg — about **65,000x** inflation — and drained roughly **515.2M NIGHT** across four transactions.
+
+**Why this reinforces A32 rather than creating a new vector**: Butter Bridge already established the reusable bridge-authentication primitive: multiple attacker-influenced dynamic fields enter an ambiguous packed encoding, a boundary collision preserves the signed/hash value, and forged cross-chain semantics inherit a valid signature. Wanchain proves the same class across a different VM and encoding stack (`AppendByteString` / Plutus rather than Solidity `abi.encodePacked`).
+
+**Defense**:
+1. Serialize the full bridge authorization tuple with canonical, length-delimited encoding such as Plutus `SerialiseData`/CBOR; never raw-concatenate variable-length fields.
+2. Bind a fixed domain tag, source and destination chain IDs, token policy/mint, amount, recipient, direction, and one-time nonce inside the signed object.
+3. Store and consume the unique ID/nonce on-chain so even a byte-identical authorization cannot execute twice.
+4. Add property tests proving injectivity over adjacent variable-length fields and negative vectors that shift bytes across every field boundary while preserving the raw concatenation.
+
+**Sources**:
+- https://x.com/Phalcon_xyz/status/2079451633847783655
+- https://x.com/wanchain_org/status/2079444149066244340
+- https://www.cryptotimes.io/2026/07/21/wanchain-cardano-bridge-exploited-hackers-stole-10m-in-night-tokens/
+
+**Microstable relevance**: the current on-chain program and keeper have no cross-chain token release, bridge treasury validator, or signed multi-field withdrawal message, so the exact variant is **NOT ACTIVE today**. Any future bridge/export path must treat canonical tuple serialization plus domain/nonce binding as a release-blocking invariant.
 **Source**: https://hacked.slowmist.io/en/ | https://ourcryptotalk.com/news/butter-bridge-exploit-mints-1-quadrillion-mapo-tokens
 
 ### A32 — 2026-06-25 Reinforcement: Taiko Bridge SGX-Prover Registration Forgery
@@ -2941,7 +2962,7 @@ let collateral_value = ctx.accounts.vault_usdc.total_deposits * oracle_price / S
 
 ---
 
-## D39. Glassworm: Invisible Unicode PUA Code Injection + Blockchain C2 (2026-03-17)
+### D39. Glassworm: Invisible Unicode PUA Code Injection + Blockchain C2 (2026-03-17)
 
 **Signal**: Active campaign March 3–9, 2026. 151+ GitHub repos compromised (dev.to, 2026-03-14). Novel supply-chain technique — distinct from D28 (typosquat), D38 (CI/CD exploit), A44/A45 (malicious crate publish).
 
@@ -3748,7 +3769,7 @@ solana config set --keypair /dev/ledger  # hardware wallet path
 ---
 <!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-22 -->
 
-## A56 — Token-2022 ExtraAccountMeta Injection (Transfer Hook Fund Redirection)
+### A56 — Token-2022 ExtraAccountMeta Injection (Transfer Hook Fund Redirection)
 **Historical**: No major exploit yet (vector is emerging — Neodyme research 2026-03-15)
 **Mechanism**: Token-2022 transfer hooks receive extra accounts via `ExtraAccountMetaList` PDA. If the hook program doesn't re-verify the PDA derivation of these extra accounts (expected seeds + bump), an attacker controlling the mint authority at initialization pre-seeds the PDA with malicious account entries. Every transfer silently redirects funds to the attacker's account — no revert, no error signal.
 **Distinct from**:
@@ -3774,7 +3795,7 @@ require!(extra_account.key == &expected_pda, ErrorCode::InvalidFeeVault);
 **Microstable relevance**: LOW now (SPL Token only). LATENT HIGH if Token-2022 collateral added.
 **Source**: Neodyme Token-2022 research synthesis (dev.to, 2026-03-15)
 
-## A57 — Anchor v1.0.0 "Shadow IDL Migration" Discriminator Gap
+### A57 — Anchor v1.0.0 "Shadow IDL Migration" Discriminator Gap
 **Historical**: No recorded major exploit (emerging risk — Anchor v1.0.0-rc.5 released 2026-03-20)
 **Mechanism**: Anchor v1.0.0 introduces breaking changes to discriminator computation and IDL format. When the on-chain program stays at Anchor v0.31.x while off-chain components (keeper, client SDK, tooling) migrate to v1.0.0 — or vice versa — a "shadow migration" window opens. During this window:
 1. Keeper submits transactions with Anchor v1.x discriminators against a v0.31.x program → silent `InvalidInstructionData` rejections → oracle updates and rebalances silently stop.
@@ -3792,7 +3813,7 @@ grep "anchor-client" keeper/Cargo.lock | grep "0.31"  # must match
 **Microstable relevance**: MEDIUM — action required: verify `keeper/Cargo.lock` anchor-client pins.
 **Source**: solana-foundation/anchor releases.atom (v1.0.0-rc.3~rc.5, 2026-03-18~20)
 
-## A58 — Token-2022 Transfer Fee Invisible Tax Accounting Bypass
+### A58 — Token-2022 Transfer Fee Invisible Tax Accounting Bypass
 **Historical**: No recorded major exploit (emerging design-flaw class — Neodyme research 2026-03-15)
 **Mechanism**: Token-2022 transfer fee extension deducts a fee at the token-program level from every transfer. If a protocol's deposit instruction credits the user based on the `amount` parameter (what was _sent_) rather than the actual post-transfer balance delta (what was _received_), the depositor is over-credited by the fee percentage. Attack form: deposit 100 tokens with 1% fee → vault receives 99 → protocol records 100 → borrow against 100 with 99 real collateral → 1% undercollateralization per deposit cycle → compound over many deposits → protocol insolvency.
 **Distinct from A2** (Flash Loan): A2 is same-TX manipulation. A58 is a persistent accumulated accounting error: no flash loan, no oracle, no time pressure. Exploitable over many blocks at low cost.
@@ -3817,7 +3838,7 @@ state.collateral_balance += received; // SAFE: uses actual received amount
 
 <!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-23 -->
 
-## A59 — DEX Aggregator Solver Race-to-Minimum / Interface-Mediated Thin-Pool Routing Loss
+### A59 — DEX Aggregator Solver Race-to-Minimum / Interface-Mediated Thin-Pool Routing Loss
 **Historical**: Aave/CoWSwap (2026-03-12, $50M user loss): User rotated $50.4M aEthUSDT → aEthAAVE via Aave's interface, which routed through CoW Protocol's solver network. Solver constructed a 4-leg path; the final leg pushed 17,957 WETH (≈$50M) into a SushiSwap AAVE/WETH pool holding only $73K total liquidity (17.65 WETH reserve). User received 327 AAVE (~$36K). Every contract executed correctly. Aave refunded $110K in collected fees; CoW DAO refunded solver fees. No attacker — loss was pure price impact absorbed by the AMM invariant; subsequent arbitrageurs captured the delta.
 **Mechanism**:
 1. User signs a CoW Protocol intent with minimum buy amount pre-computed from CoW explorer quote (which shows pre-impact rate, not expected execution rate)
@@ -3873,7 +3894,7 @@ if (priceImpactBps > 2500) throw new Error("Price impact exceeds 25% — blocked
 
 <!-- AUTO-ADDED BY REDTEAM DAILY EVOLUTION 2026-03-23 (03:30 KST) -->
 
-## A70 — CPI User-Signer Authority Forwarding via Multi-Hop Aggregator
+### A70 — CPI User-Signer Authority Forwarding via Multi-Hop Aggregator
 **Historical**: No single nine-figure exploit attributed solely to this pattern; it is the latent mechanism underlying Wormhole (A4) and is emerging in Solana DeFi aggregators (2026-03-19, CPI Playbook synthesis).
 **Mechanism**: A Solana DeFi aggregator/router receives a user-signed transaction and constructs a CPI that passes the user's `AccountInfo` (including signer privilege) directly to an external DEX or bridge program. Solana's runtime propagates `is_signer = true` through CPI calls without explicit permission checks. Attack paths:
 1. **External program substitution**: User specifies a `token_program` / `dex_program` account. Without explicit `Program<'info, T>` type enforcement (which verifies program ID), attacker substitutes a malicious program. The malicious program receives the user's signer authority and can drain any account where the user has signing rights.
@@ -3919,7 +3940,7 @@ pub fn aggregate_swap(ctx: Context<AggSwap>) -> Result<()> {
 **Microstable relevance**: ✅ NOT APPLICABLE — All Microstable token CPIs use PDA authority (`seeds = [b"protocol_state", ...]`). No external DEX CPIs with user signer forwarding. Confirmed in `lib.rs` helper `fn transfer_from_vault_to_user` at line ~3855.
 **Source**: dev.to CPI Security Playbook (Pattern 2, 2026-03-19) | Wormhole post-mortem synthesis
 
-## A71 — Cross-Protocol Multi-Venue Flash-Loan MEV Sandwich
+### A71 — Cross-Protocol Multi-Venue Flash-Loan MEV Sandwich
 **Historical**: ETH Mainnet MEV Bot Attack (2026-03-12): ~$9.9M profit. Victim lost $50.4M USDT → received 327 AAVE (~$36K). Flash borrow: 17,957 WETH (~$29M) from Morpho. Buy target asset on Bancor ahead of victim's large pending order on SushiSwap. Victim executes; MEV bot sells Bancor position back; returns flash loan. Net: $9.9M extracted, 0 attacker capital at risk.
 **Mechanism** (3-protocol, 3-step):
 1. **Flash borrow from Protocol A** (Morpho, lending): zero-cost capital acquisition for the duration of one block
@@ -11137,3 +11158,124 @@ batch N+1:
 | A143 Encrypted-Mempool Correction Exclusion / Self-Authored State-Distortion Claim | attacker hides a self-authored state mutation inside a sealed batch and owns a downstream claim that settles before honest adaptive correction can enter | amplified funding/rebate/redemption/auction payout without victim-order visibility or dishonest builder behavior | current commit/reveal only hides target weights and no same-window claim is paid from those weights, so **NOT ACTIVE today**; future private ordering plus state-linked settlement must insert reveal→correct→pay separation |
 
 **Matrix state as of 2026-07-19 (red-team daily update)**: **A143** added as a new information-schedule attack distinct from A110 admission poisoning and B81 builder defection. Setup-instruction registry redirection was classified as a B29/D38 reinforcement, and Anchor IDL namespace preservation as A112/D52 reinforcement rather than duplicate new vectors. No new active CRITICAL/HIGH Microstable finding was confirmed.
+
+---
+
+## 2026-07-22 Solana Solvency Precision Fail-Open Addition
+
+### A144. Positive Collateral Truncated to Zero → Empty-Position Solvency Fail-Open
+
+**Incident**: DeFiTuna Lending on Solana, exploited `2026-07-16` for about **$569,601 USDC**; transaction and code-level analysis published by CertiK on `2026-07-16` and updated through `2026-07-20`.
+
+**Mechanism**: a positive but sub-unit collateral valuation was rounded down to integer zero, and a separate empty-position shortcut interpreted `total == 0` as healthy even when debt was non-zero. The attacker created a nearly empty TUNA/USDC pool, placed attacker-owned liquidity at an extreme tick, opened a zero-collateral leveraged spot position, and routed about **569,601 USDC** of borrowed funds through an embedded Jupiter path. The thin pool returned only **494 raw TUNA units**. At the reference price, that position was worth about **0.9077417** in the integer-valued quote unit; `to_num::<u64>()` discarded the fractional part and produced zero. `is_healthy()` then evaluated `total == 0 || debt <= threshold(total)` and returned healthy solely because `total == 0`, letting the attacker withdraw the USDC captured by the malicious liquidity positions.
+
+**Attack chain**:
+1. Create or select a route whose terminal output can be made positive but smaller than one accounting unit at the protocol's valuation precision.
+2. Place attacker-owned liquidity so borrowed assets are economically transferred to the attacker while the position receives only dust.
+3. Open or increase a leveraged position with zero or negligible user collateral and an attacker-controlled arbitrary swap route.
+4. Force fixed-point valuation through a floor conversion so `0 < economic_total < 1` becomes integer `total == 0`.
+5. Reach an empty-position shortcut that treats `total == 0` as healthy without separately requiring `debt == 0`.
+6. Withdraw the attacker-owned liquidity proceeds while the lending vault retains the debt deficit.
+
+**Vulnerable shape**:
+```rust
+let total = fixed_point_collateral_value.to_num::<u64>(); // positive dust -> 0
+let healthy = total == 0
+    || debt <= total.saturating_mul(liquidation_threshold) / SCALE;
+```
+
+**Safe shape**:
+```rust
+let total = fixed_point_collateral_value;
+let debt = fixed_point_debt_value;
+
+// Empty means both sides are economically empty; debt-bearing zero-value states fail closed.
+require!(total > Fixed::ZERO || debt == Fixed::ZERO, ErrorCode::InsolventPosition);
+let healthy = debt <= total.checked_mul(liquidation_threshold)?;
+require!(healthy, ErrorCode::InsolventPosition);
+```
+
+**Why this is distinct**:
+- **A10 Logic Bug** is generic; A144 identifies the reusable composition **precision-domain collapse + sentinel fail-open**.
+- **A2/A3** can amplify or prepare the skewed route, but the drain succeeds because a debt-bearing positive position is reclassified as an empty healthy position after floor conversion.
+- **B67** covers an off-chain router selecting an illiquid pool. DeFiTuna accepted an attacker-specified embedded route on-chain; the decisive flaw remained the post-route solvency predicate.
+- **META-31** records the broad precision-risk pattern. A144 is the concrete, exploited Solana/Anchor admission rule auditors can test.
+
+**Defensive heuristic**:
+- never use `total == 0` as a healthy shortcut unless `debt == 0` is proven in the same precision domain
+- keep collateral and debt in fixed-point form through solvency comparison; round collateral down and debt up only at external transfer boundaries
+- reject any debt-bearing position whose valued collateral is below the minimum representable accounting unit
+- after every arbitrary/aggregator swap, recompute health from actual received terminal balances rather than pre-swap route intent
+- constrain terminal mint/pool/route provenance and require a minimum economically meaningful output
+- add boundary tests for `0`, `epsilon`, `1-unit - epsilon`, `1 unit`, extreme ticks, zero user collateral, non-zero debt, and attacker-owned terminal liquidity
+- assert the invariant `debt > 0 => collateral_value > 0 && health_ratio is evaluated`, never `debt > 0 && total == 0 => healthy`
+
+**Sources**:
+- https://www.certik.com/blog/defituna-incident-analysis
+- https://github.com/DefiTuna/tuna-sdk/blob/6a0e6b80b089e86cf4f59391ea7e10ee983c483e/rust-sdk/client/src/implementation/tuna_position.rs#L45-L85
+- https://hacked.slowmist.io/en/
+
+**Microstable relevance**:
+- current Microstable has no per-user borrowing, leveraged LP position, arbitrary Jupiter/Orca route, health factor, or liquidation engine in `programs/microstable/src/lib.rs` / `keeper/src/`.
+- `redeem()` computes pro-rata payouts from tracked vault deposits and supply; a zero payout does not create a debt-bearing position or invoke an empty-position health shortcut.
+- therefore A144 is **NOT ACTIVE today** on the reviewed Microstable code.
+- future lending, leveraged LP, router, or debt-position features must make A144 a release-blocking negative-test family.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A144 Positive Collateral Truncated to Zero → Empty-Position Solvency Fail-Open | floor conversion collapses positive sub-unit collateral to integer zero, then `total == 0` bypasses health checks despite non-zero debt | arbitrary borrowed-fund diversion, bad debt, lending-pool insolvency | no debt/health/router surface in current code, so **NOT ACTIVE today**; mandatory gate for future lending or leveraged-routing features |
+
+**Matrix state as of 2026-07-22 (black-team daily update)**: **A144** added and seven previously orphaned `##` vector sections were restored to canonical heading coverage. Canonical inventory is now **212 active named-vector headings across 204 unique named IDs**, plus **72 META entries**. That is **276 unique IDs** or **284 active coverage entries** when duplicate-ID sections are tracked separately. Wanchain Cardano↔BNB reinforces **A32**; Allbridge Core reinforces **A2 + A3 + META-63**; neither adds another named vector.
+
+---
+
+## 2026-07-22 Purple-Team AI Agent Self-State Addition
+
+### B85. Self-Hosted Agent Self-State Mutation / Recovery-Domain Collapse
+
+**Source signal**: Chen et al., *Self-State Attacks on Self-Hosted AI Agents: How Far Can OS Defenses Go?* (`arXiv:2607.17986`, submitted `2026-07-20`). The preprint defines a four-axis attack space over agent instruction, memory, and configuration state; realizes **23 attack cells / 43 concrete operations** on real self-state files; and reports that a small residual set of memory mutations is structurally indistinguishable from normal writes at the OS layer.
+
+**Mechanism**: a prompt-injected agent, compromised tool, sibling local process, or erroneous autonomous workflow uses legitimate filesystem operations to modify, add, delete, or deny access to the agent's own instructions, configuration, or persistent memory. The modified state is then reloaded as trusted context on later turns, giving the attacker persistence without a new executable, unusual syscall, or direct key theft. If backup and recovery artifacts live under the same write authority, the same actor can corrupt the state and erase the clean recovery point.
+
+**Why this is distinct**:
+- **B29/B38** cover untrusted content crossing prompt/tool boundaries during execution; B85 covers the durable **local self-state** that later becomes trusted input even after the original injection is gone.
+- **B17 checkpoint poisoning** targets protocol/optimizer state integrity; B85 covers an autonomous agent's instruction-memory-configuration control plane and its authority over future reasoning/actions.
+- **META-49/META-66** explain executable configuration and assurance-plane failure at a higher level; B85 is the concrete host-level attack/test family.
+
+**Why audits miss it**:
+1. File writes are expected agent behavior, so syscall allowlists cannot distinguish every malicious memory mutation from normal learning.
+2. Prompt-injection tests usually end when the current turn ends and do not reboot/reload the agent to test persistence.
+3. Instruction, memory, configuration, and backup are reviewed as separate files rather than one future-authority graph.
+4. Backups are counted as recovery even when the agent can modify/delete both primary state and backup with the same credentials.
+
+**Attack/test matrix**:
+1. Targets: instruction, configuration, short/long-term memory, recovery manifest.
+2. Mechanisms: modify, add, delete, deny.
+3. Granularity: whole file, section, entry, field.
+4. Timing: burst during an active task and quiet mutation between normal workloads.
+5. Reboot/reload after each mutation and verify whether the altered state changes tool scope, transaction policy, signer selection, allowlists, or incident response.
+
+**Defense**:
+- mount instruction/config layers read-only where practical, or require signed/hash-pinned manifests verified outside the agent process before load;
+- journal every memory write with source turn/tool, previous hash, new hash, policy decision, and independent append-only storage;
+- use workload-conditioned memory anomaly detection rather than one global write-rate threshold;
+- keep clean backups and restore authority in a separate trust domain the agent cannot erase or rewrite;
+- require an external policy engine for transaction limits, signer scope, and privileged parameter changes so corrupted self-state cannot expand hard capabilities;
+- test recovery by fully removing the primary agent state and restoring without the failed runtime, identity, or storage plane.
+
+**Limitations / evidence grade**: **emerging, preprint-backed**. The paper establishes a structured attack and defense evaluation, not a universal exploit rate. Its own residual-indistinguishability result means complete OS-only detection must not be claimed.
+
+**Microstable relevance**:
+- the reviewed Microstable on-chain program does not load autonomous-agent instruction/memory/config state, so B85 is **NOT ACTIVE** in the current program.
+- current keeper parameter changes still require on-chain keeper quorum, but future autonomous risk/governance agents could make B85 relevant if local memory/config influences proposal construction or signer selection.
+- before such automation, bind each proposal to live snapshot hash, policy version/hash, agent evidence hash, bounded delta/expiry, independent observation quorum, and external signing policy.
+
+**Sources**:
+- https://arxiv.org/abs/2607.17986
+- https://metamask.io/news/agentic-wallet-security
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B85 Self-Hosted Agent Self-State Mutation / Recovery-Domain Collapse | legitimate local writes persistently corrupt instruction/config/memory and may erase same-domain recovery state | durable policy drift, privileged tool misuse, false incident decisions, signer/parameter manipulation | on-chain exact variant **NOT ACTIVE**; preventive gate for future autonomous risk/governance agents |
+
+**Matrix state as of 2026-07-22 (purple-team daily update)**: **B85** added; no new META. Reconciled canonical inventory is **213 active named-vector headings across 205 unique named IDs**, plus **72 META entries**: **277 unique IDs** or **285 active named/META headings** when duplicate-ID sections are counted separately. Reinforcement-only subheadings are not counted as separate active vectors.

@@ -2129,3 +2129,29 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 98. ☐ encrypted/private ordering의 state-linked payout은 attacker-known self-authored mutation을 포함해 `reveal → correction window → settle` 순서를 검증할 것
 99. ☐ foreign IDL codegen은 reserved/prelude-name collision 테스트와 explicit generated namespace 격리를 릴리스 게이트로 둘 것
+
+---
+
+## 2026-07-22 DeFiTuna Solvency Precision Fail-Open
+
+### A144 — Positive Collateral Truncated to Zero → Empty-Position Solvency Fail-Open
+
+- **Solana context**: CLMM/aggregator 경로는 극단 tick, raw token decimals, Q64.64 fixed-point, 라우터가 반환한 dust를 한 instruction 안에서 결합한다. 이때 양수 collateral value를 `u64`로 floor한 뒤 `0`을 “빈 포지션” sentinel로 재사용하면, **실제 자산은 공격자 LP로 이동했고 부채는 남았는데도 health check는 비어 있다고 판정**할 수 있다.
+- **Confirmed incident**: DeFiTuna Lending (`2026-07-16`, 약 `$569,601 USDC`). 공격자는 거의 빈 TUNA/USDC pool과 extreme-tick limit liquidity를 만들고, zero-collateral position에서 borrowed USDC를 embedded Jupiter route로 흘렸다. 받은 494 raw TUNA의 평가액 약 `0.9077417`이 `to_num::<u64>()`에서 `0`으로 절삭됐고, `is_healthy()`의 `total == 0 || ...` 분기가 비영 부채 포지션을 healthy로 승인했다.
+- **Mandatory Solana checks**:
+  1. health 비교는 collateral/debt를 같은 fixed-point domain에 유지하고, transfer boundary 밖에서 조기 정수화를 금지한다.
+  2. `total == 0` shortcut에는 반드시 `debt == 0`을 함께 요구한다.
+  3. arbitrary Jupiter/Orca/Raydium route 뒤 actual terminal token balance와 exact terminal mint/pool을 재검증한다.
+  4. `epsilon`, `1 raw unit - epsilon`, extreme tick, zero user collateral + non-zero loan shares, attacker-owned terminal liquidity를 negative test로 고정한다.
+  5. `debt > 0 && valued_collateral < minimum_accounting_unit`는 fail-closed liquidation/abort 상태여야 한다.
+- **Microstable current status**:
+  - current program/keeper에는 per-user debt, health factor, liquidation, leveraged LP, Jupiter/Orca arbitrary swap route가 없다.
+  - redemption은 tracked vault deposits와 total supply의 pro-rata 계산이며 `total == 0 => healthy` 같은 debt-bearing shortcut이 없다.
+  - 따라서 **NOT ACTIVE today**. lending/router 기능 도입 시 A144를 release-blocking suite로 승격한다.
+- **Sources**:
+  - https://www.certik.com/blog/defituna-incident-analysis
+  - https://github.com/DefiTuna/tuna-sdk/blob/6a0e6b80b089e86cf4f59391ea7e10ee983c483e/rust-sdk/client/src/implementation/tuna_position.rs#L45-L85
+- **Checklist item 100**: ☐ Solana debt/health 계산은 양수 dust collateral을 integer zero로 절삭한 뒤 empty-position shortcut으로 우회할 수 없게 하고, `debt > 0 => total > 0 && full health evaluation` 불변식을 extreme-tick/zero-collateral/arbitrary-route 테스트로 고정할 것
+
+### Solana-Specific Defense Checklist Update
+100. ☐ debt/health 계산에서 `total == 0`을 healthy로 쓰지 말고 같은 precision domain의 `debt == 0`을 함께 증명하며, positive-dust→zero 경계와 attacker-owned terminal liquidity를 negative test로 고정할 것
