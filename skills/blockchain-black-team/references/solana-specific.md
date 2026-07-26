@@ -2155,3 +2155,31 @@ archive_or_forward(tx)?; // delayed execution risk
 
 ### Solana-Specific Defense Checklist Update
 100. ☐ debt/health 계산에서 `total == 0`을 healthy로 쓰지 말고 같은 precision domain의 `debt == 0`을 함께 증명하며, positive-dust→zero 경계와 attacker-owned terminal liquidity를 negative test로 고정할 것
+
+---
+
+## 2026-07-27 x402 Sponsored ATA Rent Extraction
+
+### A145 — Facilitator Fee-Payer Instruction Smuggling / Sponsored ATA Rent Extraction
+
+- **Signal**: arXiv `2607.19545`, *When HTTP 402 Meets the Blockchain: Risks on Emerging x402 Payments* (USENIX Security 2026, submitted `2026-07-21`).
+- **Solana context**: x402 Solana 결제 payload는 직렬화된 `VersionedTransaction`이며 facilitator가 fee payer로 서명할 수 있다. 따라서 payment proof는 단순 서명 증거가 아니라 **실행 가능한 instruction graph + sponsor budget request**다.
+- **Mechanism**: 검증기가 amount/mint/recipient만 보고 최종 instruction set, program ID, account metas, signer/writable bits를 정확히 고정하지 않으면 공격자가 정상 `transfer_checked` 옆에 attacker-owned ATA 생성을 끼울 수 있다. facilitator가 rent-exempt deposit과 수수료를 내고, attacker는 ATA를 비운 뒤 `CloseAccount`로 lamports를 자기 주소에 회수하거나 대량 계정을 방치해 sponsor 자본을 잠근다.
+- **Why existing checks miss it**:
+  1. payment amount가 정확하고 settlement도 성공하므로 B79류 unpaid-service alarm이 울리지 않는다.
+  2. fee payer는 signer이지만 생성된 ATA의 token authority가 아니므로 **비용 지불자와 환급 통제자**가 분리된다.
+  3. nonce deduplication은 동일 proof replay만 막고 fresh owner/mint tuple의 rent churn은 막지 못한다.
+  4. Solana의 한 transaction 안에서 compute-budget, ATA creation, token transfer가 자연스럽게 조합돼 extra instruction이 정상 SDK plumbing처럼 보인다.
+- **Measured risk evidence**: 논문은 facilitator-funded ATA creation `37,959`건, 약 `77.3 SOL`의 rent deposit, 그리고 3회 미만 transfer 뒤 닫힌 ATA 비율 `60.59%`를 관측했다. 저자들은 이 수치를 confirmed exploitation이 아니라 abuse와 일치하는 risk signal로 제한했다.
+- **Microstable current status**:
+  - 요청된 `programs/microstable_core/src/lib.rs`는 없고 실제 live path는 `programs/microstable/src/lib.rs`다.
+  - keeper에는 x402/facilitator/attacker-supplied `VersionedTransaction` fee sponsorship path가 없다.
+  - `Mint`는 `user: Signer`, canonical user/protocol ATA constraints를 요구하며 attacker-selected ATA를 생성하지 않는다.
+  - `init_if_needed` 대상 `UserPosition`의 payer도 `user`다.
+  - 따라서 **NOT ACTIVE today**. future gasless mint/redeem, paid keeper API, agent-to-agent payment, sponsored relay가 붙으면 즉시 release-blocking gate로 전환한다.
+- **Checklist item 101**: ☐ sponsored Solana settlement는 최종 compiled message의 instruction 순서, program IDs, accounts, signer/writable bits를 exact allowlist로 고정하고, unquoted ATA creation·alternate token program·address-table 추가·extra signer를 거부할 것
+- **Checklist item 102**: ☐ facilitator가 ATA rent를 지원하면 ATA를 declared recipient+mint에서 canonical derive하고, beneficial-controller별 누적 sponsor budget과 close-refund destination을 sponsor/escrow에 결박하며 create→close→recreate churn 테스트를 필수화할 것
+
+### Solana-Specific Defense Checklist Update
+101. ☐ sponsored transaction은 nominal transfer fields만 검증하지 말고 final compiled instruction graph와 facilitator lamport delta를 deterministic manifest에 결박할 것
+102. ☐ sponsor-funded ATA의 owner/authority/refund recipient를 분리 검토하고 fresh wallet/mint fan-out 및 close/recreate에도 누적 비용 한도가 유지되는지 검증할 것

@@ -11288,3 +11288,73 @@ require!(healthy, ErrorCode::InsolventPosition);
 | B85 Self-Hosted Agent Self-State Mutation / Recovery-Domain Collapse | legitimate local writes persistently corrupt instruction/config/memory and may erase same-domain recovery state | durable policy drift, privileged tool misuse, false incident decisions, signer/parameter manipulation | on-chain exact variant **NOT ACTIVE**; preventive gate for future autonomous risk/governance agents |
 
 **Matrix state as of 2026-07-23 (black-team daily update)**: no new named vector or META entry. Balance Coin / 42DAO reinforces **A3**; BarnBridge reinforces **A92 + A119 + META-68**. Reconciled canonical inventory remains **213 active named-vector headings across 205 unique named IDs**, plus **72 META entries**: **277 unique IDs** or **285 active named/META headings** when duplicate-ID sections are counted separately. Reinforcement-only subheadings are not counted as separate active vectors.
+
+---
+
+## 2026-07-27 Solana Sponsored-Settlement Rent Extraction Addition
+
+### A145. Facilitator Fee-Payer Instruction Smuggling / Sponsored ATA Rent Extraction
+
+**Signal**: Wang et al., *When HTTP 402 Meets the Blockchain: Risks on Emerging x402 Payments* (`arXiv:2607.19545`, USENIX Security 2026, submitted `2026-07-21`).
+
+**Mechanism**: a Solana payment facilitator accepts a client/server-supplied serialized transaction as a payment proof, then adds its own signature as fee payer. If verification binds only the expected mint, amount, and nominal recipient but does not bind the **entire executable transaction template**, an attacker can retain a valid payment transfer while smuggling an additional Associated Token Account creation or alternative token-program instruction. The facilitator pays the rent-exempt deposit and fees for an attacker-controlled ATA. Once the balance is zero, the attacker-controlled token authority can close the ATA and direct the refunded lamports to itself, or abandon many subsidized accounts to lock the facilitator's capital. Repeated close/recreate cycles turn a payment subsidy into a rent-extraction or cost-amplification primitive.
+
+**Attack chain**:
+1. Discover an x402 or analogous settlement endpoint that accepts a serialized Solana transaction and sponsors its fee payer.
+2. Keep the expected `transfer_checked` fields valid so amount/mint/recipient checks pass.
+3. Add `create_associated_token_account` for an attacker-controlled authority, redirect the transfer to that ATA where validation is incomplete, or include another unapproved token-program instruction.
+4. The facilitator signs and broadcasts the transaction, paying transaction fees and the ATA rent-exempt deposit.
+5. After emptying the ATA, close it to an attacker-selected refund address; alternatively leave it open to convert sponsor liquidity into locked rent.
+6. Repeat across owner/mint pairs or close/recreate cycles so proof nonce deduplication and per-payment limits do not cap aggregate loss.
+
+**PoC-level scenario**:
+```text
+payment transaction supplied to facilitator:
+  [bounded compute-budget instructions]
+  [create ATA: payer = facilitator, owner = attacker, mint = accepted asset]
+  [transfer_checked: client source -> attacker-owned ATA]
+
+facilitator:
+  checks amount/mint superficially
+  signs as fee payer
+  broadcasts and reports settlement
+
+attacker:
+  moves/empties tokens
+  closes ATA -> refund_recipient = attacker
+  repeats with a fresh owner/mint tuple
+```
+
+**Why this is distinct**:
+- **B79** concerns service release before finalized, one-shot settlement. A145 can execute after a fully successful settlement; the flaw is that payment proof becomes an attacker-shaped **sponsored execution template**.
+- **A141** poisons controller-blind volume metrics with valid self-churn. A145 extracts or immobilizes sponsor lamports even when no volume metric controls security.
+- **A135** concerns subtractive PDA realloc refunds. A145 uses ATA payer/owner/refund-role separation and transaction-instruction smuggling.
+- generic arbitrary-CPI findings focus on an on-chain program accepting an arbitrary callee. A145 arises one layer earlier when an off-chain facilitator signs an attacker-composed Solana transaction as fee payer.
+
+**Evidence grade and limits**:
+- the paper directly demonstrates widespread facilitator rule violations and identifies Solana ATA-creation rent abuse as an execution-safety/asset-theft path;
+- its mainnet measurement found `37,959` facilitator-funded ATA creations, about `77.3 SOL` in rent deposits, and `60.59%` of ATAs closed after fewer than three transfers;
+- the authors explicitly treat historical on-chain patterns as risk evidence, not proof that every observed close was malicious. Do not label all measured churn as confirmed exploitation.
+
+**Defense**:
+1. Parse the final compiled message after all parties sign; allow only an exact instruction sequence, exact program IDs, exact accounts, and exact signer/writable bits.
+2. Permit at most bounded compute-budget instructions plus one expected transfer; reject injected ATA creation, alternate token programs, address-table surprises, extra signers, and unrelated instructions.
+3. If ATA creation is a supported product feature, derive the exact ATA from the declared recipient and mint, bind its authority, quote the rent explicitly, rate-limit by beneficial controller, and ensure any close refund returns to the sponsor or an agreed escrow.
+4. Simulate before signing and assert facilitator lamport delta, token-balance delta, created-account set, and post-state against a deterministic settlement manifest.
+5. Apply per-controller cumulative sponsor budgets across fresh addresses and mint pairs; nonce uniqueness alone does not bound rent churn.
+
+**Microstable relevance**:
+- the requested `microstable/solana/programs/microstable_core/src/lib.rs` path is absent; the live program is `microstable/solana/programs/microstable/src/lib.rs`.
+- the keeper has no x402/HTTP 402/facilitator path and does not sign attacker-supplied `VersionedTransaction` payloads as fee payer.
+- `Mint` requires the user as signer, constrains canonical user/protocol ATAs, and does not create an attacker-selected ATA; its only `init_if_needed` account is `UserPosition` with `payer = user`.
+- therefore A145 is **NOT ACTIVE today**. It becomes release-blocking if a paid API, agent-to-agent settlement, sponsored transaction, gasless mint/redeem, or arbitrary serialized-transaction relay is added.
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| A145 Facilitator Fee-Payer Instruction Smuggling / Sponsored ATA Rent Extraction | attacker preserves the nominal payment while injecting ATA creation or other unapproved instructions into a facilitator-sponsored Solana transaction, externalizing rent/fees and potentially reclaiming the rent on close | sponsor lamport theft, locked rent capital, settlement-service DoS, attacker-chosen value-moving side effects | no x402/facilitator or attacker-supplied sponsored transaction path; canonical ATAs and `payer = user` make the current code **NOT ACTIVE** |
+
+**Sources**:
+- https://arxiv.org/abs/2607.19545
+- https://arxiv.org/pdf/2607.19545
+
+**Matrix state as of 2026-07-27 (red-team daily update)**: **A145** added as a sponsored-execution/rent-ownership attack distinct from B79 payment-service correspondence, A141 sponsored volume churn, and A135 realloc refunds. Canonical inventory is now **214 active named-vector headings across 206 unique named IDs**, plus **72 META entries**: **278 unique IDs** or **286 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
