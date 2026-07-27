@@ -11067,6 +11067,29 @@ assess_flow_risk(net_outflow, linked_controller_volume, capital_reuse_rate)?;
 4. Circuit breaker: treasury outflow 가 시간당 X% 초과 시 자동 일시정지
 5. Cost-to-attack 모니터링: 시장가 기준 quorum 매수 비용 vs treasury 가치 실시간 추정
 
+### META-73. Vacuous-Verification / Trivial-Satisfaction Gap
+
+**Source**: Bonzo Finance / Supra oracle exploit ($9.05M, 2026-07-11); Balance Coin / 42DAO oracle exploit ($912K, 2026-07-22); AFX Trade bridge key compromise ($24.15M, 2026-07-22). Purple Team synthesis, 2026-07-28.
+**Definition**: 검증 메커니즘(서명 확인, 오라클 검증, 거버넌스 투표, 감사 리포트)이 자체 수학적 정의에 따라 정확하게 동작하지만, 검증이 null/zero/degenerate 입력에 의해 자명하게 충족된다. 시스템은 "검증 통과"를 보고하지만 실제로는 아무것도 검증하지 않았다.
+**Core pattern**: `verify(0, 0, pk=0) = true` — 수학은 맞지만 의미는 비어 있다. 검증 시스템의 통과 조건 자체가 공격자가 도달할 수 있는 degenerate solution을 가지고 있다.
+**Evidence across July 2026 incidents**:
+- **A146 Bonzo/Supra**: oracle verifier가 zeroed signature를 zeroed public key에 대해 수용. pairing check가 `true` 반환. 암호학이 맞고, 수학이 맞고, 결과는 $9.05M 유출.
+- **Balance/42DAO**: lending contract가 oracle 가격을 수용했지만 가격 대역 검증이나 청산 지연이 없었음. 형식은 유효, 값은 허위.
+- **AFX Trade**: bridge contract가 5개 validator 서명을 확인하고 quorum을 충족. 계수는 맞음. 서명자는 모두 탈취된 상태.
+- **BonkDAO**: token-weighted vote가 통과. 투표 집계는 맞음. 투표율 2.9%.
+**Why this is distinct from existing META**:
+- META-55 (Declared-Constraint / Resolver-Enforcement) = 제약이 있지만 resolver가 hint로 강등. → META-73에서는 제약이 **hard-enforce** 되지만 그 제약 자체가 자명하게 충족됨.
+- META-70 (Node-Audit / Edge-Semantics) = 노드는 검토됐지만 edge가 비어 있음. → META-73에서는 노드(검증기) 자체가 검토됐지만 검증의 충족이 vacuous함.
+- META-71 (Terminal-State / Sentinel Admissibility) = 종료 상태가 여전히 인증 값으로 남음. → META-73에서는 활성 상태의 검증이 vacuous함.
+- META-52 (Metric-Optimized Security Mirage) = 업계가 측정 가능한 것만 측정. → META-73은 개별 검증 컴포넌트의 수학적 성공 기준이 보안 결과와 직교함.
+**Why audits miss**: 감사사는 "검증기가 잘 동작하는가?"를 확인하지만, "검증기의 통과 조건이 degenerate input으로 우회될 수 있는가?"는 묻지 않는다. 테스트 스위트는 잘못된 입력을 거부하는 것을 확인하지만, null/zero/trivial 입력을 별도로 테스트하지 않는다. FV는 속성이 성립함을 증명하지만, 속성이 vacuously 성립하는 경우를 감지하지 못한다.
+**Defense**:
+1. **Anti-vacuity checks**: 모든 검증 경로에서 null/zero/default 입력을 명시적으로 거부. `if signature == zeros || pubkey == zeros → reject`.
+2. **Semantic validation**: 형식적 유효성과 별도로 의미적 타당성 검증. 가격 대역, 서명자 liveness, 투표율 최소 기준.
+3. **Degenerate-input fuzzing**: 테스트 스위트에 zero-vector, empty-proof, null-signature 입력을 포함.
+4. **Independent re-verification**: 위임된 검증을 신뢰하지 말고, consumer 측에서 최소한의 독립 검증을 수행.
+5. **Non-triviality proofs**: 형식 검증에서 vacuous satisfaction을 감지하는 non-triviality 조건 추가.
+
 ## 2026-07-17 Stake-Account Reincarnation and Anchor Reload Boundary Update
 
 ### A142. Solana Account Reincarnation + Cached Lifecycle Desync
@@ -11373,6 +11396,7 @@ attacker:
 | **Impact** | forged oracle price, unbacked mint, reserve drain, lending protocol bad debt, vault insolvency |
 | **Microstable status** | NOT ACTIVE — on-chain `read_pyth_price_update` enforces `RawPythVerificationLevel::Full` and rejects Partial/zero-sig. Keeper mirror-checks the same field. However, Microstable does NOT re-verify Pyth signatures itself; it trusts the Pyth receiver program's internal semantics based solely on a serialized enum value. |
 | **Required future invariant** | any custom oracle integration must reject zero-valued signatures, zero-valued public keys, and default-initialized verification artifacts as invalid by construction. A `Full` enum variant is not a substitute for independent signature verification. |
+| **Purple META-73 link** | A146 is the canonical exploited instance of **META-73 (Vacuous-Verification / Trivial-Satisfaction Gap)** — `verify(0,0,0)=true` is mathematically correct and semantically empty. The pattern extends beyond oracle verifiers: any verification primitive whose pass-condition has a computable degenerate solution is vulnerable. |
 
 ---
 
@@ -11402,4 +11426,4 @@ attacker:
 
 ---
 
-**Matrix state as of 2026-07-28 (red-team daily update)**: **A146–A148** added from rekt.news Jul 2026 exploit analysis (Bonzo Finance oracle zero-sig, Ostium price forwarder hijack, Summer Finance phantom valuation). **RUSTSEC-2026-0191** (solana_rbpf OOB pointer) and **RUSTSEC-2026-0207/0212** (libcrux-sha3/libcrux-secrets) reviewed — not in Microstable dependency tree. Anchor `fix(avm): Skip attestation for older releases (#4835)` reviewed — AVM attestation skip for versions <1.1.0 (excl. 1.0.3) reinforces existing A145 assessment. Canonical inventory is now **217 active named-vector headings across 209 unique named IDs**, plus **72 META entries**: **281 unique IDs** or **289 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
+**Matrix state as of 2026-07-28 (purple-team daily update)**: **META-73** added — Vacuous-Verification / Trivial-Satisfaction Gap. A146 canonical reinforcement link added. Canonical inventory is now **217 active named-vector headings across 209 unique named IDs**, plus **73 META entries**: **282 unique IDs** or **290 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
