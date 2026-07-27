@@ -4,10 +4,44 @@
 
 ## 2026
 
+- **2026-07-26 — WEMIX / WEMIX$ (Ethereum/BNB Chain — owner key compromise enabled unbacked stablecoin mint)** — SlowMist reports the owner privileges of a WEMIX$-related smart contract were compromised, allowing the attacker to illegally mint approximately **5.23 million WEMIX$** stablecoins (worth about **$6.25 million**), which were swapped into WEMIX and USDC.e before being bridged out. The team suspended bridges and related services.
+**Root cause**: a single privileged owner key controlled the mint authority for the stablecoin contract without hardware isolation, threshold signatures, or operational delay.
+**Vector mapping**: **B15 Key Compromise** reinforcement — same class as Echo Protocol (key → mint authority → unbacked mint → swap/bridge). No new named vector required.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/coinbureau/status/2081559245653483870
+
+- **2026-07-26 — Garden Finance (multi-chain HTLC swap — off-chain solver database compromise enabled fraudulent fund releases)** — Blockaid detected an ongoing exploit targeting Garden Finance's HTLC contracts, draining about **$450K** in USDT across Ethereum, Base, Arbitrum, and BNB Chain. The project stated that an independent solver's off-chain database was compromised and fraudulent records were inserted, causing improper fund releases. The protocol and smart contracts themselves were not compromised.
+**Root cause**: the HTLC swap execution trusted off-chain solver state without independent on-chain verification. Compromising the solver's database allowed injecting fraudulent swap-fulfillment records that the on-chain contracts accepted as legitimate.
+**Vector mapping**: **B17 Checkpoint Poisoning + B28 Supply Chain** reinforcement — off-chain operator infrastructure compromise translated directly into on-chain fund release authority. No new named vector required.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/blockaid_/status/2081409252489298100
+
+- **2026-07-24 — Lien Finance (Ethereum — missing multiset integrity checks in bond exchange enabled unbacked minting)** — SlowMist reports the attacker abused a validation flaw in the `exchangeEquivalentBonds` function of the `BondMakerCollateralizedEth` contract (missing multiset integrity checks), minting unbacked bond tokens and draining approximately **$542K USDC** via OTC pools.
+**Root cause**: the bond exchange function accepted a multiset of bond identifiers where a set was required, allowing duplicate entries to inflate the exchange output without corresponding collateral.
+**Vector mapping**: **A10 Logic Bug** reinforcement — same class as ApeBond batch-migration duplicate inflation. The reusable lesson is that any batch/exchange function accepting value-bearing identifiers must enforce uniqueness or hard-fail on duplicates before value aggregation.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/SlowMist_Team/status/2080555677811171459
+
+- **2026-07-24 — Triple-A (multi-chain hot wallet compromise)** — Singapore-based stablecoin payments firm Triple-A suffered unauthorized access to its hot wallets across multiple chains, with attackers draining approximately **$9.7M–$11.8M** in company-owned digital assets. Client funds in separate trust accounts remained unaffected.
+**Root cause**: hot wallet key exposure (exact vector not publicly detailed).
+**Vector mapping**: **B15 Key Compromise** reinforcement. No new named vector.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/TripleAHQ/status/2081622020932948328
+
+- **2026-07-23 — Verus Ethereum Bridge (second exploit of unpatched bridge import path)** — The Verus Ethereum Bridge was exploited again through the same import path that was vulnerable in May 2026. The attacker triggered unbacked payouts on the Ethereum side, draining approximately **$7.54 million** in assets (ETH, tBTC, USDC, etc.). The project had not issued a detailed post-incident report for either incident.
+**Root cause**: the initial May 2026 exploit fix was not applied comprehensively. The same import-to-payout trust path remained exploitable, enabling a second drain through an already-known vulnerability.
+**Vector mapping**: **META-63 Invariant-to-Operations Promotion Gap** reinforcement — a documented vulnerability fix that is not durably encoded, verified, and monitored across the deployment can be re-exploited. No new named vector.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/blockaid_/status/2080143099561496896
+
+- **2026-07-22 — AFX Trade (Arbitrum bridge — five compromised validator keys cleared two-thirds quorum, draining $24.15M)** — rekt.news and Blockaid reporting confirm the attacker used compromised validator hot keys to meet the bridge's two-thirds signature threshold, authorizing a single **$24.15M USDC** withdrawal. The funds were bridged to Ethereum and swapped for ETH. QuillAudits confirmed the same validator set added at deployment signed off on the withdrawal, pointing to off-chain signing system compromise rather than contract vulnerability. The Zellic audit had documented zero test coverage with acknowledgments left unfixed.
+**Root cause**: the bridge's security model required validators to never be compromised, but the off-chain signing infrastructure was not hardened to the same standard as the on-chain threshold logic. A 200-second dispute window provided no effective challenge.
+**Vector mapping**: **B15 Key Compromise** reinforcement — validator quorum threshold met through key compromise (same class as Ronin/Harmony but with a bridge validator set). No new named vector.
+**Sources**: https://rekt.news/afx-trade-rekt | https://x.com/blockaid_/status/2080080240265621680 | https://x.com/QuillAudits_AI/status/2080230218648940888
+
 - **2026-07-22 — Balance Coin / 42DAO (BNB Chain Maker-style stablecoin — unbounded oracle write immediately became liquidation authority)** — SlowMist's transaction-backed analysis says an abnormally low BTCB Median Oracle value was accepted through `Spotter.poke` without a deviation bound, maximum-drawdown limit, or minimum-price floor. `Dog.bark` then consumed that value without an OSM-style delay or secondary-oracle verification and liquidated multiple BTCB vaults in the same transaction, producing about **$912K** in losses and a roughly **99% BLC depeg**.
 **Root cause**: the protocol collapsed oracle admission and liquidation execution into one attacker-timed transaction. The public evidence does not yet establish how the upstream Median Oracle value was created, so the verified failure is the downstream absence of sanity bounds, independent confirmation, and a delay/challenge window.
 **Vector mapping**: **A3 Oracle Manipulation** reinforcement (unbounded oracle-consumer / same-transaction liquidation sub-pattern); no new named vector is required.
 **Sources**: https://x.com/SlowMist_Team/status/2079759793192132810 | https://www.cryptotimes.io/2026/07/22/42daos-blc-stablecoin-depegs-to-near-zero-after-912k-oracle-exploit/
+
+- **2026-07-21 — FlashTrade (Solana perps — unauthorized withdrawal from ephemeral instance)** — FlashTrade detected an unauthorized **$98,000** withdrawal from its ephemeral instance. The newly rolled-out withdrawal batching and monitoring system detected the incident quickly. Trading, deposits, and withdrawals were paused. The team covered the full amount; all user funds were safe. Root cause not yet publicly detailed.
+**Vector mapping**: insufficient information for vector admission; excluded pending code-level disclosure.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/FlashTrade/status/2079727481574334544
 
 - **2026-07-21 — Wanchain Cardano↔BNB bridge / NIGHT treasury (Cardano Plutus validator — non-injective signed-message encoding enabled field-boundary signature reuse)** — BlockSec's initial transaction and on-chain Plutus V2 bytecode analysis says `TreasuryCheck` constructed its signed message by folding `AppendByteString` over **14 variable-length redeemer fields** without delimiters or length prefixes. Different field tuples could therefore produce identical bytes and hashes. BlockSec traced one attack `uniqueId` to a legitimate BSC transaction authorizing about **3,110 NIGHT**; the same signature was reused on Cardano for a **203,001,692 NIGHT** withdrawal, roughly **65,000x** larger. Across four transactions, about **515.2M NIGHT** (roughly **$9M-$10M**) left the bridge treasury.
 **Root cause**: the bridge signed an ambiguous byte string rather than a canonical typed authorization object. Signature validity therefore authenticated a hash, but not a unique chain/token/amount/recipient tuple.

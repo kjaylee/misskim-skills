@@ -1,3 +1,54 @@
+## 2026-07-28 Daily Check
+
+### Source Sweep (24h~7d window: 2026-07-21 → 2026-07-28 KST)
+
+- Sources checked: `rekt.news`, SlowMist Hacked, Immunefi, GitHub Advisory Database (Solana/Anchor/SPL since 2026-07-14), OtterSec blog (offline).
+- `web_search` disabled; used direct `web_fetch` on rekt.news, SlowMist, Immunefi, GitHub.
+- **New named vectors from today's intake: 0.** All six in-window incidents map to existing vectors.
+- **Reinforcements applied (6)**:
+  1. **WEMIX** (`2026-07-26`, ~$6.25M) → **B15** (owner key → mint authority → unbacked stablecoin mint, same class as Echo Protocol)
+  2. **Garden Finance** (`2026-07-26`, ~$450K) → **B17 + B28** (off-chain solver DB compromise → fraudulent HTLC records → on-chain fund release)
+  3. **Lien Finance** (`2026-07-24`, ~$542K) → **A10** (`exchangeEquivalentBonds` missing multiset integrity, same class as ApeBond)
+  4. **Triple-A** (`2026-07-24`, ~$9.7-11.8M) → **B15** (hot wallet compromise)
+  5. **Verus Ethereum Bridge** (`2026-07-23`, ~$7.54M) → **META-63** (second exploit of unpatched May 2026 flaw)
+  6. **AFX Trade** (`2026-07-22`, ~$24.15M) → **B15** (5 compromised validator keys → bridge quorum threshold → drain)
+- Canonical inventory remains **213 active named headings / 205 unique named IDs + META-01~72 = 285 active coverage rows**.
+
+### Full Live-Code Sweep — Carry-Forward Verification
+
+- **A6 CRITICAL — Fake MSTB mint in redeem path**: **STILL OPEN**. `mstb_mint` in redeem context (`lib.rs:2396`) has `#[account(mut)]` but **no `mint::authority` or explicit address constraint**. The Mint context (`lib.rs:2320`) correctly binds `mint::authority = protocol_state`, but the redeem path does not. An attacker could supply a self-owned mint, burn their own worthless tokens, and receive real vault collateral.
+- **A10 HIGH — Bearer/position split**: **STILL OPEN** (carry-forward).
+- **Hermes false-success HIGH**: **STILL OPEN**. `oracle.rs:693-710` — when `run_oracle_cycle` fails after Hermes posts succeed, Hermes posted receipts are converted to `OracleUpdateResult` and returned as `Ok(Vec)`. The keeper reports success, but vault oracle feeds were never updated (Hermes posts to temporary accounts at `Partial` verification; vault reads from fixed feeds at `Full` verification).
+- **B45 HIGH — Audit-to-deployment attestation gap**: **STILL OPEN**. `security/audit-attestation.json` confirmed absent via `ls`.
+
+### Today's Vector Focus — New Reinforcement Assessment
+
+| Vector | Source Incident | Verdict | Microstable Code Evidence |
+|---|---|---|---|
+| B15 — key → mint authority (WEMIX) | WEMIX `2026-07-26` | ✅ NOT ACTIVE | Microstable has no governance token or admin mint function beyond `mint::authority = protocol_state`. The WEMIX pattern requires a centralized mint authority key, which Microstable binds to a PDA. |
+| B17+B28 — off-chain solver DB compromise (Garden Finance) | Garden Finance `2026-07-26` | ✅ NOT ACTIVE | Microstable keeper uses deterministic Rust oracle cycle; no HTLC solver or database layer exists. |
+| A10 — multiset integrity (Lien Finance) | Lien Finance `2026-07-24` | ✅ NOT ACTIVE | Microstable has no batch bond exchange or multiset aggregation path. |
+| B15 — validator quorum (AFX Trade) | AFX Trade `2026-07-22` | ✅ NOT ACTIVE | Microstable uses 2-of-3 keeper quorum for privileged instructions, not a bridge validator set. |
+| META-63 — incomplete patch (Verus Bridge) | Verus `2026-07-23` | ✅ NOT ACTIVE | Microstable has no bridge import path. The lesson reinforces operational discipline for any future contract upgrades. |
+
+### Severity Rollup
+
+- **CRITICAL 1** — A6 fake MSTB mint in redeem path
+- **HIGH 3** — A10 bearer/position split, Hermes false-success, B45 attestation gap
+- **MEDIUM 4** — A43 cumulative sub-threshold drift, A75 manual-oracle exception lane, B84/D27 correlated RPC failover, META-53/META-63 actuator promotion
+- **LOW 1** — D26 frontend trust surface
+- **INFO-latent 1** — B83 `quinn-proto 0.11.13` (no TPU/QUIC client path)
+
+### Immediate Fix Order (Unchanged)
+
+1. **A6 CRITICAL** — Bind redeem context `mstb_mint` with `mint::authority = protocol_state` or explicit address check
+2. **Hermes HIGH** — Pass posted account pubkey into `update_oracle_pyth`; require non-zero vault state advance before success; align `Partial`/`Full` policy
+3. **B45 HIGH** — Create signed `audit-attestation.json` binding audit commit, program ELF, keeper binary, dashboard artifact
+4. **A10 HIGH** — Bind position ownership in redeem/liquidation paths
+5. **A43/A75/D27** — Add cumulative drift accumulator; strengthen manual-oracle trust parity; diversify RPC confirmation paths
+
+---
+
 ## 2026-07-16 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-07-09 → 2026-07-16 KST)
