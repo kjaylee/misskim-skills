@@ -2183,3 +2183,27 @@ archive_or_forward(tx)?; // delayed execution risk
 ### Solana-Specific Defense Checklist Update
 101. ☐ sponsored transaction은 nominal transfer fields만 검증하지 말고 final compiled instruction graph와 facilitator lamport delta를 deterministic manifest에 결박할 것
 102. ☐ sponsor-funded ATA의 owner/authority/refund recipient를 분리 검토하고 fresh wallet/mint fan-out 및 close/recreate에도 누적 비용 한도가 유지되는지 검증할 것
+
+### A146 Oracle Verifier Zero-Default Acceptance — Solana Application
+
+- **Solana-specific pattern**: Pyth receiver program writes `RawPythVerificationLevel::Full` or `Partial { num_signatures }` into on-chain account data. Downstream consumers (like Microstable) deserialize this enum and trust the Pyth receiver's internal verification semantics without independently re-verifying signatures.
+- **Attack surface**: if the Pyth receiver program is upgraded, forked, or has a bug where `Full` is written without proper signature checks, all downstream consumers accept unverified prices.
+- **Microstable code**: `read_pyth_price_update()` in `programs/microstable/src/lib.rs:3243` matches on `RawPythVerificationLevel::Full => {}` and rejects `_ => PythVerificationLevelTooLow`. Keeper `oracle.rs:497` mirrors this check.
+- **Defense gap**: neither the on-chain program nor the keeper independently verifies Pyth signature count or signer set. The trust is entirely delegated to the Pyth receiver program.
+- **Checklist item 103**: ☐ any oracle integration (Pyth, Switchboard, custom) must either independently verify the signature set or pin the oracle receiver program to a verified deploy hash and monitor upgrades
+- **Checklist item 104**: ☐ zero-valued verification fields (zero sig count, zero pubkey, default enum) must be rejected by construction, not just by matching against a known-good variant
+
+### A147 Trusted Forwarder Price Injection — Solana Application
+
+- **Solana-specific pattern**: the `PYTH_TRUSTED_WRITE_AUTHORITY` constant (`3fimeXDHiEK9oeJX6XM1rXNoavTCWhzbxNXVmwFzh6Kk`) is a single point of trust. If this authority key is compromised at the Pyth infrastructure level, an attacker can push arbitrary prices into Pyth accounts that Microstable will accept.
+- **Microstable defense layers**: write-authority allowlist (`is_allowed_pyth_write_authority`), price bounds (`PRICE_MIN`/`PRICE_MAX`), confidence cap (`ORACLE_CONFIDENCE_MAX`), staleness limit, TWAP smoothing, circuit breaker, and cross-RPC validation.
+- **Residual risk**: infrastructure-level compromise bypasses all consumer-side checks. No protocol-level recovery path exists if Pyth pushes persistently wrong prices.
+- **Checklist item 105**: ☐ for critical DeFi protocols, implement a secondary independent oracle (e.g., Switchboard or Chainlink) that must agree within a bound, or implement an emergency price-floor that limits maximum extractable value per slot
+
+### A148 Deprecated Feed Phantom Valuation — Solana Application
+
+- **Solana-specific pattern**: `set_pyth_feed` can disable a vault by setting `pyth_price_feed = Pubkey::default()`. The vault struct persists with its last-known `price`, `twap_price`, and `total_deposits` fields.
+- **Microstable defense**: oracle update skips vaults with `pyth_price_feed == Pubkey::default()`. Mint path checks `vault_oracle_degraded()` which checks slot staleness. But `assert_invariants` still reads all 4 vaults.
+- **Attack surface**: if a vault is retired (feed disabled) but its `price` field is not zeroed, and `assert_invariants` uses `price` for aggregate checks, the stale price could influence accounting.
+- **Checklist item 106**: ☐ retiring a vault must atomically zero `price`, `twap_price`, `confidence`, and exclude the vault from aggregate valuation in `assert_invariants`
+- **Checklist item 107**: ☐ add an invariant: `require!(pyth_price_feed == Pubkey::default() implies price == 0)` to enforce that disabled feeds cannot echo stale prices

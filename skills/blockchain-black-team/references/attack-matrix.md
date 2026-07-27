@@ -11363,4 +11363,43 @@ attacker:
 - https://arxiv.org/abs/2607.19545
 - https://arxiv.org/pdf/2607.19545
 
-**Matrix state as of 2026-07-27 (red-team daily update)**: **A145** added as a sponsored-execution/rent-ownership attack distinct from B79 payment-service correspondence, A141 sponsored volume churn, and A135 realloc refunds. Canonical inventory is now **214 active named-vector headings across 206 unique named IDs**, plus **72 META entries**: **278 unique IDs** or **286 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
+## A146 Oracle Verifier Zero-Default Acceptance / Trivial-Identity Signature Pass
+
+| Field | Value |
+|---|---|
+| **Origin** | Bonzo Finance / Supra oracle exploit, Hedera, Jul 2026 — $9.05M loss. rekt.news reference: /bonzo-finance-rekt |
+| **Vector** | oracle verifier accepts a zeroed signature submitted against a zeroed public key because the underlying verification equation holds trivially for all-zero inputs (0 = verify(0, 0, pk=0)), causing the oracle to emit a valid price update with no actual attestation |
+| **Prerequisites** | oracle consumer trusts a downstream verifier whose equation degenerates to identity for zero inputs; consumer does not independently re-check signer liveness or public-key non-zero |
+| **Impact** | forged oracle price, unbacked mint, reserve drain, lending protocol bad debt, vault insolvency |
+| **Microstable status** | NOT ACTIVE — on-chain `read_pyth_price_update` enforces `RawPythVerificationLevel::Full` and rejects Partial/zero-sig. Keeper mirror-checks the same field. However, Microstable does NOT re-verify Pyth signatures itself; it trusts the Pyth receiver program's internal semantics based solely on a serialized enum value. |
+| **Required future invariant** | any custom oracle integration must reject zero-valued signatures, zero-valued public keys, and default-initialized verification artifacts as invalid by construction. A `Full` enum variant is not a substitute for independent signature verification. |
+
+---
+
+## A147 Trusted Price Forwarder Hijack / Oracle Feed Authority Impersonation
+
+| Field | Value |
+|---|---|
+| **Origin** | Ostium exploit, Arbitrum, Jul 2026 — $23.75M loss. rekt.news reference: /ostium-rekt |
+| **Vector** | attacker compromises or impersonates a trusted price forwarder/middleware to inject an extreme price (e.g., fake $60K BTC) into a downstream vault; the vault accepts the price because the forwarder's authority appears legitimate, then settles trades against the manipulated quote |
+| **Prerequisites** | protocol trusts an off-chain forwarder or push-based oracle whose authority key is a single point of compromise; no multi-signer threshold on the forwarder; no sanity-bound or circuit-breaker on the received price |
+| **Impact** | instant reserve drain through malicious liquidation or leveraged trading at fabricated prices |
+| **Microstable status** | NOT ACTIVE — `PYTH_TRUSTED_WRITE_AUTHORITY` is hardcoded and `is_allowed_pyth_write_authority` enforces either allowlisted authority or self-authority. Cross-RPC validation adds a second node's perspective. Price bounds (`PRICE_MIN`/`PRICE_MAX`), confidence check (`ORACLE_CONFIDENCE_MAX`), and staleness check add layered defense. However, a Pyth infrastructure-level compromise would bypass all consumer-side checks. |
+| **Required future invariant** | any migration to a push-based oracle or off-chain forwarder must require multi-signer threshold (≥2-of-3) on the forwarder authority and implement price-sanity bounds independent of the forwarder's own checks. |
+
+---
+
+## A148 Deprecated Feed Phantom Valuation / Retired-Vault Deposit Echo
+
+| Field | Value |
+|---|---|
+| **Origin** | Summer Finance / Lazy Summer exploit, Jul 2026 — $6.04M loss. rekt.news reference: /summer-finance-rekt |
+| **Vector** | an asset/vault marked for removal or capacity-capped is still included in aggregate vault valuation, so a donated or stale-position asset inflates the share price and drains real liquidity from active vaults |
+| **Prerequisites** | protocol computes per-share value or total-collateral-value across all vaults including ones whose feed is disabled or stale; no explicit quarantine or zero-valuation gate for deprecated vaults |
+| **Impact** | share-price inflation, drain of real collateral through inflated redemptions, protocol insolvency |
+| **Microstable status** | NOT ACTIVE — `set_pyth_feed` can zero out a feed (`Pubkey::default()`), but mint path checks `vault_oracle_degraded()` per-vault and oracle update checks `pyth_price_feed != Pubkey::default()`. Each vault's price is individually gated. However, `assert_invariants` still iterates all 4 vaults during mint/redeem. If a future vault-retirement path preserves deposits without zeroing the oracle price field, the stale price could echo into valuation. |
+| **Required future invariant** | retiring a vault must atomically (a) disable the feed, (b) set `price = 0` and `twap_price = 0` on the vault, (c) migrate or lock remaining deposits, and (d) exclude the vault from `assert_invariants` aggregate computations. A vault with `pyth_price_feed == Pubkey::default()` must have `price == 0`. |
+
+---
+
+**Matrix state as of 2026-07-28 (red-team daily update)**: **A146–A148** added from rekt.news Jul 2026 exploit analysis (Bonzo Finance oracle zero-sig, Ostium price forwarder hijack, Summer Finance phantom valuation). **RUSTSEC-2026-0191** (solana_rbpf OOB pointer) and **RUSTSEC-2026-0207/0212** (libcrux-sha3/libcrux-secrets) reviewed — not in Microstable dependency tree. Anchor `fix(avm): Skip attestation for older releases (#4835)` reviewed — AVM attestation skip for versions <1.1.0 (excl. 1.0.3) reinforces existing A145 assessment. Canonical inventory is now **217 active named-vector headings across 209 unique named IDs**, plus **72 META entries**: **281 unique IDs** or **289 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
