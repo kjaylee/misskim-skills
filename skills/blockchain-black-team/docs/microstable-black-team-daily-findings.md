@@ -4,14 +4,15 @@
 
 - Sources checked: `rekt.news`, SlowMist Hacked, Immunefi, GitHub Advisory Database (Solana/Anchor/SPL since 2026-07-14), OtterSec blog (offline).
 - `web_search` disabled; used direct `web_fetch` on rekt.news, SlowMist, Immunefi, GitHub.
-- **New named vectors from today's intake: 0.** All six in-window incidents map to existing vectors.
-- **Reinforcements applied (6)**:
+- **New named vectors from today's intake: 0.** All seven in-window incidents map to existing vectors.
+- **Reinforcements applied (7)**:
   1. **WEMIX** (`2026-07-26`, ~$6.25M) → **B15** (owner key → mint authority → unbacked stablecoin mint, same class as Echo Protocol)
   2. **Garden Finance** (`2026-07-26`, ~$450K) → **B17 + B28** (off-chain solver DB compromise → fraudulent HTLC records → on-chain fund release)
-  3. **Lien Finance** (`2026-07-24`, ~$542K) → **A10** (`exchangeEquivalentBonds` missing multiset integrity, same class as ApeBond)
-  4. **Triple-A** (`2026-07-24`, ~$9.7-11.8M) → **B15** (hot wallet compromise)
-  5. **Verus Ethereum Bridge** (`2026-07-23`, ~$7.54M) → **META-63** (second exploit of unpatched May 2026 flaw)
-  6. **AFX Trade** (`2026-07-22`, ~$24.15M) → **B15** (5 compromised validator keys → bridge quorum threshold → drain)
+  3. **Projekt** (`2026-07-25`, ~$560K) → **A10** (`trackPurchase` derived reward entitlement from pair-balance deltas after `skim()`, enabling phantom reward allocation)
+  4. **Lien Finance** (`2026-07-24`, ~$542K) → **A10** (`exchangeEquivalentBonds` missing multiset integrity, same class as ApeBond)
+  5. **Triple-A** (`2026-07-24`, ~$9.7-11.8M) → **B15** (hot wallet compromise)
+  6. **Verus Ethereum Bridge** (`2026-07-23`, ~$7.54M) → **META-63** (second exploit of unpatched May 2026 flaw)
+  7. **AFX Trade** (`2026-07-22`, ~$24.15M) → **B15** (5 compromised validator keys → bridge quorum threshold → drain)
 - Canonical inventory remains **213 active named headings / 205 unique named IDs + META-01~72 = 285 active coverage rows**.
 
 ### Full Live-Code Sweep — Carry-Forward Verification
@@ -27,6 +28,7 @@
 |---|---|---|---|
 | B15 — key → mint authority (WEMIX) | WEMIX `2026-07-26` | ✅ NOT ACTIVE | Microstable has no governance token or admin mint function beyond `mint::authority = protocol_state`. The WEMIX pattern requires a centralized mint authority key, which Microstable binds to a PDA. |
 | B17+B28 — off-chain solver DB compromise (Garden Finance) | Garden Finance `2026-07-26` | ✅ NOT ACTIVE | Microstable keeper uses deterministic Rust oracle cycle; no HTLC solver or database layer exists. |
+| A10 — reward entitlement from synthetic purchase deltas (Projekt) | Projekt `2026-07-25` | ✅ NOT ACTIVE | Microstable has no permissionless reward vault, `trackPurchase`, AMM `skim()`-derived accounting, or `massWithdraw` reward pool. |
 | A10 — multiset integrity (Lien Finance) | Lien Finance `2026-07-24` | ✅ NOT ACTIVE | Microstable has no batch bond exchange or multiset aggregation path. |
 | B15 — validator quorum (AFX Trade) | AFX Trade `2026-07-22` | ✅ NOT ACTIVE | Microstable uses 2-of-3 keeper quorum for privileged instructions, not a bridge validator set. |
 | META-63 — incomplete patch (Verus Bridge) | Verus `2026-07-23` | ✅ NOT ACTIVE | Microstable has no bridge import path. The lesson reinforces operational discipline for any future contract upgrades. |

@@ -14,6 +14,11 @@
 **Vector mapping**: **B17 Checkpoint Poisoning + B28 Supply Chain** reinforcement — off-chain operator infrastructure compromise translated directly into on-chain fund release authority. No new named vector required.
 **Sources**: https://hacked.slowmist.io/ | https://x.com/blockaid_/status/2081409252489298100
 
+- **2026-07-25 — Projekt / GREEN-GOLD reward vault (Ethereum — reward accounting trusted pair-balance deltas instead of authenticated spend)** — SlowMist reports the Projekt reward vault was exploited after the attacker flash-loaned about **14K WETH** into multiple Uniswap V2 memecoin pairs and used `skim()` to create fake reward-eligible purchase records. The permissionless `trackPurchase` path sized rewards from token-balance deltas without verifying that real ETH consideration had actually been spent, and the attacker later drained about **301.7 ETH (~$560K)** via `massWithdraw`.
+**Root cause**: reward entitlement was derived from observable inventory movement rather than from authenticated settlement inputs. AMM pair-balance changes therefore became a spend-surrogate the attacker could synthesize out of band.
+**Vector mapping**: **A10 Logic Bug** reinforcement — same broad class as NovaBox/Chi/Lien, but sharpened around **phantom reward entitlement from synthetic purchase accounting**. No new named vector required.
+**Sources**: https://hacked.slowmist.io/?c=ETH | https://hacked.slowmist.io/
+
 - **2026-07-24 — Lien Finance (Ethereum — missing multiset integrity checks in bond exchange enabled unbacked minting)** — SlowMist reports the attacker abused a validation flaw in the `exchangeEquivalentBonds` function of the `BondMakerCollateralizedEth` contract (missing multiset integrity checks), minting unbacked bond tokens and draining approximately **$542K USDC** via OTC pools.
 **Root cause**: the bond exchange function accepted a multiset of bond identifiers where a set was required, allowing duplicate entries to inflate the exchange output without corresponding collateral.
 **Vector mapping**: **A10 Logic Bug** reinforcement — same class as ApeBond batch-migration duplicate inflation. The reusable lesson is that any batch/exchange function accepting value-bearing identifiers must enforce uniqueness or hard-fail on duplicates before value aggregation.
