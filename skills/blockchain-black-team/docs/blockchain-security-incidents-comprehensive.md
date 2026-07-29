@@ -4,6 +4,11 @@
 
 ## 2026
 
+- **2026-07-28 — Crypto DAO / Pro token (BNB Chain — unprotected vault/executor function let anyone drain USDT)** — SlowMist's incident feed and follow-up reporting say the attacker called a publicly reachable vault execution path (`exec()` / equivalent asset-moving helper) with no effective access-control guard and drained about **$8.2M** in USDT. Flash liquidity only amplified the extraction size.
+**Root cause**: a privileged asset-moving vault/helper entrypoint was left permissionless on-chain. The protocol relied on workflow assumptions ("only internal strategy/router code should call this") instead of enforcing caller authorization at the contract boundary.
+**Vector mapping**: **A4 Access Control** reinforcement — same helper/vault-entrypoint class already seen in YieldCore and similar incidents. No new named vector is required.
+**Sources**: https://hacked.slowmist.io/ | https://www.cryptotimes.io/2026/07/29/crypto-dao-drained-for-8-2m-on-bnb-chain-via-access-control-bug/
+
 - **2026-07-26 — WEMIX / WEMIX$ (Ethereum/BNB Chain — owner key compromise enabled unbacked stablecoin mint)** — SlowMist reports the owner privileges of a WEMIX$-related smart contract were compromised, allowing the attacker to illegally mint approximately **5.23 million WEMIX$** stablecoins (worth about **$6.25 million**), which were swapped into WEMIX and USDC.e before being bridged out. The team suspended bridges and related services.
 **Root cause**: a single privileged owner key controlled the mint authority for the stablecoin contract without hardware isolation, threshold signatures, or operational delay.
 **Vector mapping**: **B15 Key Compromise** reinforcement — same class as Echo Protocol (key → mint authority → unbacked mint → swap/bridge). No new named vector required.
@@ -33,6 +38,11 @@
 **Root cause**: the initial May 2026 exploit fix was not applied comprehensively. The same import-to-payout trust path remained exploitable, enabling a second drain through an already-known vulnerability.
 **Vector mapping**: **META-63 Invariant-to-Operations Promotion Gap** reinforcement — a documented vulnerability fix that is not durably encoded, verified, and monitored across the deployment can be re-exploited. No new named vector.
 **Sources**: https://hacked.slowmist.io/ | https://x.com/blockaid_/status/2080143099561496896
+
+- **2026-07-23 — Solido Cash (Supra lending/stablecoin — stale-feed fallback misassignment let cheap collateral mint near-par debt)** — Solido Money's incident report says two exploit waves on July 23 abused the same oracle-pricing defect. SOLID collateral's canonical feed went stale, and fallback logic then priced SOLID off a different token quote near **$1** instead of its real market price. The attacker bought cheap SOLID, deposited it, minted about **809,052 CASH**, and sold the new debt token for roughly **293.7M SUPRA**, with the first wave executed atomically and the second repeated manually across five wallets.
+**Root cause**: the failure was not merely `stale data accepted`. The exception path substituted the wrong semantic price object when the canonical feed died, silently promoting a fallback quote into collateral truth without sufficiently tight risk limits or asset/feed disambiguation.
+**Vector mapping**: **A3 Oracle Manipulation** reinforcement — stale-feed fallback / oracle-misassignment sub-pattern. No new named vector is required.
+**Sources**: https://app.solido.money/reports/solido-cash-incident-july-2026.pdf | https://ambcrypto.com/solido-traces-84-of-exploit-proceeds-to-exchange-infrastructure-in-forensic-report/ | https://www.coingabbar.com/en/crypto-currency-news/solido-cash-exploit-foundation-funds-report-2026 | https://hacked.slowmist.io/
 
 - **2026-07-22 — AFX Trade (Arbitrum bridge — five compromised validator keys cleared two-thirds quorum, draining $24.15M)** — rekt.news and Blockaid reporting confirm the attacker used compromised validator hot keys to meet the bridge's two-thirds signature threshold, authorizing a single **$24.15M USDC** withdrawal. The funds were bridged to Ethereum and swapped for ETH. QuillAudits confirmed the same validator set added at deployment signed off on the withdrawal, pointing to off-chain signing system compromise rather than contract vulnerability. The Zellic audit had documented zero test coverage with acknowledgments left unfixed.
 **Root cause**: the bridge's security model required validators to never be compromised, but the off-chain signing infrastructure was not hardened to the same standard as the on-chain threshold logic. A 200-second dispute window provided no effective challenge.
