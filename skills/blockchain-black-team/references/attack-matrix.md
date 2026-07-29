@@ -11321,6 +11321,63 @@ require!(healthy, ErrorCode::InsolventPosition);
 
 ---
 
+## 2026-07-28 Red-Team Safety-Actuator Starvation Addition
+
+### B86. State-Invariant Blockspace Saturation / Safety-Actuator Starvation
+
+**Signal**: Wang et al., *Blockspace Under Pressure: An Analysis of Spam MEV on High-Throughput Blockchains* (`arXiv:2604.00234v2`, posted `2026-07-21`) and Pahari et al., *There Will Be Spam: Characterizing State-Invariant Transactions and Speculative MEV* (`arXiv:2607.24172`, submitted `2026-07-27`).
+
+**Mechanism**: attacker waits for a protocol to approach a time-sensitive safety boundary, then floods the chain with large volumes of speculative or state-invariant transactions that consume blockspace, validator attention, RPC/indexer capacity, and confirmation budget while looking mostly like ordinary low-value traffic. The goal is not to steal through the spam transaction itself; the goal is to make **defensive transactions** land too late, so oracle refreshes, manual fallback activation, emergency shutdown, or corrective keeper actions miss their viable execution window.
+
+**Attack chain**:
+1. Observe a protocol approaching a safety-critical boundary such as oracle staleness, emergency collateral-ratio breach, manual-oracle expiry, or a narrow reveal/rebalance deadline.
+2. Generate large batches of speculative probe transactions or state-invariant transactions that touch many different accounts, so the pressure is **global inclusion/confirmation pressure**, not just single-account contention.
+3. Keep fees just high enough to remain admissible while exploiting low-fee/high-throughput settings; some probes may revert, others may succeed without meaningful state change.
+4. Time-critical keeper/guardian transactions now compete against degraded blockspace and fee conditions even when they are semantically correct and target uncontended accounts.
+5. Fixed confirmation windows, fixed fee assumptions, or generic retry logic misclassify the event as benign congestion or transient RPC lag.
+6. The protocol enters a worse state because the **safety actuator was late**, not because the core accounting rule was directly broken.
+
+**Why this is distinct**:
+- **D20 Denial of Service** is a broad availability class. **B86** is a chain-native, economically rational admission/inclusion attack using mostly valid low-signal transactions.
+- **B64 Firedancer Write-Lock LDoS** starves a specific writable PDA. **B86** can succeed **without any single-account write-lock bottleneck**, by exhausting shared blockspace and confirmation capacity.
+- **A110 Receipt-Threshold Poisoning** attacks private-ordering admission sets. **B86** targets the public or chain-level execution lane that safety actuators themselves rely on.
+- **B78 / A91 / A92** monetize ordering visibility. **B86** can be worthwhile even if the spam transaction itself has near-zero edge, because the real payout comes from the downstream safety failure.
+
+**Why audits miss it**:
+1. Anti-spam heuristics often watch for revert rate, failed arbitrage, or one hot account; state-invariant or low-state-change traffic can stay below those alarms.
+2. Keeper reviews focus on correctness of `oracle update`, `shutdown`, or `rebalance` logic, not on whether those transactions still land under adversarial blockspace pressure.
+3. Dual-RPC designs can prove state consistency while still sharing the same on-chain admission bottleneck.
+4. Priority-fee handling is often treated as ops tuning rather than as a security invariant for time-sensitive actuators.
+
+**Evidence grade and limits**:
+- **Emerging / paper-backed with red-team inference**. The cited papers establish that speculative and state-invariant spam can consume a large fraction of chain resources and that low-fee/high-throughput settings encourage it.
+- The exact jump from `spam exists` to `specific protocol safety actuator can be starved` is a **derived exploit pattern**, not a directly reported Microstable incident.
+
+**Microstable relevance**: **MEDIUM latent**
+- reviewed live path: `microstable/solana/programs/microstable/src/lib.rs` and `microstable/solana/keeper/src/`.
+- `keeper/src/utils.rs` submits transactions through `send_instructions()` using caller-supplied instructions and default send config, but **does not attach `ComputeBudgetInstruction::set_compute_unit_price`** or another explicit fee-escalation lane before broadcasting.
+- the same generic submission path is used by `monitor.rs` for `emergency_shutdown` and by `oracle.rs` for manual oracle mode activation and fallback writes, so multiple safety actuators share one fee-neutral submission surface.
+- current repo scan found no Jito/private-ordering lane and no DEX liquidation loop, so the exact exploit is **not active today**. The risk is architectural: under adverse blockspace conditions, safety actions can arrive late while code-level invariants still look correct.
+
+**Defense**:
+1. Give safety-critical transactions a dedicated priority-fee strategy with bounded automatic escalation and explicit deadline awareness.
+2. Distinguish `write-lock contention`, `global blockspace starvation`, and `RPC observation mismatch` in keeper telemetry; they are not the same failure.
+3. Reserve an actuator lane: emergency shutdown, oracle refresh, and manual-fallback activation should not share the same zero-priority submission defaults as non-urgent operations.
+4. Stress-test under spam conditions: low-state-change probes, non-reverting state-invariant traffic, and slot-boundary bursts.
+5. Treat confirmation-window design as a security parameter; if the window is fixed while fee conditions float adversarially, the attacker owns the deadline.
+
+**Sources**:
+- https://arxiv.org/html/2604.00234v2
+- https://arxiv.org/abs/2607.24172
+
+| Vector | Mechanism | Impact | Microstable relevance |
+|---|---|---|---|
+| B86 State-Invariant Blockspace Saturation / Safety-Actuator Starvation | attacker floods a high-throughput chain with speculative or state-invariant low-signal transactions timed around a protocol's defensive deadline, starving oracle refresh/emergency/manual-fallback actions without direct write-lock or oracle forgery | stale-oracle windows, missed shutdown/recovery actions, rebalance deadline failure, latent insolvency amplification | current code shows **MEDIUM latent** exposure because safety actuators use a fee-neutral generic submission path; exact exploit is **not active today** without adverse chain conditions |
+
+**Matrix state as of 2026-07-28 (red-team daily update)**: **B86** added after classifying recent spam/state-invariant transaction research as a reusable actuator-starvation primitive distinct from **D20**, **B64**, and **A110**. Canonical inventory is now **218 active named-vector headings across 210 unique named IDs**, plus **73 META entries**: **283 unique IDs** or **291 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed; one **MEDIUM latent** architecture finding was documented.
+
+---
+
 ## 2026-07-27 Solana Sponsored-Settlement Rent Extraction Addition
 
 ### A145. Facilitator Fee-Payer Instruction Smuggling / Sponsored ATA Rent Extraction

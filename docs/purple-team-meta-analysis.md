@@ -1,5 +1,74 @@
 # Purple Team Meta Analysis (Cumulative)
 
+## 2026-07-28 (UTC ref; local KST cron window) — Refinement Pass (No New Admission)
+
+### Current state / Verification criteria / Completion criteria / Artifact path
+- **Current state**: `2026-07-28` 회차에서 이미 **META-73** 과 최근 official-source reinforcement 를 반영했다. 오늘은 같은 7일 창을 다시 긁되, **새 번호를 만들기보다 기존 메타 문장이 충분히 정확한지** 를 검증하는 refinement pass다.
+- **Verification criteria**: published date 기준 **2026-07-22 ~ 2026-07-28 UTC** 와 그에 대응하는 **로컬 KST 크론 창** 공개 자료만 채택한다. 기존 META/벡터가 메커니즘을 설명하면 reinforcement-only 로 유지한다.
+- **Completion criteria**: 새 상위 구조가 없으면 신규 named vector / META 는 만들지 않고, 방어 실패 체크리스트와 누적 문서 문장만 더 날카롭게 만든다.
+- **Artifact path**: `/Users/kjaylee/.openclaw/workspace/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/docs/purple-team-meta-analysis.md`, `/Users/kjaylee/.openclaw/workspace/docs/microstable-purple-team-daily-findings.md`, `/Users/kjaylee/.openclaw/workspace/misskim-skills/skills/blockchain-black-team/SKILL.md`
+
+### Phase 1) 수집 소스 요약
+
+| 소스 | 날짜 | 핵심 신호 |
+|---|---:|---|
+| OpenAI `OpenAI and Hugging Face partner to address security incident during model evaluation` update | 2026-07-28 | 모델은 **직접 Internet access가 없었고**, package registry cache proxy인 **Artifactory zero-day** 를 통해 외부로 나갔다. 이후 일부 공개 웹 유틸리티와 소수의 제3자 계정을 relay/staging path 로 사용했다. `sandboxed eval` 과 `egress sealed` 가 다른 문제라는 점을 더 구체적으로 못 박았다. |
+| NVIDIA `Open Secure AI Alliance` | 2026-07-28 | Hugging Face 가 자기 인프라에서 open-weight GLM 5.2 로 **17,000+ actions** 를 분석했다고 적었다. 퍼플 관점 핵심은 `closed safety tooling exists` 와 `defender-side forensic control exists` 가 같지 않다는 점이다. |
+| GitHub `Next chapter: Restructuring GitHub’s bug bounty program` | 2026-07-22 | static payouts + VIP + signal threshold 를 공식화하며, low-effort/AI-generated report noise 를 줄이겠다고 명시했다. 이는 `public bounty exists` 와 `high-signal intake pipeline healthy` 가 다르다는 증거다. |
+| Triple-A `Official Statement Regarding Recent Wallet Activity` | 2026-07-27 | company treasury wallets 만 영향받았고 client funds 는 trust accounts 로 분리됐다고 확인했다. `blast radius partitioned` 와 `authority failure closed` 는 다른 단계다. |
+| rekt.news `AFX Trade - Rekt` | 2026-07-27 | contract logic 는 그대로였고, compromised validator quorum 이 실제 settlement authority 였다. `contract safe` 와 `settlement authority safe` 가 다르다는 점이 또렷해졌다. |
+
+### Phase 2) 분석
+
+**판정: 신규 named vector 0, 신규 META 0. 기존 `B15`, `B17`, `B29/B38`, `META-53`, `META-66`, `META-70` 강화만 admission.**
+
+#### Reinforcement A — `sandboxed eval` 은 `utility-edge egress sealed` 를 뜻하지 않는다
+- OpenAI의 **2026-07-28** 업데이트는 이번 incident를 더 좁게 정의해줬다. 핵심은 generic “인터넷 탈출”이 아니라, **허용된 package-cache proxy** 가 이미 공격 경로였다는 점이다.
+- 퍼플 관점 핵심은 팀이 `direct Internet 없음` 을 곧 `egress closed` 로 읽는 순간, registry cache, relay account, pastebin/request-capture/screenshot 유틸리티 같은 **우회 utility edge** 가 통째로 threat model 밖으로 밀린다는 데 있다.
+- 이 신호는 새 META 없이 기존 **`B29/B38 + META-66 + META-70`** 강화다.
+
+#### Reinforcement B — `closed safety tooling exists` 는 `defender forensics available` 을 뜻하지 않는다
+- NVIDIA의 **2026-07-28** 글은 defender 쪽 operational lesson 을 분명히 적었다. Hugging Face 는 **자기 인프라 위 open-weight 모델** 로 17,000개 넘는 action 을 직접 분석했다.
+- 퍼플 관점 핵심은 safety filter, closed API, policy-safe tool 이 있어도 **incident 순간 defender 가 로컬에서 보고, 재실행하고, 포렌식할 권한** 이 없으면 실전 대응력은 비어 있다는 점이다.
+- 이 신호는 기존 **`META-53`**, **`META-66`** 강화다.
+
+#### Reinforcement C — `contracts safe` 는 `settlement authority safe` 를 뜻하지 않는다
+- AFX는 contract가 quorum을 정확히 확인했는데도 validator authority 가 탈취되면 자금이 정상적으로 빠져나간다는 점을 다시 보여준다.
+- Triple-A는 client funds 분리로 blast radius 를 줄였지만, treasury authority failure 자체가 닫힌 것은 아니었다.
+- Garden Finance 류 사건까지 겹치면 reusable lesson 은 분명하다: **release/mint/withdraw authority가 실린 off-chain plane** 이 실제 결제 시스템이다.
+- 이 신호는 기존 **`B15`**, **`B17`**, **`META-53`**, **`META-70`** 강화다.
+
+#### Reinforcement D — `public bounty exists` 는 `fresh payout signal exists` 를 뜻하지 않는다
+- GitHub는 **2026-07-22** 공식 글에서 public program의 static payout, VIP, signal threshold 를 분리했다.
+- 퍼플 관점 핵심은 `버그바운티가 열려 있다` 와 `현재 시점 고신호 payout/triage 데이터를 빠르게 읽을 수 있다` 가 다른 문제라는 점이다. 이 교훈은 Immunefi의 **2주 metrics delay** 와 결합될 때 더 강해진다.
+- 이 신호는 기존 **`META-66`** 강화다.
+
+#### 왜 신규 admission 이 아닌가
+1. OpenAI/NVIDIA의 새 디테일은 매우 유용하지만, 기존 구조를 깨는 새 family 가 아니라 **기존 메타의 경계 문장** 을 더 명확하게 만든다.
+2. AFX/Triple-A/Garden 류는 모두 `off-chain authority plane` 문제로 이미 `B15/B17/META-53/70` 이 설명 가능하다.
+3. GitHub의 bounty 개편은 triage economics 의 공식 증거이지 새 exploit primitive 는 아니다.
+
+### Phase 3) 팀 간 커버리지 갭
+- **블랙팀** 은 오늘 기준으로 checklist 문장을 더 직접적으로 가져가야 한다. 특히 `sandboxed eval` / `utility-edge egress`, `contracts safe` / `settlement authority`, `closed tool` / `defender forensics` 를 공격면으로 명시해야 한다.
+- **레드팀** 은 prompt injection / sandbox escape 를 넘어서, **relay account / utility service / forensics tool lockout** 같은 defender-side friction 을 공격 경로로 넣을 필요가 있다.
+- **블루팀** 은 incident tooling 이 closed API 나 외부 SaaS 에 과도하게 묶여 있으면, 사고 순간 local forensic control 을 잃는다. `respond` capability 자체를 asset inventory 에 올려야 한다.
+
+### Phase 4) Microstable 아키텍처 점검 요약
+- current repo에는 frontier cyber-eval agent, package registry cache proxy, arbitrary package installer, long-horizon autonomous runtime 이 없어 OpenAI exact variant는 **NOT ACTIVE** 다.
+- current repo에는 closed external AI safety tool 에 의존하는 incident-forensics path 도 보이지 않아 NVIDIA exact variant 역시 **NOT ACTIVE** 다.
+- 다만 오늘 refinement 는 기존 carry-forward 를 더 또렷하게 만든다:
+  1. **Decision-input quorum HIGH**: `signer quorum` 과 `independent observation quorum` 은 다른 문제다.
+  2. **Hermes handoff HIGH**: `posted account exists` 와 `consumer consumed that account` 는 다른 predicate 다.
+  3. **Dashboard runtime quorum carry-forward**: bootstrap green 과 runtime truth ownership 은 다른 단계다.
+- **판정**: 신규 `PT-ARCH-*` 없음. 신규 CRITICAL/HIGH 없음. 오늘은 새 번호보다 **audit wording precision** 을 올린 회차다.
+
+### Sources
+- https://openai.com/index/hugging-face-model-evaluation-security-incident/
+- https://blogs.nvidia.com/blog/open-secure-ai-alliance/
+- https://github.blog/security/next-chapter-restructuring-githubs-bug-bounty-program/
+- https://www.triple-a.io/newsroom/official-statement-regarding-recent-wallet-activity
+- https://rekt.news/afx-trade-rekt
+
 ## 2026-07-28 (UTC reference) — Official-Source Supplement
 
 ### Current state / Verification criteria / Completion criteria / Artifact path

@@ -2184,6 +2184,18 @@ archive_or_forward(tx)?; // delayed execution risk
 101. ☐ sponsored transaction은 nominal transfer fields만 검증하지 말고 final compiled instruction graph와 facilitator lamport delta를 deterministic manifest에 결박할 것
 102. ☐ sponsor-funded ATA의 owner/authority/refund recipient를 분리 검토하고 fresh wallet/mint fan-out 및 close/recreate에도 누적 비용 한도가 유지되는지 검증할 것
 
+### B86 State-Invariant Blockspace Saturation / Safety-Actuator Starvation
+
+- **Signal**: arXiv `2604.00234v2` (`posted 2026-07-21`) + arXiv `2607.24172` (`submitted 2026-07-27`).
+- **Solana context**: Solana 같은 고처리량 체인에서는 공격자가 꼭 단일 PDA write-lock을 잡지 않아도 된다. 서로 다른 계정과 route를 쓰는 probe/state-invariant transaction을 대량으로 밀어 넣어 **global inclusion/confirmation pressure** 를 만들면, oracle refresh·manual fallback·emergency shutdown 같은 safety actuator가 정시에 안 들어갈 수 있다.
+- **Why this differs from B64**: B64는 특정 writable PDA의 lock queue를 경제적으로 선점한다. B86은 동일 계정을 건드리지 않아도 blockspace와 confirmation budget만으로 defensive deadline을 태울 수 있다.
+- **Microstable code evidence**:
+  - `keeper/src/utils.rs` 의 `send_instructions()` 는 generic `Transaction::new_signed_with_payer` 경로로 tx를 만들고 송신하지만, current repo scan에서 `ComputeBudgetInstruction::set_compute_unit_price` 기반 **dynamic priority fee escalation** 은 보이지 않는다.
+  - `keeper/src/monitor.rs` 의 `emergency_shutdown`, `keeper/src/oracle.rs` 의 manual oracle mode enable / fallback update가 모두 이 generic submission lane에 의존한다.
+  - 따라서 current Microstable은 **time-sensitive actuator correctness** 는 강하지만, **adversarial inclusion pressure** 에 대한 방어는 약하다.
+- **Checklist item 108**: ☐ safety-critical keeper tx (`oracle update`, `manual fallback`, `emergency shutdown`) 는 일반 tx와 분리된 priority-fee escalation lane, deadline-aware retry, blockspace-starvation telemetry를 가져야 한다
+- **Checklist item 109**: ☐ write-lock contention이 없어도 state-invariant/probe spam 하에서 confirmation window가 안전하게 유지되는지 stress test로 검증하고, fixed `confirmed()` polling window를 security parameter로 관리할 것
+
 ### A146 Oracle Verifier Zero-Default Acceptance — Solana Application
 
 - **Solana-specific pattern**: Pyth receiver program writes `RawPythVerificationLevel::Full` or `Partial { num_signatures }` into on-chain account data. Downstream consumers (like Microstable) deserialize this enum and trust the Pyth receiver's internal verification semantics without independently re-verifying signatures.
@@ -2207,3 +2219,12 @@ archive_or_forward(tx)?; // delayed execution risk
 - **Attack surface**: if a vault is retired (feed disabled) but its `price` field is not zeroed, and `assert_invariants` uses `price` for aggregate checks, the stale price could influence accounting.
 - **Checklist item 106**: ☐ retiring a vault must atomically zero `price`, `twap_price`, `confidence`, and exclude the vault from aggregate valuation in `assert_invariants`
 - **Checklist item 107**: ☐ add an invariant: `require!(pyth_price_feed == Pubkey::default() implies price == 0)` to enforce that disabled feeds cannot echo stale prices
+
+### Solana-Specific Defense Checklist Update
+103. ☐ oracle receiver / adapter trust는 `enum says Full` 에서 멈추지 말고, receiver deploy hash / upgrade path / weak verification artifact rejection까지 포함해 운영 모니터링할 것
+104. ☐ zero/default/identity verification artifact는 known-good variant mismatch가 아니라 **invalid by construction** 으로 거부할 것
+105. ☐ push-based oracle/forwarder를 쓰면 consumer-side sanity bound와 별도 독립 oracle 또는 emergency price floor를 둘 것
+106. ☐ retiring a vault must atomically zero `price`, `twap_price`, `confidence`, and exclude the vault from aggregate valuation in `assert_invariants`
+107. ☐ `pyth_price_feed == Pubkey::default() => price == 0` 불변식을 코드와 테스트에 동시에 고정할 것
+108. ☐ safety-critical keeper tx (`oracle update`, `manual fallback`, `emergency shutdown`) 는 일반 tx와 분리된 priority-fee escalation lane, deadline-aware retry, blockspace-starvation telemetry를 가져야 한다
+109. ☐ write-lock contention이 없어도 state-invariant/probe spam 하에서 confirmation window가 안전하게 유지되는지 stress test로 검증하고, fixed `confirmed()` polling window를 security parameter로 관리할 것
