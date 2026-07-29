@@ -21,6 +21,7 @@
 - **A10 HIGH — Bearer/position split**: **STILL OPEN** (carry-forward).
 - **Hermes false-success HIGH**: **STILL OPEN**. `oracle.rs:693-710` — when `run_oracle_cycle` fails after Hermes posts succeed, Hermes posted receipts are converted to `OracleUpdateResult` and returned as `Ok(Vec)`. The keeper reports success, but vault oracle feeds were never updated (Hermes posts to temporary accounts at `Partial` verification; vault reads from fixed feeds at `Full` verification).
 - **B45 HIGH — Audit-to-deployment attestation gap**: **STILL OPEN**. `security/audit-attestation.json` confirmed absent via `ls`.
+- **D45/B15 HIGH — Same-host quorum-key compromise**: **STILL OPEN / ACTIVE-LATENT**. Keeper config still requires exactly three `keeper_keypairs`, and startup still loads them together into one daemon (`keeper/src/config.rs`, `keeper/src/main.rs`). Distinct parent directories reduce blast radius on disk, but they do **not** create independent host/HSM fault domains. A single host/toolchain compromise can still collect enough keys for protocol-recognized 2-of-3 quorum.
 
 ### Today's Vector Focus — New Reinforcement Assessment
 
@@ -30,13 +31,13 @@
 | B17+B28 — off-chain solver DB compromise (Garden Finance) | Garden Finance `2026-07-26` | ✅ NOT ACTIVE | Microstable keeper uses deterministic Rust oracle cycle; no HTLC solver or database layer exists. |
 | A10 — reward entitlement from synthetic purchase deltas (Projekt) | Projekt `2026-07-25` | ✅ NOT ACTIVE | Microstable has no permissionless reward vault, `trackPurchase`, AMM `skim()`-derived accounting, or `massWithdraw` reward pool. |
 | A10 — multiset integrity (Lien Finance) | Lien Finance `2026-07-24` | ✅ NOT ACTIVE | Microstable has no batch bond exchange or multiset aggregation path. |
-| B15 — validator quorum (AFX Trade) | AFX Trade `2026-07-22` | ✅ NOT ACTIVE | Microstable uses 2-of-3 keeper quorum for privileged instructions, not a bridge validator set. |
+| B15 / D45 — validator quorum / correlated signer compromise (AFX Trade analog) | AFX Trade `2026-07-22` | ⚠️ HIGH ACTIVE-LATENT | Microstable does not run a bridge validator set, but it **does** load three keeper keypairs into one keeper process. The nominal 2-of-3 quorum is therefore still vulnerable to one host or toolchain compromise collecting enough local signer material. |
 | META-63 — incomplete patch (Verus Bridge) | Verus `2026-07-23` | ✅ NOT ACTIVE | Microstable has no bridge import path. The lesson reinforces operational discipline for any future contract upgrades. |
 
 ### Severity Rollup
 
 - **CRITICAL 1** — A6 fake MSTB mint in redeem path
-- **HIGH 3** — A10 bearer/position split, Hermes false-success, B45 attestation gap
+- **HIGH 4** — A10 bearer/position split, Hermes false-success, B45 attestation gap, D45/B15 same-host quorum-key compromise
 - **MEDIUM 4** — A43 cumulative sub-threshold drift, A75 manual-oracle exception lane, B84/D27 correlated RPC failover, META-53/META-63 actuator promotion
 - **LOW 1** — D26 frontend trust surface
 - **INFO-latent 1** — B83 `quinn-proto 0.11.13` (no TPU/QUIC client path)
@@ -45,9 +46,10 @@
 
 1. **A6 CRITICAL** — Bind redeem context `mstb_mint` with `mint::authority = protocol_state` or explicit address check
 2. **Hermes HIGH** — Pass posted account pubkey into `update_oracle_pyth`; require non-zero vault state advance before success; align `Partial`/`Full` policy
-3. **B45 HIGH** — Create signed `audit-attestation.json` binding audit commit, program ELF, keeper binary, dashboard artifact
-4. **A10 HIGH** — Bind position ownership in redeem/liquidation paths
-5. **A43/A75/D27** — Add cumulative drift accumulator; strengthen manual-oracle trust parity; diversify RPC confirmation paths
+3. **D45/B15 HIGH** — Move each keeper signer into an independent host/HSM or remote signer; stop co-loading quorum keys in one daemon
+4. **B45 HIGH** — Create signed `audit-attestation.json` binding audit commit, program ELF, keeper binary, dashboard artifact
+5. **A10 HIGH** — Bind position ownership in redeem/liquidation paths
+6. **A43/A75/D27** — Add cumulative drift accumulator; strengthen manual-oracle trust parity; diversify RPC confirmation paths
 
 ---
 
