@@ -11321,7 +11321,7 @@ require!(healthy, ErrorCode::InsolventPosition);
 
 ---
 
-## 2026-07-28 Red-Team Safety-Actuator Starvation Addition
+## 2026-07-29 Red-Team Safety-Actuator Starvation Addition
 
 ### B86. State-Invariant Blockspace Saturation / Safety-Actuator Starvation
 
@@ -11374,7 +11374,7 @@ require!(healthy, ErrorCode::InsolventPosition);
 |---|---|---|---|
 | B86 State-Invariant Blockspace Saturation / Safety-Actuator Starvation | attacker floods a high-throughput chain with speculative or state-invariant low-signal transactions timed around a protocol's defensive deadline, starving oracle refresh/emergency/manual-fallback actions without direct write-lock or oracle forgery | stale-oracle windows, missed shutdown/recovery actions, rebalance deadline failure, latent insolvency amplification | current code shows **MEDIUM latent** exposure because safety actuators use a fee-neutral generic submission path; exact exploit is **not active today** without adverse chain conditions |
 
-**Matrix state as of 2026-07-28 (red-team daily update)**: **B86** added after classifying recent spam/state-invariant transaction research as a reusable actuator-starvation primitive distinct from **D20**, **B64**, and **A110**. Canonical inventory is now **218 active named-vector headings across 210 unique named IDs**, plus **73 META entries**: **283 unique IDs** or **291 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed; one **MEDIUM latent** architecture finding was documented.
+**Matrix state as of 2026-07-29 (red-team daily update)**: **B86** added after classifying recent spam/state-invariant transaction research as a reusable actuator-starvation primitive distinct from **D20**, **B64**, and **A110**. Canonical inventory is now **218 active named-vector headings across 210 unique named IDs**, plus **73 META entries**: **283 unique IDs** or **291 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed; one **MEDIUM latent** architecture finding was documented.
 
 ---
 
