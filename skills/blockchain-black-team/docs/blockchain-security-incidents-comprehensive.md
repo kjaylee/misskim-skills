@@ -4,6 +4,41 @@
 
 ## 2026
 
+- **2026-08-03 — RISEx (Ethereum — RWA strategy misconfiguration enabled unauthorized USDC withdrawal)** — On August 3, 2026, an unauthorized withdrawal of **673,011.56 USDC** occurred from the RWA strategy linked to RISEx's XLP vault due to a misconfiguration present since its July 13 deployment. The team detected it within minutes, patched it by 08:09 UTC, and fully compensated XLP depositors using July fees.
+**Root cause**: deployment-time misconfiguration in the RWA strategy that silently persisted until exploited.
+**Vector mapping**: **A10 Logic Bug** reinforcement — deployment configuration surface must be covered by post-deployment invariant assertions, not just unit-tested logic.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/risextrade/status/2084350396609520105
+
+- **2026-08-02 — LOOPSDAO / LpdFi (BSC — flash loan price manipulation across settlement boundary)** — The attacker used a flash loan to manipulate the spot price of the thin PancakeSwap LPD/USDC pair (no TWAP or deviation guard), opened a massively inflated interest-bearing position with minimal LPD, and claimed interest right across the daily settlement boundary. This triggered the protocol to burn its own Cake-LP and pay out the inflated amount, draining approximately **$690,000**.
+**Root cause**: thin-pair spot price used without TWAP; daily settlement boundary accepted same-block manipulated positions.
+**Vector mapping**: **A2 Flash Loan + Price Manipulation** + **A10 Logic Bug** reinforcement — cross-settlement-boundary claim amplification.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/DefimonAlerts/status/2084157533204197380
+
+- **2026-08-02 — MOKE (BNB Chain — unprotected public claim function)** — The attacker abused an unprotected public `claim()` function in `MokeToken.releaseContract()` (no eligibility check on the caller), repeatedly draining ~166 million MOKE from the protocol's internal reserve pool, then used flash loans, Venus leverage, LP removal, and dividend distribution to convert into ~1,546 BNB, resulting in a loss of approximately **$907,700**.
+**Root cause**: public function that released value from an internal reserve without verifying caller eligibility per-call.
+**Vector mapping**: **A4 Access Control** reinforcement.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/TenArmorAlert/status/2084102947500368164
+
+- **2026-07-30 — Coldcard (Bitcoin — firmware entropy bug in hardware wallet seed generation)** — Coldcard hardware wallets (by Coinkite) suffered from a firmware bug (since March 2021 on certain versions) that generated seeds with insufficient entropy (~40 bits on Mk3, ~72 bits on newer models vs. the intended 128 bits). Attackers offline brute-forced predictable private keys and drained numerous single-signature Bitcoin addresses across multiple waves, with cumulative losses exceeding **$100 million** and the incident ongoing.
+**Root cause**: insufficient entropy in hardware RNG during seed generation.
+**Vector mapping**: **B19 Memory/Log Leak** (hardware entropy failure class) — not a smart contract exploit.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/glxyresearch/status/2084411904924045370
+
+- **2026-07-30 — Set Protocol / Index Coop ExchangeIssuance (Ethereum — insufficient state locking in pre-issue hook)** — The DeFi protocol Set Protocol was exploited due to insufficient state locking in the smart contract. The attacker used a malicious manager pre-issue hook to artificially inflate asset valuations (e.g., `positionMultiplier`), causing the contract to transfer excess assets based on falsified data, resulting in a loss of approximately **$9,600**.
+**Root cause**: reentrancy via a pre-issue callback hook that could mutate intermediate state during multi-step issuance.
+**Vector mapping**: **A1 Reentrancy** + **A10 Logic Bug** reinforcement — CEI is not enough when the hook itself is the attack vector.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/SlowMist_Team/status/2082767887245410320
+
+- **2026-07-30 — Swan Treasury (BNB Chain — hardcoded off-chain signer key leakage)** — The decentralized asset management protocol Swan Treasury on BNB Chain was exploited due to the leakage of an off-chain signer's private key hardcoded in the ZhaiquanBuy contract. The attacker forged valid signatures and used PancakeSwap flash loans to purchase approximately 687,000 STY tokens at around a 100x discount, then dumped them, making a profit of approximately **$625,000**.
+**Root cause**: hardcoded signer private key in deployed contract source code.
+**Vector mapping**: **B15 Key Compromise** reinforcement — hardcoded keys in contract bytecode cannot be rotated without migration.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/DefimonAlerts/status/2083039796784410802
+
+- **2026-07-26 — ChainConnect (Multi-chain — unauthorized bridge access)** — ChainConnect's EVM integration was compromised through unauthorized access. Approximately **$650,000** in tokens was drained from the bridge contracts across Ethereum, BNB Chain, Avalanche C-Chain and Polygon in 23 transactions; bridge operations were paused immediately.
+**Root cause**: unauthorized access to bridge operator infrastructure enabling multi-chain drain.
+**Vector mapping**: **B15 Key Compromise** + **A4 Access Control** reinforcement.
+**Sources**: https://hacked.slowmist.io/ | https://x.com/VenomFoundation/status/2082101022928040063
+
 - **2026-07-28 — Crypto DAO / Pro token (BNB Chain — unprotected vault/executor function let anyone drain USDT)** — SlowMist's incident feed and follow-up reporting say the attacker called a publicly reachable vault execution path (`exec()` / equivalent asset-moving helper) with no effective access-control guard and drained about **$8.2M** in USDT. Flash liquidity only amplified the extraction size.
 **Root cause**: a privileged asset-moving vault/helper entrypoint was left permissionless on-chain. The protocol relied on workflow assumptions ("only internal strategy/router code should call this") instead of enforcing caller authorization at the contract boundary.
 **Vector mapping**: **A4 Access Control** reinforcement — same helper/vault-entrypoint class already seen in YieldCore and similar incidents. No new named vector is required.

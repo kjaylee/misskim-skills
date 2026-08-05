@@ -2228,3 +2228,25 @@ archive_or_forward(tx)?; // delayed execution risk
 107. ☐ `pyth_price_feed == Pubkey::default() => price == 0` 불변식을 코드와 테스트에 동시에 고정할 것
 108. ☐ safety-critical keeper tx (`oracle update`, `manual fallback`, `emergency shutdown`) 는 일반 tx와 분리된 priority-fee escalation lane, deadline-aware retry, blockspace-starvation telemetry를 가져야 한다
 109. ☐ write-lock contention이 없어도 state-invariant/probe spam 하에서 confirmation window가 안전하게 유지되는지 stress test로 검증하고, fixed `confirmed()` polling window를 security parameter로 관리할 것
+
+### Transaction Simulation Preview Divergence
+
+- **Signal**: arXiv `2607.28747` (2026-07-30) — transaction simulation phishing against blockchain wallets.
+- **Mechanism**: attacker crafts a contract whose execution path depends on mutable on-chain state, so `simulateTransaction` or wallet preview shows a benign result while the actual committed transaction routes value to attacker-controlled accounts.
+- **Microstable relevance**: current live path uses `simulateTransaction` only in devnet/e2e scripts and not as a wallet-signing trust root. Exact preview-phishing variant is therefore **NOT ACTIVE** today, but any future preview gate or operator approval flow must treat simulation output as advisory only.
+- **Checklist item 110**: ☐ any transaction preview/simulation used for approval must pin the exact slot, account set, and program graph, then re-check those same inputs at signing time
+- **Checklist item 111**: ☐ do not let `simulateTransaction` results alone authorize custody or payout; require a post-sim manifest match or a deterministic on-chain state assertion before signature
+
+### Relay Verification Cache Poisoning / Unverified Event Acceptance
+
+- **Signal**: RustSec `RUSTSEC-2026-0231`, `RUSTSEC-2026-0232`, `RUSTSEC-2026-0224` (2026-07-31 ~ 2026-08-02) — relay auth challenge memory exhaustion, processing of unverified relay events, and verification cache poisoning.
+- **Mechanism**: memoized verification or partial admission in an off-chain relay can turn cache hits into trusted state, letting stale or forged events bypass signature validation or exhaust relay memory before the real admission predicate runs.
+- **Microstable relevance**: **NOT ACTIVE today**. The current live path has no relay auth plane, but any future queue, gossip bridge, or off-chain admission cache must treat verification state as part of the cache key.
+- **Checklist item 112**: ☐ cache keys must include event hash, signer, nonce, expiry, and verification status; `seen` is never equivalent to `verified`
+- **Checklist item 113**: ☐ admission caches must fail closed on verification miss / auth-challenge replay rather than converting stale cache hits into trusted messages
+
+### Solana-Specific Defense Checklist Update
+110. ☐ transaction preview/simulation used for approval must pin the exact slot, account set, and program graph, then re-check those same inputs at signing time
+111. ☐ `simulateTransaction` results alone must never authorize custody or payout; require a post-sim manifest match or deterministic on-chain state assertion before signature
+112. ☐ cache keys for any future relay / admission cache must include event hash, signer, nonce, expiry, and verification status; `seen` is never equivalent to `verified`
+113. ☐ admission caches must fail closed on verification miss / auth-challenge replay rather than promoting stale cache hits into trusted messages

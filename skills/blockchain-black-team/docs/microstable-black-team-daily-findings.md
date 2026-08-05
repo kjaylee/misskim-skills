@@ -1,3 +1,37 @@
+## 2026-08-04 Daily Check
+
+### Source Sweep (24h~7d window: 2026-07-28 → 2026-08-04 KST)
+
+- Sources checked: `rekt.news`, SlowMist Hacked, Immunefi disclosures/metrics, GitHub Advisory Database (Solana/Anchor/SPL), official Solana security/news surfaces, Trail of Bits, OtterSec, Neodyme, and X/community fallback.
+- **New named vectors from today's intake: 0.** The freshest public items in-window were Rekt's `Wrong Attack Surface` opsec article and VerusCoin follow-up coverage; neither adds a new incident-grade mechanism beyond already-absorbed bridge/import-path and key/opsec classes.
+- **Reinforcements applied: 0.** No source in the last 24h~7d window produced a new code-level mechanism that Microstable does not already model.
+- **Skill delta today:** no `attack-matrix.md`, `solana-specific.md`, or incident-timeline updates required.
+
+### Full Live-Code Sweep — Carry-Forward Verification
+
+- The current Microstable code still matches the same active carry set as the previous daily check: **A6 CRITICAL**, **Hermes false-success HIGH**, **B45 HIGH**, **D45/B15 HIGH**, **A75 MEDIUM**, **A43 MEDIUM**, **D27 MEDIUM**, **D26 LOW**.
+- The currently re-read code still shows the known open edges:
+  - `solana/programs/microstable/src/lib.rs:671-759` keeps the manual oracle write path distinct from the mint-path `validate_spot_vs_twap()` guard.
+  - `solana/programs/microstable/src/lib.rs:1571-1605` still gates commit/reveal only when a single-call turnover crosses `LARGE_REBALANCE_THRESHOLD`; no rolling cumulative drift accumulator is present.
+  - `microstable/docs/app.js:1645` still reconstructs a browser-embedded faucet keypair from `FAUCET_CONFIG.faucetKeypair`.
+  - `solana/Cargo.lock:2984,3303,3316,3357,3371,3381,4890,5430,7164` still carries `quinn-proto` / `rustls-webpki` pins in the keeper dependency tree.
+
+### Today's Verdict
+
+- **New incidents found:** 0
+- **New attack vectors added:** 0
+- **Reinforcements applied:** 0
+- **New CRITICAL findings:** 0
+- **Active carry-forward findings:** unchanged from the previous daily check
+
+### Blue-Team Immediate Fix Order
+
+1. **B83** — upgrade the keeper dependency chain off `quinn-proto 0.11.13` / `rustls-webpki 0.101.7` / `0.103.9` and re-run the dependency-tree proof.
+2. **B45** — add a signed audit-attestation manifest that binds the approved audit commit to the deployed artifact set.
+3. **A75** — unify manual oracle fallback with the mint-path spot/TWAP guard and record explicit fallback evidence.
+4. **A43** — add a rolling cumulative turnover accumulator so repeated sub-threshold rebalances cannot evade the large-rebalance guard.
+5. **D26** — remove the browser-embedded faucet secret from the dashboard client.
+
 ## 2026-07-28 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-07-21 → 2026-07-28 KST)
