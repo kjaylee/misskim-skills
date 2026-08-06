@@ -4,6 +4,21 @@
 
 ## 2026
 
+### 2026-08-05 — ZEUS (Lightning Network Wallet)
+- **Loss**: $0 (no customer funds lost)
+- **Method**: Infrastructure Compromise
+- **Mechanism**: ZEUS, a Bitcoin Lightning Network wallet and LSP provider, suffered a cybersecurity incident. Attack was mitigated; services taken offline for audit. No evidence of Lightning node software vulnerability.
+- **Vector mapping**: B15 (Key/Infrastructure Compromise) — opsec only, no smart contract vulnerability
+- **Source**: https://x.com/ZeusLN/status/2085113369367871605
+
+### 2026-07-28 — LULA Token (BSC)
+- **Loss**: ~$578,100
+- **Method**: Flash Loan + Privileged Function Exploit
+- **Mechanism**: Attacker pre-deployed helper contracts 12 days before exploit to accumulate referral/team reward eligibility. On attack day, flash-borrowed ~$237M to swap out LULA in PancakeSwap V2 pool, maximizing deflation. Then called `claimReward()` → `recycle()`, a privileged token-management function that operated on spot DEX reserves without TWAP or oracle-independent sanity bound. Deflation amplified payout. Funds laundered through Railgun.
+- **Vector mapping**: A2 (Flash Loan + Price Manipulation) + A10 (Logic Bug — privileged payout function reads spot DEX without manipulation-resistant oracle)
+- **Key lesson**: Any protocol whose reward/referral/recycle function reads spot DEX reserves without a manipulation-resistant price source is vulnerable, even if the function itself is access-controlled. Pre-positioned reward accumulation combined with flash-loan deflation is a composite attack vector.
+- **Source**: https://x.com/CertiKAlert/status/2082309959484911845
+
 - **2026-08-03 — RISEx (Ethereum — RWA strategy misconfiguration enabled unauthorized USDC withdrawal)** — On August 3, 2026, an unauthorized withdrawal of **673,011.56 USDC** occurred from the RWA strategy linked to RISEx's XLP vault due to a misconfiguration present since its July 13 deployment. The team detected it within minutes, patched it by 08:09 UTC, and fully compensated XLP depositors using July fees.
 **Root cause**: deployment-time misconfiguration in the RWA strategy that silently persisted until exploited.
 **Vector mapping**: **A10 Logic Bug** reinforcement — deployment configuration surface must be covered by post-deployment invariant assertions, not just unit-tested logic.
