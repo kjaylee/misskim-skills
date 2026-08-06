@@ -11,7 +11,7 @@ description: Execute real-world blockchain attack scenarios against smart contra
 - **Use `blockchain-purple-team`** for meta-level coverage gaps, audit failure causes, and architecture/ops blind spots.
 
 
-Execute battle-tested attack vectors from 90+ historical blockchain incidents ($10B+ total losses) against target protocol code. (Canonical matrix: 220 active named-vector headings across 212 unique named IDs + META-01~73 | last reconciled 2026-08-04 | retired duplicate aliases: A138 = B83, D57 = A40/META-68; future admissions continue at A149/B89/D58/META-74.)
+Execute battle-tested attack vectors from 90+ historical blockchain incidents ($10B+ total losses) against target protocol code. (Canonical matrix: 220 active named-vector headings across 212 unique named IDs + META-01~73 | last reconciled 2026-08-06 | retired duplicate aliases: A138 = B83, D57 = A40/META-68; future admissions continue at A149/B89/D58/META-74.)
 
 **Canonical inventory (2026-08-04)**: the live matrix contains **220 active named-vector headings across 212 unique named IDs**, plus **META-01~73**. That is **285 unique ID entries** or **293 active named/META headings** when duplicate-ID sections are counted separately. Duplicate IDs **A52, A70, A91, A92, B49, D35, D43, D45** carry more than one historical meaning, so coverage must track both ID and section name. Reinforcement-only subheadings are not counted as separate active vectors. **A138** is a retired duplicate alias of **B83**; **D57** is a retired duplicate classification of **A40 / META-68** and neither is counted separately.
 
