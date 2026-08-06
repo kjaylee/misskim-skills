@@ -2250,3 +2250,21 @@ archive_or_forward(tx)?; // delayed execution risk
 111. ☐ `simulateTransaction` results alone must never authorize custody or payout; require a post-sim manifest match or deterministic on-chain state assertion before signature
 112. ☐ cache keys for any future relay / admission cache must include event hash, signer, nonce, expiry, and verification status; `seen` is never equivalent to `verified`
 113. ☐ admission caches must fail closed on verification miss / auth-challenge replay rather than promoting stale cache hits into trusted messages
+
+### Zero-Copy Deserialization Composite-Type Validation Bypass
+
+- **Signal**: RustSec `RUSTSEC-2026-0233`, `RUSTSEC-2026-0234`, `RUSTSEC-2026-0235` (2026-08-04) — rkyv 0.8.8–0.8.16 safe checked deserialization has structural validation gaps for composite types.
+- **Mechanism (three sub-patterns)**:
+  1. **Shared-pointer metadata confusion**: validation caches validated pointees by address+type but not metadata (e.g., slice length). Multiple Rc/Arc/weak pointers sharing a data address but using different metadata cause the second pointer to skip pointee validation → forged slice length → OOB read via safe API.
+  2. **Hash-table count mismatch**: verifier accepts malformed ArchivedHashTable where occupied bucket count ≠ declared length → OOB read in later lookup, validation, or deserialization.
+  3. **Relative-pointer range confusion**: insufficient archive range validation lets invalid relative pointers reach `ArchivedString::deserialize` → heap use-after-free under AddressSanitizer.
+- **Why the `checked` label is a false promise**: each per-entry validation check fires correctly; the gap is in **cross-entry and cross-metadata invariants** — the validator never asks "does the metadata on pointer N match the metadata used when the shared target was first validated?"
+- **Microstable relevance**: **NOT ACTIVE today**. Microstable uses borsh 0.10.4 (not rkyv). No `AccountLoader` or `#[account(zero)]` path in the codebase. However, the meta-pattern transfers to any deserialization framework that caches or skips validation for composite types.
+- **Checklist item 114**: ☐ if rkyv is ever adopted for off-chain state parsing, pin ≥ 0.8.17; fuzz the `checked_deserialize` entrypoint with AddressSanitizer for every collection type
+- **Checklist item 115**: ☐ audit borsh upgrade changelogs for validation-cache changes; treat `BorshDeserialize::try_from_slice` as necessary-but-not-sufficient and layer explicit length/metadata assertions at the application boundary for nested collections
+- **Checklist item 116**: ☐ any off-chain keeper code that deserializes untrusted JSON/Rust structs from API responses must use checked deserialization and validate collection lengths independently
+
+### Solana-Specific Defense Checklist Update
+114. ☐ if rkyv is ever adopted for off-chain state parsing, pin ≥ 0.8.17; fuzz `checked_deserialize` with ASan for every collection type
+115. ☐ audit borsh upgrade changelogs for validation-cache changes; layer explicit length/metadata assertions at the application boundary for nested collections
+116. ☐ any off-chain keeper code that deserializes untrusted API responses must use checked deserialization and validate collection lengths independently

@@ -11529,4 +11529,20 @@ attacker:
 
 ---
 
-**Matrix state as of 2026-08-04 (purple-team daily update)**: **219 active named-vector headings across 211 unique named IDs**, plus **73 META entries**: **284 unique IDs** or **292 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
+## B89. Zero-Copy Deserialization Composite-Type Validation Bypass / Safe-API Shared-Pointer Confusion
+
+| Field | Value |
+|---|---|
+| **Origin** | RustSec `RUSTSEC-2026-0233`, `RUSTSEC-2026-0234`, `RUSTSEC-2026-0235` (Aug 4, 2026) — rkyv 0.8.8–0.8.16 |
+| **Vector** | a "safe checked" deserialization API (one supposed to validate untrusted bytes before returning typed data) has structural validation gaps for composite types: (1) shared-pointer validation caches validated pointees by address+type but omits pointer metadata, so different slice lengths at the same address skip revalidation → forged slice → OOB read; (2) hash-table verifier does not enforce occupied-bucket count == declared length → OOB read in later lookup/deserialization; (3) insufficient archive range validation allows invalid relative pointers to reach string deserialization → heap use-after-free |
+| **Prerequisites** | protocol or keeper deserializes untrusted bytes through a framework whose `checked` / `safe` API performs per-entry validation but has incomplete cross-entry or cross-metadata invariants for shared pointers, hash tables, or variable-length collections |
+| **Impact** | memory-corruption (UAF, OOB read/write) through the *safe* API surface, bypassing application-level `try_deserialize` checks; scalar or SIMD reads outside the input buffer; information leak; process crash; potential code execution if the corrupted pointer reaches a write path |
+| **Microstable status** | NOT ACTIVE — Microstable uses borsh 0.10.4 (not rkyv) via Anchor's `Account<>` wrapper; no `AccountLoader` / `#[account(zero)]` / rkyv dependency in `Cargo.lock`. Off-chain keeper also does not use rkyv for untrusted input parsing. |
+| **Required future invariant** | (1) any deserialization framework used for untrusted input must validate shared/composite types by full identity key (address + type + metadata); (2) hash-table validators must reject occupied-bucket-count ≠ declared-length; (3) fuzz the `checked_deserialize` entrypoint with AddressSanitizer for every collection type; (4) if rkyv is ever adopted for off-chain state, pin ≥ 0.8.17; (5) treat `checked` API labels as necessary-but-not-sufficient and layer explicit length/metadata assertions at the application boundary. |
+| **Relation to existing vectors** | Extends **A122** (unchecked zero-copy loader trust collapse) and **A126** (zero-copy truncation panic) to a new class: the validator itself runs, its per-entry checks fire, but its **cross-entry / cross-metadata invariants are structurally incomplete**, so the `checked` label is a false promise. The rkyv shared-pointer metadata confusion is the canonical example. |
+
+**Red-team bypass note**: borsh 0.10.x currently has no public advisory of this class, but the pattern transfers: any zero-copy or cached-validation deserializer that keys a validation cache on a subset of discriminators (address, type tag) without including full metadata (length, variant, offset) is a candidate. Audit the framework, not just the application code.
+
+---
+
+**Matrix state as of 2026-08-07 (red-team daily evolution)**: **220 active named-vector headings across 212 unique named IDs**, plus **73 META entries**: **285 unique IDs** or **293 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
