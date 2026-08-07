@@ -11548,4 +11548,36 @@ attacker:
 
 ---
 
-**Matrix state as of 2026-08-07 (red-team daily evolution)**: **220 active named-vector headings across 212 unique named IDs**, plus **73 META entries**: **285 unique IDs** or **293 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
+## B90. Checked-Arithmetic Silent-Contract Violation / Overflow-Flag Negation
+
+| Field | Value |
+|---|---|
+| **Origin** | RustSec `RUSTSEC-2026-0220` (Jul 30, 2026) — ruint <1.20.0 |
+| **Vector** | a widely-used arithmetic crate's `checked_shl`/`checked_shr` returns `Some` instead of `None` for in-range overflow (non-limb-aligned widths like U160), so downstream `checked_*` consumers treat overflowed values as valid; `saturating_*` returns wrapped values instead of saturated; `wrapping_shl`/`wrapping_shr` on 64/128/256-bit types truncates shift amounts ≥ 2^32 returning incorrect wrapped values instead of zero; `to_base_be` can loop forever on no-alloc builds — a denial-of-service reachable from untrusted input |
+| **Prerequisites** | protocol or keeper depends on a `checked_*` or `saturating_*` arithmetic API for range validation, amount computation, or permission gating, and the underlying crate has silent overflow-flag bugs on certain bit widths or shift magnitudes |
+| **Impact** | invariant checks silently pass for out-of-range values; incorrect amount/price/reward calculations; infinite loops (DoS) in formatting paths; any code path that trusts `checked_shl → None means overflow` is compromised |
+| **Microstable status** | NOT ACTIVE — ruint is not in Microstable's `Cargo.lock` (0 matches); no `shl`/`shr` operations found in on-chain program or keeper source; Microstable uses Solana-native arithmetic (u64/u128) without ruint |
+| **Required future invariant** | (1) if ruint or any big-integer crate is adopted, pin ≥ fixed versions (ruint ≥1.20.0); (2) do not rely solely on `checked_*` API contracts for security-critical range validation — add independent bounds assertions; (3) fuzz arithmetic paths with edge-case bit widths (U160, U256) and shift amounts near limb boundaries; (4) treat any `checked_*` API as defense-in-depth, not as sole boundary |
+| **Relation to existing vectors** | Extends the B89 meta-pattern ("`checked`/`safe` API label is a false promise") from deserialization to arithmetic. The root cause is identical: a framework-level safe wrapper silently violates its documented contract on edge-case inputs, and downstream code that depends on the contract for security is compromised without any application-level bug. |
+
+**Red-team bypass note**: Solana BPF uses 64-bit arithmetic natively. The ruint issue affects Ethereum-focused (alloy-rs) code paths. However, the meta-pattern — **trusted arithmetic API silently returns wrong results** — transfers to any ecosystem. If Solana's `checked_*` stdlib operations or spl-token math libraries ever develop similar edge-case bugs, the same class of invariant bypass applies. Audit not just the application arithmetic but the arithmetic library's overflow semantics for all bit widths in use.
+
+---
+
+## B91. Verification Cache Poisoning / Signature-Bypass via Cache-Key Collision
+
+| Field | Value |
+|---|---|
+| **Origin** | RustSec `RUSTSEC-2026-0224` (Jul 31, 2026) — nostr-relay-pool; `RUSTSEC-2026-0226` (Aug 2, 2026) — nostr wallet event parsers accept unauthenticated events |
+| **Vector** | a verification cache keyed on a subset of event identity (e.g. event ID without full hash + signer + nonce) allows a forged event to collide with a previously verified event's cache entry, causing the verifier to return "valid" without performing actual cryptographic verification; alternatively, unauthenticated relay events are promoted into trusted state on cache hit alone, bypassing the signature check entirely |
+| **Prerequisites** | protocol or keeper caches verification/signature results (for gas optimization, latency reduction, or replay prevention) using a cache key that does not fully bind to the cryptographic statement being verified |
+| **Impact** | forged oracle price updates, fake authorization events, or invalid governance proposals accepted as valid without cryptographic proof; the signature/verification machinery is correct but never runs for poisoned cache entries |
+| **Microstable status** | NOT ACTIVE — on-chain program verifies each transaction independently (no on-chain verification cache); off-chain keeper does not cache oracle signature verification results; Hermes price updates are verified fresh each cycle via `AccumulatorUpdateData::try_from_slice` and on-chain Pyth verification |
+| **Required future invariant** | (1) any future verification cache must bind cache keys to full event hash + signer pubkey + nonce + timestamp + verification-status; (2) never promote an unverified relay/API response into trusted state on cache hit alone; (3) add a cache-invalidation path for signer/key-rotation events; (4) fuzz the cache key derivation for collision resistance across attacker-chosen inputs |
+| **Relation to existing vectors** | Distinct from the Bonzo Lend pattern (A3, zero/identity BLS signature accepted by verifier logic) — in B91, the verifier logic is correct, but the **cache layer** creates a bypass that skips verification entirely. Extends META-63 (remediation not encoded as cross-deployment invariant) to caching: a verification optimization can silently weaken the verification guarantee if cache key design is incomplete. |
+
+**Red-team bypass note**: Solana's runtime verifies each transaction's signatures natively, so on-chain B91 is unlikely. The risk surface is off-chain: keeper relay paths, oracle aggregation layers, or any middleware that caches "this payload was verified" results. If Microstable ever adds a keeper-level signature cache for Hermes/Pyth updates (e.g. to avoid redundant verification across retry loops), the cache key must include the full payload hash + signer set + timestamp — not just a payload digest or accumulator address.
+
+---
+
+**Matrix state as of 2026-08-08 (red-team daily evolution)**: **222 active named-vector headings across 214 unique named IDs**, plus **73 META entries**: **287 unique IDs** or **295 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.

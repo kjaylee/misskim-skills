@@ -2268,3 +2268,7 @@ archive_or_forward(tx)?; // delayed execution risk
 114. ☐ if rkyv is ever adopted for off-chain state parsing, pin ≥ 0.8.17; fuzz `checked_deserialize` with ASan for every collection type
 115. ☐ audit borsh upgrade changelogs for validation-cache changes; layer explicit length/metadata assertions at the application boundary for nested collections
 116. ☐ any off-chain keeper code that deserializes untrusted API responses must use checked deserialization and validate collection lengths independently
+117. ☐ if ruint or any big-integer crate is adopted, pin ≥ fixed versions; do not rely solely on `checked_*` API for security-critical range validation — add independent bounds assertions
+118. ☐ fuzz arithmetic paths with edge-case bit widths (U160, U256) and shift amounts near limb/word boundaries
+119. ☐ any future verification/signature cache must bind keys to full event hash + signer + nonce + timestamp + verification-status; never promote unverified relay events on cache hit alone
+120. ☐ if a keeper-level signature cache is added for Hermes/Pyth updates, include full payload hash + signer set + timestamp in the cache key — not just a payload digest or accumulator address
