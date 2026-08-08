@@ -1,4 +1,4 @@
-# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~72
+# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~74
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -11584,4 +11584,43 @@ attacker:
 
 ---
 
-**Matrix state as of 2026-08-08 (red-team daily evolution)**: **222 active named-vector headings across 214 unique named IDs**, plus **73 META entries**: **287 unique IDs** or **295 active named/META headings** when duplicate-ID sections are counted separately. No new active CRITICAL/HIGH Microstable finding was confirmed.
+### META-74. Operational Trust Migration / Code-Security Allocation Gap (OTMAG)
+
+**Source**: QuillAudits H1 2026 DeFi Security Report ($935.3M, 87 incidents); Hacken Q2 2026 Web3 Security Report (88.3% of losses from operational/key compromise); Drift Trade ($295M, social engineering to admin key); Kelp DAO ($293M, compromised RPC nodes); Humanity Protocol ($31M, private key leak); Gravity Bridge ($5.4M, private key leak). Purple Team synthesis, 2026-08-09.
+
+**Definition**: H1 2026 데이터가 확정하는 구조적 전환: 업계의 보안 투자는 스마트 컨트랙트 코드에 집중되지만, 실제 손실의 **82.7%** 는 코드 바깥의 운영·인프라·인간 공격 표면에서 발생한다. `code correctly audited` ≠ `protocol operationally secure`. 이 격차는 보안 산업의 자원 배분이 공격자의 실제 경로와 직교할 때 발생한다.
+
+**Core pattern**: 보안 노력은 측정 가능하고 도구로 검증 가능한 코드 표면에 집중한다. 공격자는 측정하기 어렵고 도구가 닿지 않는 인간/운영 표면을 공격한다. 양측이 서로 다른 전장에서 싸운다.
+
+**Evidence (H1 2026)**:
+- **Drift Trade ($295M)**: 6개월간의 소셜 엔지니어링으로 admin key 획득. 코드 버그 없음.
+- **Kelp DAO ($293M)**: 탈취된 RPC 노드가 거짓 데이터를 브릿지에 공급. 온체인 검증은 설계대로 동작했으나, 외부 인프라가 거짓을 진술.
+- **Trezor 사용자 ($282M)**: IT 지원 사기로 시드 탈취. 하드웨어 월렛 자체는 안전.
+- **Humanity Protocol ($31M)**: 팀 멤버 프라이빗 키 탈취.
+- **Gravity Bridge ($5.4M)**: 서명 키 탈취.
+- **TesseraDAO ($2.4M)**: 코어 컨트랙트 통제권 탈취 후 mint-and-dump.
+- **Fluid ($215K)**: 탈취된 proposer/approver 운영 키로 가짜 Merkle root 제출.
+
+집계: 스마트 컨트랙트 버그로 인한 손실은 H1 2026 전체의 **17.3%** 에 불과하다. 나머지 82.7%는 키 관리, 소셜 엔지니어링, 인프라 탈취, 브릿지 운영 실패에서 비롯됐다.
+
+**Why this is distinct from existing META**:
+- META-52 (Metric-Optimized Security Mirage) = 측정 가능한 것만 측정. → META-74는 측정의 방향이 코드에서 운영으로 이동한 **실제 공격자 행동 변화**를 기록한다.
+- META-70 (Node-Audit / Edge-Semantics Gap) = 노드는 검토됐지만 edge가 비어 있음. → META-74는 노드(코드) 자체가 검토 대상이 아닌 **다른 표면**으로 공격이 이동했음을 기록한다.
+- META-72 (Code-Audit Boundary / Governance-Economic) = 감사 scope가 거버넌스/경제적 공격 표면을 커버하지 않음. → META-72는 여전히 온체인 영역 내의 scope 문제다. META-74는 감사 scope 자체가 아닌, **감사가 아예 닿지 않는 인간/운영 영역**을 다룬다.
+- META-73 (Vacuous-Verification / Trivial-Satisfaction) = 검증은 동작하지만 의미가 비어 있음. → META-74는 검증이 동작하고 의미도 있지만, **공격자가 검증이 닿는 곳을 우회하는** 더 넓은 패턴이다.
+
+**Why audits miss**: 감사 산업은 도구 중심으로 발전했다 — Slither, Foundry, Certora, Echidna는 모두 코드를 검사한다. 운영 보안(key custody, social engineering resistance, RPC infrastructure, deploy pipeline)을 감사하는 표준 도구와 프레임워크가 없다. 감사 보고서는 "코드가 안전하다"고 결론짓지만, 이는 "프로토콜이 안전하다"와 동의어가 아니다. 인간과 운영 프로세스를 감사할 수 있는 프레임워크, 자격, 시장이 존재하지 않는다.
+
+**Defense**:
+1. **Operational security audit**: 코드 감사와 별도로 키 관리, custody, 서명 인프라, 배포 파이프라인, 팀 구성원의 보안 관행을 검증하는 별도 감사 카테고리 생성.
+2. **Key architecture review**: 모든 권한 키의 보관 경로, 접근 통제, 회전 정책, 복구 절차를 명시적 보안 자산으로 관리. HSM/MPC 의무화.
+3. **Infrastructure trust boundary**: RPC 노드, oracle 데이터 소스, relayer 서버를 코드와 동일한 보안 경계로 취급. 신뢰할 수 있는 RPC 노드 목록, 노드 서명 검증.
+4. **Social engineering resistance**: 팀 구성원 대상 정기적인 피싱 시뮬레이션, 권한 분산, 단일 담당자 의존도 제거.
+5. **Deploy pipeline integrity**: 배포 스크립트, CI/CD, 서명 인프라를 코드 감사와 동일한 수준으로 검증. 환경 변수, 시크릿 관리, 접근 로그.
+6. **Monitoring for the human layer**: 권한 키 사용 패턴 모니터링, 비정상 거래 알림, 다중 서명 요구.
+
+**Microstable applicability**: Microstable의 keeper quorum (3-key 분산), config signature 검증, upgrade authority pinning은 META-74 방어에 기여한다. 그러나 RPC 인프라, keeper 서버 자체의 보안, 팀 멤버의 개인 보안 관행은 현재 보증 범위 밖이다.
+
+---
+
+**Matrix state as of 2026-08-09 (purple-team daily evolution)**: **222 active named-vector headings across 214 unique named IDs**, plus **74 META entries**: **288 unique IDs** or **296 active named/META headings** when duplicate-ID sections are counted separately. META-74 added by Purple Team 2026-08-09: **Operational Trust Migration / Code-Security Allocation Gap (OTMAG)**. H1 2026 aggregate data confirming 82.7% of losses from non-code vectors, establishing this as the dominant structural threat. No new active CRITICAL/HIGH Microstable finding was confirmed.
