@@ -11624,3 +11624,51 @@ attacker:
 ---
 
 **Matrix state as of 2026-08-09 (purple-team daily evolution)**: **222 active named-vector headings across 214 unique named IDs**, plus **74 META entries**: **288 unique IDs** or **296 active named/META headings** when duplicate-ID sections are counted separately. META-74 added by Purple Team 2026-08-09: **Operational Trust Migration / Code-Security Allocation Gap (OTMAG)**. H1 2026 aggregate data confirming 82.7% of losses from non-code vectors, establishing this as the dominant structural threat. No new active CRITICAL/HIGH Microstable finding was confirmed.
+
+---
+
+## B92. Custom-Crypto Degenerate-Point Universal Signature Forgery
+
+| Field | Value |
+|---|---|
+| **Origin** | RustSec `RUSTSEC-2026-0240` (Aug 9, 2026) — dcrypt-sign <2.0.0 |
+| **Vector** | a custom Ed25519 implementation accepts the Edwards identity point as a public key; a signature with R = B (base point) and S = 1 then verifies for every message because the challenge term multiplies the identity point, producing a trivial relation. The implementation also admits other noncanonical or small-order inputs, widening the forgery surface |
+| **Prerequisites** | protocol or off-chain component uses a third-party or custom Ed25519 verification library (not the platform-native cryptographic primitive) that fails to reject degenerate curve points; consumer accepts externally supplied public keys |
+| **Impact** | universal signature forgery — any message under any (identity-point) key verifies; authentication bypass; forged authorizations accepted as valid without compromising any legitimate private key |
+| **Microstable status** | NOT ACTIVE — Microstable on-chain uses Solana's native `ed25519_program` / `solana_program::sysvar::instructions` for signature verification (not dcrypt-sign); keeper uses `solana-sdk` native signature verification (not dcrypt-sign). No dcrypt-* dependency in either `Cargo.lock`. |
+| **Required future invariant** | (1) any Ed25519/ECDSA library used for verification must reject identity/small-order/noncanonical points by test vectors; (2) prefer platform-native verification primitives over third-party reimplementations; (3) if a custom library is unavoidable, fuzz it against Wycheproof test vectors before trusting; (4) independently verify that `verify(pk_identity, msg, sig_crafted) == false` for all accepted libraries |
+| **Relation to existing vectors** | Distinct from A3 (Bonzo — application logic accepts zero/identity BLS signature without verification): in B92, the verification code runs, the math executes, but the mathematical degeneracy of the accepted inputs makes the verification relation trivially satisfiable. The bug is in the **cryptographic primitive**, not the application logic. Extends B89/B90 meta-pattern ("safe/checked label is a false promise") to cryptographic verification itself. |
+
+**Red-team bypass note**: Solana's runtime verifies Ed25519 signatures through a built-in sysvar/syscall that has been audited and does not accept identity points. The risk surface is off-chain: any keeper, relayer, or monitoring component that pulls in a Rust crypto crate for signature verification (rather than using `solana-sdk`) inherits that crate's correctness properties. The dcrypt family was published on crates.io and discoverable via `cargo search`. Review all off-chain signature verification paths for library provenance.
+
+---
+
+## B93. Streaming AEAD Stream-Structure Non-Authentication (Truncation/Replay/Reorder)
+
+| Field | Value |
+|---|---|
+| **Origin** | RustSec `RUSTSEC-2026-0239` (Aug 9, 2026) — dcrypt-symmetric <2.0.0 |
+| **Vector** | a streaming AEAD protocol authenticates individual frames (GCM/ChaCha20-Poly1305 per-frame tag) but does not authenticate stream-level structure: the terminator, counter, length, and sequence fields are unauthenticated. An attacker can (1) truncate the stream at a frame boundary to produce a successful short-EOF, (2) omit frames, (3) replay frames from a prior stream, (4) reorder frames, or (5) request allocations approaching 4 GiB from unbounded length fields |
+| **Prerequisites** | protocol or keeper uses a streaming encryption layer where frame-level authentication is present but stream-level structural integrity (ordering, completeness, termination) is not bound into the AEAD association data |
+| **Impact** | message truncation attacks (dropping the last N frames), frame replay across streams, frame reordering to confuse state machines, denial-of-service via large allocations, protocol-state corruption |
+| **Microstable status** | NOT ACTIVE — keeper does not use streaming AEAD. Off-chain communication uses TLS (HTTPS) for RPC, which provides record-level authentication via TLS AEAD but not application-level stream framing. No dcrypt-symmetric dependency. |
+| **Required future invariant** | (1) any streaming encryption must bind version, algorithm, stream identifier, base nonce, strict sequence number, bounded lengths, final flag, and caller AAD into the AEAD association data; (2) enforce authenticated finality and physical EOF; (3) bound frame sizes before allocation; (4) retain partial-read plaintext to prevent loss on truncation |
+| **Relation to existing vectors** | Novel: no existing vector covers stream-level structural integrity. B89 covers per-object deserialization validation. B91 covers verification cache poisoning. B93 covers a distinct class: the cryptographic primitive works correctly per-frame, but the protocol layer above it fails to authenticate the frame sequence as a whole. |
+
+**Red-team bypass note**: If the keeper ever adds a persistent encrypted channel (e.g., for keeper-to-keeper gossip, state synchronization, or multi-region oracle replication), stream-structure authentication becomes critical. TLS protects the transport, but any application-level framing above TLS inherits the application's framing-authentication properties, not TLS's.
+
+---
+
+## B94. Safe-API Type-Erasure Undefined Behavior (Type Confusion / UAF via Box<E> → raw ptr → Box<()>)
+
+| Field | Value |
+|---|---|
+| **Origin** | RustSec `RUSTSEC-2026-0242` (Aug 9, 2026) — dcrypt-api <2.0.0 |
+| **Vector** | a library marked `#![forbid(unsafe_code)]` exposes safe public APIs that internally use type erasure: `Box<E>` values are erased to raw pointers, stored in a global registry, later deallocated as `Box<()>` (mismatched deallocation). A `get_error<E>` operation performs an unchecked cast to a caller-selected type (type confusion). Concurrent replacement or clearing can free a value while another thread clones it (use-after-free). Ordinary safe Rust can trigger mismatched deallocation, type confusion, and UAF |
+| **Prerequisites** | protocol or keeper depends (directly or transitively) on a crate that uses type erasure + raw pointer storage behind safe public APIs; the crate's `#![forbid(unsafe_code)]` badge creates a false security signal |
+| **Impact** | memory corruption via safe Rust code path — type confusion enables reading/writing arbitrary type layouts; UAF enables reading freed memory; mismatched deallocation enables heap corruption; potential code execution |
+| **Microstable status** | NOT ACTIVE — dcrypt-api is not in Microstable's `Cargo.lock` (0 matches). No dependency tree path to dcrypt-api. |
+| **Required future invariant** | (1) audit transitive dependencies for type-erasure patterns (`Box<dyn Any>`, `Any::downcast`, raw pointer storage in safe code); (2) `#![forbid(unsafe_code)]` on a crate does not guarantee memory safety — safe code can cause UB through type confusion and concurrent access to global registries; (3) prefer crates that use `Box<dyn Any + Send>` with checked downcasts behind a mutex over raw-pointer-based registries; (4) run `cargo audit` against RustSec for all transitive dependencies quarterly |
+| **Relation to existing vectors** | Novel class: not about deserialization (B89), arithmetic (B90), verification (B91), or crypto primitives (B92). B94 targets the **Rust type system's inability to prevent type-confusion UB through safe APIs** when a library uses internal type erasure. The `#![forbid(unsafe_code)]` attribute is a sufficient condition for memory safety only if no type erasure exists; with type erasure, safe code paths can still produce UB. |
+
+**Red-team bypass note**: This vector class is invisible to standard code audits that focus on `unsafe` blocks. A crate can be 100% safe Rust and still cause UB through type erasure patterns. Automated tools (`cargo audit`, `cargo deny`) catch known-bad versions but not custom patterns. For high-assurance code, review how error registries, global state, and type-erased storage interact in all transitive dependencies.

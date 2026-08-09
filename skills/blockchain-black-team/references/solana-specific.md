@@ -2272,3 +2272,34 @@ archive_or_forward(tx)?; // delayed execution risk
 118. ☐ fuzz arithmetic paths with edge-case bit widths (U160, U256) and shift amounts near limb/word boundaries
 119. ☐ any future verification/signature cache must bind keys to full event hash + signer + nonce + timestamp + verification-status; never promote unverified relay events on cache hit alone
 120. ☐ if a keeper-level signature cache is added for Hermes/Pyth updates, include full payload hash + signer set + timestamp in the cache key — not just a payload digest or accumulator address
+
+### Custom-Crypto Degenerate-Point Universal Signature Forgery
+
+- **Signal**: RustSec `RUSTSEC-2026-0240` (2026-08-09) — dcrypt-sign <2.0.0, Ed25519 identity public keys permit universal signature forgery.
+- **Mechanism**: a custom Ed25519 implementation accepts the Edwards identity point as a public key. A signature with R = B, S = 1 then verifies for every message. Noncanonical and small-order inputs are also accepted, widening the forgery surface.
+- **Why this matters for Solana**: Solana uses Ed25519 for transaction signing. While the Solana runtime's built-in verification is not affected, any off-chain component (keeper, relayer, monitoring, auth service) that pulls in a custom Ed25519 crate inherits its correctness. A keeper that verifies keeper-quorum signatures via a vulnerable crate would accept forged authorizations.
+- **Microstable relevance**: **NOT ACTIVE today**. On-chain uses Solana native ed25519. Keeper uses `solana-sdk`. No dcrypt-* dependency.
+- **Checklist item 121**: ☐ audit all off-chain signature verification paths for library provenance; any non-`solana-sdk` Ed25519/ECDSA verifier must pass Wycheproof test vectors and reject identity/small-order/noncanonical points
+- **Checklist item 122**: ☐ add a CI test that asserts `verify(PK_IDENTITY, arbitrary_msg, SIG_CRAFTED) == false` for every signature verification library in the dependency tree
+
+### Streaming AEAD Structure Non-Authentication
+
+- **Signal**: RustSec `RUSTSEC-2026-0239` (2026-08-09) — dcrypt-symmetric <2.0.0, streaming AEAD does not authenticate stream structure.
+- **Mechanism**: per-frame AEAD tag validates, but stream-level ordering, completeness, termination, and length fields are unauthenticated. Attacker can truncate, replay, reorder frames, or trigger large allocations.
+- **Microstable relevance**: **NOT ACTIVE today**. No streaming AEAD in keeper or on-chain. Transport uses TLS.
+- **Checklist item 123**: ☐ any future keeper-to-keeper encrypted channel must authenticate stream structure: bind sequence, length, final flag, stream ID, and version into AEAD AAD; enforce authenticated finality
+
+### Safe-API Type-Erasure Undefined Behavior
+
+- **Signal**: RustSec `RUSTSEC-2026-0242` (2026-08-09) — dcrypt-api <2.0.0, safe ErrorRegistry APIs cause UB via type erasure.
+- **Mechanism**: safe public APIs internally use `Box<E> → raw ptr → Box<()>` type erasure. Unchecked cast on retrieval enables type confusion. Concurrent access enables UAF. `#![forbid(unsafe_code)]` badge creates false security signal.
+- **Microstable relevance**: **NOT ACTIVE today**. No dcrypt-api in dependency tree.
+- **Checklist item 124**: ☐ audit transitive dependencies for type-erasure patterns (`Box<dyn Any>`, raw pointer storage in safe code); `#![forbid(unsafe_code)]` does not guarantee UB-free code when type erasure is involved
+- **Checklist item 125**: ☐ run `cargo audit` quarterly against RustSec for all transitive dependencies; add `cargo deny` to CI for automated advisory checking
+
+### Solana-Specific Defense Checklist Update
+121. ☐ audit all off-chain signature verification paths for library provenance; reject identity/small-order/noncanonical points
+122. ☐ CI test: `verify(PK_IDENTITY, msg, SIG_CRAFTED) == false` for every sig-verification library in the dependency tree
+123. ☐ future keeper-to-keeper encrypted channels must authenticate stream structure in AEAD AAD
+124. ☐ audit transitive dependencies for type-erasure UB patterns; `#![forbid(unsafe_code)]` is not sufficient when type erasure exists
+125. ☐ quarterly `cargo audit` + CI `cargo deny` for all transitive dependencies
