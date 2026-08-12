@@ -2303,3 +2303,8 @@ archive_or_forward(tx)?; // delayed execution risk
 123. ☐ future keeper-to-keeper encrypted channels must authenticate stream structure in AEAD AAD
 124. ☐ audit transitive dependencies for type-erasure UB patterns; `#![forbid(unsafe_code)]` is not sufficient when type erasure exists
 125. ☐ quarterly `cargo audit` + CI `cargo deny` for all transitive dependencies
+
+126. ☐ audit all data structure dependencies for panic-safety in Drop implementations; focus on structures with manual Drop and multi-step mutations
+127. ☐ cargo fuzz with panic-inducing inputs (custom Ord/PartialEq/Hash that randomly panic) against critical data structures in keeper and validator-adjacent code
+128. ☐ pin lru, sized-chunks, circular-buffer, orx-split-vec to fixed versions when they enter the dependency tree; block pre-fix versions via cargo deny
+129. ☐ treat Drop::drop as an unsafe boundary in code review; require panic-safety documentation for any struct with manual Drop implementation
