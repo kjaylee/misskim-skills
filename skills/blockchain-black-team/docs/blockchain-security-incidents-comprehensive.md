@@ -627,3 +627,27 @@
 - **2026-03-31 — Arf X Account Compromise ($0 loss)** — Huma Finance warned that partner Arf's official X account (@arf_one) was compromised. No direct protocol fund loss. Represents ongoing social media account compromise trend targeting DeFi protocol partner ecosystems.
   Vector mapping: **B53 Address/Account Poisoning** (social media variant).
   Source: https://x.com/humafinance/status/2038810915802611834
+
+---
+
+## Q3 2026 Incident Additions (2026-08-13 daily evolution)
+
+- **2026-07-06 — BonkDAO Governance Attack ($20M, Solana)** — Attacker spent ~$4M to buy BONK tokens on the open market, accumulated sufficient voting power, and passed malicious governance proposal BIP-76 to transfer ~$20M BONK from treasury to attacker-controlled wallets. No smart contract exploit — used the DAO's own voting system. No flash loan required.
+  Vector mapping: **C23 Governance Attack** (real-capital treasury arbitrage variant — flash-loan defenses irrelevant when treasury value >> cost of acquiring voting tokens).
+  Source: SlowMist Hacked (`hacked.slowmist.io/?c=Solana`)
+
+- **2026-07-16 — DefiTuna Lending Exploit ($580K, Solana)** — Solana-based DeFi protocol DefiTuna's lending pools were exploited by an attacker who drained ~$580K, creating a matching deficit in the USDC lending pool. Attack vector identified and patched.
+  Vector mapping: **A144 Positive Collateral Truncated to Zero → Empty-Position Solvency Fail-Open** (already tracked in attack matrix at line ~11308).
+  Source: SlowMist Hacked, CertiK analysis.
+
+- **2026-07-21 — FlashTrade Unauthorized Withdrawal ($98K, Solana)** — Solana perps protocol FlashTrade detected an unauthorized $98K withdrawal from its ephemeral instance. Withdrawal batching and monitoring system enabled quick detection and containment. Team covered the full amount.
+  Vector mapping: **Operational security — ephemeral instance compromise** (method unknown, contained quickly).
+  Source: SlowMist Hacked (`hacked.slowmist.io/?c=Solana`)
+
+- **2026-08-04 — ChainDrop npm Worm (453+ packages, supply chain)** — Self-propagating npm supply chain worm compromised 453+ packages (~2B weekly downloads). Worm steals npm/GitHub/cloud credentials, scrapes GitHub Actions runner memory for OIDC tokens, self-replicates via stolen publishing tokens, uses Ethereum smart contract for C2 domain resolution, generates valid Sigstore provenance, and persists via VS Code/Claude Code configuration hooks. Second major wave after GlassWorm (March 2026).
+  Vector mapping: **D28 Supply Chain** (reinforced) + **B95 NEW** (blockchain-based C2 / valid-provenance bypass / AI-tool persistence).
+  Sources: Unit 42 (`unit42.paloaltonetworks.com/chaindrop-npm-worm-analysis/`), Microsoft Security Blog, Elastic Security Labs, Datadog Security Labs.
+
+- **2026-08-04 — Coldcard Hardware Wallet Exploit ($130M+, Bitcoin)** — Security vulnerability in Coldcard hardware wallets (Mk3+) allowed attackers to drain Bitcoin from offline hardware wallets. RNG bug generated seeds with only ~40-72 bits entropy instead of 128 bits. Attackers brute-forced predictable private keys offline. Undetected for 5+ years.
+  Vector mapping: **B15 Key/Theft + META-73** (vacuous-verification in cryptographic implementation — code reviewed but output entropy never statistically validated). Already reinforced twice in attack matrix.
+  Source: TechCrunch (`techcrunch.com/2026/08/04/hackers-steal-over-130-million-by-exploiting-bug-in-offline-hardware-wallets/`), GLXY Research.
