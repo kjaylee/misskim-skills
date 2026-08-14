@@ -651,3 +651,31 @@
 - **2026-08-04 — Coldcard Hardware Wallet Exploit ($130M+, Bitcoin)** — Security vulnerability in Coldcard hardware wallets (Mk3+) allowed attackers to drain Bitcoin from offline hardware wallets. RNG bug generated seeds with only ~40-72 bits entropy instead of 128 bits. Attackers brute-forced predictable private keys offline. Undetected for 5+ years.
   Vector mapping: **B15 Key/Theft + META-73** (vacuous-verification in cryptographic implementation — code reviewed but output entropy never statistically validated). Already reinforced twice in attack matrix.
   Source: TechCrunch (`techcrunch.com/2026/08/04/hackers-steal-over-130-million-by-exploiting-bug-in-offline-hardware-wallets/`), GLXY Research.
+
+---
+
+## Q3 2026 Incident Additions (2026-08-15 daily evolution)
+
+- **2026-08-11/12 — Harmony Protocol Unauthorized Mint (~4B ONE, ~26% supply, Solana-unrelated L1)** — Attacker minted ~4 billion ONE via "empty blocks and related flaws" (protocol logic vulnerability), funneled large amounts to exchanges, crashing ONE ~30-40%. Team paused the bridge, shipped an emergency validator patch, coordinated exchange freezes, and evaluated rollback. Notably, reports indicate Harmony's `totalSupply` endpoint did not reflect the inflation (**supply masking**), delaying detection.
+  Vector mapping: chain-level protocol/consensus logic flaw → unauthorized native mint (kin to the Injective chain-level class). **Matrix admission deferred** — public code-level mechanism not yet published; timeline-tracked with caveat.
+  Sources: https://x.com/harmonyprotocol/status/2087487246148542527 | https://www.coindesk.com/markets/2026/08/12/harmony-s-one-falls-26-after-attacker-allegedly-mints-4-billion-tokens | https://hacked.slowmist.io/en/
+
+- **2026-08-09 — Coreum Bridge Fake Deposit (~200K XRP, ~$200K)** — Attacker self-transferred the bridge's own wrapped tokens with valid memos; relayer deposit-verification authorized real XRP withdrawals. 94 multisig transactions over 97 minutes.
+  Vector mapping: **A32 reinforcement (NEW 2026-08-15)** — deposit verification by pattern recognition instead of inbound-value conservation.
+  Source: https://x.com/txEcosystem/status/2087269579190046895
+
+- **2026-08-09 — Oraichain EVM Cross-Chain Transfer Path (unauthorized ORAI mint, loss contained)** — Vulnerability in EVM cross-chain transfer path enabled unauthorized ORAI minting; network halted 04:00 UTC, bridges restricted, unauthorized balances to be burned and supply reconciled.
+  Vector mapping: **A32 reinforcement (NEW 2026-08-15)** — EVM-lane mint authorization gap; halt→freeze→burn-and-reconcile containment playbook.
+  Source: https://x.com/oraichain/status/2086774707882451012
+
+- **2026-08-06 — RRWallet / CryptoJS Weak RNG (~$2M, CVE-2026-71851 "Ill Bloom")** — Coinspect disclosed RRWallet seed phrases generated with weak CryptoJS RNG; keys predictable; at least one user lost ~$2M.
+  Vector mapping: **B15 reinforcement (NEW 2026-08-15)** — client-library RNG entropy insufficiency; Coldcard/META-73 vacuous-verification gap in the web-wallet domain.
+  Source: https://x.com/coinspect/status/2085430121670811898
+
+- **2026-08-06 — Unistreets LaunchpadFactoryAuto Calldata Injection (~$17.75K, Ethereum)** — Factory custodied all launched tokens' Uniswap V4 LP NFTs; attacker injected `setApprovalForAll` via arbitrary calldata and burned LP positions, draining liquidity.
+  Vector mapping: **A4 reinforcement (NEW 2026-08-15)** — custodial aggregator + calldata passthrough = approval-injection drain lane.
+  Source: https://x.com/unistreetapp/status/2085225140690751793
+
+- **2026-07-23 — VerusCoin Ethereum Bridge Second Exploit (~$7.54M, backfill)** — Same bridge, different gap in the same trust boundary as the May A125 incident. `checkExportAndTransfers` never validated `totalamounts`/`totalfees`/`totalburned`/CTxOut `nValue` nor prior-outpoint backing; attacker committed to attacker-payable transfer list with attacker-chosen hash; all notary proofs and Merkle paths genuine. May patch `checkCCEValues` held — sibling function with same missing conservation semantics.
+  Vector mapping: **A125 reinforcement (NEW 2026-08-15)** — postmortem fixed the found function, not the class; every proof→release conversion path needs conservation regression tests.
+  Source: https://rekt.news/veruscoin-rekt | https://x.com/SlowMist_Team/status/2080192064478724299

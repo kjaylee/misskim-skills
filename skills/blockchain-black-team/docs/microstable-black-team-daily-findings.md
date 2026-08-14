@@ -2708,3 +2708,44 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - New CRITICAL findings: **0**
 - Active HIGH findings: **2** — **B83 active-latent**, **B45 carry-forward**
 - Focused conclusion: 오늘은 매트릭스를 더 넓히는 날이 아니라, **이미 흡수한 최근 사고들이 현재 코드에 새 공격면을 열지 않았는지 재검증한 날** 이다. 다만 **B83** 과 **B45** 는 여전히 HIGH 상태로 남아 있어, blue-team 수정 없이는 daily sweep만으로 닫혔다고 볼 수 없다.
+
+## 2026-08-15 Daily Check
+### Source Sweep (24h~7d window: 2026-08-08 → 2026-08-15 KST)
+- Sources checked: rekt.news, hacked.slowmist.io/en/, GitHub Advisory DB (Solana/Anchor/SPL), zai-search (Immunefi/ToB/OtterSec/Neodyme/X fallback). CVE-2026-45137 detail cross-checked via SentinelOne NVD entry + GHSA-c6rc-8jpp-2fgc.
+- **Confirmed in-window items (matrix delta)**:
+  1. **Coreum Bridge (2026-08-09, ~$200K)** — fake deposits via self-transfer of bridge's own wrapped tokens with valid memos → **A32 reinforcement NEW** (deposit verification by pattern recognition instead of inbound-value conservation).
+  2. **Oraichain (2026-08-09)** — EVM cross-chain transfer path → unauthorized ORAI mint, chain-halt containment → **A32 reinforcement NEW**.
+  3. **RRWallet / CVE-2026-71851 Ill Bloom (2026-08-06, ~$2M)** — CryptoJS weak RNG seeds → **B15 reinforcement NEW** (Coldcard/META-73 vacuous-verification gap, web-wallet domain).
+  4. **Unistreets (2026-08-06, ~$17.75K)** — arbitrary calldata injection into NFT-custodial launchpad factory → **A4 reinforcement NEW**.
+  5. **VerusCoin #2 backfill (2026-07-23, ~$7.54M)** — `checkExportAndTransfers` sibling gap of May-patched `checkCCEValues` → **A125 reinforcement NEW** (postmortem fixed the function, not the class).
+  6. **Harmony Protocol (2026-08-11/12, ~4B ONE)** — empty-block protocol logic mint + totalSupply endpoint masking → **timeline-only**, matrix admission deferred (no public code-level mechanism yet).
+- **CVE-2026-45137 / RUSTSEC-2026-0144 (Anchor `Program<System>` sentinel)**: already covered by **A123**. Re-checked live: `solana/Cargo.lock` pins `anchor-lang 0.31.1` (unaffected, <1.0.0); no anchor 1.0.x anywhere. ✅ NOT ACTIVE. Upgrade guard recorded: any Anchor 1.x migration must land ≥1.0.2.
+
+### Skill Delta Today
+- **0 NEW named vectors** (A123 already covers the Anchor CVE)
+- **+5 reinforcements** (A32 ×2, A125, A4, B15) + 1 timeline-only entry (Harmony)
+- Updated: `SKILL.md`, `references/attack-matrix.md`, `docs/blockchain-security-incidents-comprehensive.md`, `docs/microstable-black-team-daily-findings.md`
+
+### Microstable Code Sweep (live-code verdicts)
+| Vector | Code Target | Verdict | Notes |
+|--------|-------------|---------|-------|
+| **A6 redeem canonical-mint gap (CRITICAL carry)** | `solana/programs/microstable/src/lib.rs:2395-2396` (Redeem struct `mstb_mint`) | ❌ **CRITICAL STILL ACTIVE** | No `address=` / `mint::authority=` constraint on Redeem's `mstb_mint` (Mint struct has `mint::authority = protocol_state` at :2320; Redeem does not). In-handler `user_mstb_ata` check (:1352-1357) derives expected ATA **from the attacker-supplied mint** — circular. Attacker burns self-minted fake tokens, keeps real MSTB, extracts real collateral. |
+| **A123 Anchor `Program<System>` sentinel (CVE-2026-45137)** | `solana/Cargo.lock` anchor-lang 0.31.1 | ✅ **NOT ACTIVE** | Unaffected range (<1.0.0); 5 `Program<'info, System>` sites in lib.rs are framework-validated in 0.31.x. Upgrade guard: Anchor 1.x migration must be ≥1.0.2. |
+| **A32 Coreum fake-deposit / Oraichain EVM mint** | on-chain + keeper | ✅ **NOT ACTIVE** | No bridge/export/wrapped-asset path exists in Microstable. |
+| **A4 Unistreets calldata injection** | `lib.rs` entrypoints | ✅ **NOT ACTIVE** | Anchor IDL-constrained entrypoints; no arbitrary-calldata passthrough; `program_id` usages are PDA derivations + owner checks only. |
+| **B15 RRWallet CryptoJS RNG** | keeper/dashboard | ✅ **NOT ACTIVE** | Rust `solana-keygen` keygen; no JS keygen path. (Dashboard devnet faucet keypair = known D26, unchanged.) |
+| **B83 QUIC fragment-hole (HIGH carry)** | `solana/Cargo.lock` | ❌ **HIGH carry-forward** | `quinn-proto` still 0.11.13. |
+| **B45 audit attestation (HIGH carry)** | `microstable/security/` | ❌ **HIGH carry-forward** | `audit-attestation.json` still absent. |
+| **A75 manual-oracle drift (MEDIUM carry)** | `keeper/src/oracle.rs:714-718` | ⚠️ **MEDIUM carry-forward** | Manual fallback still posts `ix_update_oracle` without spot-vs-TWAP anchor parity. |
+
+### Blue-Team Fix Order (unchanged priority, A6 first)
+1. **A6 CRITICAL**: store canonical `mstb_mint` pubkey in `ProtocolState` at `initialize`, then constrain Redeem's `mstb_mint` with `#[account(mut, address = protocol_state.mstb_mint @ ErrorCode::InvalidMint, mint::authority = protocol_state)]`. Mirror the same canonical pin in every burn/mint leg (`lib.rs:1086-1119` Mint path already has authority pin; add address pin there too).
+2. **B83 HIGH**: upgrade Solana client dependency chain until `quinn-proto >= 0.11.15` verified in `Cargo.lock`.
+3. **B45 HIGH**: add `security/audit-attestation.json` (audited commit hash, covered paths, artifact hashes, reviewer identity) + CI fail-on-absence.
+4. **A75 MEDIUM**: apply `validate_spot_vs_twap()`-style anchor to manual oracle update path or disable manual mode in production.
+
+### Today's Verdict
+- New admissible matrix delta: **+5 reinforcements, 0 new named vectors**
+- New CRITICAL findings: **0** (but **A6 CRITICAL carry-forward re-verified live — still unfixed**)
+- Active HIGH: **B83, B45 (+ A3/HERMES-H1, A10, D45/B15 per SKILL.md carry set)**
+- Focused conclusion: 오늘의 신규 패턴(브릿지 위장 입금·EVM 민트·calldata 주입·JS RNG)은 모두 Microstable 비활성 도메인이나, **A6 redeem canonical-mint gap은 3주째 방치된 CRITICAL**로 blue-team 수정 없이는 다음 스윕에서도 동일 판정이 반복된다.
