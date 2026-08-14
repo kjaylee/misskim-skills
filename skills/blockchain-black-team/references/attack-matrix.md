@@ -1,4 +1,4 @@
-# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~74
+# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~75
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -231,6 +231,8 @@ _executeSwap(swap.aggregator, swap.fromToken, swap.toToken, swap.amount);
 **Source**: https://rekt.news/afx-trade-rekt | https://hacked.slowmist.io/ | https://x.com/coinbureau/status/2081559245653483870 | https://x.com/TripleAHQ/status/2081622020932948328
 **2026 reinforcement (Coldcard / Coinkite, disclosed 2026-07-30, $100M+ ongoing)**: GLXY Research disclosed that Coldcard hardware wallets (Mk3 and newer) shipped a firmware RNG bug since **March 2021** that generated seeds with only **~40 bits entropy (Mk3)** / **~72 bits (newer models)** instead of the intended 128 bits. Attackers brute-forced predictable private keys **offline** and drained single-sig Bitcoin addresses across multiple waves without ever accessing the devices. **Key sub-pattern**: this is B15 via **cryptographic parameter insufficiency** rather than key theft — the signing infrastructure was never compromised, but the keys themselves were never strong enough. The failure ran undetected for **5+ years** because no one statistically validated actual RNG output against the claimed entropy target. **Why audits miss**: firmware and cryptographic implementation reviews verify code correctness (`does the RNG algorithm match the spec?`) but rarely perform **statistical entropy validation over generated output** (`does the output actually contain 128 bits of entropy?`). The gap between `implementation reviewed` and `security parameter met` is the same META-73 pattern in the hardware/firmware domain.
 **Source**: https://x.com/glxyresearch/status/2084411904924045370
+**2026 reinforcement (RRWallet / RenrenBit, disclosed 2026-08-06, ~$2M)**: Coinspect disclosed that RRWallet generated vulnerable seed phrases due to a **weak RNG in the CryptoJS library** ("Ill Bloom", CVE-2026-71851), making private keys predictable; one user lost ~$2M. This is the **second entropy-validation failure within 8 days** of the Coldcard disclosure (2026-07-30) and extends the identical structural lesson from firmware RNG to **wallet software inheriting library-level RNG weakness**: nobody — not firmware reviewers, not wallet vendors, not downstream auditors — statistically validates generated key material against its claimed entropy target. **Additional sub-pattern (B15 × D28 intersection)**: the defect lived in a widely-deployed JS crypto library consumed as a dependency; the wallet vendor's security posture was inherited from an unverified upstream RNG implementation, and downstream smart-contract or product audits never reach that layer. **Why audits miss**: `battle-tested library` is treated as a trust anchor (Authority Bias), and `key generation correctness` is verified by deterministic unit tests — which pass on weak RNG because the output is still well-formed, just low-entropy. Only **statistical entropy validation over large generated-key samples** (NIST SP 800-22-style batteries or min-entropy estimation on fresh seeds) catches this class; no standard audit or certification requires it.
+**Source**: https://x.com/coinspect/status/2085430121670811898 | https://hacked.slowmist.io/
 
 ### B16. Race Condition
 **Mechanism**: Multiple keepers submit conflicting TXs → inconsistent state.
@@ -11654,9 +11656,28 @@ attacker:
 
 **Operational reinforcement (2026-08-09, Coinsbuy, $7.9M)**: B2B crypto payment processor wallets drained across Ethereum and TRON, method unknown, funds laundered through Monero via exchanges. ChangeNOW froze a six-figure amount. Consistent with B15/META-74 pattern: operational infrastructure compromise without smart-contract bug. The cross-chain (Ethereum + TRON) drain from a single processor reinforces that operational key compromise at a centralized payment intermediary simultaneously affects all chains the processor operates on.
 
+**Macro reinforcement (SlowMist 2026 H1 mid-year report, 2026-08)**: 182 security incidents in H1 2026 (+~50% YoY) with **$956M in losses (−~60% YoY)**, while AI-related threats grew alongside. This combination quantitatively confirms the META-65 prediction: attack *search labor* is commoditizing (incident count up) while the *median* payoff per incident falls — but the loss distribution remains tail-concentrated and increasingly operational (phishing/key-compromise/social-engineering), exactly the vectors outside audit scope per META-74 and arXiv 2606.15465. Attack volume is no longer a proxy for attack severity; defense budgeting that tracks incident counts will systematically misallocate.
+**Source**: https://slowmist.medium.com/slowmist-2026-mid-year-blockchain-security-and-aml-report-75e0862179ef
+
+---
+
+### META-75. Snapshot-Assurance / Discovery-Hazard-Rate Gap (SA-DHRG)
+
+**Published**: 2026-08-15 | **Source**: Purple Team Daily Evolution | **Signal**: Immunefi five-year platform research (Jan 2021 – Feb 2026, 593 continuous bug bounty programs, confirmed-and-paid reports only; audit competitions excluded)
+
+**핵심 비대칭**: 조직·사용자·보험사는 보증을 **날짜가 찍힌 사건** (감사 완료일, 검증 통과일, 바운티 개시일)으로 소비하지만, 치명적 취약점 발견은 **노출 시간에 단조 증가하는 확률 과정** 이다. Immunefi 5년 데이터: ① 5년 이상 운영된 프로그램의 **93.9%** 가 최소 1건의 확인·지급된 Critical 보유 — 프로그램 연령별 누적: 1년 61.4% → 2년 73.9% → 3년 87.2% → 4년 92.9% → 5년 93.9%. ② Critical은 1회성이 아니라 반복 사건: Critical 경험 프로그램 평균 **2.7건** (중앙값 2, 최다 50건), 129개 프로그램은 서로 다른 연도에 걸쳐 Critical 반복 발생. ③ 어떤 연도든 활성 프로그램의 ~50%가 Critical 1건 이상, ~70%가 High-이상 1건 이상 — 5개 완전 연도, 시장 사이클, 아키텍처 계열 전반에서 안정적. ④ 경제적 비대칭: Critical 중앙값 바운티 **$20K** vs Amador Hack Impact Estimate **~$25M 직접 피해 + 6개월 내 토큰가 −61% + 84% 확률 미회복 + 최소 3개월 조직 생산성 손실** — 예방 가치 대비 보상이 ~1/1000 수준.
+
+**왜 감사가 놓치는가**: ① 감사·검증·바운티 개시는 모두 시점 표본이며, 그 시점 이후 코드베이스가 계속 변해도 (`2.7 Critical/프로그램`이 보여주듯 신규 코드 = 신규 취약면) 보증 배지는 갱신되지 않는다 — 보증 신호는 부패하는데 재검증 의무가 없다. ② "우리 코드는 감사받았고 Critical은 남에게 일어나는 일"이라는 기저 가정이 데이터와 정면으로 모순되지만, 감사 보고서에 "노출 시간 t에서 잔존 Critical 기대치" 같은 위험률(hazard rate) 정보는 아예 없다. ③ 감사 산업 산출물이 불연속 문서(리포트, 배지)인 반면 발견 과정은 연속적 확률 과정이라, 두 표현체계가 만나는 지점이 없다. ④ 바운티 경제학이 예방을 ~1/1000로 저가 평가하므로, 화이트햇 발견 속도가 블랙햇 발견 속도와 경쟁하는 구조에서 지속 커버리지가 구조적으로 과소공급된다.
+
+**META-24/61/65와의 구별**: META-24는 "감사 통과 ≠ 안전"이라는 신화의 단면적 고찰, META-61은 한 평면의 보증이 인접 평면으로 번지는 후광, META-65는 탐색 노동 상품화다. META-75는 **보증의 시간 구조** 자체를 다룬다 — 보증은 사건이 아니라 위험률 과정이며, 업계에는 그 위험률을 측정·표시·갱신하는 표준이 전혀 없다는 실패를 규정한다.
+
+**Microstable applicability**: Microstable 배포 시 1회성 감사는 base rate상 부족하다 — 5년 노출 시 Critical 1건 이상 확률 ~94%, 신규 배포·업그레이드마다 Critical 기대치가 재유입된다. 방어: ① 감사를 사건이 아닌 위험률 관리로 예산화 (지속 바운티 + META-63 invariant 런타임 승격), ② 모든 배포·업그레이드에 보증 만료 개념 도입 (코드 변경률에 비례한 재검증 트리거), ③ 발견-대응 지표(평균 인지→패치 시간)를 감사 횟수보다 우선 추적.
+
 ---
 
 **Matrix state as of 2026-08-13 (black-team daily evolution)**: **223 active named-vector headings across 215 unique named IDs**, plus **74 META entries**: **289 unique IDs** or **297 active named/META headings** when duplicate-ID sections are counted separately. 2026-08-13 changes: **B95** added (ChainDrop self-propagating supply-chain worm with blockchain-based C2 / valid-provenance bypass — 3 novel sub-patterns: Ethereum C2 router, Sigstore provenance forgery, AI-tool persistence); **C23** reinforced (BonkDAO governance attack — real-capital treasury arbitrage, $4M cost → $20M gain, flash-loan defenses irrelevant); **D28** reinforced (ChainDrop/Shai-Hulud wave — 453+ packages, self-propagation + blockchain C2 + valid provenance). No new META entries.
+
+**Matrix state as of 2026-08-15 (purple-team daily evolution)**: **META-75 added** (Snapshot-Assurance / Discovery-Hazard-Rate Gap — Immunefi 5-year base rates: 93.9% of 5+y programs have ≥1 confirmed critical, 2.7 criticals/program, ~50% yearly critical rate, $20K median bounty vs ~$25M expected hack impact); **B15 reinforced** (RRWallet CryptoJS "Ill Bloom" CVE-2026-71851 — second entropy-validation failure in 8 days, library-inherited weak RNG, B15×D28 intersection); **META-65/74 reinforced** (SlowMist H1 2026: incidents +50%, losses −60%, $956M, AI threats up — volume/severity decoupling). Total: **74+1 = 75 META entries**.
 
 ---
 
