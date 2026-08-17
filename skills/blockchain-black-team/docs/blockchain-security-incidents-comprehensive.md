@@ -679,3 +679,11 @@
 - **2026-07-23 — VerusCoin Ethereum Bridge Second Exploit (~$7.54M, backfill)** — Same bridge, different gap in the same trust boundary as the May A125 incident. `checkExportAndTransfers` never validated `totalamounts`/`totalfees`/`totalburned`/CTxOut `nValue` nor prior-outpoint backing; attacker committed to attacker-payable transfer list with attacker-chosen hash; all notary proofs and Merkle paths genuine. May patch `checkCCEValues` held — sibling function with same missing conservation semantics.
   Vector mapping: **A125 reinforcement (NEW 2026-08-15)** — postmortem fixed the found function, not the class; every proof→release conversion path needs conservation regression tests.
   Source: https://rekt.news/veruscoin-rekt | https://x.com/SlowMist_Team/status/2080192064478724299
+
+---
+
+## Q3 2026 Incident Additions (2026-08-18 daily evolution)
+
+- **2026-08-15 — FoxMarket (BSC — flash-loan spot-quote manipulation with valuation-snapshot fixation)** — `FoxLpBondsPool.stake()` computed and fixed `_stakeAmount` from a manipulable Pancake AMM spot quote **before** the attacker's large USDT→Fox swap. Flash loans skewed pair reserves; post-swap `addLiquidity` ran at a mismatched ratio; `Treasury.lpBonds()` trusted the stale fixed snapshot; the protocol minted excess Fox tokens and paid inviter rewards to an attacker-controlled address, which were sold back into the pair in the same transaction. Loss ~$118.7K.
+  Vector mapping: **A2 reinforcement (NEW 2026-08-18)** — valuation-snapshot fixation TOCTOU: a stored AMM-derived valuation remains the issuance basis after the underlying reserves mutate in the same transaction. Not a new primitive (A2 family), but a distinct failure mode from live-spot reads: persistence of the snapshot across manipulation. Defense: recompute valuation at the consuming instruction or bind snapshot validity to a reserve-state hash/nonce.
+  Source: https://x.com/SlowMist_Team/status/2089196291800908164 | https://hacked.slowmist.io/
