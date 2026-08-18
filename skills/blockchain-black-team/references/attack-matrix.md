@@ -6869,7 +6869,7 @@ fn execute_rebalance(route: Route, policy: &Policy) {
 
 **Published**: 2026-05-20 | **Severity**: HIGH | **Red Team**
 
-**Signal**: RustSec `RUSTSEC-2026-0144` (published 2026-05-14) + GitHub advisory `GHSA-c6rc-8jpp-2fgc`
+**Signal**: RustSec `RUSTSEC-2026-0144` (published 2026-05-14) + GitHub advisory `GHSA-c6rc-8jpp-2fgc` + NVD alias `CVE-2026-45137` (published to NVD 2026-05-27; NVD description confirms TryFrom<&AccountInfo> for Program<'a,T> sentinel collision, fixed in Anchor 1.0.2 — added 2026-08-19 daily sweep re-verification: Microstable still on anchor-lang 0.31.1, outside affected 1.0.0–1.0.1 range)
 
 **Key insight**: 많은 Solana 팀은 `Program<'info, System>` 를 보면 “이 계정은 당연히 system program 으로 검증된다” 고 생각한다. 그런데 이번 Anchor 1.0 계열 신호는 typed wrapper 자체가 그 보장을 무너뜨릴 수 있음을 보여준다. `System::id()` 가 `Pubkey::default()` 이라서 untyped `Program<()>` sentinel 경로와 충돌하면, 코드상으로는 “시스템 프로그램 전용 CPI” 처럼 보이는데 실제 런타임에서는 **임의 실행 프로그램을 system program 대리인처럼 주입** 할 수 있다.
 
