@@ -2308,3 +2308,18 @@ archive_or_forward(tx)?; // delayed execution risk
 127. ☐ cargo fuzz with panic-inducing inputs (custom Ord/PartialEq/Hash that randomly panic) against critical data structures in keeper and validator-adjacent code
 128. ☐ pin lru, sized-chunks, circular-buffer, orx-split-vec to fixed versions when they enter the dependency tree; block pre-fix versions via cargo deny
 129. ☐ treat Drop::drop as an unsafe boundary in code review; require panic-safety documentation for any struct with manual Drop implementation
+
+### Build-Time BPF Toolchain Compromise via crates.io Yank-Forced Resolution (arrayref 2026-08-20)
+
+**Incident class**: attack-matrix B99. A maintainer-credential compromise republished `arrayref` 0.3.10 with a typosquat build-script dependency and yanked the clean 0.3.9 — forcing unconstrained resolutions onto malware for ~86 minutes.
+
+**Solana-specific chain (verified in microstable/solana/Cargo.lock)**:
+`arrayref 0.3.9 ← blake3 1.5.5 ← solana-blake3-hasher 2.2.1 ← solana-program 2.3.0 ← anchor-lang 0.31.1 ← {on-chain program, keeper}`
+
+Every Anchor program build transitively executes `arrayref`'s dependency tree; a malicious in-range version means attacker code runs on the **BPF build host** — with access to the upgrade-authority keypair and the ability to tamper the .so before deployment. Program-digest verification downstream does not detect a compromised builder.
+
+**Solana-Specific Defense Checklist Update**
+- Release/program builds: `cargo build-sbf --locked` (or equivalent locked invocation) only; `cargo update` is a reviewed operation, not routine hygiene.
+- Any pinned dependency being **yanked** upstream = supply-chain alarm (crates.io monitor), not housekeeping — yank-forced resolution is the attacker's forcing function.
+- Baseline release cadence of foundational crates (blake3, borsh, bytemuck, solana-*): a years-dormant stable crate republishing at patch level with new direct deps = block-and-investigate.
+- Deployment evidence: record builder host + rustc/toolchain digest alongside program digest; treat builder integrity as a distinct boundary from program-signing integrity.
