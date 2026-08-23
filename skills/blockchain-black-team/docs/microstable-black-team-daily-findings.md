@@ -2749,3 +2749,25 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - New CRITICAL findings: **0** (but **A6 CRITICAL carry-forward re-verified live — still unfixed**)
 - Active HIGH: **B83, B45 (+ A3/HERMES-H1, A10, D45/B15 per SKILL.md carry set)**
 - Focused conclusion: 오늘의 신규 패턴(브릿지 위장 입금·EVM 민트·calldata 주입·JS RNG)은 모두 Microstable 비활성 도메인이나, **A6 redeem canonical-mint gap은 3주째 방치된 CRITICAL**로 blue-team 수정 없이는 다음 스윕에서도 동일 판정이 반복된다.
+
+## 2026-08-24 Daily Check
+
+### Source Sweep (24h~7d window: 2026-08-17 → 2026-08-24 KST)
+- Sources checked: rekt.news (front page), SlowMist Hacked (main + Solana category), RustSec advisory feed, Immunefi, GitHub Advisory (Solana/Anchor/SPL), Trail of Bits / OtterSec / Neodyme surfaces, zai-search X/community fallback (oneDay + oneWeek).
+- **New named vectors: 0. New reinforcements: 0.** SlowMist's newest entry remains 2026-08-18 Maya (A149, added 2026-08-23); RustSec's newest remains the 2026-08-20 arrayref cluster (B99). rekt front-page items (Harmony rekt2→A32 closed, Coinsbuy→B15, Coldcard→B15-entropy/META-73, VerusCoin#2→A125, AFX→B15, Ostium→A146-family, Bonzo→META-73, BonkDAO→governance) all pre-mapped. Drift/Kelp DAO news in-window are retrospective coverage of already-mapped incidents (Drift: 21 matrix matches incl. 2026-08-18 Chainalysis reinforcement; Kelp: 45 matches).
+- **Inadmissible candidates rejected**: Texture (Solana lending, $2.2M) — SlowMist entry predates 2026-03-11, outside window, no published code-level mechanism located; KITE Foundation (08-06, $0 loss, plain key-leak class already B15-covered). No skill delta; SKILL.md/attack-matrix/timeline unchanged.
+
+### Microstable Code Sweep (live-code verdicts; working tree unchanged since 2026-02-28, zero drift vs 2026-08-23 audit — no commits since 08-20, all mtimes ≤02-28)
+| Vector | Code Target | Verdict | Evidence (live read today) |
+|---|---|---|---|
+| **A6 fake-MSTB redeem (CRITICAL carry)** | `lib.rs:2396` Redeem `mstb_mint` | ❌ **CRITICAL STILL ACTIVE (~4주째)** | `#[account(mut)]` only — no `address =`/`mint::authority` pin; Mint path has pin at :2320; handler :1353 derives expected ATA from attacker-supplied mint (circular) |
+| **B83 QUIC (HIGH carry)** | `Cargo.lock` quinn-proto | ❌ **HIGH carry-forward** | still `0.11.13` |
+| **B45 attestation (HIGH carry)** | `security/` | ❌ **HIGH carry-forward** | `audit-attestation.json` still absent |
+| **B99 yank-forced resolution (added 08-23)** | `Cargo.lock` | ✅ NOT ACTIVE re-verified | arrayref pinned `0.3.9`; 0/8 malicious crates+typosquats in lock |
+| **B98 h2 empty-DATA (added 08-19)** | `Cargo.lock` incl. new keeper `reqwest 0.12.28` | ✅ NOT ACTIVE re-verified | `h2`: 0 matches — reqwest added with `default-features=false` (no http2); keeper stays HTTP/1.1. **Guard**: enabling reqwest `http2` feature flips this to ACTIVE until `h2 ≥0.4.16` |
+| **A149 uncapped subsidy (added 08-23)** | `lib.rs` | ✅ NOT ACTIVE re-verified | grep subsid/insur/compensat/rebate/bounty = 0 handler hits |
+
+### Today's Verdict
+- New incidents/vectors/reinforcements: **0 / 0 / 0** — window fully pre-captured by 2026-08-23 run (Maya→A149, arrayref→B99).
+- New CRITICAL/HIGH: **0**. Carries unchanged: **A6 CRITICAL, B83 HIGH, B45 HIGH** (+ Hermes false-success, A75, A43, D26 per standing set).
+- Blue-team fix order unchanged: **A6 first** (pin Redeem `mstb_mint` with `address = protocol_state.mstb_mint @ ErrorCode::InvalidMint` + mirror address pin on Mint path), then B83 (quinn-proto ≥0.11.15), B45 (attestation manifest), A75 (manual-oracle anchor parity). A6이 4주째 방치된 CRITICAL — 다음 blue-team 스프린트 최우선.
