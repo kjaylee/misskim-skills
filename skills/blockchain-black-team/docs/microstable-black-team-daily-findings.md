@@ -1,3 +1,33 @@
+## 2026-08-25 (KST 03:00)
+
+**Evolution delta**: **0 new named vectors, +4 verified incident reinforcements**. Source window `2026-08-23 → 2026-08-25` added Solend (A3), Arrakis V1 (A2), Term Finance (C23), and warp.green (A32). No new Solana/Anchor/SPL exploit primitive surfaced.
+
+### Today's reinforced patterns
+
+| Incident | Vector | Mechanism | Microstable verdict |
+|---|---|---|---|
+| Solend low-liquidity pools | A3 | Thin market created a pricing discrepancy that bots exploited instantly. | ✅ NOT ACTIVE - Microstable's mint/redeem path already layers Pyth freshness, confidence, and TWAP checks; no thin-pool pricing source is used for liquidation authority. |
+| Arrakis V1 | A2 | Flash-loaned Uniswap V3 spot price manipulated vault share mint/burn valuation. | ✅ NOT ACTIVE - Microstable does not mint/burn against live AMM spot via `pool.slot0()`, and `rebalance()` is isolated from the mint/redeem pricing path. |
+| Term Finance Strategy Vaults | C23 | Majority voting power acquired, timelock disabled, treasury drained. | ✅ NOT ACTIVE - Microstable has no token-voting governance or treasury proposal path; privileged mutations require keeper quorum. |
+| warp.green bridge | A32 | Forged burn narrative obtained validator signatures and released bridge reserves. | ✅ NOT ACTIVE - Microstable has no bridge / proof-acceptance path or cross-chain release authority. |
+
+### Live-code carry-forward check
+
+- **A6 CRITICAL** redeem canonical-mint gap remains open in `solana/programs/microstable/src/lib.rs` because `Redeem.mstb_mint` is still a plain mutable mint account and the expected ATA is derived from the caller-supplied mint.
+- **A10 HIGH** bearer-token / private-ledger split remains open.
+- **HERMES-H1 HIGH** posted-account vs consumed-account false-success remains open in the keeper oracle path.
+- **B45 HIGH** `security/audit-attestation.json` is still absent.
+- **D45/B15 HIGH** co-loaded quorum keys remain an active-latent architecture risk.
+
+### Today's Verdict
+
+- **New incidents found:** 4
+- **New attack vectors added:** 0
+- **Reinforcements applied:** 4
+- **New CRITICAL findings:** 0
+- **New HIGH findings:** 0
+- **Discord alert:** none
+
 ## 2026-08-04 Daily Check
 
 ### Source Sweep (24h~7d window: 2026-07-28 → 2026-08-04 KST)

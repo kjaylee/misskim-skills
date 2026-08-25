@@ -15,6 +15,8 @@ Execute battle-tested attack vectors from 90+ historical blockchain incidents ($
 
 **Canonical inventory (2026-08-11)**: the live matrix contains **220 active named-vector headings across 212 unique named IDs**, plus **META-01~73**. That is **285 unique ID entries** or **293 active named/META headings** when duplicate-ID sections are counted separately. Duplicate IDs **A52, A70, A91, A92, B49, D35, D43, D45** carry more than one historical meaning, so coverage must track both ID and section name. Reinforcement-only subheadings are not counted as separate active vectors. **A138** is a retired duplicate alias of **B83**; **D57** is a retired duplicate classification of **A40 / META-68** and neither is counted separately.
 
+**Recent daily reinforcement (2026-08-25)**: no new named vectors were admitted in the 2026-08-23/24 sweep. Default cross-check set for today: Solend -> A3, Arrakis V1 -> A2, Term Finance -> C23, warp.green -> A32.
+
 ## When to Use
 
 - Security audit of smart contracts (Solana Anchor, Solidity, CosmWasm)

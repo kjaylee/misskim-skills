@@ -691,3 +691,21 @@
 - **2026-08-15 — FoxMarket (BSC — flash-loan spot-quote manipulation with valuation-snapshot fixation)** — `FoxLpBondsPool.stake()` computed and fixed `_stakeAmount` from a manipulable Pancake AMM spot quote **before** the attacker's large USDT→Fox swap. Flash loans skewed pair reserves; post-swap `addLiquidity` ran at a mismatched ratio; `Treasury.lpBonds()` trusted the stale fixed snapshot; the protocol minted excess Fox tokens and paid inviter rewards to an attacker-controlled address, which were sold back into the pair in the same transaction. Loss ~$118.7K.
   Vector mapping: **A2 reinforcement (NEW 2026-08-18)** — valuation-snapshot fixation TOCTOU: a stored AMM-derived valuation remains the issuance basis after the underlying reserves mutate in the same transaction. Not a new primitive (A2 family), but a distinct failure mode from live-spot reads: persistence of the snapshot across manipulation. Defense: recompute valuation at the consuming instruction or bind snapshot validity to a reserve-state hash/nonce.
   Source: https://x.com/SlowMist_Team/status/2089196291800908164 | https://hacked.slowmist.io/
+
+## Q3 2026 Incident Additions (2026-08-25 daily evolution)
+
+- **2026-08-23 — Solend (low-liquidity pools, oracle manipulation)** — REKT Hub summarized a pricing discrepancy on low-liquidity pools that bots exploited instantly, with about **$2.1M** loss. This is the familiar thin-market / stale-price class: a pricing source too shallow to resist immediate adversarial flow.
+  Vector mapping: **A3 reinforcement** — low-liquidity market pricing becomes attack authority before a sanity gate can react.
+  Source: https://hub.rekt.news/
+
+- **2026-08-23 — Term Finance Strategy Vaults (Ethereum, governance exploit)** — The attacker acquired majority voting power, passed malicious proposals to disable the timelock, and drained about **2,843 ETH** plus **1.68M USDC** (later swapped to DAI), for roughly **$8.5M** lost.
+  Vector mapping: **C23 Governance Attack** — real-capital vote acquisition plus timelock removal, no flash-loan requirement.
+  Source: https://hacked.slowmist.io/
+
+- **2026-08-23 — Arrakis V1 / G-UNI ENS-WETH vault (flashloan price manipulation)** — The attacker flash-loaned **1,800 WETH**, skewed Uniswap V3 spot price, minted vault shares at the distorted valuation, restored price, and burned the shares for a richer token mix. Root cause: `mint()` / `burn()` trusted `pool.slot0()` without TWAP or deviation guard.
+  Vector mapping: **A2 reinforcement** — flash-loan-amplified mint/burn valuation from live spot pricing.
+  Source: https://hacked.slowmist.io/?c=ETH
+
+- **2026-08-23 — warp.green bridge (Chia-side Chialisp puzzle exploit)** — The attacker minted worthless CAT tokens, presented them as burned wUSDC, obtained validator signatures, and drained about **$93K USDC** from the Base and Ethereum bridge contracts before converting the proceeds to ETH.
+  Vector mapping: **A32 reinforcement** — bridge proof/verification accepted forged burn semantics as if they were real source-side value movement.
+  Source: https://hacked.slowmist.io/

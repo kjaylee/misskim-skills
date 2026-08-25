@@ -1,4 +1,3 @@
-
 ## PT-ARCH-2026-0824 (Purple Team Daily — Run #33)
 
 ### PT-ARCH-2026-0824-01: Knowledge-Asset Disclosure / Codified-Capability Exposure
@@ -25,3 +24,36 @@
 | PT-ARCH-2026-0824-01 | LOW (현재) / MEDIUM (mainnet 시) | Agent ↔ Knowledge Asset ↔ External | mainnet 배포 시점에 Microstable-specific 섹션 분리 결정 + carry 해결 즉시 active 표기 제거 |
 
 CRITICAL 없음. HIGH 없음. LOW 1건(현재) / MEDIUM if mainnet.
+
+## 2026-08-25 Purple Team Daily Evolution
+
+### Collected Insights
+1. **Post-mortem Analysis**: Glean article on building an AI incident response playbook for 2026 (https://www.glean.com/perspectives/how-to-build-an-ai-incident-response-playbook-for-2026) - emphasizes scope, AI-specific tools, and workflow integration.
+2. **Bug Bounty Payouts**: Sherlock article on best Web3 bug bounties in 2026 (https://sherlock.xyz/post/best-web3-bug-bounties-in-2026-the-highest-paying-programs-on-every-platform) - reports Usual's $16M bounty on Sherlock as the largest in tech history, Immunefi's $110M+ total payouts.
+3. **Formal Verification Research**: Certora blog announcing Certora Prover going open-source (https://www.certora.com/blog/certora-goes-open-source) - democratizes FV, making it accessible for auditors to integrate into their process.
+4. **Invariant Testing**: GitHub repo comparing Foundry, Echidna, and Medusa (https://github.com/devdacian/solidity-fuzzing-comparison) - shows Medusa excels in certain invariant testing scenarios, suggesting a multi-tool approach.
+5. **Incident Response Playbooks**: Safeguard supply chain incident response playbook for 2026 (https://safeguard.sh/resources/blog/incident-response-supply-chain-playbook-2026) - highlights SBOM visibility, rebuild-from-source recovery, and credential rotation.
+6. **Cross-chain Interop Security**: Sherlock article on cross-chain security in 2026 (https://sherlock.xyz/post/cross-chain-security-in-2026) - describes predictable patterns: trust assumptions as guarantees, authentication failures at message boundaries, single points of failure.
+7. **AI Agent Security**: a16z article on AI agents executing DeFi exploits (https://a16zcrypto.com/posts/article/ai-agents-defi-exploits/) - demonstrates AI agents can perform complex exploits; UK AISI report shows AI agents as autonomous attack originators.
+
+### Gap Analysis
+Compared to black team's attack-matrix.md and red team references:
+- **Bug Bounty & Scope**: Audits often miss vulnerabilities in out-of-scope areas (frontend, infrastructure) that bug bounties catch. Add note to attack-matrix.md about expanding audit scope to include off-chain components.
+- **Formal Verification Accessibility**: With Certora Prover open-source, auditors should consider FV as a standard tool; current notes already mention FV limitations but not its new accessibility.
+- **Invariant Testing Multi-Tool**: Existing META-12 note covers Foundry limitations; add recommendation to use Echidna and Medusa with specific configurations for different invariant types.
+- **Supply Chain IR**: Existing notes cover key compromise but not SBOM-based detection and rebuild strategies for supply chain incidents.
+- **Cross-chain Trust Assumptions**: Existing LayerZero/KelpDAO note covers assumption weakening; our insight reinforces this.
+- **AI Agent as Attack Origin**: Existing notes cover AI as victim/tool; add note about AI agents autonomously executing attacks (per UK AISI).
+
+### Updates Made
+- Added "defense failure patterns" section to skills/blockchain-black-team/SKILL.md.
+- Amended attack-matrix.md with new "why audits miss" notes for:
+    * Bug bounty scope limitations (frontend, infra)
+    * Formal verification accessibility (Certora open-source)
+    * Multi-tool invariant testing (Foundry/Echidna/Medusa)
+    * Supply chain incident response (SBOM, rebuild)
+    * AI agent autonomous attack origin (behavioral anomaly detection)
+
+### Files Changed
+- skills/blockchain-black-team/SKILL.md
+- skills/blockchain-black-team/references/attack-matrix.md
