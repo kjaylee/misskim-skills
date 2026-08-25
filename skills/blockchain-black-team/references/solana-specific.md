@@ -1778,6 +1778,19 @@ archive_or_forward(tx)?; // delayed execution risk
 79. ☐ ACK / handshake / failover notice / peer-update message가 trusted endpoint를 바꿀 수 있다면, `session id + monotonic phase/epoch + prior peer hash + explicit rebind approval` 없이는 peer identity를 갱신하지 말고, `out-of-order ACK`·`stale ACK`·`cross-session replay` 회귀 테스트를 필수화할 것
 
 ---
+
+### B100. Peer-Rotation Pending-VAA Redemption Bricking
+
+- **Solana context**: bridge and messaging programs that rotate trusted peers, managers, or transceiver authorities through PDA-backed config state.
+- **Core pattern**: a new peer assignment overwrites the only stored identity for a `(config, chain_id)` pair, so older VAAs or receipts still in flight fail redemption after the rotation.
+- **Why it matters**: the chain remains live, but historical messages become unredeemable unless the protocol preserves overlap, versioning, or a grace window.
+- **Microstable current status**: NOT ACTIVE
+- **Checklist item 100**: preserve historical peer overlap for a bounded window, and add regression coverage for `old peer still redeemable` after rotation.
+
+### Solana-Specific Defense Checklist Update
+
+100. ☐ Peer rotation, guardian swap, or transceiver rewrite must keep historical redemption paths alive for already-emitted messages until a bounded expiry or explicit migration completes.
+
 <!-- AUTO-ADDED 2026-05-28 (Red Team Daily Evolution) — A128 serialized shrink-tail ghost bytes -->
 
 ## 2026-05-28 Serialized Shrink-Tail Ghost-Byte Pattern

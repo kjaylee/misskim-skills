@@ -11880,3 +11880,17 @@ attacker:
 **Red-team bypass note**: The yank primitive defeats the standard "pin exact version in Cargo.toml" advice in one specific case: `arrayref = "0.3.9"` (caret) still resolves to 0.3.10 when 0.3.9 is yanked. Only committed lockfiles + `--locked` builds survive. Second bypass: defenders checking "is this crate popular/well-maintained?" get a false pass — arrayref *is* canonical; the signal that was actually abnormal was **an old stable crate republishing after years of silence, at patch-level, with a new direct dependency**. Behavioral baselining of "crate release cadence vs history" catches what reputation checks cannot. Third: the payload lived one layer down (typosquat), so auditing the top-level crate's diff against its prior version — the instinctive check — only shows an innocuous-looking new dependency named almost exactly like the legitimate `proc-macro2`; the maliciousness required reading *that* crate's build.rs. Supply-chain review must recurse at least two layers.
 
 **Source**: https://blog.rust-lang.org/2026/08/20/supply-chain-attack-on-arrayref/ | https://rustsec.org/advisories/RUSTSEC-2026-0260.html (arrayref) | RUSTSEC-2026-0259/0261–0266 (arone, aronenao, append-only-vec, tinymember, proc-macro-en, proc-macro1, internment)
+
+## B100. Peer-Rotation Pending-VAA Redemption Bricking / Cross-Instance Manager Rewrite
+
+| Field | Value |
+|---|---|
+| **Origin** | OtterSec audit **Multi Host Tenant Solana** (Aug 18, 2026) — Wormhole Foundation NTT PR#875, **2M 1L** |
+| **Vector** | `set_peer` overwrites the existing `NttManagerPeer` because its PDA is keyed only by `config + chain_id`, not by the peer address. A rotation updates the trust root in-place, so older VAAs still carrying the previous `source_ntt_manager` can no longer satisfy `peer.address == source_ntt_manager`. Pending redemptions or transceiver votes can become permanently blocked even though the original messages were valid. This is a trust-root migration / message-liveness failure, not signature forgery. |
+| **Prerequisites** | Cross-chain manager / bridge deployment that rotates peer records without preserving a bounded historical overlap for in-flight messages |
+| **Impact** | Liveness collapse for pending redemptions / votes, permanent message bricking during peer migrations, operator-induced denial of service across multi-instance deployments |
+| **Microstable status** | NOT ACTIVE — Microstable has no Wormhole/NTT receiver or peer-rotation control plane in current live paths |
+| **Required future invariant** | Preserve historical peer identities until all pending messages expire or settle; version peers by epoch; require explicit grace-window tests for peer rotation; never make a trust-root update invalidate previously admissible in-flight messages by default |
+| **Novel elements vs existing vectors** | Related to B82 trusted-peer rewrite and A32 cross-chain message forgery, but distinct: the bug is not a forged message or stale ACK, it is a legitimate trust-root rotation that retroactively bricks already-valid messages |
+
+**Source**: https://osec.io/audits | https://osec.io/reports/3c184d4e-4146-80ec-94a3-d46773725dab
