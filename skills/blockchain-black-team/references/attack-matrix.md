@@ -1,4 +1,4 @@
-# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~75
+# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~76
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -8,6 +8,11 @@
 - `metrics refreshed daily` ≠ `closure state current`: Immunefi's live bounty surface still reports a confidentiality delay on resolved reports, so fresh dashboards are not the same as fresh closure ownership. This reinforces `META-66` / `META-53` rather than creating a new vector.
 - `postmortem exists` ≠ `operational closure owned`: Google SRE's postmortem guidance keeps the focus on root cause, trigger, and recovery artifacts, not on mere documentation presence.
 - `workflow integrated` ≠ `coverage owned`: Certora's Veda fuzz/invariant report and Foundry integration docs still point to alpha tooling and partial coverage, not a closed invariant family.
+
+### 2026-08-30 purple-team meta note (META-76 + META-73 reinforcement)
+
+- `patched in latest version` ≠ `patched where the funds live`: Rain/Avici (B101), Enjin legacy ERC-1155, and Moonwell's third 2026 incident together show that assurance artifacts attach to code identities (commit, version, audit report) while exploitable risk attaches to the **live set of instances actually custodying value** — and no role owns that instance inventory. Promoted to **META-76** (full section at file end).
+- `quorum counted correctly` ≠ `quorum meaningful`: Term Finance's 0.5 ETH majority over an opt-in governance wrapper (C23 mechanics note) is the governance twin of BonkDAO's 2.9% turnout already cited in META-73 — a degenerate participation state trivially satisfies the verification. CometDEX's USDC→USDC same-asset swap adds the degenerate-*identity*-input variant. Both reinforce **META-73** (vacuous verification); no new number.
 
 ## A. Smart Contract Vectors
 
@@ -11955,3 +11960,22 @@ attacker:
 | **Relation to existing vectors** | Feeds the B77/A94 delayed-execution family with a stronger carrier; complements B101's version-skew (execution-time vs signing-time semantics divergence). Solana pattern recorded in `references/solana-specific.md` |
 
 **Sources**: https://solana.com/news/solana-changelog-august-20-2026 | https://x.com/solana_devs/article/2092966888624263218 (Changelog Aug 27, self-withdrawal prohibition proposals)
+
+### META-76. Instance-Topology / Deployment-Inventory Blindness (ITDIB)
+
+**Published**: 2026-08-30 | **Source**: Purple Team Daily Evolution | **Signals**: Rain/Avici multi-tenant card-contract exploit (2026-08-28, B101, $500.8K Avici / >$1M cross-tenant — stale deployed version stayed live with real balances while patched versions existed elsewhere); Enjin legacy ERC-1155 platform takeover (2026-08-25, ~$162K — unmaintained legacy adapter set still custoding backing reserve); Moonwell third 2026 incident (2026-08-27, $8.79M — Feb oracle wiring, Mar governance attempt, Aug collateral admission: three per-incident fixes, no systemic perimeter view); TAC shared-precompile drain (2026-08-22, $7.5M — flaw "not in TAC-specific code", blast radius = every chain on the shared component)
+
+**정의**: 보증 산출물(감사 리포트, 패치, 배지)은 **코드 정체성** — 커밋 해시, 버전 태그 — 에 부착된다. 그러나 악용 가능한 위험은 **실제로 가치를 보관 중인 라이브 인스턴스의 집합** 에 존재한다. 업계 어디에도 이 인스턴스 인벤토리를 소유하는 역할이 없어, (a) 새 버전 배포 후에도 자금을 보관한 채 살아있는 구버전 인스턴스, (b) 개발은 끝났지만 여전히 자산을 수탁하는 유산(legacy) 배포, (c) 하나의 공유 컴포넌트에 의존하는 전체 체인/테넌트 집합이 **소유자 없는 상시 공격 표면**으로 남는다. `fixed in the repo` ≠ `fixed in the fleet`.
+
+**왜 감사가 놓치는가**: 감사 scope는 특정 시점의 리포지토리 체크아웃이지 배포 함대(fleet)가 아니다. 감사·패치·업그레이드 문서는 모두 "최신 버전은 안전함"을 증명하지만, "자금이 있는 곳이 어느 버전인가"는 어떤 산출물에도 답하지 않는다. 멀티테넌트 인프라에서는 한 스테일 인스턴스의 폭발 반경이 모든 테넌트 브랜드의 합집합이 된다(Avici: 5개+ 브랜드). META-75가 보증의 **시간** 구조(사건 vs 위험률 과정)를 다룬다면, META-76은 보증의 **공간** 구조(코드 정체성 vs 인스턴스 토폴로지)를 다룬다. META-63(불변식→운영 승격 실패)은 지식-운영 갭이고, META-74(운영 신뢰 이전)는 투자 배분 갭 — 둘 다 "인스턴스 목록 자체가 무소유 상태"라는 이 발견과 직교한다.
+
+**Defense**:
+1. **배포 인벤토리를 1급 보안 산출물로**: 라이브 인스턴스별 (프로그램 주소, 버전, 수탁 가치, 테넌트 집합, 마지막 업그레이드 시각) 목록을 유지하고, 인벤토리에 없는 인스턴스가 자금을 보관하기 시작하면 알림.
+2. **대체 시 자동 동결(supersede-freeze)**: 새 버전 배포 시 구버전 인스턴스의 권한 있는 명령이 자동 동결되어야 한다 — "신규 사용자 유치 중단"만으로는 부족하다(Avici에서 신규 유입이 멈춰도 잔액은 그대로 노출).
+3. **수탁 가치 ↔ 업그레이드 수신 정합성 모니터링**: 어떤 인스턴스가 업그레이드를 받지 않으면서 수탁 가치가 증가하면 이는 상시 악용 표면 신호다.
+4. **유산 배포 퇴역 절차**: 개발 종료 프로토콜의 유산 컨트랙트에 잔여 수탁 자산이 있으면 의도적 청산·이전 없이 방치 금지(Enjin 교훈).
+5. **공유 컴포넌트 의존성 명시**: 자체 코드 밖 공유 레이어(Ethermint/Cosmos EVM precompile, Rain 카드 컨트랙트 등)에 의존하는 경우, 그 레이어의 버전·패치 상태를 자기 인벤토리에 포함.
+
+**Microstable status**: **NOT ACTIVE** (2026-08-30) — 단일 인스턴스·단일 체인; mainnet 프로그램 immutable(`security/program-immutability-proof.txt`)이라 버전-스큐 레인 구조적 차단; `devnet_force_reinit`은 `devnet-admin` feature + `TRUSTED_INITIALIZER` 핀으로 게이트. **Activation triggers**: (1) 업그레이드 오소리티 도입, (2) 두 번째 배포/테넌트 재사용, (3) keeper/dashboard가 스테일 클러스터 RPC를 향하는 경우. 상세는 `docs/microstable-purple-team-daily-findings.md` PT-ARCH-2026-0830-01.
+
+**Sources**: https://hacked.slowmist.io/en/ (2026-08-30 스냅샷) | B101 (Rain/Avici, this file) | rekt.news/term-labs-rekt | https://x.com/SlowMist_Team/status/2092455321654694355 (Enjin)

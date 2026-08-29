@@ -57,3 +57,14 @@ Compared to black team's attack-matrix.md and red team references:
 ### Files Changed
 - skills/blockchain-black-team/SKILL.md
 - skills/blockchain-black-team/references/attack-matrix.md
+## PT-ARCH-2026-0830-01 — Instance-Topology / Deployment-Inventory (META-76) 사전 등록
+
+- **구조 질문**: Microstable이 "라이브 인스턴스 목록을 소유하는 역할 없이" 두 번째 배포·업그레이드에 진입하는가?
+- **검증** (2026-08-30, 블랙팀 live-code sweep 재사용 + 구조 판독):
+  - mainnet 프로그램 immutable(`security/program-immutability-proof.txt`) → 버전-스큐/업그레이드 레인 구조적 차단. Avici형 "구버전이 자금 보관" 시나리오 불가.
+  - `devnet_force_reinit`은 `devnet-admin` feature + `TRUSTED_INITIALIZER` 핀으로 이중 게이트 → devnet 인스턴스가 권한 리플레이 통로가 될 조건 없음.
+  - 현재 단일 체인·단일 인스턴스·단일 keeper 바이너리 → 테넌트 확산 표면 없음.
+- **판정**: **NOT ACTIVE / LOW (사전 등록)**.
+- **Active화 트리거**: (1) 업그레이드 오소리티 도입, (2) 프로그램의 두 번째 배포(다른 브랜드·테넌트 재사용 포함), (3) keeper·dashboard가 복수 클러스터 RPC를 동시에 향하는 구성.
+- **사전 등록 불변식 (배포 전 체크리스트에 추가 권장)**: ① 배포 인벤토리 파일(프로그램 주소·버전·수탁 가치·테넌트·마지막 업그레이드)을 보안 산출물로 유지, ② 신버전 배포 시 구버전 권한 명령 자동 동결(supersede-freeze), ③ "업그레이드 미수신 + 수탁 가치 증가" 모니터링 알림.
+- **연결**: attack-matrix.md META-76, B101(Rain/Avici), C23(Term), Enjin 08-25, Moonwell 08-27(3회차).
