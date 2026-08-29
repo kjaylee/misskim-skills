@@ -2354,3 +2354,25 @@ Every Anchor program build transitively executes `arrayref`'s dependency tree; a
 132. ☐ per-tenant deployment inventory: an instance that stopped receiving upgrades but still custodies balances = standing exploit surface; superseded versions must auto-freeze privileged instructions (version-skew kill switch)
 133. ☐ shared-infra blast-radius cap: one program instance per tenant brand, or per-tenant admin domains that cannot cross-grant (AddCollateralAdmin must be tenant-scoped and unforgeable across tenants)
 134. ☐ monitoring: alert on any transaction invoking a role/authority-grant instruction that carries off-chain signature material in instruction data
+
+### Client-Side Signature-Count Verification Bypass in solana-transaction (B102)
+
+**Pattern**: The Rust SDK's `verify`/`verify_partial` did not assert `signatures.len() == message.header.num_required_signatures` before verifying — misaligned or short signature vectors passed off-chain gates (fix: `solana-transaction 4.3.0`, 2026-08-19; disclosed in Changelog 2026-08-27). Attack surface is every off-chain system that treats library `verify` as an authorization boundary: relayers, partial-signature multisig assemblers, MPC co-signers, session-key validators, CI sim gates.
+
+**Microstable verification (2026-08-30)**: NOT ACTIVE — keeper self-signs all transactions (Keypair), zero third-party tx verification, no relay lane. On-chain program relies on runtime `Signer` semantics, unaffected by SDK-side bug.
+
+**Solana-Specific Defense Checklist Update**
+135. ☐ SDK-level `verify` is diagnostics, never authorization; derive the expected signer set from the message and require exact positional match + count equality
+136. ☐ dependency policy: on 4.x pin `solana-transaction ≥ 4.3.0`; on older lines (2.x/3.x) confirm backport status before trusting local verification of externally-assembled transactions
+137. ☐ partial-signature collection flows must re-derive the required signer list per assembly step, not accumulate "verified so far" state
+
+### Durable-Nonce Account Role Conflation — Self-Withdrawal & Nonce-Address-as-Program-ID (B103)
+
+**Pattern**: Runtime still permits (a) self-withdrawal from Nonce/Vote accounts and (b) durable-nonce transactions invoking their own nonce account address as a program id — SIMDs proposed 2026-08-20 and 2026-08-27 to prohibit both, confirming the primitives are live and unexploded. An address that is simultaneously replay-protection authority and executable callee breaks the signing-time ↔ execution-time semantic binding.
+
+**Microstable verification (2026-08-30)**: NOT ACTIVE — no durable nonce accounts or nonce-account instructions anywhere in program or keeper (grep-verified; on-chain "nonces" are in-memory RNG seeds only).
+
+**Solana-Specific Defense Checklist Update**
+138. ☐ if durable nonces are ever adopted: construction-time ban on the nonce account address appearing as program id in any instruction of the same tx
+139. ☐ nonce authority ≠ withdraw authority; abandoned nonce accounts are deactivated/drained deliberately — standing risk, not inert state
+140. ☐ track SIMD feature-gate activation per cluster; re-test nonce-role assumptions when gates land (differential behavior = new attack surface)
