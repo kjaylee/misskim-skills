@@ -709,3 +709,27 @@
 - **2026-08-23 — warp.green bridge (Chia-side Chialisp puzzle exploit)** — The attacker minted worthless CAT tokens, presented them as burned wUSDC, obtained validator signatures, and drained about **$93K USDC** from the Base and Ethereum bridge contracts before converting the proceeds to ETH.
   Vector mapping: **A32 reinforcement** — bridge proof/verification accepted forged burn semantics as if they were real source-side value movement.
   Source: https://hacked.slowmist.io/
+
+## Q3 2026 Incident Additions (2026-08-30 daily evolution)
+
+- **2026-08-28 — Avici / Rain Card Contract (Solana, multi-tenant neobank infra)** — Attackers exploited an **outdated version of Rain's Solana card contract** still live with real user balances. **Crafted signature bundles** were accepted as authorization for the privileged **`AddCollateralAdmin`** instruction, granting collateral-admin rights; subsequent withdrawals drained **$500,859.22 from 1,685 Avici users**. Cross-tenant exposure >$1M (useTria, Solayer Pay, etherfi cash also affected — one shared instance served many brands). Self-custodial wallets unaffected; contract upgraded across all programs; refunds promised. Proceeds bridged via deBridge → ETH → Tornado Cash.
+  Vector mapping: **B101 NEW (2026-08-30)** — signature-bundle privilege grant via version-skewed multi-tenant contract. Instruction-level path confirmed by Rain/Avici disclosures; exact signature-validation internals (domain separation vs bundle malleability) pending postmortem.
+  Sources: https://hacked.slowmist.io/ | https://x.com/avici/status/2093439613201482068 | https://x.com/WuBlockchain/status/2093466503454826698 | https://thedefiant.io/news/hacks/attacker-drains-more-than-usd1-million-from-avici-users-in-live-solana-neobank-attack
+
+- **2026-08-27 — Moonwell (Base, $8.79M, price manipulation)** — Attacker inflated the price of low-liquidity token **MAMO**, posted it as collateral, and borrowed real assets (cbBTC, USDC) from mCBTC/mUSDC markets. Blockaid initially reported ~$4M, later revised to ~$8.79M observed outflows.
+  Vector mapping: **A2/A3 family reinforcement** — low-liquidity collateral price inflation → borrow real assets; third Moonwell incident of 2026 (Feb oracle wiring, Mar governance attempt, Aug collateral admission) — the recurring lesson is collateral-admission review, not oracle code alone.
+  Source: https://hacked.slowmist.io/ | https://x.com/blockaid_/status/2092914508666753081
+
+- **2026-08-25 — CometDEX (Stellar, $717,518.92, accounting corruption)** — An accounting bug allowed **same-asset swaps (USDC→USDC)** through the BLND-USDC pool, corrupting reserve calculations; attacker used Blend-pool flash loans and repeated the cycle ~36 times to extract excess funds.
+  Vector mapping: **A2-family reinforcement (reserve-accounting conservation)** — same-asset swap is a novel *trigger* for the classic "pool math reads corrupted reserves" class: swaps that conservatively should be no-ops (asset→same asset) must be structurally rejected or reserve math breaks.
+  Source: https://hacked.slowmist.io/ | https://x.com/blend_capital/status/2092288347766984713
+
+- **2026-08-25 — Enjin Legacy ERC-1155 (Ethereum, ~$162K, proxy takeover)** — **Storage-layout mismatch in delegatecall adapters plus an unprotected `initialize`** let the attacker take over the Managed Delegate Proxy, register a malicious adapter, transfer NFTs from ~52 wallets without approval, and melt them to redeem backing ENJ from the reserve (~5.24M ENJ).
+  Vector mapping: EVM proxy/initialization family reinforcement (unprotected initializer + storage-collision adapter) — class well-covered by existing EVM vectors; entry recorded for timeline completeness.
+  Source: https://hacked.slowmist.io/ | https://x.com/SlowMist_Team/status/2092455321654694355
+
+- **2026-08-26 — FH Token (BSC, ~$20K, token logic)** — `_transfer`/`isSell` burn-accounting flaw enabled repeated buy-sell pool drainage. Minor; timeline completeness only.
+  Source: https://x.com/TenArmorAlert/status/2092427353456812207
+
+- **2026-08-23 — Term Finance (mechanics deepening)** — C23 reinforcement expanded with rekt.news postmortem detail: voting power was an **opt-in wrapper** (Aragon TokenVoting) around vault shares with near-zero participation → **~0.5 ETH bought 100% of five USDC vaults' voting supply + 90.7% of the ETH Meta Vault**; funding traced to 2 ETH from Tornado Cash. First executed action zeroed the **Zodiac Delay module** (governance-writable timelock = "the guard guards itself"); then recall funds → attacker strategy → unlimited debt ceiling → drain (2,843 WETH + 1.68M USDC, ~$8.5M, 68% TVL).
+  Source: https://rekt.news/term-labs-rekt | https://x.com/0x3b33/status/2091466221602406855 | https://x.com/CDSecurity_io/status/2091869490078183720

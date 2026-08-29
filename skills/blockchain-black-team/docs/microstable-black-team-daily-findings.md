@@ -2801,3 +2801,24 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - New incidents/vectors/reinforcements: **0 / 0 / 0** — window fully pre-captured by 2026-08-23 run (Maya→A149, arrayref→B99).
 - New CRITICAL/HIGH: **0**. Carries unchanged: **A6 CRITICAL, B83 HIGH, B45 HIGH** (+ Hermes false-success, A75, A43, D26 per standing set).
 - Blue-team fix order unchanged: **A6 first** (pin Redeem `mstb_mint` with `address = protocol_state.mstb_mint @ ErrorCode::InvalidMint` + mirror address pin on Mint path), then B83 (quinn-proto ≥0.11.15), B45 (attestation manifest), A75 (manual-oracle anchor parity). A6이 4주째 방치된 CRITICAL — 다음 blue-team 스프린트 최우선.
+
+## 2026-08-30 Daily Check
+
+### Source Sweep (24h~7d window: 2026-08-24 → 2026-08-30 KST)
+- Sources: rekt.news (front page + term-labs-rekt), SlowMist Hacked (full recent list), zai-search (X/community fallback, oneWeek). Immunefi/GitHub Advisory/OtterSec/Neodyme/ToB: no new admission-grade Solana/Anchor/SPL disclosure found in window.
+- **New named vectors: 1 (B101 — Avici/Rain). New reinforcements: 2 (C23 Term mechanics, A2/A3 Moonwell+CometDEX). Timeline additions: 6.**
+- Avici/Rain (08-28, Solana): admission satisfied at instruction level (`AddCollateralAdmin` named in official disclosure); signature-validation internals flagged pending postmortem. Raydium headlines in-window were retrospective June-10 coverage — rejected (pre-captured). FH Token ($20K) admitted as timeline-only minor.
+
+### Microstable Code Sweep (live-code verdicts, working tree unchanged — no commits since 08-20, mtimes ≤02-28)
+| Vector | Code Target | Verdict | Evidence (live read today) |
+|---|---|---|---|
+| **B101 signature-bundle privilege grant (NEW)** | `lib.rs` full + `keeper/src/` | ✅ NOT ACTIVE | No off-chain signature verification in program (0 verify paths); privileged instructions = Signer + `require_keeper_quorum` (2-of-3 fixed `keeper_set`) / `TRUSTED_INITIALIZER` pin / timelocked rotation; no runtime role-grant instruction exists; mainnet immutable (`program-immutability-proof.txt`) closes version-skew lane; Pyth = CPI to pinned `PYTH_RECEIVER_PROGRAM`; keeper = standard tx signatures + config integrity sig file |
+| **A6 fake-MSTB redeem (CRITICAL carry)** | `lib.rs:~2396` Redeem `mstb_mint` | ❌ **CRITICAL STILL ACTIVE** | `#[account(mut)]` only — no `address`/`mint::authority` pin; Mint path pin confirmed present (~:2323); redeem handler derives user ATA from attacker-supplied mint (circular validation). Blue-team fix unchanged: `#[account(mut, address = ...canonical mstb mint...)]` or `mint::authority = protocol_state` mirror + dedicated `ErrorCode` |
+| **HERMES-H1 (HIGH carry)** | `keeper/src/hermes.rs:61-69` | ❌ **HIGH carry-forward** | `HermesPostedUpdate` still 7 fields (symbol, collateral_index, price, confidence, publish_time, observed_slot, signature) — no `posted_price_account` binding |
+| **C23/A150 participation-vacuum scan (Term-lesson)** | `lib.rs` quorum surfaces | ✅ NOT ACTIVE | All quorums fixed 2-of-3 over `keeper_set` — none computed over open-enrollment populations; `RegisterAgent` (open) feeds no voting; `KEEPER_ROTATION_DELAY_SLOTS = 100` is a const, not governance-writable (no self-zeroing analog of Zodiac Delay); watch: any future agent-majority vote or token-voting wrapper = instant activation |
+| **B99/B98 dependency carries** | `Cargo.lock` | ✅ NOT ACTIVE re-verified | arrayref still pinned 0.3.9; h2 still 0 matches |
+
+### Today's Verdict
+- New CRITICAL/HIGH Microstable findings: **0** — B101 assessed against live code and judged NOT ACTIVE (structural absence of the entire authorization lane, not just correct implementation of it).
+- Carry-forward unchanged: **A6 CRITICAL (unfixed since first flag — highest priority), HERMES-H1 HIGH, A10 HIGH, B45 PARTIAL, B83 HIGH**.
+- Blue-team fix order unchanged: **A6 → HERMES-H1 (posted_price_account field) → B83 → B45**. A6은 1행 constraint 추가로 닫히는 결함 — 다음 blue-team 스프린트 전면 최우선.

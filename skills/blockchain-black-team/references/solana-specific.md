@@ -2336,3 +2336,21 @@ Every Anchor program build transitively executes `arrayref`'s dependency tree; a
 - Any pinned dependency being **yanked** upstream = supply-chain alarm (crates.io monitor), not housekeeping — yank-forced resolution is the attacker's forcing function.
 - Baseline release cadence of foundational crates (blake3, borsh, bytemuck, solana-*): a years-dormant stable crate republishing at patch level with new direct deps = block-and-investigate.
 - Deployment evidence: record builder host + rustc/toolchain digest alongside program digest; treat builder integrity as a distinct boundary from program-signing integrity.
+
+### Signature-Bundle Privilege Grant on Version-Skewed Multi-Tenant Program (Rain Card / Avici 2026-08-28)
+
+**Incident class**: attack-matrix B101. Crafted signature bundles invoked a privileged `AddCollateralAdmin` instruction on an **outdated but still-live** Rain card contract, granting attacker collateral-admin rights and draining 1,685 Avici users' card balances ($500,859.22; cross-tenant >$1M incl. useTria, Solayer Pay, etherfi cash exposure). Self-custodial wallets unaffected — custodial lane only. Proceeds: deBridge → ETH → Tornado Cash.
+
+**Solana-specific pattern**:
+1. Card/session infra settles off-chain-authorized operations on-chain as bundles carrying backend signatures — a **second authorization lane** parallel to Solana's native Signer model.
+2. The privileged instruction (`AddCollateralAdmin`) was reachable through that lane: signature *validity* was checked, but the signature did not bind to the full action domain (program id + instruction discriminator + accounts + tenant + nonce + expiry).
+3. Version skew: patched program existed, stale instance kept custoding balances for multiple tenant brands — one instance's staleness = every brand's users drained.
+
+**Microstable verification (2026-08-30, live read)**: NOT ACTIVE — no off-chain signature verification in the on-chain program at all; privileged paths gate on `Signer`/`require_keeper_quorum` (2-of-3 fixed set)/`TRUSTED_INITIALIZER`/timelocked rotation (`KEEPER_ROTATION_DELAY_SLOTS = 100`, constant not writable); mainnet program immutable (no upgrade authority → no version-skew lane); Pyth path is CPI-verified against pinned receiver program + feed accounts; keeper signs standard transactions, config has separate integrity signature file.
+
+**Solana-Specific Defense Checklist Update**
+130. ☐ any privileged instruction and any signature-settlement lane must be structurally disjoint instructions with disjoint account shapes — a role-grant instruction that can appear in the same bundle as user-settlement signatures is a standing exploit
+131. ☐ if session keys / cards / off-chain authorization are ever added: signatures must cover program id, instruction discriminator, full account list, tenant id, nonce, expiry — partial-coverage bundles rejected
+132. ☐ per-tenant deployment inventory: an instance that stopped receiving upgrades but still custodies balances = standing exploit surface; superseded versions must auto-freeze privileged instructions (version-skew kill switch)
+133. ☐ shared-infra blast-radius cap: one program instance per tenant brand, or per-tenant admin domains that cannot cross-grant (AddCollateralAdmin must be tenant-scoped and unforgeable across tenants)
+134. ☐ monitoring: alert on any transaction invoking a role/authority-grant instruction that carries off-chain signature material in instruction data
