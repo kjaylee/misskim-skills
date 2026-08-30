@@ -2376,3 +2376,16 @@ Every Anchor program build transitively executes `arrayref`'s dependency tree; a
 138. ☐ if durable nonces are ever adopted: construction-time ban on the nonce account address appearing as program id in any instruction of the same tx
 139. ☐ nonce authority ≠ withdraw authority; abandoned nonce accounts are deactivated/drained deliberately — standing risk, not inert state
 140. ☐ track SIMD feature-gate activation per cluster; re-test nonce-role assumptions when gates land (differential behavior = new attack surface)
+
+**Off-Chain Keeper Instrumentation Hardening (2026-08-31 — B104/B105, arXiv 2608.26858 + 2608.25600)**
+
+Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오프체인 컴포넌트에 있다. 이번 주 학술 결과 두 건이 오프체인 경계의 새로운 우회 원시를 고정한다:
+
+- **Blocking-construct encoding (B104)**: 루프가 없는 오프체인 컴포넌트라도 recursive method call로 blocking construct를 인코딩할 수 있어, 온체인↔오프체인 순차성 가정 위에 세운 정적 정보흐름 검증(IFC/taint)이 무효화된다(arXiv 2608.26858). keeper를 taint 라벨·정적 검증으로 보호하려는 설계는 이 동시성 블라인드 스팟을 명시적으로 다뤄야 한다.
+- **Debounce-counter oscillation (B105)**: `consecutive_breach_cycles >= debounce_cycles` 형태의 카운터 디바운스 탐지기(Microstable `monitor.rs` 포함)는 정상 관측 시 카운터를 0으로 리셋하는 한, 임계 경계 진동 패턴에 구조적으로 취약하다. 방어 수단이 공격 지도가 된다(arXiv 2608.25600 — Bi-LSTM 페그 방어 recall 97.7%·추론 1.5–2.8ms 수치 자체가 우회 설계도).
+
+141. ☐ keeper/monitor 디바운스 카운터는 단순 리셋 대신 leaky bucket 또는 지수 감쇠(decay)로 — 정상 관측 한 번에 이전 비상 누적이 소멸되지 않게 설계
+142. ☐ 비상 임계 *누적 노출 시간*(exposure-time) 기반 보조 트리거를 카운트 디바운스와 병렬 운영 — 진동으로 두 트리거를 동시에 무력화하기 어렵게
+143. ☐ 임계 교차 빈도(crossing rate) 자체를 경보 지표로 — 비정상적 진동은 정상 상태 회복이 아니라 공격 또는 오라클 불안정 신호
+144. ☐ ML 기반 이상탐지 도입 시: 학습 분포 밖 slow-drift, 단일 관측 임계 하회 분할, 추론 지연 창 내 고주파 버스트 세 가지 우회 경로를 레드팀 테스트로 필수화
+145. ☐ 오프체인 컴포넌트에 taint/IFC 라벨 검증을 도입하는 경우 recursive-call blocking construct로 인한 동시성 우회를 위협 모델에 명시 — 정적 증명의 오프체인 한계를 보증 문서에 기록

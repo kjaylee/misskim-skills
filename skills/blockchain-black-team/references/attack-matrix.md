@@ -11979,3 +11979,39 @@ attacker:
 **Microstable status**: **NOT ACTIVE** (2026-08-30) — 단일 인스턴스·단일 체인; mainnet 프로그램 immutable(`security/program-immutability-proof.txt`)이라 버전-스큐 레인 구조적 차단; `devnet_force_reinit`은 `devnet-admin` feature + `TRUSTED_INITIALIZER` 핀으로 게이트. **Activation triggers**: (1) 업그레이드 오소리티 도입, (2) 두 번째 배포/테넌트 재사용, (3) keeper/dashboard가 스테일 클러스터 RPC를 향하는 경우. 상세는 `docs/microstable-purple-team-daily-findings.md` PT-ARCH-2026-0830-01.
 
 **Sources**: https://hacked.slowmist.io/en/ (2026-08-30 스냅샷) | B101 (Rain/Avici, this file) | rekt.news/term-labs-rekt | https://x.com/SlowMist_Team/status/2092455321654694355 (Enjin)
+
+## B104. Off-Chain Component IFC Concurrency Blind Spot (blocking-construct encoding via recursive off-chain calls)
+
+| Field | Value |
+|---|---|
+| **Origin** | arXiv:2608.26858 (2026-08-27) — "Information Flow Control in Off-Chain Components": 온체인 컨트랙트와 동기화되는 designated-location 오프체인 컴포넌트(keeper·oracle·bridge)를 갖는 블록체인 아키텍처의 형식 모델에서, 정적 정보흐름 제어(IFC)로 온체인↔오프체인 무결성·시크리시를 보장하려는 시도가 **루프 없이도 실패함을 증명** — 오프체인 컴포넌트가 별도 스레드처럼 동작해 recursive method call로 blocking construct를 인코딩할 수 있기 때문 |
+| **Vector** | 방어 설계자가 "오프체인 코드에 taint/secrecy 라벨을 붙이고 정적 분석으로 정보흐름을 증명했다"고 믿는 순간, 그 보증은 오프체인 경계에서 무효다. 공격자(또는 오염된 의존성)는 재귀 호출로 blocking을 인코딩해 분석기의 순차성 가정을 깨고, 라벨이 검증되지 않은 채널로 시크릿(서명 키, 오라클 관측, 가격 데이터)이 흐르게 만든다. 핵심은 취약한 코드를 찾는 게 아니라 **증명 도구의 기저 가정(sequential execution) 자체를 공격**하는 것 — B102(검증 라이브러리 형태 가정 공격)의 오프체인 버전 |
+| **Exploit chain (PoC scenario)** | (1) keeper 의존성에 무해해 보이는 유틸 크레이트 삽입(또는 기여); (2) 재귀 헬퍼가 오프체인 관측→온체인 보고 경로에서 실행 순서를 재배치 — IFC 분석기는 직렬 실행을 가정해 흐름이 안전하다고 판정; (3) 실제 런타임에서는 interleaving이 발생해 오라클 관측 시점과 온체인 반영 시점이 분리; (4) stale-but-blessed 데이터가 정상 관측으로 서명됨 |
+| **Prerequisites** | (1) 오프체인 컴포넌트에 IFC/taint 정적 검증 채택(아직 드물다 — 채택 초기 시장이 표적); (2) keeper가 재귀 가능한 언어(Rust 포함)로 작성; (3) 의존성 또는 기여자 채널 |
+| **Impact** | 공개 사고 없음 — 잠재. 그러나 학술적으로 "정적 IFC만으로는 오프체인 보안 증명이 불가능"하다는 근본 결과가 처음 고정됨. 하이브리드 아키텍처 보증 체계에 대한 이론적 반례 |
+| **Microstable status** | **NOT ACTIVE** — keeper는 Rust 단일 프로세스이며 IFC/taint 라벨 시스템을 사용하지 않음(2026-08-31 확인). 보호 대상이 없으므로 우회할 것도 없음 |
+| **Activation triggers** | (1) keeper/오프체인 컴포넌트에 taint 라벨·정적 정보흐름 검증 도입; (2) keeper 다중 스레드/다중 프로세스 병렬화; (3) IFC 기반 보증을 요구하는 컴플라이언스/감사 프레임워크 채택 |
+| **Required future invariant** | IFC 도입 시: (1) 오프체인 컴포넌트의 재귀·비동기 실행 경로를 위협 모델에 명시; (2) 정적 증명을 런타임 검증(관측-반영 시간차 상한, 단일 작성자 채널)과 이중화; (3) "정적 분석 통과"를 보증 문서에서 과잉 판매하지 않기 |
+| **Novel elements vs existing vectors** | B85(keeper self-state mutation)·B88(relay cache)는 구체적 결함이라면, B104는 **하이브리드 아키텍처의 정적 검증 전반에 적용되는 구조적 불가능성**이라는 상위 원리. 오프체인 패밀리에 이론적 기반을 제공 |
+| **Relation to existing vectors** | B102(형태 가정 공격)의 오프체인 상동(sibling). 방어 체크리스트는 `references/solana-specific.md` #141–145 |
+
+**Sources**: https://arxiv.org/abs/2608.26858
+
+## B105. Debounce-Counter Oscillation / Statistical-Detector Distribution Evasion (defense telemetry as attack map)
+
+| Field | Value |
+|---|---|
+| **Origin** | arXiv:2608.25600 (2026-08-26) — "Defending the Peg": DeFi 스테이블코인 실시간 보호를 위한 Bi-LSTM 이상탐지 모델(12건 실사고 분석, recall 97.7%, 단일 추론 1.5–2.8ms). **방어 논문의 성능 수치 자체가 우회 설계도** — recall 97.7%는 FN 대역 2.3%의 존재 증명이고, 추론 지연 1.5–2.8ms는 고주파 흐름에서의 탐지 지연 창 |
+| **Vector** | 탐지기의 **알고리즘적 구조**를 공격 표면으로 삼는 클래스. (a) **카운터 디바운스 우회**: `consecutive_breach_cycles >= N` 형태 탐지기(Microstable keeper `monitor.rs` 포함)는 정상 관측 시 카운터를 0으로 리셋하므로, 임계 경계를 진동하는(oscillate) 상태 변화는 N을 영원히 채우지 못해 대응(emergency_shutdown)이 무기한 지연됨. (b) **ML 분포 우회**: 학습 분포 밖 slow-drift(개별 관측은 전부 정상, 궤적은 악화), 단일 관측 임계 하회 분할, 추론 지연 창 내 고주파 버스트 |
+| **Exploit chain (PoC scenario)** | Microstable 변주: (1) 공격자(또는 악성 유동성 제공자)가 시장 조작으로 CR(collateral ratio)을 비상 임계 아래로 짧게 밀었다 복귀시키는 것을 반복 — oracle staleness 게이트(`is_stale`)가 몇 개 관측을 스킵하더라도 살아남는 진동 선택; (2) 각 정상 복귀 관측에서 `consecutive_emergency_cycles = 0` 리셋이 발생(코드 경로 실재 — `monitor.rs` L204–212); (3) 누적 페그 악화 노출 시간은 계속 증가하지만 디바운스는 영원히 만료 안 됨; (4) 진짜 붕괴 순간에도 shutdown이 늦거나 발사 안 됨 |
+| **Prerequisites** | (1) 카운터-리셋형 디바운스 탐지기(널리 쓰이는 패턴); (2) 공격자가 감시 지표(CR/가격/페그)를 비용-효율적으로 진동시킬 수 있는 시장 경로; (3) ML 탐지기의 경우 학습 분포와 배포 분포의 괴리 |
+| **Impact** | 공개 사고 없음 — 잠재. Microstable 실현 난이도는 높음(CR 진동 = 시장가 조작 비용, 단일 관측당 수수료). 그러나 우회 **코드 경로는 실재**하므로 구조적 부채로 기록 |
+| **Microstable status** | **LOW-MEDIUM (structural, latent)** — 2026-08-31 검증: `monitor.rs`의 `consecutive_emergency_cycles` 리셋 라인 실재, `emergency_debounce_cycles` 게이트 실재. 단, (1) CR 진동의 시장 조작 비용, (2) `oracle.rs` staleness 스킵이 진동 선택지를 좁힘, (3) watchdog.rs 계층이 별도 존재 — 삼중 완화. CRITICAL/HIGH 아님 → 즉시 알림 없음, 구조 개선 권고만 |
+| **Activation triggers** | (1) CR·페그 지표를 외부 시장이 저비용으로 진동시킬 수 있는 유동성 구조 도입; (2) 디바운스 카운터가 유일한 비상 트리거로 남는 경우; (3) ML 이상탐지 도입 시 분포 우회 경로 미테스트 상태로 배포 |
+| **Required future invariant** | (1) 디바운스 카운터는 단순 리셋 대신 leaky bucket/지수 감쇠 — 정상 관측 한 번에 누적이 소멸되지 않게; (2) 카운트 기반과 **노출-시간(exposure-time) 기반 트리거를 병렬** 운영해 이중 무력화 차단; (3) 임계 교차 빈도(crossing rate) 자체를 경보 지표로 — 진동은 정상 회복이 아니라 공격·오라클 불안정 신호; (4) ML 탐지기 배포 전 slow-drift/분할/지연창 버스트 레드팀 테스트 필수 |
+| **Novel elements vs existing vectors** | B52(slow-drip memory poisoning)는 공격이 **에이전트의 판단**을 왜곡한다. B105는 **방어 계측기의 알고리즘 속성**(리셋 조건, 분포 가정, 지연 예산)이 직접 표면 — 공격 대상이 방어 그 자체. 방어 논문에서 우회 원시를 추출하는 레드팀 방법론의 전형 |
+| **Relation to existing vectors** | B86(blockspace saturation으로 안전 액추에이터 굶기기)와 상보 — B86은 액추에이터의 *전송*을 끊고 B105는 액추에이터의 *발사 조건*을 무력화. 체크리스트 `references/solana-specific.md` #141–145 |
+
+**Sources**: https://arxiv.org/abs/2608.25600 | Microstable `keeper/src/monitor.rs` L204–212, L266–300 | `keeper/src/oracle.rs` L296–304
+
+**Matrix state as of 2026-08-31 (red-team daily evolution)**: **B104 + B105 added** (off-chain IFC concurrency blind spot — arXiv 2608.26858; debounce-counter oscillation / statistical-detector distribution evasion — arXiv 2608.25600 cross-checked against live Microstable keeper code). RustSec window (08-24 → 08-31) contained one advisory (RUSTSEC-2026-0267 stable-vec panic-safety) — B96 family instance, no new vector. Anchor (last release 08-12) and solana-program (07-28) unchanged in window; SPL monorepo frozen since 2025-01 (programs migrated to dedicated repos) — no security-relevant commits. Solana incident sweep: no new exploits in window. Both new vectors latent; Microstable CRITICAL/HIGH: 0.
