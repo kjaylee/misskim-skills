@@ -672,6 +672,10 @@
   Vector mapping: **A32 reinforcement (NEW 2026-08-15)** — EVM-lane mint authorization gap; halt→freeze→burn-and-reconcile containment playbook.
   Source: https://x.com/oraichain/status/2086774707882451012
 
+- **2026-08-09 — Coinsbuy Exchange Drain ($8.07M, TRON + Ethereum; [timeline closure 2026-08-31])** — B2B crypto payment processor wallets drained across two chains in under an hour; 5-USDT TRON test transaction first, then parallel sweep; laundering via FixedFloat/ChangeNOW toward Monero. Ten drained wallets were **refilled (~$3.93M across seven deposits) within 10–12 hours by Coinsbuy-linked funding addresses — before the operator's first public statement (Aug 10)** — while no attack path, affected control layer, or independent remediation evidence was ever disclosed. Twitter dormant since 2020; Panama-incorporated.
+  Vector mapping: **B15/META-74 reinforcement (2026-08-31)** — operational key/infrastructure compromise at a centralized multi-chain processor; the pre-statement refill (reserves spent before root cause established) adds an incident-response theater sub-pattern: cosmetic made-whole flows substituting for disclosed root cause.
+  Source: https://rekt.news/coinsbuy-rekt | https://x.com/BlockWatchdog/status/2086693306851840323
+
 - **2026-08-06 — RRWallet / CryptoJS Weak RNG (~$2M, CVE-2026-71851 "Ill Bloom")** — Coinspect disclosed RRWallet seed phrases generated with weak CryptoJS RNG; keys predictable; at least one user lost ~$2M.
   Vector mapping: **B15 reinforcement (NEW 2026-08-15)** — client-library RNG entropy insufficiency; Coldcard/META-73 vacuous-verification gap in the web-wallet domain.
   Source: https://x.com/coinspect/status/2085430121670811898
