@@ -2389,3 +2389,15 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 143. ☐ 임계 교차 빈도(crossing rate) 자체를 경보 지표로 — 비정상적 진동은 정상 상태 회복이 아니라 공격 또는 오라클 불안정 신호
 144. ☐ ML 기반 이상탐지 도입 시: 학습 분포 밖 slow-drift, 단일 관측 임계 하회 분할, 추론 지연 창 내 고주파 버스트 세 가지 우회 경로를 레드팀 테스트로 필수화
 145. ☐ 오프체인 컴포넌트에 taint/IFC 라벨 검증을 도입하는 경우 recursive-call blocking construct로 인한 동시성 우회를 위협 모델에 명시 — 정적 증명의 오프체인 한계를 보증 문서에 기록
+
+## 2026-09-01 Mirrored-Ledger Conservation Break / Governance-Token Collateral Admission Pattern
+
+**Origin**: MANTRA (2026-08-20, Cosmos EVM GHSA-7g4w-cg88-2cq2 — vesting-account StateDB underflow → EVM-mirror balance inflation → overflow-wrap victim sweep → staking-precompile keyless debit; 4+ chain cluster) + Tectonic (2026-08-30, Cronos, $74M — TONIC governance-token ~100× inflation → collateral → borrow real assets; chain halt froze $68M).
+
+**Solana 매핑 (B106)**: Solana에는 EVM mirror가 없지만 동일 클래스가 도입될 수 있는 표면: (1) liquid-staking receipt(wSOL/stSOL 계열)이나 wrapped 토큰에서 **파생 잔액 산술** — redemption 수수료/잠금 반영 subtraction이 underflow 나면 영수증 가치가 인플레이션됨; (2) **vesting/escrow 스케줄 계정**의 남은 잔액 계산이 u64 wrap되는 경우; (3) CPI로 타 프로그램 계정 잔액을 소유 서명 없이 이동시키는 privileged 경로(staking precompile의 무서명 debit에 대응). 방어 인바리언트: 잔액 파생은 checked 산술 + 양측 보존 증명, privileged CPI debit 금지.
+
+**Solana 매핑 (Tectonic/A2-A3)**: 거버넌스/저유동성 토큰 담보 승인은 오라클 정밀도와 무관하게 CR을 무너뜨림 — 담보 승인 정책 자체가 공격 표면. 담보 세트는 승인된 고유동성 자산으로 고정하고, 신규 담보 추가는 지연 + 이해관계자 승인 게이트를 거쳐야 함.
+
+146. ☐ 파생/영수증 잔액(liquid-staking receipt, wrapped 토큰) 도입 시 모든 잔액 산술은 checked — underflow가 부분 성공이 아니라 전체 tx 실패로 귀결되는지 검증
+147. ☐ vesting/escrow/locked 계정 타입 도입 시 남은 잔액·스케줄 계산에 u64 wrap 경로가 없는지 fuzz 검증 — 두 표현(원본/파생)의 합이 보존되는 인바리언트 테스트 명시
+148. ☐ 담보 승인 정책: 프로토콜 자신의 거버넌스 토큰·저유동성 토큰은 담보 배제가 원칙(Tectonic/Moonwell 4일 2연발 교훈) — 신규 담보는 유동성 심사 + 지연 게이트 필수

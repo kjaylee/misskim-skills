@@ -2822,3 +2822,20 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - New CRITICAL/HIGH Microstable findings: **0** — B101 assessed against live code and judged NOT ACTIVE (structural absence of the entire authorization lane, not just correct implementation of it).
 - Carry-forward unchanged: **A6 CRITICAL (unfixed since first flag — highest priority), HERMES-H1 HIGH, A10 HIGH, B45 PARTIAL, B83 HIGH**.
 - Blue-team fix order unchanged: **A6 → HERMES-H1 (posted_price_account field) → B83 → B45**. A6은 1행 constraint 추가로 닫히는 결함 — 다음 blue-team 스프린트 전면 최우선.
+
+## 2026-09-01 Daily Check
+
+**Focus vectors**: B106 (NEW — mirrored-ledger conservation break, MANTRA/Cosmos EVM) · A2/A3 (Tectonic $74M governance-token collateral lesson) · carry-forward A6/A10/HERMES-H1/B83/B45.
+
+| Vector | Verdict | Evidence (live code read) |
+|---|---|---|
+| **B106 mirrored-ledger underflow sweep** | ✅ NOT ACTIVE | `programs/microstable/src/lib.rs`: `wrapping_`/`overflowing_` **0건**, checked/saturating 113건; keeper `wrapping_`는 `integration_tests.rs:198-199` RNG(테스트)만. Dual-ledger mirror 부재(단일 `protocol_state` 원장), vesting/escrow 계정 타입 부재, 무서명 privileged debit 경로 부재(모든 지출 = SPL Token CPI + 권한 검증). |
+| **A2/A3 governance/low-liquidity collateral (Tectonic class)** | ✅ 구조적 방어 | 담보 = 고정 스테이블 4종(USDC/USDT/DAI/USDS), `require_collateral_decimals` 6-decimals invariant(lib.rs:166-170, 285-289), collateral-index feed allowlist(PTV2-005/PTV2-003); 신규 담보 승인 surface 없음. Keeper oracle: `is_stale` 게이트(oracle.rs:297, 563) + `deviation_bps` 검증 실재. 거버넌스 토큰 담보 경로 자체가 없음 — Tectonic/Moonwell 클래스 배제. |
+| **A6 redeem-side mint authority 미고정** | ❌ CRITICAL UNFIXED (26일차) | lib.rs:~2395 `mstb_mint` = bare `#[account(mut)]`; Mint path(2320)는 `mint::authority = protocol_state` pin 존재 — 비대칭 지속. 1-line fix 대기. |
+| **A10 redeem burn passed-in mint** | ❌ HIGH UNFIXED | lib.rs:~1360 `token::burn` CPI가 전달받은 `ctx.accounts.mstb_mint` 사용. |
+| **HERMES-H1 가격 계정 미검증 업데이트** | ❌ HIGH UNFIXED | `HermesPostedUpdate`(keeper/src/hermes.rs) 7필드 — `posted_price_account` 부재. |
+| **B83 quinn-proto 0.11.13** | ❌ HIGH UNFIXED | `solana/Cargo.lock` 확인. |
+| **B45 audit attestation** | ⚠️ PARTIAL | `security/` 리포트 존재, `audit-attestation.json` 부재 (carry-forward). |
+| **B105 debounce reset** | ⚠️ LOW-MEDIUM | monitor.rs:212/320 `consecutive_emergency_cycles = 0` 리셋 실재 (구조 개선 권고 유지). |
+
+**신규 CRITICAL/HIGH: 0** (B106·A2/A3 모두 NOT ACTIVE/구조적 방어). 기존 미수복 4건(A6/A10/HERMES-H1/B83)은 전부 재검증으로 확인 — 블루팀 수정 여전히 대기 중. 긴급 알림 없음.
