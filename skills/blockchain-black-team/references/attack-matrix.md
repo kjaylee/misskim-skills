@@ -1,4 +1,4 @@
-# Attack Matrix — 213 Active Named-Vector Headings / 205 Unique Named IDs + META-01~76
+# Attack Matrix — 215 Active Named-Vector Headings / 207 Unique Named IDs + META-01~76
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -12044,3 +12044,27 @@ attacker:
 **Sources**: https://hacked.slowmist.io/ | https://x.com/PeckShieldAlert/status/2094217367434015065
 
 **Matrix state as of 2026-09-01 (black-team daily evolution)**: **B106 added** (mirrored-ledger balance-conservation break — Cosmos EVM GHSA-7g4w-cg88-2cq2 vesting-underflow cluster, MANTRA/Saga/TAC/Kii/Nesa; postmortem-verified code-level path) + **A2/A3 family reinforcement (Tectonic $74M — governance-token collateral admission; largest incident in window)**. Window (08-31→09-01 KST) Solana-specific: quiet (Avici already captured 08-30; Drift search hits are April-era). Microstable live-code check: B106 NOT ACTIVE (0 wrapping arithmetic in program), A2/A3 structurally excluded (fixed stable collateral set). Carry-forward: **A6 CRITICAL (26th day)**, A10 HIGH, HERMES-H1 HIGH, B83 HIGH (quinn-proto 0.11.13), B45 PARTIAL — all re-verified in live code today.
+
+## B107. Capability-Sandbox Path-Representation Escape (trailing-slash + symlink, cap-std / wasmtime-wasi)
+
+| Field | Value |
+|---|---|
+| **Origin** | RUSTSEC-2026-0269 / GHSA-vqjp-4c8c-hfgg (issued 2026-08-31, HIGH) — root cause in cap-std GHSA-hp8f-xmx4-4qrg. Companion: RUSTSEC-2026-0268 (wasmtime WASIp3 streams, MEDIUM, same day — D34 family instance, see below) |
+| **Vector** | 게스트(부분신뢰 wasm 플러그인·시뮬레이터·전략 엔진)에 샌드박스 디렉터리 하나의 쓰기 권한만 주어도, **경로 문자열 뒤 trailing slash + 샌드박스 내 symlink 조합**이 cap-std의 symlink 재검증을 우회해 호스트 전체 파일시스템으로 탈출. 읽기 전용 게스트도 사전 존재 symlink에 따라 임의 파일 읽기 가능. 샌드박스 '강제 계층(enforcement layer)' 자체의 문자열-표현 혼동이 버그 — 게스트 코드 취약성 아님 |
+| **Kernel-dependency twist** | Linux ≥5.6은 openat2(RESOLVE_BENEATH) 경로로 **영향 없음**; **macOS·구형 Linux 커널만 영향**. 같은 바이너리·같은 설정이라도 **호스트 커널 프리미티브 가용성이 보안 경계를 결정** — "우리 코드는 동일하니 안전" 비교가 무효가 되는 첫 실증 사례군. Patched: wasmtime 24.0.13 / 36.0.14 / 46.0.3 / 47.0.4; 48.0.0+ clean. Workaround 없음 |
+| **Exploit chain (PoC scenario)** | (1) keeper/시뮬레이터가 부분신뢰 wasm 게스트에 sandbox dir 하나 write 권한 부여; (2) 게스트가 dir 내에 외부 symlink 생성(또는 사전 존재 symlink 발견); (3) `"symlink-to-target/"` trailing-slash 경로로 open — cap-std가 symlink 재검증을 건너뜀; (4) keeper 키 파일(id.json)·환경변수·시크릿 읽기 또는 배포 바이너리 교체 — A74(tar-rs symlink traversal)의 런타임 상동, 공급망 아티팩트가 아닌 **실행 중 샌드박스 게스트**가 운반 |
+| **Microstable status** | **NOT ACTIVE** — 2026-09-01 검증: `microstable/solana/Cargo.lock`에서 `wasmtime`/`wasmtime-wasi`/`cap-std`/`stack_dst`/`suppaftp` 전부 0매치(grep 실증). 온체인 BPF 프로그램에는 파일시스템 의미론 자체가 없음. 단 keeper 빌드·실행 호스트가 Mac Studio(macOS) = **영향 플랫폼 클래스 그 자체**라 도입 순간 즉시 유효 |
+| **Activation triggers** | (1) keeper/simulator에 wasm 플러그인·전략 엔진·quote 엔진 임베딩(wasmtime 계열); (2) 파일 접근 격리를 cap-std/문자열 경로 정규화에 의존하는 도구 도입; (3) macOS·구 Linux(≥5.6 미만) CI 러너에서 신뢰할 수 없는 wasm 실행. 이 셋 중 하나라도 성립하는 순간 재평가 필수 |
+| **Required future invariant** | (1) 격리는 **커널 매개 격리(openat2/RESOLVE_BENEATH, macOS Seatbelt/sandbox-exec 프로파일)** 로 강제하고, 커널 프리미티브 부재 시 fail-closed; (2) 경로 문자열 동등성 기반 샌드박스 판정 금지 — "trailing slash 유무로 같은 경로 다른 권한"이 나오면 결함; (3) wasm 런타임은 패치 라인(≥24.0.13/36.0.14/46.0.3/47.0.4, 또는 48.0.0+)으로 핀; (4) 샌드박스 테스트 스위트에 symlink+trailing-slash 탈출 프로브 회귀 테스트 포함 |
+| **Novel elements vs existing vectors** | D46은 컴파일러 백엔드 코드젠 계층, D34는 자원 한도 계층, A74는 아카이브 해제(정적 아티팩트) 계층. B107은 **샌드박스 강제 프리미티브 자체의 경로 해석 계층** — 세 번째이자 최하위(가장 신뢰하는) 계층에서의 wasmtime 탈출. "방어가 커널 버전에 조건부"라는 운영적 실증(B101 version-skew의 호스트-커널 판)이 신규 |
+| **Relation to existing vectors** | B97/B102 representation-confusion 패밀리(신뢰 중개자·검증 라이브러리의 형태 가정 공격)의 OS-추상화 계층 확장; A74와 공급망↔런타임 상보; D34/D46과 함께 "wasm 샌드박스 신뢰 3중 실패" 클래스 형성. Solana 패턴 `references/solana-specific.md` 체크리스트 #149–152 |
+
+**Sources**: https://github.com/bytecodealliance/wasmtime/security/advisories/GHSA-vqjp-4c8c-hfgg | https://github.com/bytecodealliance/cap-std/security/advisories/GHSA-hp8f-xmx4-4qrg | https://rustsec.org/advisories/ (2026-08-31 0269 HIGH / 0268 MEDIUM / 0272 INFO / 0271 / 0270 클러스터)
+
+### B107-day window notes (2026-09-01 redteam) — DeLLMGuard reinforcement (B51/META-75) + RUSTSEC instance mapping
+
+- **arXiv 2608.28400 "When Verified Source Becomes Attack Input" (2026-08-28, 어제 회차 미흡수)**: 검증된 소스 공개가 신뢰 메커니즘에서 **공격자 LLM 에이전트의 대규모 정찰 입력**으로 전환된 위협모형 실증. 방어(DeLLMGuard)는 proxy/delegate/factory 다중 주소 분리로 소스-실행 분리 — LLM 에이전트 root-cause 정확도 **23.5%→6.6%** 감소(387 취약 컨트랙트, SCONE-bench 유도 환경). **레드팀 역독법 2가지**: (a) 악성 배포자는 취약성을 entry 컨트랙트가 아니라 **다운스트림 프록시/팩토리 뒤에 숨겨** 자동 스캐너·얕은 감사를 통과하는 배포-토폴로지 은폐; (b) 방어자의 LLM 기반 사전 심사 파이프라인도 동일한 토폴로지 맹점 상속. Solana 상동: 심층 CPI 체인 뒤 2차 프로그램·IDL-less 프로그램·커스텀 역직렬화에 취약성 배치. B51/META-75 패밀리 강화 — 신규 번호 부여 안 함(어제 B104/B102 중복 방제 원칙 준수).
+- **RUSTSEC 2026-08-31 인스턴스 매핑**: 0268(wasmtime WASIp3 guest-size host heap alloc) = D34 자원-고갈 패밀리 인스턴스; 0272(stack_dst panic-safety UAF) = B96 패밀리 인스턴스; 0270(sp-sized-chunks unmaintained) = B96 인접 하우스키핑; 0271(suppaftp FTP CRLF) = keeper FTP 표면 부재로 무동작. 모두 개별 벡터 미달.
+- **Tectonic ($74M, 8/30) 폐기 사유**: 블랙팀 데일리가 동일 날짜 03:03 KST 선행 흡수(commit 80d94a4 — B106 섹션 + A2/A3 강화) 확인 후 중복 배제.
+
+**Matrix state as of 2026-09-01 (red-team daily evolution)**: **B107 added** (capability-sandbox path-representation escape — cap-std trailing-slash symlink, RUSTSEC-2026-0269, kernel-primitive-conditional defense) + **B51/META-75 reinforcement (DeLLMGuard 2608.28400 — verified-source recon input + deployment-topology obfuscation, 23.5%→6.6%)**. Window quiet: CTF(Paradigm/DVD 신규 없음), MEV(Flashbots/Jito/Skip 창 내 신규 없음), Anchor(8/12 그대로, crates.io 실증), SPL(2025-03 이후 동결, GitHub API 실증). Microstable live-code check: B107 NOT ACTIVE (Cargo.lock wasmtime/cap-std 0매치), keeper 호스트 macOS = 영향 플랫폼 클래스로 트리거 명시. Carry-forward watch: SIMD tx-batch priority ordering, Agave program-cache separation(B101 미분), SseRex 도구 평가, A6 CRITICAL(27th day, black-team ledger).

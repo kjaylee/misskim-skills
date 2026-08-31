@@ -2401,3 +2401,14 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 146. ☐ 파생/영수증 잔액(liquid-staking receipt, wrapped 토큰) 도입 시 모든 잔액 산술은 checked — underflow가 부분 성공이 아니라 전체 tx 실패로 귀결되는지 검증
 147. ☐ vesting/escrow/locked 계정 타입 도입 시 남은 잔액·스케줄 계산에 u64 wrap 경로가 없는지 fuzz 검증 — 두 표현(원본/파생)의 합이 보존되는 인바리언트 테스트 명시
 148. ☐ 담보 승인 정책: 프로토콜 자신의 거버넌스 토큰·저유동성 토큰은 담보 배제가 원칙(Tectonic/Moonwell 4일 2연발 교훈) — 신규 담보는 유동성 심사 + 지연 게이트 필수
+
+## 2026-09-01 Capability-Sandbox Escape & LLM-Scanner-Resistant Audit (B107)
+
+**Origin**: RUSTSEC-2026-0269 / GHSA-vqjp-4c8c-hfgg (2026-08-31) — wasmtime-wasi 파일시스템 샌드박스가 cap-std의 trailing-slash + symlink 경로 해석 버그로 완전 탈출. Linux ≥5.6(openat2/RESOLVE_BENEATH)은 무영향, **macOS·구형 Linux만 영향** — 같은 바이너리도 호스트 커널이 보안 경계를 결정. 같은 날 0268(WASIp3 guest-size host alloc, D34 인스턴스)·0272(stack_dst, B96 인스턴스) 동시 발표.
+
+**Solana keeper 매핑**: 온체인 BPF엔 파일시스템 의미가 없어 직접 표면 0. 위험은 전적으로 오프체인 — keeper/시뮬레이터가 wasm 플러그인(전략·quote·시뮬레이션 엔진)을 wasmtime으로 격리 실행하는 순간, macOS 호스트(Mac Studio 포함)에서 "게스트에 샌드박스 dir 하나 쓰기 권한"만으로 keeper 키(id.json)·시크릿·바이너리가 노출. A74(tar-rs supply-chain symlink)의 런타임 상동 — 침투 경로만 아티팩트→실행 중 게스트로 바뀜.
+
+149. ☐ keeper/simulator에 wasm 게스트 임베딩 시 wasmtime은 패치 라인(≥24.0.13/36.0.14/46.0.3/47.0.4, 또는 48.0.0+)으로 핀 — Cargo.lock에 미패치 wasmtime/cap-std 있으면 배포 차단
+150. ☐ 파일시스템 격리는 커널 매개 격리로만 강제: Linux openat2(RESOLVE_BENEATH) 확인, macOS는 Seatbelt/sandbox-exec 프로파일; 커널 프리미티브 부재 환경(macOS 구축 CI 등)에서는 게스트 실행 자체를 fail-closed
+151. ☐ 샌드박스 회귀 테스트에 trailing-slash + symlink 탈출 프로브 포함 — `"link/"` 형태 경로가 외부 경로로 열리는지 CI에서 매 빌드 검증; 경로 문자열 동등성 기반 권한 판정 로직 정적 금지
+152. ☐ (DeLLMGuard 역적용) 타 프로토콜 감사·레드팀 시 심층 CPI 체인 뒤 2차 프로그램·IDL-less 프로그램·커스텀 역직렬화에 취약성이 배치됐는지 반드시 CPI 그래프 전체를 역추적 — entry program 소스 검증만으로 "검증됨" 판정 금지 (B51/META-75 계열)
