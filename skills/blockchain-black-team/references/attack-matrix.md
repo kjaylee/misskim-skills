@@ -12068,3 +12068,22 @@ attacker:
 - **Tectonic ($74M, 8/30) 폐기 사유**: 블랙팀 데일리가 동일 날짜 03:03 KST 선행 흡수(commit 80d94a4 — B106 섹션 + A2/A3 강화) 확인 후 중복 배제.
 
 **Matrix state as of 2026-09-01 (red-team daily evolution)**: **B107 added** (capability-sandbox path-representation escape — cap-std trailing-slash symlink, RUSTSEC-2026-0269, kernel-primitive-conditional defense) + **B51/META-75 reinforcement (DeLLMGuard 2608.28400 — verified-source recon input + deployment-topology obfuscation, 23.5%→6.6%)**. Window quiet: CTF(Paradigm/DVD 신규 없음), MEV(Flashbots/Jito/Skip 창 내 신규 없음), Anchor(8/12 그대로, crates.io 실증), SPL(2025-03 이후 동결, GitHub API 실증). Microstable live-code check: B107 NOT ACTIVE (Cargo.lock wasmtime/cap-std 0매치), keeper 호스트 macOS = 영향 플랫폼 클래스로 트리거 명시. Carry-forward watch: SIMD tx-batch priority ordering, Agave program-cache separation(B101 미분), SseRex 도구 평가, A6 CRITICAL(27th day, black-team ledger).
+
+### META-77. Containment-Plane Disownership / Halt-Latency vs Exit-Velocity Gap (CPD) — 퍼플팀 2026-09-01
+
+**핵심 비대칭**: 앱레이어 공격이 성공하면 최후의 봉쇄 액추에이터는 프로토콜 자신이 아니라 **체인 레이어(검증자 조정 halt)**다. 이 평면의 효율은 `할트 결정 지연 ÷ 공격자의 체인 간 탈출 속도`라는 단일 비율로 결정되는데, 분자(누가 언제 halt를 결정하는가)와 분모(브릿지 처리량·거래소 입금 확정 속도) 어느 쪽도 프로토콜 팀이 소유하지 않는다. 방어의 최종 성패가 **무소유 파라미터의 경주**에 맡겨진 구조다.
+
+**30일 자연실험 (2026-08, 동일 봉쇄 평면·정반대 결과)**:
+- **Tectonic (08-30, $74M)**: Cronos 체인 halt가 브릿지 이탈 전 발사 — ~8%($6M)만 Ethereum 도달, ~92%($68M) 체인 내 동결. 봉쇄 성공이나 "회수" 아님: 동결 자산의 언와인드(재개·보상 규칙)는 미결 거버넌스 부담으로 전환. 봉쇄 비용은 체인 위 무관한 모든 사용자·프로토콜의 liveness 상실로 사회화됨.
+- **MANTRA (08-20, 720.9M OM/$3.6M)**: halt는 발사됐으나 너무 늦어 **94.7%가 halt 전 거래소 도착** — 같은 도구, 반대 결과. 결정 변수는 도구의 존재가 아니라 경주의 승패였다.
+- **Oraichain (08-09)**: 무허가 mint → halt → 브릿지 제한 → burn-and-reconcile. 봉쇄+공급 조정 플레이북이 의도대로 작동한 대조군.
+
+**왜 감사가(방어가) 놓치는가**: ① 감사·FV·인버런트는 전부 컨트랙트 경계 내부를 검증 — 체인 halt 지연·브릿지 처리량은 "인프라"로 범위 밖. ② 봉쇄 실패의 원인이 소유 경계 너머(검증자·브릿지 운영자·거래소 입금 확인)에 있어 사후에도 책임 귀속 불가 — 누구의 post-mortem에도 "우리가 늦었다"는 항목이 없다. ③ 봉쇄 성공 사례(Tectonic/Oraichain)가 "체인이 막아준다"는 과신을 형성(META-60 recoverability bias의 체인 버전). ④ 체인 halt의 사회화 비용은 그 어떤 프로토콜의 손익 계정에도 잡히지 않아 봉쇄의 실효 비용이 체계적으로 과소계상됨.
+
+**META-53/60/62/B49와의 구별**: META-53은 actuator가 문서화·리허설되지 않음, META-62는 확증 대기로 지연, B49는 공격 속도 대 인간 루프 — 셋 다 *프로토콜 자신의* 봉쇄 실패 평면. META-77은 (a) actuator가 **다른 조직의 손에**(검증자/체인 거버넌스), (b) 효율이 소유자 없는 경주 파라미터(halt latency vs bridge throughput)로 결정, (c) 발사 비용이 무관 제3자에게 전가된다는 3중 구조를 규정한다.
+
+**Microstable 적용 (2026-09-01 실코드 검증)**: 이 해저드에 대해 Microstable은 **구조적 우위** — 탈출 속도 자체가 코드 상한(`DEFAULT_MAX_REDEEM_PER_SLOT_PPM` 3%/slot, `MAX_REDEEM_PER_TX_PPM` 1.5%/tx, lib.rs:62-64)이고 봉쇄 액추에이터가 체인 halt가 아닌 **프로토콜 내부 기계 장치**(emergency_shutdown 게이트 lib.rs:827/919, `MINT_DEPEG_PAUSE_THRESHOLD` 3%, circuit breaker `mint_rate_limit`)이므로 경주가 원천적으로 성립하지 않는다. 잔여 갭 2가지: (1) emergency_shutdown 발사의 runbook 결박(META-53 교차 — 누가, 어떤 키로, 몇 분 안에), (2) 일시정지·동결 상태의 언와인드 플랜 부재(봉쇄≠회수 — 회복 순서·보상 규칙 미문서화) → **PT-ARCH-2026-0901-01 (LOW)**.
+
+**Sources**: https://hacked.slowmist.io/en/ (2026-09-01 스냅샷, Tectonic 엔트리) | MANTRA postmortem (rekt.news 2026-08-28 공개 — B106/SKILL.md 09-01 엔트리의 94.7% 수치) | Oraichain (이 파일 A146 인접 08-09 엔트리) | B106 섹션 (Tectonic 코드레벨 흡수)
+
+**Matrix state as of 2026-09-01 (purple-team daily evolution)**: **META-77 added** (Containment-Plane Disownership / Halt-Latency vs Exit-Velocity Gap — Tectonic 8% 탈출 vs MANTRA 94.7% 탈출 자연실험, 30일 3사건 봉쇄평면 클러스터). 사건창(08-25→09-01) 전 건이 블랙/레드팀 동일 날짜 선행 런에 완전 흡수됨(Tectonic→B106+A2/A3, DeLLMGuard→B51/META-75, B107, Term/Arrakis/Enjin/CometDEX/Moonwell/Avici→08-25~30 스윕) — 퍼플은 메타 구조층만 추가. FV/invariant 스트림: 조용(에버그린 콘텐츠만, Foundry #14437 이후 신규 없음). 신규 named vector 없음. Microstable: 탈출 속도 코드 상한(3%/slot)+프로토콜 내부 액추에이터로 META-77 구조적 완화, 잔여 runbook/언와인드 갭 PT-ARCH-2026-0901-01 (LOW). Total: **77 META entries**.
