@@ -2412,3 +2412,14 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 150. ☐ 파일시스템 격리는 커널 매개 격리로만 강제: Linux openat2(RESOLVE_BENEATH) 확인, macOS는 Seatbelt/sandbox-exec 프로파일; 커널 프리미티브 부재 환경(macOS 구축 CI 등)에서는 게스트 실행 자체를 fail-closed
 151. ☐ 샌드박스 회귀 테스트에 trailing-slash + symlink 탈출 프로브 포함 — `"link/"` 형태 경로가 외부 경로로 열리는지 CI에서 매 빌드 검증; 경로 문자열 동등성 기반 권한 판정 로직 정적 금지
 152. ☐ (DeLLMGuard 역적용) 타 프로토콜 감사·레드팀 시 심층 CPI 체인 뒤 2차 프로그램·IDL-less 프로그램·커스텀 역직렬화에 취약성이 배치됐는지 반드시 CPI 그래프 전체를 역추적 — entry program 소스 검증만으로 "검증됨" 판정 금지 (B51/META-75 계열)
+
+## 2026-09-02 Forged-Token-Account Shape-Trust + Immutable Decoy-Program Collection (A150 / Aquifer)
+
+**Origin**: Aquifer (Solana AMM, 2026-08-31, $2.47M / 212 swaps / 40 min, chain-forensics verified). Jupiter-routed venue paid out swaps while reading a forged 165-byte "token account" (u64::MAX ≈ 18.4조 USDC, ~2,400× total on-chain USDC supply) owned by the attacker's own **immutable no-op program**, and then CPI'd to that same attacker program (nominated by the trader as the "token program" for the input leg) which returned success without moving anything. Both verification failures were **jointly necessary**: owner-check alone would have failed the real-Program transfer; program-pin alone would have failed the affordability read.
+
+**Solana 매핑 (A150)**: (1) `AccountInfo`/raw 165바이트 판독으로 잔액을 신뢰하는 모든 경로(affordability, quote, balance-based gating) — owner 프로그램 검증 없이는 전부 위조 가능; (2) `to_account_info()` 기반 수동 CPI에서 프로그램 계정을 호출자 지정값으로 수용; (3) Token-2022 다형성(`interface::token`) 도입 시 "아무 토큰 인터페이스 프로그램" 수용이 디코이 통로가 됨; (4) 트랜잭션 원자성 착각 — 디코이 CPI가 success를 반환하는 순간 "모든 instruction이 성공했다"와 "자금이 실제로 이동했다"가 분리됨. 위조 프로그램의 **immutability(업그레이드 권한 반납)**는 회수 불가능한 영구 무기화 — 디코이 차단은 프로그램 차단이 아니라 **검증 추가**로만 가능.
+
+153. ☐ 모든 잔액 판독 경로는 `Account<'info, TokenAccount>` 타입 또는 수동 `owner == &spl_token::ID` 검증을 통과해야 함 — 165바이트 형태 일치/discriminator 일치는 진위 증명이 아니며, 사용자 공급 계정의 raw 데이터 판독 금지
+154. ☐ 모든 토큰 이동 CPI는 `Program<'info, Token>`(또는 명시적 ID 비교)로 고정 — 호출자가 지정한 프로그램 계정을 CPI 대상으로 수용하는 경로 정적 스캔으로 배제; `interface::token` 다형성 채택 시 허용 프로그램 집합을 명시적으로 화이트리스트
+155. ☐ 입금-지급 복합 경로(swap, mint, redeem)는 회수 레그의 CPI success를 효과 검증 없이 신뢰하지 않음 — 회수 후 잔액/`transfer` 결과 재확인 또는 회수 실패 시 전체 revert가 구조적으로 보장되는지 검증
+156. ☐ 위조계정+디코이 조합 프로브를 회귀 테스트에 포함 — (a) attacker-program 소유 위조 토큰계정(u64::MAX), (b) no-op 프로그램을 토큰프로그램으로 지정한 스왑이 각각 단독으로도 전체 거부되는지, (c) 잔액 상식 범위 검사(공급 대비 배수 sanity bound)가 위조를 조기 차단하는지
