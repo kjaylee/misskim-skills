@@ -11712,6 +11712,34 @@ attacker:
 **Operational reinforcement (2026-08-09, Coinsbuy, $8.07M confirmed; deepened 2026-08-31 via rekt postmortem)**: B2B crypto payment processor wallets drained across Ethereum and TRON, method unknown, funds laundered through Monero via exchanges. ChangeNOW froze a six-figure amount. Consistent with B15/META-74 pattern: operational infrastructure compromise without smart-contract bug. The cross-chain (Ethereum + TRON) drain from a single processor reinforces that operational key compromise at a centralized payment intermediary simultaneously affects all chains the processor operates on. **2026-08-31 addition — refill-before-disclosure theater**: Coinsbuy-linked funding addresses replenished ten of the drained wallets (~$3.93M) within 10–12 hours, *before* the operator's first public statement, while never disclosing the attack path or affected control layer. Defensive lesson for incident-response evaluation: a rapid made-whole refill is not evidence of remediation — root-cause opacity plus reserve-funded restitution is indistinguishable (from the outside) from insider theft theater; post-incident verification must demand control-layer disclosure, not balance restoration. Source: https://rekt.news/coinsbuy-rekt
 
 **Macro reinforcement (SlowMist 2026 H1 mid-year report, 2026-08)**: 182 security incidents in H1 2026 (+~50% YoY) with **$956M in losses (−~60% YoY)**, while AI-related threats grew alongside. This combination quantitatively confirms the META-65 prediction: attack *search labor* is commoditizing (incident count up) while the *median* payoff per incident falls — but the loss distribution remains tail-concentrated and increasingly operational (phishing/key-compromise/social-engineering), exactly the vectors outside audit scope per META-74 and arXiv 2606.15465. Attack volume is no longer a proxy for attack severity; defense budgeting that tracks incident counts will systematically misallocate.
+
+**Macro reinforcement (PeckShield August 2026 tally, via CryptoMeter 2026-09-01)**: **50 major incidents in August (+67% MoM) with losses falling to $136.3M** — the SlowMist-H1 trend line continued into a second month: incident *count* commoditizing upward while per-incident *loss* keeps compressing, tail concentration intact. Exactly the META-65/META-74 prediction shape; no new mechanism, trajectory confirmation only.
+
+## META-78: Venue-Selection Disownership — Aggregator Trust Laundering (Aquifer 08-31)
+
+**Definition**: 라우팅/어그리게이션 계층은 사용자 대신 '어느 베뉴가 인벤토리를 보유할 자격이 있는지'를 결정하는 사실상의 자본 배분자지만, 그 선택의 **보안 검증 의무는 어느 주체에게도 귀속되지 않는다**. 라우팅 포함(being quotable)이 암묵적 보안 인증으로 기능하며, 유일한 집행 메커니즘은 손실 *이후* 도착하는 시장 규율이다.
+
+**Production evidence (Aquifer, 2026-08-31, $2.47M — Bitquery chain-forensic, 379 tx 재구성)**:
+- Jupiter 라우팅으로 오더플로를 받는 **폐쇄소스·비공개·무감사** 베뉴가 18개 토큰 볼트(USDC $1.28M 등)를 보유
+- A150 벡터(위조 토큰계정 u64::MAX shape-trust + immutable no-op 디코이 프로그램)로 **212스왑 / 40분간 무중단 전액 유출** — 수중 보존 invariant·이상 브레이커 전무
+- 사후 규율만 작동: 트래픽 −99.9%, **미패치 잔존**(09-01 기준)
+
+**Why defense failed — 고아 불변식(4-way orphaned check)**: 단일 검증(수신 자금의 owner 보존)이 4개 주체 사이에서 무주 상태:
+1. **베뉴**: 소스 미공개·감사 없음 — 자체 검증 책임 방기
+2. **어그리게이터**: 최적가 라우팅 = 사실상의 베뉴 승인이나 보안 어테스테이션 의무 없음(내부 리스팅 심사 존재 여부와 무관하게, '가장 오래된 체크'가 미검증인 채 라우팅된 것이 사건 자체로 입증)
+3. **체인(SPL)**: 프리미티브만 제공, owner 검증은 호출자 책임 — 강제 없음
+4. **사용자**: 폐쇄소스로 검사 불가 + 베뉴 선택권 없음(어그리게이터가 대리 선택)
+
+**Distinct from existing METAs**: META-09(오프체인 솔버 로직의 감사 사각)는 *실행 로직* 실패, META-78은 *어드미션*(선택·승인)의 무소유 — 객체 상이. META-77(봉쇄 평면 무소유)에 이은 무소유 시리즈 2탄: 방어 평면이 아니라 **공격 표면 조립 평면**의 무소유. META-65(공격 노동 상품화)와 수렴: 어그리게이터가 롱테일 베뉴에 인벤토리를 공급하는 경제 구조가 저비용 표적의 번식지. 벡터 계층은 A150이 커버 — META-78은 그 벡터가 *존재할 수 있었던 구조*를 다룬다.
+
+**Defense implications**:
+1. 어그리게이터 계층: 베뉴 어드미션에 보안 어테스테이션(공개 소스/감사 보고서/conservation invariant 증명) 요구 — 라우팅 포함이 인증으로 기능하는 한 그 의무를 질 것
+2. 베뉴: per-swap conservation invariant(총 수신 ≥ 총 지급) + 동일 상대방 연속 체결 이상 브레이커(212스왑 무중단 = 모니터링 부재의 실증)
+3. 체인 생태계: '가장 오래된 실수'의 2026년 재발 = 교훈 전파 실패 — 어그리게이터가 전파 채널이 될 수 있음(베뉴 어드미션 체크리스트)
+
+**Microstable status**: **NOT APPLICABLE** — 2026-09-02 grep 실증: `swap|jupiter|route|dex|amm` 0매치(베뉴 선택 평면 자체가 부재, mint/redeem 전용 프로토콜), 오라클 어드미션은 `expected_pyth_feed_account` 핀닝 + collateral-index allowlist로 **소유됨**. UncheckedAccount는 migration 경로에 국한(블랙팀 09-02 라이브 체크와 일치).
+
+**Sources**: https://bitquery.io/investigations/aquifer-solana-hack-2-5-million (체인 포렌식 원본) | A150 entry (본 파일) | META-09/65/77 (본 파일)
 **Source**: https://slowmist.medium.com/slowmist-2026-mid-year-blockchain-security-and-aml-report-75e0862179ef
 
 ---
@@ -12137,3 +12165,5 @@ attacker:
 - **창 내 나머지**: Anchor 1.1.2(8/12) 불변, SPL 2025-03 동결, CTF/MEV/감사보고서 신규 없음, rekt 1면 전부 기존 흡수(블랙팀 09-02 state: TAC/MANTRA→B106, Harmony→A32, Coldcard→B15), Aquifer→**A150 블랙팀 오늘 03:06 KST 선행 흡수(commit 4f66b84) — 레드팀 중복 배제**.
 
 **Matrix state as of 2026-09-02 (red-team daily evolution)**: **B108 added** (stubbed-cryptography impostor dependency — manzana RUSTSEC-2026-0273, `patched = []` scanner-blind functional no-op, 3-plane convergence with A150/B15) + **B51/META-75 dual reinforcement (ECLIPSE sandbox-verified attack-trajectory synthesis + CIPR prompt-level-configuration attack-surface shaping)** + B96 instance (rtrb 0274) + AIS policy-version watch item. Microstable live-code check: B108 NOT ACTIVE (manzana/rtrb Cargo.lock 0매치, keeper crypto = RustCrypto 메인스트림), negative-control 테스트 38건 존재. Carry-forward watch: SIMD tx-batch priority ordering, Agave program-cache separation, SseRex, A6 CRITICAL(28th day — black-team ledger), AIS 채택 시 policy-version confusion 재평가.
+
+**Matrix state as of 2026-09-02 (purple-team daily evolution)**: **META-78 added** (Venue-Selection Disownership / Aggregator Trust Laundering — Aquifer 폐쇄소스·무감사 베뉴가 Jupiter 라우팅으로 볼트 보유, 212스왑/40분 무중단, 사후 시장 규율만 작동; 고아 불변식 4-way 구조 문서화) + **META-65 macro reinforcement** (PeckShield 8월: 50건 +67% MoM, $136.3M — count↑/loss↓ 트렌드 2개월째 확인). Beyer arXiv 2606.15465·a16z AI-exploit 벤치마크·Certora 오픈소스·Immunefi 93.9% 전부 기존 흡수(META-74/75/08-10·2025-02·META-75) 확인 후 중복 배제. FV/invariant 스트림 2주째 조용. Microstable: **META-78 NOT APPLICABLE** (swap/route/venue 경로 0매치, Pyth 어드미션 핀닝됨 — grep 실증). Total: **78 META entries**.
