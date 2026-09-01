@@ -2423,3 +2423,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 154. ☐ 모든 토큰 이동 CPI는 `Program<'info, Token>`(또는 명시적 ID 비교)로 고정 — 호출자가 지정한 프로그램 계정을 CPI 대상으로 수용하는 경로 정적 스캔으로 배제; `interface::token` 다형성 채택 시 허용 프로그램 집합을 명시적으로 화이트리스트
 155. ☐ 입금-지급 복합 경로(swap, mint, redeem)는 회수 레그의 CPI success를 효과 검증 없이 신뢰하지 않음 — 회수 후 잔액/`transfer` 결과 재확인 또는 회수 실패 시 전체 revert가 구조적으로 보장되는지 검증
 156. ☐ 위조계정+디코이 조합 프로브를 회귀 테스트에 포함 — (a) attacker-program 소유 위조 토큰계정(u64::MAX), (b) no-op 프로그램을 토큰프로그램으로 지정한 스왑이 각각 단독으로도 전체 거부되는지, (c) 잔액 상식 범위 검사(공급 대비 배수 sanity bound)가 위조를 조기 차단하는지
+
+### 2026-09-02 redteam — B108 stubbed-crypto impostor (RUSTSEC-2026-0273 manzana)
+
+157. ☐ 모든 sign/verify/암호 경로는 부정-제어(negative-control) 테스트를 동반 — verify는 오류 서명을 반드시 거부하고, sign/encrypt 출력은 키·메시지 변화에 따라 반드시 달라져야 함. 결정론적 양성 테스트만으로는 스텁·약한 암호 모두 통과(Coldcard·RRWallet·manzana 3중 실증)하므로 증거 불충분
+158. ☐ 암호 의존성 채택 게이트 — 신규 signer/enclave/attestation/verify 래퍼 크레이트는 (a) 성숙한 감사 이력, (b) KAT 테스트 벡터 공개, (c) `patched = []` 스텁 어드바이저리 부재를 확인한 뒤 도입. 메인스트림 감사 크레이트(RustCrypto 등) 외 신규 암호 크레이트는 기능 증명 없이 도입 금지 (B108)
+159. ☐ 온체인 상동 — 검증 호출의 '존재'가 아니라 '효력'을 단정할 것: 서명 검증·오라클 어테스테이션·권한 증명 프로그램 CPI는 성공 반환 ≠ 검증 수행이므로, 알려진 실패 케이스(오염된 입력에서 반드시 revert)로 실제 검증 동작을 회귀 테스트 — A150 immutable no-op 디코이와 동일 원리의 위임·검증 계층 확장
