@@ -2429,3 +2429,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 157. ☐ 모든 sign/verify/암호 경로는 부정-제어(negative-control) 테스트를 동반 — verify는 오류 서명을 반드시 거부하고, sign/encrypt 출력은 키·메시지 변화에 따라 반드시 달라져야 함. 결정론적 양성 테스트만으로는 스텁·약한 암호 모두 통과(Coldcard·RRWallet·manzana 3중 실증)하므로 증거 불충분
 158. ☐ 암호 의존성 채택 게이트 — 신규 signer/enclave/attestation/verify 래퍼 크레이트는 (a) 성숙한 감사 이력, (b) KAT 테스트 벡터 공개, (c) `patched = []` 스텁 어드바이저리 부재를 확인한 뒤 도입. 메인스트림 감사 크레이트(RustCrypto 등) 외 신규 암호 크레이트는 기능 증명 없이 도입 금지 (B108)
 159. ☐ 온체인 상동 — 검증 호출의 '존재'가 아니라 '효력'을 단정할 것: 서명 검증·오라클 어테스테이션·권한 증명 프로그램 CPI는 성공 반환 ≠ 검증 수행이므로, 알려진 실패 케이스(오염된 입력에서 반드시 revert)로 실제 검증 동작을 회귀 테스트 — A150 immutable no-op 디코이와 동일 원리의 위임·검증 계층 확장
+
+### 2026-09-03 redteam — B109 dead-credential wire-type neutralization (RUSTSEC-2026-0278 zbus_polkit)
+
+160. ☐ 권한·자격증명은 instruction data(borsh 필드)가 아니라 `Signer<'info>` 계정으로만 전달 — Args/데이터 구조체에 authority·owner·signer류 필드가 있으면 '드롭 가능한 방어 입력'이므로 정적 스캔으로 금지 (B109; Microstable은 현재 전 경로 계정-경로로 준수 중)
+161. ☐ 보안 인자 직렬화 왕복 테스트 + 부정-제어 — 자격증명 필드를 변조했을 때 인가 결과가 반드시 변하는지 회귀 검증(변하지 않으면 죽은 방어 — zbus_polkit에서 신뢰 UID가 인가 결정에 0효과였던 실증). 역직렬화 unknown/mismatch 필드 silent-skip 금지, fail-hard
+162. ☐ keeper IPC·서비스 프로토콜 경계에서 uid·peer 자격증명·시간·금액 전달 시 타입 폭(u/i, 32/64, base58 vs [u8;32]) 와이어 규격과 일치 검증 — geteuid/커널 직접 소스는 안전, 손실 있는 채널 재인코딩 시 B109 활성 경로
