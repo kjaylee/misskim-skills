@@ -2435,3 +2435,5 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 160. ☐ 권한·자격증명은 instruction data(borsh 필드)가 아니라 `Signer<'info>` 계정으로만 전달 — Args/데이터 구조체에 authority·owner·signer류 필드가 있으면 '드롭 가능한 방어 입력'이므로 정적 스캔으로 금지 (B109; Microstable은 현재 전 경로 계정-경로로 준수 중)
 161. ☐ 보안 인자 직렬화 왕복 테스트 + 부정-제어 — 자격증명 필드를 변조했을 때 인가 결과가 반드시 변하는지 회귀 검증(변하지 않으면 죽은 방어 — zbus_polkit에서 신뢰 UID가 인가 결정에 0효과였던 실증). 역직렬화 unknown/mismatch 필드 silent-skip 금지, fail-hard
 162. ☐ keeper IPC·서비스 프로토콜 경계에서 uid·peer 자격증명·시간·금액 전달 시 타입 폭(u/i, 32/64, base58 vs [u8;32]) 와이어 규격과 일치 검증 — geteuid/커널 직접 소스는 안전, 손실 있는 채널 재인코딩 시 B109 활성 경로
+163. ☐ 권한 수명주기 종단 상태(작업 완료·권한 회수·멤버 해제·로테이션·셧다운)마다 선행 grant의 잔류 효과 경로를 열거·부정 회귀 — 종단 직후 이전 주체의 모든 상태 변경 시도가 revert되는지. '해제 명령 존재'가 아니라 '해제 후 잔류 효과 0'이 감사 완료 조건. 지속 grant(SPL approve/delegate, 세션 PDA)는 목적 달성과 동일 트랜잭션에서 소멸(scope-bound)하거나 즉시 revoke (B110; EFFECTBOUND)
+164. ☐ 타임락 pending 제안(keeper 회전·지연 실행)은 (a) 명시적 cancel 경로가 있거나 (b) 활성화가 신규 다중서명 재확인을 요구하는지 점검 — 무장 pending이 취소 불가로 남아 낡은 쿼럼 의도가 나중에 자동 실행되는 창 방지. Microstable rotate_keeper_set은 (b)로 방어(활성화 재호출도 require_keeper_quorum), cancel 명령은 부재(INFO) (B110)

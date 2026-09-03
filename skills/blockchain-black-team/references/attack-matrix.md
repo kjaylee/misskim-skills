@@ -1,4 +1,4 @@
-# Attack Matrix — 217 Active Named-Vector Headings / 209 Unique Named IDs + META-01~76
+# Attack Matrix — 218 Active Named-Vector Headings / 210 Unique Named IDs + META-01~76
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -682,6 +682,7 @@ let cbeth_usd = (cbeth_eth as u128 * eth_usd as u128) / SCALE;
   (d) Persist across restarts because the agent reloads skills from a tampered source
 **Key insight vs B29 (Confused-Deputy)**: B29 is a runtime attack via content the agent processes. D32 is a supply-chain attack on the agent's identity/policy layer — the agent believes it is following its own rules while executing attacker instructions. Detection is harder because the agent exhibits authorized behavior (from its poisoned perspective).
 **DeFi agent relevance**: Keeper agents, AI ops assistants, or governance proposal drafters that load skills/tools from a shared registry are fully exposed. One poisoned skill file = full access to all privileged operations the agent can perform.
+**2026-09-04 reinforcement (SkillShift, arXiv 2609.02564)**: covert policy steering은 파일 변조·명령 주입·태스크 하이재킹을 **전제하지 않는다** — 정상 발행된 서드파티 스킬이 선언된 과제와 출력 인터페이스를 그대로 보존하면서 계층적 검증·실패 유도 최적화·전략 압축으로 에이전트 결정을 미공개 목표로 조종한다(유효성·출력 정당성·이전성·은폐성 동시 유지). 감사 시사: 스킬을 '기능 검증 통과 = 안전'으로 처리하면 안 되며, **Skill Policy Integrity**(스킬 유래 정책이 선언 기능·사용자 승인 목표와 정렬되는지)를 별도 검증 평면으로 둬야 한다. D32의 '변조된 소스' 전제를 무력화하는 validation-passing 서브패턴.
 **Code/config pattern to find**:
 ```yaml
 # VULNERABLE: agent loads skills from a mutable, unverified directory
@@ -12202,3 +12203,26 @@ attacker:
 - **Microstable 라이브 체크**: B109 NOT ACTIVE(authority 전 경로 Signer-계정 강제·geteuid 직접 시콜 — grep 실증), B19 NOT ACTIVE(keeper 로그 keeper_count 수치만, 키·헤더 0매치), B107/apimock NOT ACTIVE(네트워크 제어 파일 서빙 부재, config 경로는 운영자 고정).
 
 **Matrix state as of 2026-09-03 (red-team daily evolution)**: **B109 added** (dead-credential wire-type neutralization — zbus_polkit RUSTSEC-2026-0278, trusted-UID silent dropout via u/i32 mismatch + TOCTOU re-derivation; '검사 존재 ≠ 효력' 제4면) + **강화 4건** (B19←azure_core 0275, B107←apimock 0276/0277, B51/META-75←Context-PE·AKRASIA, META-66←Cheap-Verifiers — arXiv 9/1 배치 전일 미흡수 흡수). Microstable live-code check: B109/B19/B107 전부 NOT ACTIVE(grep 실증). Carry-forward watch: SIMD tx-batch priority ordering, Agave program-cache 분리, SseRex, A6 CRITICAL(29일차 — 블랙팀 원장), AIS, MutMem-V2/Defense-as-Skill(블루).
+
+## B110. Post-Completion Effect-Closure Failure — Residual Authority/Effect Paths After Terminal Lifecycle States
+
+| Field | Value |
+|---|---|
+| **Origin** | arXiv 2609.02866 "When Does Authorization End? Effect Closure at Provider Boundaries" (2026-09-02) — EFFECTBOUND. GitHub·Kubernetes·NATS·Kafka에서 effect closure 실패 실측. 핵심 정의: 그랜트가 **closed**라려면 (1) 기존 authorization들이 애플리케이션이 거부하는 효과를 일으킬 수 있는 경로가 남지 않고 (2) 새 authorization을 발행할 수 없어야 함. "revocation completion / clean state / operation success"는 closure의 대리 지표일 뿐이며, **provider(런타임·라이브러리·오라클)가 자기 계약 내에 있는 동안에도** 기존 grant가 거부된 효과를 계속 유발할 수 있는 경로가 존재 |
+| **Vector** | 권한 수명주기의 종단 상태(작업 완료·권한 회수·멤버 해제·로테이션·긴급 셧다운) 이후에도 선행 grant의 **잔류 효과 경로**(persistent delegation, 무장 pending 제안, 세션 PDA, in-flight CPI 재진입, 회수되지 않은 approve)가 남아 공격자 또는 낡은 주체가 여전히 상태를 변경. 방어자는 '작업이 성공했다/플래그를 바꿨다'를 closure로 오인 — "작업 완료 ≠ 효과 종결"(A150/B108/B109 '검사 존재 ≠ 효력' 계보의 수명주기 제5면) |
+| **Exploit chain (PoC scenario)** | (1) 프로토콜이 제한된 목적(한 번의 전송·한 번의 리밸런스)으로 delegate/approve/pending-proposal을 생성; (2) 목적 달성·해제·만료 후에도 런타임 계약 수준에서 grant가 유효(SPL token delegate는 revoke 전까지, timelock pending은 활성화 가능 상태로, deregister는 상태 플래그만 변경); (3) 소비자 검증 경로 중 하나라도 상태가 아니라 잔류 grant를 신뢰하면(또는 grant 자체가 원자적으로 소멸하지 않으면) 낡은 주체가 효과 유발; (4) 감사는 '해제 명령이 존재한다'로 마감하지만 실제 소멸 시점·경로 열거는 검증 안 함 |
+| **Microstable status** | **NOT ACTIVE (2026-09-04, 코드 실증)** — (a) keeper 로테이션: `rotate_keeper_set`(lib.rs:1895-1926)은 원자 교체(`keeper_set = pending`), pending 즉시 clear, 활성화 재호출도 신규 2-of-3 쿼럼 재서명(`require_keeper_quorum`) 요구 — 구 keeper의 잔류 권한 경로 0; (b) 에이전트 해제: `deregister_agent`는 상태 플래그 변경이나 **전 소비자가 Active 강제** — commit 제출 `assert_agent_commit_eligibility`(status==Active), promote/demote/score 경로(506/534/559), claim은 Deregistered+쿨다운(4165); 재등록 탈취는 `init`(record)로 차단 — 계정 존재 시 재생성 불가; (c) SPL approve/delegate 프로그램 내 0매치 — 지속 토큰 grant 부재. **INFO**: 무장 pending 회전에 명시적 cancel 명령 없음 — 활성화가 신규 쿼럼 서명을 요구해 위험 낮음(낡은 쿼럼 의도가 무기 상태로 남는 창 존재), 체크리스트 #164 |
+| **Activation triggers** | (1) SPL token `approve`/delegate 패턴 도입 시 revoke 경로 없이 목적 달성 후 방치; (2) pending 제안(타임락 회전·지연 실행)에 cancel 미구현 + 활성화가 신규 서명 없이 자동 실행; (3) deregistration을 상태 플래그로만 처리하고 소비자 검증 일부가 grant 존재(escrow·role·PDA)를 그대로 신뢰; (4) 세션/임시 PDA authority에 수명 종료 시 close 대신 lamport 방치 |
+| **Required future invariant** | (1) 모든 권한 수명주기 종단 상태별 **잔류 경로 열거 테스트** — 완료·해제·로테이션 직후 이전 주체가 시도 가능한 모든 상태 변경이 revert되는지 부정 회귀; (2) 지속 grant(delegate/approve)는 목적 달성과 동일 트랜잭션에서 소멸(scope-bound) 또는 즉시 revoke; (3) 타임락 pending은 취소 명령 또는 활성화 시 신규 다중서명 재확인; (4) '해제 명령 존재'가 아니라 '해제 후 잔류 효과 0'을 감사 완료 조건으로 |
+| **Novel elements vs existing vectors** | A4(미보호 함수)·A10(프레디케이트 비대칭)은 개별 검증 누락 — B110은 **수명주기 종단 이후의 시간차 잔류**라는 새 축; B42는 심각도 산정 실패(조직), B110은 기술적 경로; ZetaChain 무한 approve 사례는 B110의 온체인 선례 인스턴스로 재매핑 가능하나 'effect closure'라는 일반화된 감사 렌즈·provider-contract-internal 조건은 EFFECTBOUND에서 신규 공식화 |
+| **Relation to existing vectors** | A150/B108/B109 '존재 ≠ 효력' 수렴의 제5면(수명주기 종단); B29/D32와 구별 — 혼동부차·오염 없이도 **합법적으로 발급됐던 grant의 시간적 잔류**만으로 성립; solana-specific.md 체크리스트 #163-164 |
+
+**Sources**: http://arxiv.org/abs/2609.02866 (EFFECTBOUND, machine-checked proofs + 4 systems 실측)
+
+### B110-day window notes (2026-09-04 redteam) — arXiv 9/2 배치 흡수, RustSec/SPL/Anchor 무풍 창
+
+- **RustSec 창 내(09-02 09:13 UTC 이후) 신규 0건** — 마지막 커밋 09-02(zbus_polkit, 전일 B109로 처리). SPL 09-03 이후 0커밋, Anchor v1.1.2(2026-06-26) 불변 GitHub 실증. MEV 웹 소스는 Aquifer($2.5M, 08-31)·Drift($285M) 재보도·케이스스터디뿐 — 퍼플팀 META-78·블랙팀이 이미 매핑, 신규 기법 없음. CTF/감사보고서 창 내 신규 없음.
+- **arXiv 9/2 저녁 배치(전일 watch item) 흡수 — 신규 1 + 강화 4**: (a) **EFFECTBOUND**(2609.02866) → **B110 신규 승격** — effect closure 개념(policy-relative closure: 기존 authorization 잔류 경로 0 + 신규 발행 불가)을 온체인 권한 수명주기에 이식; (b) **SkillShift "A Finger on the Scale: Covert Policy Steering through Agentic Skills"**(2609.02564) → **D32 강화·신규 서브패턴**: 명령 주입·태스크 하이재킹 **없이** 선언된 과제·출력 인터페이스를 보존한 채 에이전트 결정을 은폐 목표로 조종 — 기능 검증을 통과하는 정상 발행 서드파티 스킬 자체가 공격 매체(D32의 '파일 변조' 전제를 무력화하는 validation-passing steering); (c) **CodePoisonRAG**(2609.02774) → **B51/META-75 강화**: 블랙박스 공격자가 task-matched 단일 아티팩트에 공격자 지정 CWE source-to-sink 흐름을 삽입, 모델 수정 없이 RACG 생성 코드로 전파 — 업스트림 지식 오염의 표적화 실증; (d) **ACLE-MCP**(2609.02690) → 방어 논문, **post-authorization execution trust gap** 개념(대체 워크로드·낡은 appraisal·타 발신자 권한 재사용·미선언 다운스트림) — B110·B109와 개념 수렴, 블루팀 watch; (e) **PrimSynth**(2609.02647) → 공격 방법론 강화: 익스플로잇 프리미티브 6계층 형식화(논리적 능력→검증 가능 효과)+다중에이전트 합성 — 커널 대상이나 온체인 프리미티브 사고 체계로 이식 가치; **Automated Vulnerability Injection**(2609.02624, 49유형/16.58% 생존율) → INFO: 공격 산업화 역량 증폭 신호, 신규 벡터 아님.
+- **Microstable 라이브 체크**: B110 NOT ACTIVE(로테이션 원자 교체+신규 쿼럼 게이트, 에이전트 해제 전 소비자 Active 강제+init 재등록 차단, approve/delegate 0매치 — 코드 실증). INFO 1건: pending 회전 cancel 명령 부재(활성화 신규 쿼럼 요구로 완화).
+
+**Matrix state as of 2026-09-04 (red-team daily evolution)**: **B110 added** (post-completion effect-closure failure — residual authority/effect paths after terminal lifecycle states; EFFECTBOUND arXiv 2609.02866; '작업 완료 ≠ 효과 종결' 제5면) + **강화 4건** (D32←SkillShift validation-passing policy steering, B51/META-75←CodePoisonRAG task-matched CWE artifact, 블루 watch←ACLE-MCP post-auth execution trust gap, 방법론←PrimSynth primitive formalization). Microstable live-code check: B110 NOT ACTIVE(rotate_keeper_set 원자성·deregister 소비자 전면 Active 강제·init 재등록 차단 — 라인넘버 실증). Carry-forward watch: SIMD tx-batch priority ordering, Agave program-cache 분리, SseRex, A6 CRITICAL(30일차 — 블랙팀 원장), AIS, MutMem-V2/Defense-as-Skill/ACLE-MCP(블루), arXiv 9/3 배치(20:00 ET 발표분) 익일 흡수.
