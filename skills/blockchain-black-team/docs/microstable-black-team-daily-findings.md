@@ -2839,3 +2839,32 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 | **B105 debounce reset** | ⚠️ LOW-MEDIUM | monitor.rs:212/320 `consecutive_emergency_cycles = 0` 리셋 실재 (구조 개선 권고 유지). |
 
 **신규 CRITICAL/HIGH: 0** (B106·A2/A3 모두 NOT ACTIVE/구조적 방어). 기존 미수복 4건(A6/A10/HERMES-H1/B83)은 전부 재검증으로 확인 — 블루팀 수정 여전히 대기 중. 긴급 알림 없음.
+
+## 2026-09-04 Daily Check
+
+### Source Sweep (24h~7d window: 2026-08-28 → 2026-09-04 KST)
+- Sources: rekt.news (front + kiichain-rekt), SlowMist Hacked (full recent list), zai-search (X/community oneDay+oneWeek), RustSec/GHSA (anchor-lang, CVE-2026-45137), Immunefi (OnRe program — JS-rendered, unverifiable), OtterSec/Neodyme/ToB surfaces (0 new).
+- **신규 벡터 0 · 명명 서브패턴 2 · 강화 1 · 클러스터 노트 1 · 타임라인 5건 추가.**
+- **09-03 런 누락 정정**: 어제 "quiet window" 판정과 달리 SlowMist 08-29~08-31 엔트리 4건(Full Sail/Switchboard, Ankr ankrFLOW, Float, Balancer V1)이 스킬 어디에도 매핑되지 않은 채 남아 있었음 — 오늘 정식 심사·반영.
+- **A3 신규 서브패턴 「Oracle-Infra Publisher-Key Admission Forgery」(Switchboard 08-29, 입증등급)**: 오라클 프로덕션 서명 코드가 공격자 키를 정상 발행자로 승인 → 모든 소비자측 검증 통과. Full Sail $91K + IOTA 무근거 VUSD 4.94M 발행 + 4체인 피드 할트. Bonzo(verifier 오승인)·Ostium(정상 키 남용)와 변별: 인프라의 키 승인 평면 자체가 침해됨. 소비자측 바인딩 무력 — 잔여 방어는 보조 오라클 합의·편차 서킷브레이커·stale→pause뿐.
+- **C22 서브패턴 「Collateral Supply-Integrity Dependency」(Ankr ankrFLOW 08-31, admission-partial)**: 무근거 LST 발행 → E-mode 담보 → 대출 드레인. 루트 함수 미공개(포스트모템 대기)로 강화로만 등재, 신규 벡터 아님.
+- **A34 강화(Balancer V1 08-31, $234K)**: 2023 공개 rounding 클래스의 3차 재발 — 레거시 V1 풀은 어느 수정 범위에도 속하지 않았음. 시간축+배포축 클래스 레지스트리 실패.
+- **Float Protocol($28K)**: slot0 vs TWAP 고전 — 타임라인-only. **KiiChain 포스트모템**: 상류 코드 소유자가 사적 통지 전에 수정을 공개 → 공개 자체가 공격 창을 열었다는 고발 — B106/B45 클러스터 노트로 등재.
+- Advisory: RUSTSEC-2026-0144/CVE-2026-45137(anchor-lang)은 5/18 발행 선점(A6/A12 계열). 신규 RustSec/Solana CVE 0건.
+
+### Microstable Code Sweep (live-code verdicts; working tree unchanged — last commit 08-06, mtimes 02-28, zero drift)
+| Vector | Code Target | Verdict | Evidence (live read today) |
+|---|---|---|---|
+| **A3-Switchboard oracle-infra key admission (NEW)** | keeper/src/oracle.rs + lib.rs | ⚠️ **부분방어** | Pyth `PYTH_RECEIVER_PROGRAM` 고정(lib.rs:93, CPI :3225 / oracle.rs:21,481) + `is_stale` 게이트(oracle.rs:297,563) + `deviation_bps`(oracle.rs:849) — 관측된 100×/10^6× 편차는 저지. 잔여: Pyth **단일 오라클** 구조 — checklist 105(보조 오라클 합의) 미구현. Pyth 인프라 자체 침해 시 deviation bound가 유일한 경제적 안전판 |
+| **C22-Ankr collateral supply-integrity (NEW)** | lib.rs collateral admission | ✅ **구조적 방어** | 담보 = 고정 4 스테이블(pubkey/피드 상수 + `require_collateral_decimals` 6-decimals invariant lib.rs:167-170,286-289) — LST/영수증 담보 승인 surface 부재 |
+| **A34-Balancer rounding (NEW)** | lib.rs 수학 전체 | ✅ NOT ACTIVE | LP/풀 셰어 수학 부재(lp_token/pool_share/bpt 0매치), checked/saturating 113건 |
+| **A6 fake-MSTB redeem (CRITICAL carry)** | lib.rs:2396 Redeem `mstb_mint` | ❌ **CRITICAL STILL ACTIVE — 29일차** | bare `#[account(mut)]` 재확인; mint 경로 pin(2321-2325)과의 비대칭 지속 |
+| **A10 redeem burn passed-in mint** | lib.rs:~1362 `token::burn` CPI | ❌ HIGH UNFIXED | `ctx.accounts.mstb_mint` 전달값 그대로 사용 |
+| **HERMES-H1 가격 계정 미검증 업데이트** | keeper/src/hermes.rs:61-69 | ❌ HIGH UNFIXED | `HermesPostedUpdate` 7필드, `posted_price_account` 부재 |
+| **B83 quinn-proto 0.11.13** | Cargo.lock:2984-2985 | ❌ HIGH UNFIXED | 라이브 확인 |
+| **B45 audit attestation** | security/ | ⚠️ PARTIAL | `audit-attestation.json` 여전히 부재 |
+
+### Today's Verdict
+- 신규 CRITICAL/HIGH: **0** (신규 서브패턴 3건 모두 부분방어/구조적 방어/NOT ACTIVE).
+- Carry-forward: **A6 CRITICAL 29일째 — 동일 1-line fix 대기**, A10·HERMES-H1·B83 HIGH, B45 PARTIAL. 블루팀 수정 순서 불변: **A6 → HERMES-H1 → B83 → B45**.
+- 오늘의 신규 교훈 요약: 오라클 인프라 키 승인 침해에 대해서는 소비자측 검증이 무력하다 — Microstable의 `deviation_bps`+stale-pause가 유효 방어선이며, 보조 오라클(checklist 105)이 남은 유일한 구조적 개선.
