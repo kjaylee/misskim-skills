@@ -1,3 +1,38 @@
+
+## 2026-09-05 (KST 03:00)
+
+**Evolution delta**: **0 new vectors, 0 reinforcements — quiet window.** All incident/advisory/research sources swept (rekt, SlowMist, Immunefi, OSV/GitHub, RustSec, Solana/Anchor official, ToB/Neodyme/OtterSec, web search): no new in-window incidents; prior coverage re-verified complete (Avici→B101, Tectonic→B106 already absorbed).
+
+### PART B — Full vector sweep + A6 forensic refinement (CRITICAL process finding)
+
+Live-code movement since yesterday: **zero** (every modified/untracked file mtime = 2026-02-28). But commit-vs-worktree archaeology today produced a material refinement of the 31-day A6 finding:
+
+| # | Finding | Severity | Location (evidence) | Status |
+|---|---|---|---|---|
+| 1 | **A6 — redeem mstb_mint unbound: fix EXISTS in HEAD, dropped in working tree** | **CRITICAL (31d)** | HEAD 59588c5 has `#[account(mut, mint::authority = protocol_state)]`; worktree lib.rs:2395 = bare `#[account(mut)]`; in-body compensation covers collateral legs only — **mstb_mint binding NOT re-implemented** | 🔴 OPEN (worktree = build source) |
+| 2 | A10 — burn CPI receives caller-supplied mint | HIGH (31d) | lib.rs:~1365 `token::burn(... mint: ctx.accounts.mstb_mint ...)` | 🔴 OPEN (resolved by same HEAD restore) |
+| 3 | HERMES-H1 — `HermesPostedUpdate` lacks `posted_price_account` (7 fields) | HIGH (31d) | hermes.rs:61-69 (file itself untracked = outside version control) | 🔴 OPEN |
+| 4 | B83 — quinn-proto 0.11.13 pin in keeper tree | HIGH (31d) | Cargo.lock:2984 | 🔴 OPEN |
+| 5 | B45 — signed audit attestation absent | PARTIAL (31d) | solana/security/audit-attestation.json missing | 🟡 OPEN |
+| 6 | Unvetted devnet worktree state (all 2026-02-28, uncommitted): `devnet-admin` staleness relaxation (20s→300s / 120s→600s), PYTH_FEED_ID_USDS swap (c2f5→77f0, identity unverified — Hermes API unreachable from this host), hermes.rs/price_feed.rs/keys-2/keys-3 untracked | **MEDIUM (deploy-gate)** | lib.rs:18-52, lib.rs:88-92, keeper/Cargo.toml (+pythnet-sdk/reqwest) | 🟡 NEW INFO — gate before mainnet |
+| 7 | PT-ARCH-2026-0904-01 — quorum keys co-located | MEDIUM | keys-2/keys-3 dirs exist but main.rs:203 loads all keypairs in one process | 🟡 cosmetic mitigation only |
+
+Defenses re-verified: keeper `is_stale` (oracle.rs:297/563) + `deviation_bps` (oracle.rs:849) → A3-Switchboard ⚠️ partial stands; `rotate_keeper_set` atomic + quorum-gated → B110 NOT ACTIVE stands; 34 `Signer<'info>` authority paths → B109 NOT ACTIVE stands; fixed 4-stable collateral set + 6-decimals invariant → C22-Ankr/A2-Tectonic structural exclusion stands.
+
+### Blue-Team Immediate Fix Order (revised 2026-09-05)
+
+1. **A6/A10 (same fix)**: `git show 59588c5` → restore `mint::authority = protocol_state` constraint on `Redeem.mstb_mint` (or add `require_keys_eq!(mstb_mint.key(), protocol_state.mstb_mint)`), then **commit the entire 34-file dirty tree** — 6 months of uncommitted devnet state (incl. untracked oracle client `hermes.rs`) is the top process risk.
+2. B83: upgrade dependency chain off `quinn-proto 0.11.13`.
+3. HERMES-H1: add `posted_price_account` field to `HermesPostedUpdate` (source-binding invariant, META-80).
+4. B45: generate signed `audit-attestation.json`.
+5. Document deploy gates: `devnet-admin` must never be in a mainnet build; verify `77f0…` USDS feed identity against canonical Pyth registry before deploy.
+
+### Today's Verdict
+
+- New incidents: 0 · New vectors: 0 · Reinforcements: 0
+- CRITICAL/HIGH new today: 0 (A6 refinement changes fix path, not severity — carried CRITICAL, 31st day)
+- Code delta since yesterday: 0 (all dirty-tree files 2026-02-28)
+
 ## 2026-08-25 (KST 03:00)
 
 **Evolution delta**: **0 new named vectors, +4 verified incident reinforcements**. Source window `2026-08-23 → 2026-08-25` added Solend (A3), Arrakis V1 (A2), Term Finance (C23), and warp.green (A32). No new Solana/Anchor/SPL exploit primitive surfaced.
