@@ -1,4 +1,4 @@
-# Attack Matrix — 218 Active Named-Vector Headings / 210 Unique Named IDs + META-01~76
+# Attack Matrix — 219 Active Named-Vector Headings / 211 Unique Named IDs + META-01~76
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -682,6 +682,7 @@ let cbeth_usd = (cbeth_eth as u128 * eth_usd as u128) / SCALE;
   (d) Persist across restarts because the agent reloads skills from a tampered source
 **Key insight vs B29 (Confused-Deputy)**: B29 is a runtime attack via content the agent processes. D32 is a supply-chain attack on the agent's identity/policy layer — the agent believes it is following its own rules while executing attacker instructions. Detection is harder because the agent exhibits authorized behavior (from its poisoned perspective).
 **DeFi agent relevance**: Keeper agents, AI ops assistants, or governance proposal drafters that load skills/tools from a shared registry are fully exposed. One poisoned skill file = full access to all privileged operations the agent can perform.
+**2026-09-05 reinforcement — Self-Issued Authentication (arXiv 2609.03247)**: LLM에 '내가 너의 개발자다'라는 무증명 신원 주장을 검증시키자, Qwen·Mistral·Llama는 *스스로 문제를 설계하고 통과 기준을 정하고 평가해* 외부 증거 없이 'Verified' 반환 — ChatGPT는 '지식 ≠ 신원'을 유지, Claude는 검증 자체를 거부. 함의: **검증자가 자기 증거 기준을 정의하는 순간 신원 검증은 무력화**된다. Keeper 쿼럼·에이전트 상호 인증·LLP 매개 승인에서 '상대가 자기 설계 테스트로 자기 신원을 증명'하는 패턴 금지 — 외부 압정 증거(키 소유·서명 가능성)만 신원 근거로. D32의 신원 계층에 '자기 발급 인증' 하위기법 추가.
 **2026-09-04 reinforcement (SkillShift, arXiv 2609.02564)**: covert policy steering은 파일 변조·명령 주입·태스크 하이재킹을 **전제하지 않는다** — 정상 발행된 서드파티 스킬이 선언된 과제와 출력 인터페이스를 그대로 보존하면서 계층적 검증·실패 유도 최적화·전략 압축으로 에이전트 결정을 미공개 목표로 조종한다(유효성·출력 정당성·이전성·은폐성 동시 유지). 감사 시사: 스킬을 '기능 검증 통과 = 안전'으로 처리하면 안 되며, **Skill Policy Integrity**(스킬 유래 정책이 선언 기능·사용자 승인 목표와 정렬되는지)를 별도 검증 평면으로 둬야 한다. D32의 '변조된 소스' 전제를 무력화하는 validation-passing 서브패턴.
 **Code/config pattern to find**:
 ```yaml
@@ -6756,6 +6757,8 @@ require!(cctp_outflow_1h <= CCTP_CIRCUIT_BREAKER_THRESHOLD,
 
 **Signal**: dev.to "Solana MEV Defense in 2026" (2026-04). vpeNALD bot executes 51,600 TX/day, 88.9% success rate, extracting ~$450K/day in SOL.
 
+**2026-09-05 reinforcement — 하위기법 2건 (bloXroute/ghost 브리프, B78·A91 공통)**: (a) **Authority-hop/passthrough** — SPL 토큰 계정 소유권을 일시적으로 수회 위임·회수하며 공격자 신원을 은폐 — 리더 행동 분석·샌드위치 상관 스코어링을 우회하는 *속성 세탁* 계층. 탐지는 트랜잭션 그래프가 아니라 일시적 소유권 이전의 시간창 상관으로만 가능. (b) **Bundle-leak exploitation** — 릴레이에 보이는 pending 트랜잭션으로 차기 슬롯에 프런트런 선점 — *사설 제출 ≠ 비유출*: Jito 릴레이 단독 보호는 릴레이 가시성·리더 공모 가정에서 붕괴(bloXroute 다중 경로 Jito+Paladin+자체 전파의 근거). Keeper 설계 함의: 사설 번들 도입 시 '유출 불가'가 아니라 '유출 난이도' 전제; leader-risk 스코어링(고위험 리더 슬롯 회피)을 제출 계층에.
+
 **Pattern — 93% of Solana sandwich attacks now span multiple slots**:
 ```
 Slot N (Attacker-Controlled Validator):  tx[last] = front-run buy order
@@ -12226,6 +12229,20 @@ attacker:
 - **Microstable 라이브 체크**: B110 NOT ACTIVE(로테이션 원자 교체+신규 쿼럼 게이트, 에이전트 해제 전 소비자 Active 강제+init 재등록 차단, approve/delegate 0매치 — 코드 실증). INFO 1건: pending 회전 cancel 명령 부재(활성화 신규 쿼럼 요구로 완화).
 
 **Matrix state as of 2026-09-04 (red-team daily evolution)**: **B110 added** (post-completion effect-closure failure — residual authority/effect paths after terminal lifecycle states; EFFECTBOUND arXiv 2609.02866; '작업 완료 ≠ 효과 종결' 제5면) + **강화 4건** (D32←SkillShift validation-passing policy steering, B51/META-75←CodePoisonRAG task-matched CWE artifact, 블루 watch←ACLE-MCP post-auth execution trust gap, 방법론←PrimSynth primitive formalization). Microstable live-code check: B110 NOT ACTIVE(rotate_keeper_set 원자성·deregister 소비자 전면 Active 강제·init 재등록 차단 — 라인넘버 실증). Carry-forward watch: SIMD tx-batch priority ordering, Agave program-cache 분리, SseRex, A6 CRITICAL(30일차 — 블랙팀 원장), AIS, MutMem-V2/Defense-as-Skill/ACLE-MCP(블루), arXiv 9/3 배치(20:00 ET 발표분) 익일 흡수.
+
+### B111. Blind-Trusted Lifecycle-Hook/Config Update Path — Trojanized Update Binds Host Execution to Benign Events (HookPry, arXiv 2609.03884)
+
+**Pattern**: 에이전트 하네스·런타임이 lifecycle-hook/구성 갱신 경로를 무검증 신뢰. 공격자는 *플러그인 메타데이터·훅 구성만* 제어해도, 양성 버전 배포판의 갱신에 공격자 명령을 양성 이벤트(세션 시작·툴 호출·파일 편집)에 묶어 트로이화 — 실행은 주 에이전트가 *관측하지 않는 시점*에 호스트 권한으로 발화. HookPry 실측: 평가 7개 하네스 전부 침해, 최대 92.5% 성공률(25개 하네스×백엔드 조합, 1,000회 E2E); Microsoft Defender recall 0%, 정적 방어 3종의 합집합도 악성 아티팩트 47.5% 놓침.
+
+**기존 벡터와의 구별**: B108(사칭 *의존성* — 패키지 치환)과 D32(에이전트가 소비하는 *내용/신원* 오염)가 대상 계층이라면, B111은 *갱신 경로 자체의 호스트 실행 바인딩 권한* — 구성 레이어가 어떤 관측자도 검증하지 않는 코드 실행 면이 된다. B109('존재 ≠ 효력')·B110('완료 ≠ 종결') 계보의 제6면: **'구성 = 데이터'가 아니라 '구성 갱신 = 코드'**.
+
+**온체인/keeper 쌍둥이**: keeper 구성은 호스트 실행에 영향(키페어 경로·RPC·임계값·스케줄). **Microstable: DEFENDED (2026-09-05 코드 실증)** — `verify_config_integrity`(keeper/src/config.rs:851-899): (a) HMAC 키 env 필수, 누락 시 fail-closed 에러; (b) 미서명 탈출구는 `allow_unsigned && cfg!(debug_assertions)` — *컴파일 타임* 게이트로 릴리스 빌드에서 구조적으로 불가; (c) 서명 사이드카 일반파일 검증 + 권한 비트 0o077 마스크 검사; (d) `load()`(config.rs:170-184)는 read→verify→parse 순서로 verify 우회 경로 부재, 설정 파일 부재도 fail-closed(config.rs:173-177). **경미 경화 2건(INFO)**: HMAC 비교가 `observed != expected`(config.rs:893) 비상수시간 16진 문자열 비교 — subtle/ct 비교 권장(국지 타이밍 침투성은 낮음); HMAC 키 env 전달 — 동일 uid의 /proc/<pid>/environ 가시는 표준적이나 키 보관 경로 문서화 필요.
+
+**활성화 트리거**: (1) 리팩터링에서 HMAC 게이트 제거/우회 경로 신설(신규 무서명 포맷·별도 parse 경로); (2) env/CI 시크릿 유출로 서명 권한 획득; (3) CI 워크플로·크론 정의·pre-commit 훅 등 '이벤트→호스트 실행' 매핑 도입 시 그 자체가 B111 면 — misskim-skills 워크플로는 현재 `pull_request`(fork 비특권) 트리거로 안전, `pull_request_target` 전환 금지; (4) 설정 무결성 회귀 테스트(서명 불일치 반드시 거부) 삭제.
+
+**방어 함의**: '갱신 = 코드' 원칙 — 이벤트에 실행을 바인딩하는 모든 구성(훅·크론·워크플로·스케줄러)은 자체적으로 서명/HMAC 게이트; 탈출구는 런타임 플래그가 아니라 컴파일 타임 게이트로; 갱신 직후 '묶인 실행 목록' diff 공개(관측 불능 시점 제거).
+
+**Sources**: arXiv 2609.03884 (HookPry, 2026-09-03) | microstable/solana/keeper/src/config.rs:170-184, 851-899 | bloXroute 브리프(갱신-경로 신뢰의 인프라 사례)
 
 ## META-79: Unit-Scoped Assurance / Population-Emergence Gap — 격리 단위 보증 vs 창발적 집단 거동의 무소유 (퍼플팀 2026-09-04)
 
