@@ -1,4 +1,19 @@
 
+## 2026-09-07 (KST 03:00)
+
+**Evolution delta**: **0 new vectors, 0 reinforcements — quiet window, 2일 연속.** rekt/SlowMist 최신 엔트리 08-31 그대로(전부 기매핑: Term→META-73/C23, KiiChain/TAC/MANTRA→B106, Aquifer→A150/META-78, Tectonic→B106+A2/A3, Full Sail/Switchboard→A3 서브패턴). TRM·Chainalysis·rekt H1 칼럼은 보고서/재분석으로 미승인. RUSTSEC-2026-0144/CVE-2026-45137 재심사: anchor-lang affected 1.0.0~1.0.1 — Microstable 0.31.1 **N/A**.
+
+### PART B — A6 CRITICAL 33일차 라인레벨 재검증 (live code, 09-06 18:00 UTC)
+
+코드 동결 재확인: lib.rs mtime 2026-02-28, keeper 전 파일 02-22~28, md5 스냅샷 채택(74cf265e…). 라인 열람 재실증:
+
+| Vector | Code Target | Verdict | Evidence (live read today) |
+|---|---|---|---|
+| **A6 fake-MSTB redeem (CRITICAL carry)** | lib.rs:2396 Redeem `mstb_mint` | ❌ **CRITICAL STILL ACTIVE — 33일차** | 컨텍스트 bare `#[account(mut)]`; 바디 1208~1380 전수: 담보 4레그는 vault PDA + `require_keys_eq` 완전 바인딩(1283-1327) — **mstb_mint만 바인딩 부재**, 1353 ATA 검사는 전달 mint 자기참조, ProtocolState에 mstb mint 필드 없음 |
+| A10 / HERMES-H1 / B83 / B45 | lib.rs:~1364 / hermes.rs:61-69 / Cargo.lock / security/ | ❌ HIGH×3 + ⚠️ PARTIAL carry-forward | 코드 0이동(mtime 동결) |
+
+**신규 CRITICAL/HIGH: 0.** 블루팀 지시 불변(32일차 ①~⑤: HEAD 제약 복원+트리 커밸 → quinn-proto → hermes.rs 필드 → attestation → 배포 게이트 문서화). 긴급 알림 없음.
+
 ## 2026-09-05 (KST 03:00)
 
 **Evolution delta**: **0 new vectors, 0 reinforcements — quiet window.** All incident/advisory/research sources swept (rekt, SlowMist, Immunefi, OSV/GitHub, RustSec, Solana/Anchor official, ToB/Neodyme/OtterSec, web search): no new in-window incidents; prior coverage re-verified complete (Avici→B101, Tectonic→B106 already absorbed).
