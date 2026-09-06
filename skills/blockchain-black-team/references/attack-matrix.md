@@ -14,6 +14,11 @@
 - `patched in latest version` ≠ `patched where the funds live`: Rain/Avici (B101), Enjin legacy ERC-1155, and Moonwell's third 2026 incident together show that assurance artifacts attach to code identities (commit, version, audit report) while exploitable risk attaches to the **live set of instances actually custodying value** — and no role owns that instance inventory. Promoted to **META-76** (full section at file end).
 - `quorum counted correctly` ≠ `quorum meaningful`: Term Finance's 0.5 ETH majority over an opt-in governance wrapper (C23 mechanics note) is the governance twin of BonkDAO's 2.9% turnout already cited in META-73 — a degenerate participation state trivially satisfies the verification. CometDEX's USDC→USDC same-asset swap adds the degenerate-*identity*-input variant. Both reinforce **META-73** (vacuous verification); no new number.
 
+### 2026-09-07 red-team methodology note (variant-generation targeting; no new vector)
+
+- **Automated detection is weakest exactly where red-team variants should concentrate.** arXiv 2609.02624 (2026-09-02, LLM vulnerability injection): ~1,000 LLM-generated variants → only **16.58% survive** semantic validation, survivors cluster in **structurally simple targets and localized syntactic patterns**, and three static analyzers show **complementary-but-incomplete coverage profiles**. Inverse targeting rule for our own mutation arsenal: deprioritize single-line/localized flaw injection (that space is well-covered), prioritize **cross-instruction state interactions, CPI-boundary freshness assumptions (B112 lens), keeper/oracle ordering, and multi-account invariants spanning program boundaries** — the classes where both LLM injection and static analysis degrade. Methodology reinforcement only; no ID assigned.
+- **Loss-mix stats keep D-series priority ahead of A-series.** 2026 running total ≈ $1.3B DeFi losses with **compromised keys/operations outnumbering contract bugs** (crypto.news aggregate, single source, 2026-09). Existing D-series key/ops vectors unchanged; treat as statistical corroboration, not a new vector.
+
 ## A. Smart Contract Vectors
 
 ### A1. Reentrancy

@@ -2447,3 +2447,8 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 3. **Prove guards at runtime, not by presence.** anchor-spl's `cpi_guard_enable/disable` used the wrong owner pubkey and never actually guarded anything (#4322, deprecated #4465). Controls should be verified by observable behavior (e.g., a CPI the guard should have blocked actually failing).
 4. **Commitment can be configured-but-ignored.** Anchor client ignored the configured commitment level until #4666. Verify confirmation semantics by observed finality behavior, not constructor args; keep finalized-only for irrevocable operations.
 5. **Repo-org migration = hijack window.** Anchor's canonical origin is now `otter-sec/anchor` (release artifacts, CHANGELOG), `verifiedBuild` uses `verify.osec.io`. Pin post-migration org immediately; stale org redirects are prime re-registration/typo targets (D43 family).
+
+### 2026-09-07 redteam — SIMD repo rename: pinning rule materialized as availability event
+
+6. **`anza-xyz/simds` → `solana-foundation/solana-improvement-documents`** (verified 2026-09-06: both `anza-xyz/simds` and `solana-foundation/simds` return hard 404 — **no redirect**, latest commit at new canonical = 2026-09-01). Rule #5's org/rename-hijack window did not materialize as a compromise here, but as silent feed breakage: any automation or doc pinning the old path now reads "no activity" and mistakes it for quiet. Concrete countermeasure: canonical-source URLs get a two-week post-rename watch with an explicit not-found alarm (distinguish 404 from empty feed), not just content diffs. Applies equally to dependency git sources (`anchor = { git = ... }`) — a renamed upstream serves a build break today and a re-registration target tomorrow.
+
