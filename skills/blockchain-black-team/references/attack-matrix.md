@@ -12397,3 +12397,42 @@ attacker:
 - **A4 ← Dream Health Chain (09-05, $71.9K)**: 파손된 보상 상태기계 — 미세 입금이 클레임 상태 리셋 → 동일 고정 지급 반복. timeline-only 마이너.
 - **WATCH — Liquid Network (09-06, ~$320M, Elements bug)**: 페더레이션 키 무손상, Elements 소프트웨어 버그로 **무담보 L-BTC ~4,000 코인 발행** → SideSwap 정상 peg-out 레일로 인출, 사이드체인 일시 정지(준비금 95%). "purported white-hat" 주장(버그 공개 의사). **메커니즘 상세 미공개 — 코드 레벨 분석 불가 → 벡터 미승인, 워치**. 포스트모템 공개 시 무담보 발행 클래스(하모니 수신 재생=A32 계열과의 구별점: 키 아닌 발행 버그) 재평가.
 - **RUSTSEC-2026-0279 (rojo, DNS rebinding)**: dev 서버 툴 — Microstable 의존성 트리 0매치. N/A. OSV anchor-lang 4건·solana-program 0건 — 전부 기매핑(0144 N/A 재확인). arXiv 9/4+ 배치 미인덱싱(최신 가시 09-03T18:19 — 그리스 세금 로깅 논문, 벡터 아님). Anza 어드바이저리 0건(v4.3.0-rc.0 09-04, v4.4.0-alpha.3 09-03 — 보안 비고 없음). Immunefi 창 내 신규 공개 0건(5년 메타 통계만). Neodyme 최신 하드웨어(Lenovo DCC 등), OtterSec 307 지속.
+
+---
+
+## META-82: Audit-Label Scope Conflation (ALSC) — 감사 라벨 스코프 혼동 (퍼플팀 2026-09-08)
+
+**Published**: 2026-09-08 | **Severity**: HIGH (methodological) | **Purple Team**
+
+**Signal**: ack3 H1 2026 DeFi Incident Dataset (arXiv:2608.13792, v1 2026-08-13, Josef Gattermayer; 데이터셋 Zenodo DOI 10.5281/zenodo.21906487) — 135건 사고·귀속 손실 $939.86M (2026-01-01~06-29). 감사 이력 확인된 68건 중 **46건(67.6%)의 공격 경로가 식별 가능한 모든 사전 공개 감사 스코프 밖** — 스코프 내 20건, 미확정 2건. **손실가중 94.4%가 스코프 밖 경로**; 대형 2건 제외 민감도 분석에서도 72.1%로 방향 불변(논문 자체 보정). 핵심 명제: **"프로젝트 단위 감사 이력과 사건 경로 스코프는 독립 변수다."**
+
+**The Pattern**:
+1. **라벨 발행 단위 ≠ 라벨 소비 단위**: "audited by N firms" 라벨은 프로젝트 전체·영구 유효처럼 유통되지만, 실제 유효 도메인은 특정 커밋·특정 아티팩트 집합·특정 시점이다.
+2. **시간 감쇠(audit age)**: 감사 후 병합되는 모든 diff는 라벨의 유효성을 무효화하지만 라벨은 갱신되지 않는다 — B45(deployment delta)의 산업 전체 정량화.
+3. **다운스트림 label-level 소비**: 리스팅·보험·파트너 통합·사용자는 path-level 검증 없이 라벨을 신뢰 자산으로 소비한다. META-81(증명 스코프 수입)과 동일한 구조가 증명(artifact)이 아닌 *감사 보증(assurance)* 계층에 적용된 형태.
+
+**Why distinct (4-way 대조 — 재포장 공격 선제 차단)**:
+- **META-02** (Full Attack Surface ≠ Deployed Contract): 진입점이 컨트랙트 *외부*(도메인/디바이스/CDN)에 존재하는 경우 — "어디로 뚫렸나".
+- **META-42** (ASQ, 92% 감사 통과): 감사가 다루는 *범주*(코드)와 공격 범주(키/운영/거버넌스/오라클)의 불일치 — "무엇을" 감사했나.
+- **META-81** (PSIF): 정당한 증명 아티팩트의 유효 스코프를 소비자가 초과 해석 — 증명 계층의 의미론.
+- **META-82** (ALSC): 같은 범주·같은 코드베이스 *안에서도* 사건 경로가 특정 감사 아티팩트 스코프 밖(감사 후 diff, 미감사 모듈, N회차 업그레이드)으로 나가는데 라벨은 프로젝트 단위로 잔존 — *"어디서·언제"*의 라벨 의미론. ack3의 94.4% 손실가중은 범주 불일치(META-42)보다 **경로 스코프 불일치가 손실 규모를 지배**한다는 최초의 정량 분리 증거다.
+
+**Why Audits/Defenders Miss This**:
+1. 감사 계약서는 스냅샷에 서명하지만 조직은 라벨을 자산처럼 축적한다("3사 감사" 마케팅) — 라벨 인플레이션 인센티브.
+2. 병합 게이트에 "이 diff가 마지막 감사 스코프를 벗어나는가?" 판정 단계가 없다.
+3. 스코프·커밋 해시·날짜·제외 경로를 외부에 노출하는 표준 형식이 없다 — 라벨만 유통된다.
+4. audit age를 리스크 감쇠 변수로 계상하는 프레임워크가 없다.
+
+**Defense Pattern**:
+1. **스코프 결속 선언**: 모든 어선런스 산출물에 (commit hash, artifact set, date, excluded paths) 명시 — 라벨이 아니라 스코프 레코드를 유통.
+2. **병합 게이트 스코프 대조**: CI에서 커밋이 마지막 감사 스코프 매니페스트와 충돌하면 re-audit/review 트리거.
+3. **audit age decay**: 어선런스 신뢰도를 시간·변경량의 함수로 감쇠 계상.
+4. 외부 어선런스 소비(파트너·보험·리스팅) 시 라벨이 아닌 path-level 증명 요구.
+
+**Microstable Relevance**: HIGH (프로세스 계층) — 리뷰/감사 산출물의 스코프-커밋 결속 매니페스트 부재(2026-09-08 find 실증: `*-audit-manifest`/`*-scope-manifest` 0매치 → **PT-ARCH-2026-0908-01**). A6 CRITICAL(34일차)의 수정 커밋("HEAD 59588c5 제약 복원 + 34파일 트리")은 기존 어떤 리뷰 스코프와도 무관한 신규 경로 — **수정 병합 시 모든 어선런스 라벨 리셋 필수**. B45(deployment delta)의 메타 상위 구조.
+
+**Sources**: https://arxiv.org/abs/2608.13792 (1차, v1 2026-08-13 21:51 UTC) | https://doi.org/10.5281/zenodo.21906487 (데이터셋) | 본 파일 META-02/META-42/META-81/B45 교차
+
+---
+
+**Matrix state as of 2026-09-08 (purple-team daily evolution)**: **META-82 added** (Audit-Label Scope Conflation — 감사 이력(프로젝트 단위 라벨) ≠ 사건 경로 스코프의 변수 분리: ack3 H1 2026 데이터셋 68건 중 67.6% 건수/94.4% 손실가중 스코프 밖, 민감도 72.1%; arXiv:2608.13792 1차). 7개 소스 스트림: FV/인버리언트 에버그린(Medusa v1 2025-02·Recon·Cyfrin 재노출, 5주+ 조용), AI-agent 재보도(beam.ai 5침해=$27M SOL 사건 등 전부 기흡수 계열, CSA 09-01 브리핑은 프레이밍만), 바운티(Usual $16M 기록 바운티 — 방향성만), A151(Cozy/UMA)은 블랙팀 09-08 런이 META-81 귀속까지 완료 → 퍼플 갭 없음. Microstable: **PT-ARCH-2026-0908-01 MEDIUM 신규**(어선런스 스코프 결속 매니페스트 부재 — META-82의 온프레미스 실현; A6 수정 커밋 시 라벨 리셋 조항 포함), carry-forward 유지(A6 34일차, HERMES-H1, B83, B45, PT-ARCH-0904-01, PT-ARCH-0901-01). Total: **82 META entries**.
