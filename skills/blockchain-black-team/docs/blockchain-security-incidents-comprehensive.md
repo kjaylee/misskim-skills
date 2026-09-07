@@ -772,3 +772,19 @@
 
 - **2026-08-31 — Float Protocol (Uniswap V3 Hypervisor, $28K / 10.71 ETH, timeline-only)** — Flash-loan swaps manipulated the V3 pool **slot0 spot price**; Hypervisor contracts mispriced LP shares with **no TWAP/oracle validation and no slippage protection**; repeated deposit/withdraw at inflated share values. Vector mapping: **A2/A3 classic (slot0 vs TWAP)** — no new mechanism; recorded as timeline-only minor (FH-Token precedent).
   Sources: https://x.com/SlowMist_Team/status/2094373942291026287 | https://hacked.slowmist.io/
+
+- **2026-09-02 — GebProxyActions (Ethereum, $14K)** — DSProxy delegatecall 전용 설계의 proxy-action 헬퍼가 직접 호출을 수락; 피해자의 직접 사용이 `ownsSAFE[safe]=GebProxyActions` 레지스트리 오염 → 공격자 `quitSystem(manager, safe, dst)` 직접 호출로 `safeAllowed` 우회·담보 이탈. Vector: **A70 역변형 강화(2026-09-08)** — 맥락 가정 헬퍼의 out-of-context 호출 레지스트리 오염. Sources: https://x.com/SlowMist_Team/status/2094986310683705835 | https://hacked.slowmist.io/
+
+- **2026-09-04 — Notional Finance V1 Escrow (Ethereum, ~$1.73M)** — free-collateral 평가의 unsafe uint128 cast로 위조 부채 ≈2^128이 0으로 절단, solvency 우회 → 가짜 fCash 민트 → 69,257 DAI + 1,658,524 USDC 인출, ~689.2 ETH 전환 후 Tornado. Vector: **A5 강화(2026-09-08) — cast-narrowing solvency bypass**(산술 오버플로 아닌 변환 축소). Sources: https://x.com/NotionalFinance/status/2095905726094856391 | https://hacked.slowmist.io/
+
+- **2026-09-05 — Rocket (perp, $287K)** — 휴면·저유동 perp 시장에서 버너 파산/반대편 가짜 수익 셀프트레이드 → $287K 양성 PnL 인출, 손실 사회화. Vector: **A36 + META-60 강화(2026-09-08) — dormant-market mark-model 추출**. Sources: https://x.com/rcktfoundation/status/2096594778863669498 | https://hacked.slowmist.io/
+
+- **2026-09-05 — Secured Finance (Ethereum lending, ~$104K)** — 플래시론+셀프트레이드로 당신 블록 주문장 평균가 조작, 가짜 lend 포지션을 담보로 승격. 원 공격자 WBTC 대형 시도는 gas 부족 revert, 프론트러너 0.9 WBTC. Vector: **A93 강화(2026-09-08)**. Sources: https://x.com/DefimonAlerts/status/2096855557575458950 | https://hacked.slowmist.io/
+
+- **2026-09-05 — Reddio RedSonic Vault (Ethereum, ~$22.8K)** — 무허가 stETH vault 등록 후 동일 stETH가 ETH/stETH 양 vault 이중 계상 → 플래시론 rsvETH 셰어 인플레이션 → 이중 상환. Vector: **A47 강화(2026-09-08) — 전역 유일 계상 불변식 부재**. Sources: https://x.com/SlowMist_Team/status/2096439593403089077 | https://hacked.slowmist.io/
+
+- **2026-09-05 — Dream Health Chain (BSC, 71,851 USDT)** — 파손 보상 상태기계: 미세 입금이 클레임 리셋 → 고정 지급 반복. Vector: **A4 timeline-only(2026-09-08)**. Sources: https://x.com/SlowMist_Team/status/2096152539767120259 | https://hacked.slowmist.io/
+
+- **2026-09-06 — Liquid Network (Bitcoin sidechain, ~4,000 BTC ≈ $320M, WATCH)** — Elements 소프트웨어 버그로 무담보 L-BTC ~4,000 발행 → SideSwap 정상 peg-out으로 페더레이션 월렛에서 인출. 키 무손상. "purported white-hat" 주장, 사이드체인·브릿지 노드 정지(준비금 95% 타격). **메커니즘 상세 미공개 — 워치, 포스트모템 대기**. Sources: https://x.com/Liquid_BTC/status/2096696272447218108 | https://hacked.slowmist.io/
+
+- **2026-09-07 — Cozy Finance (Optimism, ~$160K)** — UMA Optimistic Oracle 주장-쟁의 구조 악용: Aave v2/Curve 보호 시장 PToken 매수 → "해킹 발생" YES 무쟁의 주장(트리거의 독립 사실 검증 부재) → TRIGGERED → 소각·USDC 청구(지급자격 사전 스냅샷 미결속). 동일 프로토콜 2차 침해(1차 2025-08 ~$427K). Vector: **A151 NEW(2026-09-08) — optimistic-assertion 의미론 갭 + 사후 취득 지급자격 갭의 dual composite**. Sources: https://x.com/SlowMist_Team/status/2096881310237426062 | https://hacked.slowmist.io/ | https://blog.verichains.io/p/cozy-protocol-incident

@@ -2452,3 +2452,7 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 
 6. **`anza-xyz/simds` → `solana-foundation/solana-improvement-documents`** (verified 2026-09-06: both `anza-xyz/simds` and `solana-foundation/simds` return hard 404 — **no redirect**, latest commit at new canonical = 2026-09-01). Rule #5's org/rename-hijack window did not materialize as a compromise here, but as silent feed breakage: any automation or doc pinning the old path now reads "no activity" and mistakes it for quiet. Concrete countermeasure: canonical-source URLs get a two-week post-rename watch with an explicit not-found alarm (distinguish 404 from empty feed), not just content diffs. Applies equally to dependency git sources (`anchor = { git = ... }`) — a renamed upstream serves a build break today and a re-registration target tomorrow.
 
+
+### 2026-09-08 blackteam — A151 Optimistic-Assertion Resolution (Cozy/UMA)
+
+167. **Dispute-window oracle 소비자는 의미론을 스스로 검증하라.** 온체인 "확정"(`무쟁의`, 챌린지 창 통과, 멀티시그 승인 완료)이 증명하는 것은 *프로세스 속성*이지 *사실 발생*이 아니다(META-81 치환). Solana 맥락: (a) 키퍼 쿼럼 승인을 사실 검증으로 쓰는 트리거(서킷브레이커·보험 지급)는 승인 외에 관측 가능치(가격 이탈·준비금·pause)와 교차 확인; (b) 주장-쟁의 구조(화이트햇 조건·바운티 지급)를 온체인 구현 시 지급자격을 **사전 제안 스냅샷**에 결속 — TRIGGERED 시점 홀더 지급은 사후 취득을 보상한다(Cozy 실증: 미트리거 시장 헐값 매수 → YES 주장 → 무쟁의 확정 → 소각·청구, $160K); (c) 쟁의 liveness의 경제성(감시자 인센티브 vs 사건 규모)을 위협모델에 명시 — 무쟁의 창이 무료 위조 창이 되지 않는지.

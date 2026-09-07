@@ -12347,3 +12347,36 @@ attacker:
 - **Watch**: SIMD PRs/Issues API returned Not Found on `Anza-XYZ/SIMDs` (possible repo move or API change — recheck tomorrow); SIMD-504 coding-shreds revert in Agave #14995 (2026-09-05) — block-propagation robustness window, no technique yet; arXiv 9/4 batch still unindexed (latest visible submission 2026-09-03T17:49Z) — absorb tomorrow; STRIDE (Asymmetric Research × Solana Foundation, structured ecosystem security program) — defensive program, monitor for disclosed technique feeds.
 
 **Matrix state as of 2026-09-06 (purple-team daily evolution)**: **META-81 added** (Proof-Scope Import Fallacy — 정당한 증명의 범위를 소비자가 초과 해석: Allbridge/Circle CCTP 2026-08-19 ~$190K, 24일 잠복 credit + 어테스테이션 정당·검증자 정직; SlowMist 1차 분석으로 09-05 기각 번안) + **A134 강화**(L8084 야생 실증·프로토콜 간 일반화) + **입장 기율 개선**(저신뢰 소스+날짜 이상 → 기각 전 1차 발행처(SlowMist Zone/Medium) 확인 단계 추가 — 09-05 기각은 절차상 타당했으나 이상 신호가 사건 종결이 아니라 원사건 재조회 트리거였음). FV/invariant·AI-agent·IR 스트림은 에버그린 재노출만(벤더 A2A 블로그, META-27/28/L1810 기커버). 신규 named vector 없음(메타 계층 승격 — 벡터 분류는 블랙팀 다음 창 검토 권고: Allbridge 2026-08-19은 A121/A32 계열 강화 후보). Microstable: 신규 파인딩 0(크로스체인 부재), HERMES-H1 근거 강화(존재검사-vs-출처검사 동형), carry-forward 유지(A6 D33 코드동결 — 블랙팀 09-06 런 mtime 전량 02-28 재실증 인용; PT-ARCH-0904-01 위협모델 문서화 미실시 캐리포워드). Total: **81 META entries**.
+
+## A151. Optimistic-Assertion Semantic Trust Gap — Dispute-Window Proof Substitution + Post-Assertion Eligibility Acquisition (Cozy Finance / UMA OO)
+
+**Date added**: 2026-09-08 (black-team daily) | **Signal class**: oracle-resolution semantics × payout-eligibility temporal binding
+**Source**: Cozy Finance (Optimism, 2026-09-07, ~$160K, SlowMist X 2096881310237426062) — DeFi 보호(보험) 시장 2차 침해(1차 2025-08-29 ~$427K, Verichains 분석).
+
+**Mechanism (dual-gap composite — A150과 동일 구조, 갭이 서로 다른 감사 계층에 위치)**:
+- **Gap 1 — 증명 범위 치환 (semantic)**: UMA Optimistic Oracle의 `무쟁의(disputed 없음)` 확정은 *"쟁의 창구 동안 아무도 반박하지 않았"*을 증명할 뿐 *"주장된 사실(해킹 발생)이 참"*을 증명하지 않는다. Cozy의 트리거 컨트랙트는 이 확정을 사실로 소비 — Aave/Curve 실제 해킹의 독립 검증(pause 이벤트·오라클 이탈·준비금 급감) 부재. 공격자는 YES 주장 제출 → 본드 게시 → liveness 창을 그냥 기다림(정직한 감시자가 없으면 반박 비용은 0).
+- **Gap 2 — 지급자격 시간결속 부재 (temporal)**: PToken 지급 자격이 **사전 제안(pre-proposal) 홀더 스냅샷에 결속되지 않음**. 공격자는 미트리거 시장에서 헐값(≈0)에 PToken을 산 뒤 주장·대기·소각·USDC 청구. 지급 대상 = "TRIGGERED 시점 홀더"라는 설계가 사후 취득을 보상.
+- **결합 조건**: 각 갭 단독으론 생존 가능(독립 검증 있으면 가짜 주장 무효, 스냅샷 결속 있으면 공격자의 사후 매수가 무가치). 결합 시 드레인 — 두 방어가 **서로 다른 리뷰 렌즈**(오라클 통합 검증 vs 상품 설계/액티어리얼)에 속해 단일 감사가 둘 다 못 본다.
+
+**Attack choreography**: (1) Aave v2·Curve 보호 시장에서 PToken 매수 → (2) UMA OO에 "해킹 발생" YES 주장 + 본드 → (3) 쟁의 창 무사 통과 → (4) 시장 TRIGGERED 전환 → (5) PToken 소각 + USDC 청구. 1차(2025-08) 침해 후 트리거 경로 재설계됐으나 여전히 OO-의존 — 동일 의존성의 반복 침해.
+
+**Why distinct**: A2/A3/A93은 *가격* 피드 조작(외부 시장 신호 왜곡) — A151은 **비가격 주장(climate) 해결 메커니즘의 의미론**. META-81(Proof-Scope Import Fallacy)의 오라클 해결계 실증: `무쟁의 확정(P) ≠ 사실 발생(Q)` 치환. A150과 동일한 dual-verification composite 구조(두 독립 갭의 결합 필요조건). LULA/MOKE/WUSD 지급자격 패밀리는 *반복 청구·주소 순환*을 다룸 — A151의 시간축(사후 취득 vs 사전 스냅샷)은 신규.
+
+**Defense**: (1) **트리거 의미론 독립 검증** — OO 확정 외에 원사건 관측 가능치(pause/이탈/준비금)와 교차 확인, 미일치 시 지급 거부; (2) **지급자격 = 사전 제안 스냅샷 결속**(청구 시 홀더가 아니라 제안 시점 홀더); (3) 쟁의 liveness의 경제성 산정 — 본드·감시 인센티브가 사건 규모 대비 충분한지(무쟁의 = 무료 위조 창); (4) 보험 상품의 지급 조건을 OO 어휘가 아닌 검증 가능한 predicate로 기술.
+
+**Microstable applicability**: **NOT ACTIVE today (latent)** — 프로그램·키퍼에 optimistic-oracle/dispute-window 메커니즘 0매치(2026-09-08 grep 실증; `challenges`는 AIG 샌드박스 학습 시나리오로 무관). 활성화 트리거: (a) 보험/트리거 상품 도입, (b) 사고대응 지급(바운티·화이트햇 조건)을 온체인 주장-쟁의 구조로 구현, (c) 키퍼 거버넌스 투표를 무쟁의 창구 기반으로 전환. 온체인 쌍둥이 주의: HERMES-H1(존재검사-vs-출처검사)와 동형 — Hermes 포스트도 `서명 존재`를 `인가 출처·자산`으로 치환 중.
+
+**Sources**: https://x.com/SlowMist_Team/status/2096881310237426062 | https://hacked.slowmist.io/ | https://blog.verichains.io/p/cozy-protocol-incident (1차 2025-08) | https://oracle.uma.xyz/ ( dispute-window 설계) | 본 파일 META-81, A150, HERMES-H1
+
+### 2026-09-08 reinforcement batch — SlowMist 백필 창(09-02→09-07) 흡수
+
+**커버리지 갭 정정**: 09-07 런의 SlowMist 관측은 최신 엔트리 08-31로 기록됐으나, 실제 페이지에는 09-02~09-05 엔트리가 존재(백필 지연 또는 fetch 캐시). METR 선례에 따라 커버리지 갭 보정으로 오늘 전량 평가.
+
+- **A5 ← Notional Finance (09-04, $1.73M)**: V1 Escrow free-collateral 평가의 **unsafe uint128 cast** — 위조 부채 ≈2^128이 좁은 타입에서 **0으로 절단(truncation)**, solvency 검사 우회 → 가짜 fCash 민트 → DAI/USDC 인출(689.2 ETH 전환, Tornado). 핵심 디테일: 산술 오버플로가 아니라 **변환 축소(cast-narrowing)** — 값은 소스 타입에 들어가지만 대상 타입에서 랩. 방어: `u128::try_from`/checked 변환 + 타입 경계값(2^128-1, 2^64-1) 퍼징. **Microstable 실증(2026-09-08 라인 점검)**: 값 계산 경로 전부 `checked_mul/div/add` + u128 중간값(lib.rs:3424-3442, 3531-3534, 3581-3583) — cast는 enum→u8·index→usize·shift→u32뿐(경계 안전). **DEFENDED.**
+- **A70 ← GebProxyActions (09-02, $14K) 역변형**: 위임컨텍스트 전용 설계 helper가 **직접 호출 수락** — 피해자가 DSProxy 경유 대신 직접 호출하며 `ownsSAFE[safe]=GebProxyActions` 레지스트리 오염, 공격자는 `quitSystem` 직접 호출로 `safeAllowed` 우회·담보 이탈. 신규 서브패턴: **맥락 가정(context-assumed) 헬퍼의 out-of-context 호출이 소유권 레지스트리를 오염** — A70(공격자가 delegatecall로 맥락 획득)의 역방향(맥락 부재 호출이 상태 오염). 방어: 진입 가드(msg.sender == 사용자 DSProxy) 또는 헬퍼 무상태화. EVM 특화 — Microstable N/A(Solana CPI에 delegatecall 맥락 없음).
+- **A93 ← Secured Finance (09-05, $104K)**: 플래시론 + 셀프트레이드로 **당신 블록 주문장 평균가** 조작 → 가짜 lend 포지션을 유효 담보로 승격. A93(주문장 담보 평가 오라클)의 직접 실증 — same-block 평균은 조작 가능, TWAP/외부 피드 대조 필요. 원 공격자 WBTC 대형 시도는 gas 부족으로 revert, 프론트러너가 0.9 WBTC 획득(L922 copycat 재실증).
+- **A36 + META-60 ← Rocket (09-05, $287K)**: **휴면·저유동 perp 시장**에서 버너 계정 파산·반대편 가짜 수익 셀프트레이드 → 실제 PnL 인출, 손실 플랫폼 전체 사회화. 서브패턴: **dormant-market mark-model 추출** — 마크가 외부 유동성 0인 시장에서 나오는 한 PnL 정산은 조작 가능; 사회화가 프로토콜을 최후 거래상대로 만듦(META-60 loss-socialization 과소평가 재실증).
+- **A47 ← Reddio RedSonic Vault (09-05, $22.8K)**: 무허가 vault 등록 후 **동일 stETH가 ETH vault+stETH vault 이중 계상** → 플래시론 rsvETH 셰어가 인플레이션 → ETH 과다 상환 → rsvstETH 상환으로 stETH 회수. A47(개별 원소 통과·집계 불변식 위반) 실증: 등록 시 원소별 검증은 통과, "전역 유일 계상" 불변식 부재.
+- **A4 ← Dream Health Chain (09-05, $71.9K)**: 파손된 보상 상태기계 — 미세 입금이 클레임 상태 리셋 → 동일 고정 지급 반복. timeline-only 마이너.
+- **WATCH — Liquid Network (09-06, ~$320M, Elements bug)**: 페더레이션 키 무손상, Elements 소프트웨어 버그로 **무담보 L-BTC ~4,000 코인 발행** → SideSwap 정상 peg-out 레일로 인출, 사이드체인 일시 정지(준비금 95%). "purported white-hat" 주장(버그 공개 의사). **메커니즘 상세 미공개 — 코드 레벨 분석 불가 → 벡터 미승인, 워치**. 포스트모템 공개 시 무담보 발행 클래스(하모니 수신 재생=A32 계열과의 구별점: 키 아닌 발행 버그) 재평가.
+- **RUSTSEC-2026-0279 (rojo, DNS rebinding)**: dev 서버 툴 — Microstable 의존성 트리 0매치. N/A. OSV anchor-lang 4건·solana-program 0건 — 전부 기매핑(0144 N/A 재확인). arXiv 9/4+ 배치 미인덱싱(최신 가시 09-03T18:19 — 그리스 세금 로깅 논문, 벡터 아님). Anza 어드바이저리 0건(v4.3.0-rc.0 09-04, v4.4.0-alpha.3 09-03 — 보안 비고 없음). Immunefi 창 내 신규 공개 0건(5년 메타 통계만). Neodyme 최신 하드웨어(Lenovo DCC 등), OtterSec 307 지속.
