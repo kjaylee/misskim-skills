@@ -1,4 +1,4 @@
-# Attack Matrix — 221 Active Named-Vector Headings / 213 Unique Named IDs + META-01~76
+# Attack Matrix — 224 Active Named-Vector Headings / 216 Unique Named IDs + META-01~76
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -12485,3 +12485,28 @@ attacker:
 - **Advisory 스윕**: RustSec 최신 = greentic(09-08 redteam 기흡수) + rojo CVSS 갱신(N/A) + gtk3-rs unmaintained 철회(무관). OSV anchor-lang 4건 전부 기매핑, solana-program/spl-token 0건. Anza 어드바이저리 0건. Immunefi 신규 공개 0건. Neodyme/OtterSec/ToB 창 내 신규 0건. rekt 1면: 전건 기흡수(Term→C23/META-73+08-30 mechanics, Nesa/KiiChain/TAC/MANTRA→B106, Harmony→A32, Coldcard→B15/META-73, Coinsbuy→B15/META-74, VerusCoin→A125, DGFiP→코드 메커니즘 부재 미승인).
 
 **Matrix state as of 2026-09-09 (black-team daily evolution)**: **A152 + B114 NEW — 09-01(B106) 이후 첫 이중 승인.** Liquid WATCH($320M) 메커니즘 공개로 해소 — range-proof 캐시 언더키잉 + patch-disclosure race(B45/KiiChain 계열). WealthManagementV2→B15 강화(퇴행 파라미터 통화화 서브패턴, Microstable 경계 방어 실증). SIMD 리로케이션 워치 종결(신규 캐노니컬 활성 확인). arXiv 9/4+ 배치 4일째 미인덱싱 캐리포워드. PART B: A6 CRITICAL **35일차**(lib.rs:2395-2396 bare `#[account(mut)] mstb_mint`, 코드 mtime 02-28 동결·HEAD 08a981a 불변), A10/HERMES-H1/B83 HIGH + B45 PARTIAL carry-forward 불변, **신규 CRITICAL/HIGH 0**(A152/B114/파라미터 경계 전부 DEFENDED 또는 기존 로커스 귀속). 블루팀 지시 불변(34일차 항목 ①~⑤).
+
+## B115. Post-Relocation Namespace Re-registration & Location-Anchored Trust Drift — Canonical-Repo 이전 후 네임스페이스 재등록·혼합 표면 신뢰 박리 (coral-xyz/anchor → otter-sec/anchor)
+
+**Date added**: 2026-09-09 (red-team daily; 전이 사건 자체는 ≤2026-09-04 소급 — v1.2.0 릴리스가 이미 otter-sec 경로로 발행됐고 커뮤니티 리포 `anchor-community`가 2026-05-19 생성됨; 본 실행에서 `coral-xyz/anchor` API 호출의 301 리다이렉트로 최초 탐지·직접 실증) | **Signal class**: supply-chain location identity × time-delayed namespace recapture
+**Source**: GitHub API 직접 실증 (2026-09-09): `repos/coral-xyz/anchor` → **301 Moved Permanently** → `otter-sec/anchor`; coral-xyz org **활성 유지**(HTTP 200 — 네임스페이스 미방출, 재등록 공격의 전제 미충족); crates.io `anchor-lang` max_stable 1.2.0 레지스트리 정합(변조 징후 없음); npm 스코프는 `@coral-xyz/*` 그대로(전이 미적용) — git·npm·GitHub Pages 3개 표면의 정체가 혼재.
+
+**Mechanism**: 개발자 생태계의 신뢰가 콘텐츠 해시·서명 키가 아니라 **가변 경로(location)** 에 고정된다. 정당한 소유권 이전은 투명 301로 무통과되며 "아무 일도 일어나지 않았다"는 경험을 학습시킨다. 이후 (a) 원 조직이 개명·삭제돼 네임스페이스가 방출되고, (b) 공격자가 구 조직명을 재등록해 동일 이름 리포를 생성하는 순간 301이 끊기며 **수 년치 문서·Stack Overflow 답변·CI 템플릿·git-의존성 참조가 공격자 콘텐츠로 재귀결**된다. `coral-xyz.github.io/anchor` 문서 도메인도 구 조직명에 귀속돼 있어 조직 방출 시 문서 하이재크(악성 quickstart curl|bash) 평면이 된다. 전이 직후의 혼합 표면 drift(git=otter-sec, npm=@coral-xyz, Pages=coral-xyz.github.io)는 개발자를 교차 검증 없는 경로 불일치에 둔감하게 만드는 훈련 효과를 낳는다.
+
+**Attack choreography (PoC 수준)**: (1) 표적 프레임워크의 정당한 org 이전을 관찰(공개 이벤트, 대기 비용 0); (2) 구 org 네임스페이스 방출 대기(개명·삭제·방치 감시); (3) 재등록 + 동일 리포명 생성 → `[patch.crates-io] anchor-lang = { git = "https://github.com/coral-xyz/anchor" }` 패턴의 로컬/CI 빌드가 다음 `cargo update`에서 공격자 코드를 pull → 빌드 시점 코드 실행(빌드스크립트·proc-macro 발화 평면은 B113과 공유); (4) 병행: 구 Pages 도메인 재점거로 "공식 문서" 사칭 설치 스크립트 배포. 발화가 미래 시점(네임스페이스 방출)에 조건 걸려 있어 **현재 미발화 — 레드팀 레인의 선행 연구 대상**.
+
+**Why distinct**: D26(커뮤니티 진입점 하이재크)는 현재 소유 표면 탈취, typosquat 계열(`@coralxyz/anchor` 하이픈 제거 변종)은 유사 명칭 사칭 — B115는 **정확한 원 경로의 시간지연 재점거**로 표적이 아직 공격자 손에 있지 않다는 점에서 다르다. B95/B113은 발화 채널 분류, B115는 신뢰 앵커의 재지정 자체가 벡터다. 09-07 redteam이 기록한 SIMD 캐노니컬 리로케이션(anza-xyz → solana-foundation)과 동일 패턴의 두 번째 대형 인스턴스 — 생태계 규모 반복 구조를 근거로 명명 벡터로 승격.
+
+**Defense**: (1) 의존성은 레지스트리 체크섬(Cargo.lock)으로 고정 — 경로가 아니라 콘텐츠에 바인딩; (2) git-의존성 전면 금지 또는 rev 핀 + 구 경로 301→404/200 전환 감시 알림(캐노니컬 경로의 리다이렉트 상태 변화는 보안 이벤트); (3) 301을 조용히 따르지 말고 공식 다중 채널(X·Discord·문서 도메인 소유자) 교차 확인 — 특히 Pages 도메인 소유자와 리포 소유자 일치 여부; (4) 의존성 도입 시점 cargo vet·provenance 스냅샷으로 조직 이력 기록.
+
+**Microstable applicability**: **NOT ACTIVE — 무노출 4중 실증(2026-09-09)**: ① git-의존성 0개(workspace·keeper·program Cargo.toml 3종 grep), ② Cargo.lock 내 `coral-xyz` 0매치(전 항목 registry+crates.io-index 소스, anchor-lang 0.31.1 체크섬 핀), ③ 하드코딩 coral-xyz 참조는 node_modules 내 npm 패키지 메타데이터뿐(npm 레지스트리 소유권은 GitHub과 별도), ④ keeper 인바운드 HTTP 서버 부재(axum/actix/hyper/TcpListener 0매치 — RUSTSEC-0279류 DNS-rebinding 평면도 부재). **LATENT 트리거**: coral-xyz org 방출·개명 감시 — 방출 시 Pages 재점거·구경로 git-참조 재귀결이 활성화됨(워치 항목 등록).
+
+**Sources**: GitHub API 실증 스냅샷 2026-09-09(301 리다이렉트 / org 200 / crates.io anchor-lang 1.2.0 정합 / anchor-community created 2026-05-19 / v1.2.0 release body otter-sec 경로 / pushed_at 09-08T15:09Z) | https://github.com/otter-sec/anchor | 본 파일 D26, B95, B113, 09-07 redteam SIMD-rename pinning 노트
+
+### 2026-09-09 redteam batch — B115 승격 + 매트릭스 헤더 동기화
+
+- **B115 NEW** (위 본문) — Anchor 캐노니컬 저장소의 otter-sec 이전(301 직접 실증)에서 추상화한 위치-신뢰 재지정 벡터. Microstable 무노출 4중 실증(NOT ACTIVE), LATENT 트리거만 워치.
+- **헤더 카운트 동기화**: 블랙팀 09-09 배치(A152·B114)가 헤더에 미반영된 채였음 — 221/213 → **224/216**으로 일괄 정정(블랙팀 2 + 레드팀 B115 1).
+- **중복 회피 확인**: RustSec 창 내 활동(0279 CVSS 갱신·gtk3-rs 철회)과 SIMD 캐노니컬 재개는 블랙팀 09-09 배치가 이미 흡수 — 레드팀은 독립 재실증만 기록(301·org 상태·crates.io 정합).
+- **arXiv**: 최신 가시 09-04T17:31(블록체인 관련 3편 전부 비공격 — LLM agent controls 09-04, Greek eSEND 로깅 09-03 전흡수, blockchain-anchored agent evidence 09-03 비벡터). 9/5+ 배치 미인덱싱 지속(Labor Day+1 화요일 발표 지연) — 워치 캐리포워드.
+- **SIMD-0608 신규**(DeactivateDelinquent for Closed Vote Accounts): 스테이킹·투표계정 레인 — 프로그램 보안 비적용, 벡터화 안 함.
