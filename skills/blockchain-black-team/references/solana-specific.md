@@ -2465,3 +2465,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 ### 2026-09-10 blackteam — A32 Nomic custom-forwarding double-spend
 
 170. **(A32) 커스텀 중계·전달 레인은 '미감사 민트 권한'이다.** Nomic nBTC(09-09, $3.15M)의 Solana 번역: 표준 전송 모듈(토큰 프로그램 CPI·anchor-spl)의 감사 이력은 그 위에 얹힌 커스텀 래퍼(Pyth `UncheckedAccount` 레인·수동 CPI 조립·커스텀 중계/포워딩 로직)에 **0의 보증**을 제공한다. (a) 값류를 재발행·차감 해제·재시도할 수 있는 모든 커스텀 경로는 **매 홉마다 자산별 보존 불변식**(에스크로/담보 ≥ 유통 바우처)을 강제 — forward/timeout-refund/retry 전 경로 포함; (b) 전달·재시도 패킷은 원본 차변 소비 증명(단일 사용 nullifier)을 동반 — '전달'이 '새 발행 권한'이 되지 않도록; (c) 목적지 측 담보-유통량 괴리 모니터가 자동 알림(Nomic은 Alloyed BTC 담보 36% 오염 후에야 동결); (d) Microstable의 유추 커스텀 레인 = Pyth 가격 경로 — 전결속 실증(lib.rs:3147-3178)이 정답형이며, 보존 표면은 A6/A10(Redeem `mstb_mint` 미결속) 캐리포워드에 귀속.
+
+## 2026-09-10 — Anchor v1 self-payer realloc 코드젠 차단 (PR #4804, A135 강화)
+
+- v1 브랜치 `e21a464d`(merged 2026-09-09T16:43Z): `generate_constraint_realloc` 코드젠에 `realloc::payer.key() == field.key()`(자기-지불) 시 `InvalidArgument` 반환 추가 + `ReallocSelfPayer` 계정 구조(+`realloc::payer = sample` 자기 참조) 부정 테스트("fails when realloc payer matches target"). 동일일 docs #4953 "clarify security boundaries".
+- 패턴 함의: `realloc::payer`는 A135가 정식화한 refund-recipient authority — 상류가 이제 **payer==target 조합 자체를 정의되지 않은 동작이 아니라 명시적 오류**로 분류. 하위 호환 파괴(셀프-페이어 사용 프로그램은 v1 업그레이드 시 컴파일은 되나 실행 거부).
+- 감사 렌즈: Anchor 제약에서 `payer = <같은 계정>` 표기 발견 시 구버전 파인은 「의도된 셀프 환급」이 아니라 「코드젱 미정의 동작」으로 취급할 것.

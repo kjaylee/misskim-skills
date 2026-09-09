@@ -1,4 +1,4 @@
-# Attack Matrix — 226 Active Named-Vector Headings / 218 Unique Named IDs + META-01~83
+# Attack Matrix — 227 Active Named-Vector Headings / 219 Unique Named IDs + META-01~83
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -7550,6 +7550,8 @@ SAFER SHAPE:
 
 ### A135. Anchor Subtractive Realloc Rent-Refund Siphon / Extra-Lamport Payer Reassignment
 
+**2026-09-10 red-team reinforcement — v1 self-payer codegen block**: Anchor v1 브랜치 커밋 `e21a464d`(PR #4804 "Fix/v1 realloc payer target check", merged **2026-09-09T16:43Z**, 1.2.0 이후)이 코드젠에 `realloc::payer.key() == field.key()`(자기-지불) 시 `InvalidArgument` 명시 차단 추가 + `ReallocSelfPayer` 부정 테스트 신설. 동일일 docs PR #4953 "clarify security boundaries". realloc-payer 축이 **활동적으로 경화 중인 신뢰 경계**임을 상류가 재확인 — 0.31.x 핀 프로그램은 셀프-페이어 패턴에서 수정 전 코드젠 유지. **Microstable 이중 NOT ACTIVE(2026-09-10)**: ① 프로그램 내 Anchor `realloc` 제약 0매치(grep); ② 원시 resize 헬퍼(lib.rs:3000-3013)는 grow-only + `payer≠account` 구조적 강제 — 자기 자금 부족 상태에서의 자기 이체는 정의상 실패, shrink·반환 경로 부재로 A135 사이펀도 비적용.
+
 **Published**: 2026-07-02 | **Severity**: HIGH | **Red Team**
 
 **Signal**: Anchor commit `3958d5b` / PR `#4664` (`docs(lang): warn about subtractive realloc refund footgun in v1`, merged 2026-06-29) documents that subtractive `realloc` refunds **all lamports above the new rent-exempt minimum** to `realloc::payer`, not just the rent delta.
@@ -12541,6 +12543,22 @@ attacker:
 
 **Sources**: https://arxiv.org/abs/2609.07865 (2026-09-07, 1차 API fetch 2026-09-09) | EventSpec off-chain harness(브릿지 릴레이어·익스플로러·NFT 마켓 재현, 지갑 4건 확인) | 본 파일 B17, A3, B106 클러스터와 변별 | Anchor emit!/emit_cpi! 로그 인코딩 · 실패 tx 로그 반환 동작(RPC 메타)
 
+## B117. Agent-Skill Bundle Root-Escape & Undeclared-Closure Trust Transfer (스킬 루트 이탈·미선언 클로저 신뢰 이전 — ClosureBound 유도)
+
+**Origin**: arXiv "ClosureBound: Versioned Transitive Dependency-Closure Binding and Operation-Time Effect Governance for Agent Skills" (2026-09-05, 1차 fetch 2026-09-10) — 공개 에이전트 스킬 549개(고유 파일 4,872개)에 대한 어휘적 감사 실측: **67/549(12.2%)가 자기 루트 밖으로 해석되는 링크 포함**, 번들 파일 보유 526개 루트 중 매니페스트 외 전 경로를 명시적으로 나열한 것은 **21개(4.0%)**, frontmatter 의존성 필드를 선언한 루트는 **0개**.
+
+**Vector**: 에이전트가 스킬에 부여하는 실행 권한은 「검증된 디렉터리 루트」에 결속되지만, 실행 시점 유효 클로저는 ①심볼릭/상대 링크가 루트 밖 콘텐츠로 해석되는 경로, ②선언 없이 호출 시점에 해석되는 의존성(패키지·도구·모델)을 포함한다. 설치/검증 시점 무결성 검사가 매니페스트와 가시 파일만 점검하면, 이후 런타임 참조 추적이 **검증 경계 밖 공격자 선택 콘텐츠**에 도달한다 — 권한이 물질적 클로저 변화를 가로질러 이전된다.
+
+**Attack scenario**: (1) 무해한 스킬 게시 — SKILL.md·에셋은 전부 루트 내; (2) 한 참조(`../../sibling-skill/`, 절대경로, 또는 검증 후 교체되는 경로)만 루트 밖 향함; (3) 소비 에이전트가 설치 검증 통과 후 런타임에 참조를 따라감 — 지연 해석(lazy resolution)이므로 검증 시점과 실행 시점 콘텐츠가 다를 수 있음; (4) 루트 밖 콘텐츠가 스킬과 동일 권한(파일·네트워크·도구)으로 실행됨.
+
+**Why distinct**: A74 + RustSec 8/10-12 클러스터(zip·7z·tar-rs) = **아카이브 추출 단계**의 파일시스템 이탈 — 설치/언팩 페이즈. B115 = 소스 **정체성/위치** 재등록(어디서 가져오는가). B117 = 페치 이후 **실행 신뢰 클로저**의 불일치 — 검증된 루트 vs 유효 클로저. D39/D28 = CI 아티팩트 주입(빌드 축). 넷은 페이즈와 결속 대상이 모두 다르다.
+
+**Defense**: (1) 권한 부여 시점 클로저 핀닝 — 스킬 루트에서 도달 가능한 전 파일(심볼릭 링크 **대상 포함**)을 해시로 결속; (2) 루트 밖으로 해석되는 링크 거부(설치 시 `find -type l` + readlinkcanonical 검사); (3) 매니페스트 의존성 선언 의무화 + 호출 시점 재해석(ClosureBound 참조 모니터: 그랜트가 클로저 루트·효과 상한·목적·유효기간·에포크에 결속, 내구성 시점 재해석 후 통과 시에만 승인); (4) 검증-실행 사이 클로저 변화 = 자동 권한 회수 트리거.
+
+**Microstable applicability**: **NOT ACTIVE(외부 공격 축) — 자체 토폴로지 실측 1건(2026-09-10)**: 워크스페이스 스킬은 로컬 저작·git 관리(misskim-skills)라 외부 게시-설치 경로 부재. 그러나 `~/.openclaw/workspace/skills` 자체가 심볼릭 링크 → `/Volumes/workspace/skills`(외장 볼륨, 워크스페이스 git 경계 밖), `plugin-skills/{discord,canvas,browser-automation}`도 npm dist 디렉터리로 향하는 심볼릭 링크 — 「스킬 루트가 검증된 워크스페이스 루트 밖에서 해석되는」 B117의 정확한 형상. 현재는 Master의 정상 레이아웃(무해)이나 볼륨 마운트 교체·경로 변경 시 자동 재경로되는 구조 — INFO 워치. **활성화 트리거**: 외부 스킬 설치 도입 또는 `/Volumes/workspace` 마운트 지점 변화 감지 안됨.
+
+**Sources**: arXiv ClosureBound (2026-09-05, `export.arxiv.org` API 1차 fetch 2026-09-10 — 67/549·21/526·0/549 수치 원문 직접 확인) | 자체 실측: `find -type l` + `readlink` (2026-09-10) | 본 파일 A74·B115·D39·B29/B38+META-66/70 클러스터와 변별
+
 ### 2026-09-09 redteam batch — B115 승격 + 매트릭스 헤더 동기화
 
 - **B115 NEW** (위 본문) — Anchor 캐노니컬 저장소의 otter-sec 이전(301 직접 실증)에서 추상화한 위치-신뢰 재지정 벡터. Microstable 무노출 4중 실증(NOT ACTIVE), LATENT 트리거만 워치.
@@ -12585,3 +12603,14 @@ attacker:
 - **기각 ③**: Immunefi 7개월 트리아지 지연(Reddit r/bugbounty 단일 계정) — 2차·미검증. META-83 facet ①의 인바운드(리서처 제보→수정) 방향성으로만 기록, 매트릭스 미편집.
 
 **Matrix state as of 2026-09-10 (purple-team daily evolution)**: **신규 META 0 — META-82 강화 1건(업계급 수렴: CoinGecko 88%/60% vs ack3 94.4%/67.6%, 손실 계층 = 비커버 계층)**. 7개 소스 스트림: FV/인버리언트 7주 조용, AI-agent(a16z 재노출 기각 — 08-24 선흡수), 바운티(Immunefi 트리아지 — 방향성만), IR/크로스체인(블랙팀 09-10 A32 Nomic·Amnext WATCH 선행 — 퍼플 갭 없음), 감사실패(CoinGecko/CNBC → META-82 강화), 공급망(Anchor 어드바이저리 기매핑 — 블랙팀 09-10 완료). Microstable: 신규 파인딩 0(1차 실증: lib.rs mtime 02-28 동결·HEAD 08a981a·L2395-2396 bare mstb_mint 재확인 — A6 CRITICAL 블랙팀 36일차 판정 인용), carry-forward 전항 유지. Total: **83 META entries (불변)**.
+
+### 2026-09-10 redteam batch — B117 NEW + A135 v1 강화 + arXiv 인덱싱 재개
+
+- **B117 NEW** (위 본문) — ClosureBound(09-05) 실측 기반 스킬 루트 이탈·미선언 클로저 신뢰 이전. 자체 토폴로지 실측 1건(workspace/skills → /Volumes/workspace/skills 심볼릭 링크, 무해·INFO 워치). 외부 공격 축 NOT ACTIVE.
+- **A135 강화** — Anchor v1 `e21a464d`(PR #4804, 09-09 16:43Z) 자기-지불 realloc 코드젠 차단 + #4953 보안 경계 문서. **블랙팀 09-10 어드바이저리 스윕(GHSA 3건)이 놓친 커밋 레벨 보안 픽스** — 어드바이저리 API 미발행 상태로 병합 1h47m 후 블랙팀 런 창 내였으나 커밋 스트림 미점검. 레드팀이 선행 흡수. Microstable 이중 NOT ACTIVE.
+- **arXiv 인덱싱 재개**(워치 종결): 최신 가시 09-04 → **09-07T20:41**로 갱신. 창 내 신규 평가: Guppy(재귀 ZK 라이트 클라이언트, 방어축 — 비벡터) / EventSpec(09-07, 블랙팀 09-10 B116 선흡수) / Attestream·Watch-and-Crack·Barnacle·Graph-Screening(비공격·비블록체인 공격축) / **ClosureBound(09-05)→B117 승격** / **EFFECTBOUND "When Does Authorization End?"(09-02)→기각: 「검토된 커밋 ≠ 병합된 커밋」(GitHub merge binding 갭)·NATS 큐 비움 후 잔여 발행·Kafka 철회 후 이전 요청 잔존 = META-73(vacuous verification)·B114(patch race) 계열 강화 사례로만 기록, 신규 벡터 아님 — 본 워크스페이스 자체 적용 노트: 미리보기-승인 후 커밋 해시 재확인 없는 push는 동일 갭 노출**.
+- **SPL 오탐 제거**: token/token-2022/transfer-hook 등 "Remove" 커밋 다수는 **전부 2025-01-10산**(모노레포 분해 당시) — 2026-09 신규 아님. 2025-03 동결 판정 유지, B115 트리거 아님.
+- **RustSec**: 0282 aligned_box(09-09, double-free via panicking Drop in `realloc_with_default`, safe Rust 도달) — Cargo.lock 0매치로 Microstable 무노출; 패닉-unwind 이중해제 패턴은 Solana BPF 패닉=abort 의미론으로 온체인 번역 불가 — 벡터화 기각. manzana 0273 패치 노트(09-09) = 기존 어드바이저리 상태 갱신만.
+- **MEV**: 창 내 에버그린만 — IMC26 Jito 샌드위치 계량(521,903 instances)·bloXroute cross-slot 샌드위치 = A8/C25 + 「Type 4 Builder Cooperation」(CoW/Aave 항목) 기커버, 1차 실증 없어 강화 보류. **CTF**: DVD v3/v4 솔루션 재노출만, 신규 챌린지 0.
+- **헤더 카운트 감사**: 편집 전 헤더 226/218 vs 블랙팀 09-10 배치 노트 「228 불변」 불일치(+2 미설명) — 본 배치는 파일 헤더 기준 +1(B117) = **227/219**. 불일치 2건은 블랙팀 차회 정렬 과제로 이관.
+- **워치 갱신**: coral-xyz org 네임스페이스 방출(B115 LATENT) / Anchor v1 브랜치 post-1.2.0 보안 경계 커밋 스트림(#4953·#4804 이후 신규 — 어드바이저리 API 지연 갭 커버용) / arXiv 정상 복귀(워치 종결) / Agave B101 / PolinRider 변종(B113).
