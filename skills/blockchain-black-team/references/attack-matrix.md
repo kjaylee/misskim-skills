@@ -1,4 +1,4 @@
-# Attack Matrix — 224 Active Named-Vector Headings / 216 Unique Named IDs + META-01~76
+# Attack Matrix — 226 Active Named-Vector Headings / 218 Unique Named IDs + META-01~83
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -12522,6 +12522,25 @@ attacker:
 
 **Sources**: GitHub API 실증 스냅샷 2026-09-09(301 리다이렉트 / org 200 / crates.io anchor-lang 1.2.0 정합 / anchor-community created 2026-05-19 / v1.2.0 release body otter-sec 경로 / pushed_at 09-08T15:09Z) | https://github.com/otter-sec/anchor | 본 파일 D26, B95, B113, 09-07 redteam SIMD-rename pinning 노트
 
+**2026-09-10 reinforcement (red-team)**: 스테일 네임스페이스 1개 추가 확인 — `solana-foundation/anchor`도 GitHub API `/repositories/325891672` 리다이렉트로 `otter-sec/anchor`(동일 repo id)에 귀결. 즉 anchor 캐노니컬 저장소는 **coral-xyz → solana-foundation → otter-sec 3개 네임스페이스를 통과**(5월 어드바이저리 GHSA-c6rc 참조가 solana-foundation 경로, 09-04 v1.2.0은 otter-sec 경로)했고 현재 **2개의 스테일 경로가 동일 현 경로로 수렴** 중. solana-foundation org는 활성(SIMD 리로케이션 수용 조직)이라 방출 가능성은 coral-xyz보다 낮으나, 레드팀 관점의 본질은 **이전 1회당 스테일 신뢰 경로가 영구히 누적**된다는 것 — 이벤트 빈도가 낮을수록 각 경로의 방치 기간은 길어진다. B115 LATENT 트리거 감시 대상에 `solana-foundation/anchor` 경로 전환 추가.
+
+## B116. Anchor Event-Plane Semantic Spoofing — Origin Confusion & Event-State Desync Against Off-Chain Automation (emit! log-plane; EventSpec-derived, EVM-실증 → Solana 미개척 번역)
+
+**Date added**: 2026-09-10 (red-team daily) | **Signal class**: off-chain automation trust-boundary × semantic-layer forgery (인프라 침해 불필요)
+**Source**: arXiv 2609.07865 "EventSpec: Defining and Detecting Event-Semantic Issues in Blockchain Ecosystems" (2026-09-07) — 감사보고서·사고사례 개방 카드분류로 **5개 결함 클래스**(event collision, state-event mismatch, unauthorized event emission, event emission mismatch, event parameter mismatch) 정의, 6,617개 실계약 검출(정밀도 90.17%), **오프체인 공격 벡터 2종**(unintended emitter에 의한 event origin confusion, 상태 갱신 없는 event-state desync)을 브릿지 릴레이어·익스플로러·NFT 마켓플레이스에서 재현, 지갑 6건 보고(4건 확인 + $600 바운티). EVM에서 실증됐고 **Solana/Anchor 번역은 미개척** — 레드팀 레인("아직 아무도 안 당한" 공격)의 정의에 부합.
+
+**Mechanism (Solana/Anchor 번역 — 4개 평면)**: Anchor `emit!`은 이벤트를 **로그 문자열**(`program log:` + base64[8B discriminator = sha256("EventName")[..8] + Borsh data])로 기록하며, 로그는 합의 상태가 아니라 **권고(advisory) 데이터**다. 체인은 이벤트-상태 정합을 강제하지 않는다(EVM과 동일한 근본 결함). ① **discriminator collision** — 공격자 프로그램이 동명 이벤트를 선언하면 discriminator 동일; program-id 결속 없이 discriminator만 보고 파싱하는 소비자는 타 프로그램 이벤트 수용(unauthorized emission + origin confusion). ② **raw text plane** — 어떤 프로그램이든 `msg!`/`sol_log`로 임의 문자열(가짜 `program log: <base64>` 포함) 출력 가능; 로그를 문자열 매칭·정규식으로 소비하는 구현은 위조 수용. ③ **log flattening origin loss** — `meta.log`는 평면 배열이며 프로그램 귀속은 `meta.innerInstructions` 프레임 순회로만 복원; 로그를 flatten해 스캔하는 소비자는 발신자 귀속 상실 → unintended-emitter 클래스의 직접 근거. ④ **failed-tx log visibility desync** — 실패 트랜잭션의 로그도 RPC 메타에 반환(`meta.err` 설정된 채); `meta.status/err` 미확인 소비자는 **롤백된 상태변경의 이벤트**를 유효로 수용 — Anchor 프로그램이 에러 직전 `emit!`한 이벤트가 원자적 롤백과 무관하게 소비되는 Solana 특유 desync 경로.
+
+**Attack choreography (PoC 수준)**: (1) 표적 오프체인 자동화(키퍼·릴레이어·인덱서)가 `logsSubscribe`/`onLogs`로 이벤트 소비하는지 관찰(공개 인프라, 대기 비용 0); (2) 공격자 프로그램 배포 후 표적 이벤트와 동일 discriminator·레이아웃 이벤트 발생 → 소비자 필터가 program-id까지 결속하지 않으면 주입 성공; 혹은 (3) 표적 프로그램 자체의 state-event mismatch(이벤트 낙관 발행, 상태 갱신 조건부)를 트리거해 소비자-상태 괴리 유발; (4) 소비자가 행동하는 순간(릴레이 서명·키퍼 트랜잭션·알림 기반 수동 승인)이 곧 피해 시점 — 표적 프로그램·체인 자체는 정상 동작.
+
+**Why distinct**: B17(오프체인 운영자 인프라 침해 → 상태 주입, Garden Finance)는 **침해 전제** 벡터 — B116은 침해 없이 **의미론 계층(로그)이 정상 작동하는 소비자를 오도**. A3계열(오라클 무결성)은 가격 데이터 축, B116은 **실행 사실 signaling 축**. 블록스페이스 소진 벡터(시간축 지연)와 직교. EVM 사례는 EventSpec이 실증했으나 Solana 프로그램 대상 실측 사고는 아직 공개 바 없음 — 미래 실전화 후보.
+
+**Defense**: (1) 이벤트 소비는 **state-pull 우선** — 이벤트는 힌트, 행동 직전 `getAccountInfo`(processed→confirmed 승격)로 상태 재검증; (2) 이벤트 파싱은 소유 instruction 프레임(`innerInstructions` 트리)의 program-id에 결속 + (program-id, discriminator) 쌍 필터; (3) `meta.err`/`meta.status` 미확인 로그 폐기; (4) 로그 문자열 정규식 매칭 금지 — Anchor 이벤트 디코더 전용; (5) `emit_cpi!` 사용 시 발신 프레임(callee) 귀속 명시; (6) 오프체인 자동화 감사 범위에 "이벤트 소비 경로" 항목 의무화(프로그램 감사는 이 축을 기본 누락).
+
+**Microstable applicability**: **NOT ACTIVE — 2중 구조 실증(2026-09-10)**: ① 프로그램 이벤트 표면 부재 — `programs/microstable/src/lib.rs`에서 `emit!`/`emit_cpi!` **0매치**(이벤트 자체가 없음); ② keeper는 이벤트-푸시가 아니라 **상태-풀 구조** — `agent_loop.rs`·`main.rs` 전체에서 로그 구독/파싱 0매치, 전 소비가 `utils::fetch_account`/`get_account_with_commitment`(계정 데이터 + owner program 암호학적 결속) 경유. **활성화 트리거**: 향후 emit! 도입 + keeper 로그 구독 전환 PR — 해당 조합 등장 순간 평면 ①~④ 전부 개방.
+
+**Sources**: https://arxiv.org/abs/2609.07865 (2026-09-07, 1차 API fetch 2026-09-09) | EventSpec off-chain harness(브릿지 릴레이어·익스플로러·NFT 마켓 재현, 지갑 4건 확인) | 본 파일 B17, A3, B106 클러스터와 변별 | Anchor emit!/emit_cpi! 로그 인코딩 · 실패 tx 로그 반환 동작(RPC 메타)
+
 ### 2026-09-09 redteam batch — B115 승격 + 매트릭스 헤더 동기화
 
 - **B115 NEW** (위 본문) — Anchor 캐노니컬 저장소의 otter-sec 이전(301 직접 실증)에서 추상화한 위치-신뢰 재지정 벡터. Microstable 무노출 4중 실증(NOT ACTIVE), LATENT 트리거만 워치.
@@ -12557,3 +12576,12 @@ attacker:
 - **PART B (live-code, 2026-09-10)**: ① **A6 CRITICAL 36일차 UNFIXED** — lib.rs:2395-2396 `#[account(mut)] mstb_mint: Box<Account<'info, TokenMint>>` bare 재확인(코드 mtime 02-28 동결, HEAD 08a981a 불변). ② A32-렌즈: 프로그램 내 forwarding/passthrough 패턴 0매치; Pyth 커스텀 레인 전결속 재실증(lib.rs:3147-3178) ✅. ③ A10 HIGH / HERMES-H1 HIGH / B83 HIGH / B45 PARTIAL carry-forward 불변. ④ **신규 CRITICAL/HIGH 0**. 블루팀 지시 불변(35일차 항목 ①~⑤).
 
 **Matrix state as of 2026-09-10 (black-team daily evolution)**: **신규 네임드 벡터 0 — A32 강화 1건(Nomic nBTC custom-forwarding double-spend, WATCH pending postmortem) + WATCH 1건(Amnext, RCA 미공개 미승인)**. Anchor 어드바이저리 3건 전건 기매핑 직접 확인(B112/A124/A123; GHSA-6px8 patched_versions 공란 = META-83 공시-트리아지 비대칭 미세 실증). Active named headings **228 불변**. PART B: A6 CRITICAL **36일차**, A10/HERMES-H1/B83 HIGH + B45 PARTIAL carry-forward 불변, 신규 CRITICAL/HIGH 0.
+
+### 2026-09-10 purple-team batch — META-82 강화(업계급 수렴 실증) + 기각 3건
+
+- **META-82 강화(기록)** — CoinGecko 「State of Crypto Security Report 2026」(보고서 날짜 2026-08-27) via CNBC 2026-09-08 보도(1차 fetch 2026-09-09 19:43 UTC; CoinGecko 원문은 봇 챌린지 403로 CNBC 직접 인용분으로 실증): 2025-01~2026-07 $3.63B 손실 중 **피해액 88%·피해 플랫폼 약 60%가 독립 보안 감사 완료 상태**, "대부분의 공격이 통상적 검사가 커버하지 않는 영역 표적". ack3(arXiv:2608.13792 — 67.6% 건수/94.4% 손실가중 스코프 밖)과 **독립 데이터셋 수렴** + 계층 확장: 상위 손실 Bybit $1.4B(서명 인프라)·KelpDAO $292M·Drift $285M — 손실 질량이 **감사 상품이 커버를 표방하지 않는 계층**(운영·키·인프라)에 집중함을 업계급 정량으로 뒷받침. 신규 META 아님 — 메커니즘(보증 라벨 ↔ 실제 손실 표면의 독립성)은 META-82에 이미 형식화됨; 본 건은 근거 기반 강화.
+- **기각 ①**: rekt "After the Post-Mortem"(Cork) — 2025-06 회고로 창 밖 + 감사 스코프 은폐 주제는 META-16(2026-03-20 protos 동일 내용, 공격자 온체인 메시지 원문 포함)·META-24가 기커버(자체 grep 재확인). 재노출 재승격 금지.
+- **기각 ②**: a16z crypto "Can AI agents actually pull off DeFi exploits?" — **2026-08-24 강화로 전수 선흡수**(L1834-1840: 50%→10% Etherscan txlist 컨테이니미네이션·harness dominance·discovery-bottleneck 전부 등록 완료). 검색 재노출만.
+- **기각 ③**: Immunefi 7개월 트리아지 지연(Reddit r/bugbounty 단일 계정) — 2차·미검증. META-83 facet ①의 인바운드(리서처 제보→수정) 방향성으로만 기록, 매트릭스 미편집.
+
+**Matrix state as of 2026-09-10 (purple-team daily evolution)**: **신규 META 0 — META-82 강화 1건(업계급 수렴: CoinGecko 88%/60% vs ack3 94.4%/67.6%, 손실 계층 = 비커버 계층)**. 7개 소스 스트림: FV/인버리언트 7주 조용, AI-agent(a16z 재노출 기각 — 08-24 선흡수), 바운티(Immunefi 트리아지 — 방향성만), IR/크로스체인(블랙팀 09-10 A32 Nomic·Amnext WATCH 선행 — 퍼플 갭 없음), 감사실패(CoinGecko/CNBC → META-82 강화), 공급망(Anchor 어드바이저리 기매핑 — 블랙팀 09-10 완료). Microstable: 신규 파인딩 0(1차 실증: lib.rs mtime 02-28 동결·HEAD 08a981a·L2395-2396 bare mstb_mint 재확인 — A6 CRITICAL 블랙팀 36일차 판정 인용), carry-forward 전항 유지. Total: **83 META entries (불변)**.
