@@ -795,3 +795,9 @@
 
 - **2026-09-08 — WealthManagementV2 (BSC, 26,414 USDT)** — 소유자 키 유출 의심(사유 이전) → 공격자-owner가 `updatePlanConfig`로 퇴행 극단 파라미터(period=0, interestMultiplier/unlockMultiplier=528,300,000; timelock·경계 부재) 설정 → 동일 트랜잭션 투자·상환으로 인플레이션 이자 수확 → 2차 투자로 unlock → 인출. Vector mapping: **B15 강화(2026-09-09) — 퇴행 파라미터 통화화(degenerate-parameter monetization) 서브패턴**: period=0이 이자 산정에서 시간축 제거, 무경계 승수가 키누출을 즉시 환금 경로로 전환.
   Sources: https://x.com/SlowMist_Team/status/2097222515009724817 | https://hacked.slowmist.io/
+
+- **2026-09-09 — Nomic nBTC Bridge / Osmosis (Cosmos, ~$3.15M)** — 발행체인 Nomic의 **커스텀 포워딩 미들웨어** 버그로 nBTC 이중지출 — 무담보 바우처가 Osmosis로 유입(39.84 nBTC, Alloyed BTC 담보 ~36% 오염). Osmosis·IBC 자체는 무관(버그 로커스는 발행체인의 포워딩 홉). 봉쇄: moderation subDAO 유입/유출 동결 + 비상 검증인 업그레이드로 공격자 주소 22.65 BTC(≈$1.8M) 동결 + 거버넌스 몰수 제안·커뮤니티 풀 보전. Vector mapping: **A32 강화(2026-09-10) — 커스텀 포워딩 레인 = 미감사 민트 권한**; 코드 포스트모템 공개 전 named 승격 보류(WATCH, Harmony 선례).
+  Sources: https://x.com/osmosis/status/2097623097696251926 | https://hacked.slowmist.io/ | https://x.com/WuBlockchain/status/2097628051953922505
+
+- **2026-09-09 — Amnext (BSC, ~$116.1K)** — 구형 무손실 복권/상금풀 프로토콜. 공격자가 **Ticket AMC를 대량 발행**한 뒤 PancakeSwap에서 154.02 WBNB 드레인(TenArmor 탐지, tx 0x29eb97…/0x99c996…). RCA 미공개 — 로커스(오라클/입금 회계/특권 민트) 미확정. Vector mapping: **미승인 WATCH(2026-09-10)** — 무담보 영수증 발행+AMM 출구 계열과 동형이나 코드 레벨 메커니즘 부재(DGFiP 선례). 포스트모템 대기.
+  Sources: https://x.com/tenarmoralert/status/2097506987554808212 | https://hacked.slowmist.io/
