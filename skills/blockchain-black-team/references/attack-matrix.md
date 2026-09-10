@@ -12614,3 +12614,27 @@ attacker:
 - **MEV**: 창 내 에버그린만 — IMC26 Jito 샌드위치 계량(521,903 instances)·bloXroute cross-slot 샌드위치 = A8/C25 + 「Type 4 Builder Cooperation」(CoW/Aave 항목) 기커버, 1차 실증 없어 강화 보류. **CTF**: DVD v3/v4 솔루션 재노출만, 신규 챌린지 0.
 - **헤더 카운트 감사**: 편집 전 헤더 226/218 vs 블랙팀 09-10 배치 노트 「228 불변」 불일치(+2 미설명) — 본 배치는 파일 헤더 기준 +1(B117) = **227/219**. 불일치 2건은 블랙팀 차회 정렬 과제로 이관.
 - **워치 갱신**: coral-xyz org 네임스페이스 방출(B115 LATENT) / Anchor v1 브랜치 post-1.2.0 보안 경계 커밋 스트림(#4953·#4804 이후 신규 — 어드바이저리 API 지연 갭 커버용) / arXiv 정상 복귀(워치 종결) / Agave B101 / PolinRider 변종(B113).
+
+## B118. Anchor Hidden-IDL-Instruction Account-Type-Confusion Fund Drain — IdlCreateBuffer Hijack of Zero-Discriminator Program-Owned Vaults (Beosin PoC / Accretion primitives)
+
+**Mechanism**: Anchor ≤0.31.x (기본 IDL 주입) 프로그램은 개발자 몰래 7종 IDL 관리 명령을 번들한다. 취약 라인의 `IdlCreateBuffer`는 `#[account(zero)]` 수용 기준(owner==현재 프로그램 && discriminator 전제거)만 검사해 **비즈니스 계정을 미초기화 IDL 버퍼로 오인 수용**하고 authority=트랜잭션 서명자를 기록한다. 공격 체인(2-트랜잭션·권한 불필요): ① IdlCreateBuffer(피해 PDA, signer=공격자) → IdlAccount discriminator + attacker authority 기록, ② IdlCloseAccount(authority=공격자, dest=공격자) → `has_one = authority` 통과 → **볼트 lamports 전량 인출**. Beosin PoC(2026-09 공개): Anchor **0.31.0** 브리지 트레저리 1.001281 SOL 무권한 드레인 실증.
+
+**Preconditions (4 전부 필요)**: (a) IDL 명령이 계정 타입을 구분하지 않는 구 Anchor 라인(0.31.x 포함 — 신버전은 엄격 구분, 정확 수정 버전은 원문 미명시), (b) `no-idl` 미활성 빌드, (c) 원시 `AccountInfo<'info>` 선언 프로그램 소유 PDA(타입 계정이 아니므로 discriminator 미기록 → 데이터 전제거), (d) lamports 보유.
+
+**Sub-primitives (Accretion 분석, 재부각)**: (a) permissionless `IdlCreateAccount` = 1회성 IDL authority 탈취 → 악성 IDL로 익스플로러 인스트럭션 라벨 조작·온체인 IDL 소비 클라이언트 러그(IDL Takeover), (b) `IdlCreateBuffer` = **프로그램 소유 임의 콘텐츠/길이 계정 팩토리** → owner 검사만 하는 명령(판별자 생략)의 타입 코스프레 인에이블러 — 피해 프로그램에 다른 취약점이 있어야 발화하는 가속기.
+
+**Why distinct**: A112는 오프체인 툴링의 raw IDL metadata 신뢰 경계, A123은 `Program<System>` 검증 우회, D31은 스키마 신뢰 남용 — **B118은 프레임워크 주입 명령 자체가 온체인 자금 이동 프리미티브**라는 점에서 독립. 「감사가 본 적 없는 숨은 인스트럭션」+「계정 타입 판별 부재」의 조합이라는 점이 핵심.
+
+**Microstable assessment: NOT ACTIVE — 3중 방어 실증 (2026-09-11)**: (1) `programs/microstable/Cargo.toml:12` `default = ["no-idl", "no-log-ix-name"]` → 배포 바이너리에 IDL 진입점 부재(사전조건 b 붕괴); (2) lamport 보유 프로그램 소유 계정(agent_escrow·protocol_treasury, lib.rs:614-664 lamport 분할)은 전부 타입 계정 — discriminator 기록됨(사전조건 c 붕괴; `to_account_info()`는 사용 시점 변환일 뿐); (3) `MigrateLegacyState` UncheckedAccount 6곳(lib.rs:2100-2120)은 핸들러에서 PDA 재유도 + `require_keys_eq!(*owner, program_id)`(lib.rs:295-302) — vault 4종은 Token Program 소유로 IDL 명령의 owner==프로그램 전제 미충족.
+
+**Activation triggers**: (a) `no-idl` default 제거 또는 `--no-default-features` 빌드 재배포, (b) 판별자 없는 원시 AccountInfo SOL 볼트(PDA 에스크로·수수료 풀) 도입, (c) keeper/프론트가 온체인 IDL을 진실원으로 소비 개시(서브프리미티브 a), (d) discriminator 생략 owner-only 계정 로딩 신규 도입(서브프리미티브 b — A16 타입코스프레 가속).
+
+### 2026-09-11 redteam batch — B118 NEW (Beosin IDL drain) + greentic 공급망 음성
+
+- **B118 NEW** (위 본문) — Beosin IDL 인스트럭션 어택 공개(Anchor 0.31.0 PoC, 2-TX 무권한 볼트 드레인). Microstable 3중 방어 실증(no-idl 기본 + 타입 계정 + 핸들러 owner 검증). NOT ACTIVE, LATENT 트리거 문서화.
+- **RustSec 7일 창(09-04~09-11)**: RUSTSEC-2026-0280/0281 greentic-setup(-dev) 악성 크레이트(09-07, crates.io 제거) — Microstable Cargo.lock `name = "greentic"` 0매치 무노출. greentic은 Roblox 툴링 타이포스쿼트 계열 — B26/B47(공급망 타이포스쿼트) 패밀리 신규 인스턴스, 벡터화 불필요. 0282 aligned_box은 전일(09-10) 처리 완료.
+- **Anchor 어드바이저리 재확인**: CVE-2026-45137 / GHSA-c6rc-8jpp-2fgc(Program<System>, 1.0.0~1.0.2) = 블랙팀 09-10 A123 기매핑 유지 — Microstable 0.31.1은 영향 버전 밖.
+- **CTF/감사/arXiv/MEV**: 창 내 신규 없음. SseRex(2603.16349)는 3월산 재노출, SIRN/OtterSec 신규 발행 없음, MEV는 에버그린만(기커버 A8/C25).
+- **헤더 카운트**: 파일 헤더 기준 +1(B118) = **228/220**(09-10 배치 상속 카운트; 블랙팀 노트와의 +2 불일치는 차회 정렬 과제 이관 유지).
+
+**Matrix state as of 2026-09-11 (red-team daily evolution)**: **B118 NEW — Beosin/Accretion IDL 인스트럭션 계정타입혼동 드레인.** Anchor 0.31.x 라인의 숨은 IDL 명령 7종 중 permissionless 2종(IdlCreateAccount·IdlCreateBuffer)이 자금 프리미티브로 전환되는 패턴 최초 실증 공개(이번 주). Microstable: 3중 방어 실증으로 NOT ACTIVE — no-idl default·타입 계정 lamport 볼트·UncheckedAccount 핸들러 검증 전건 코드 레벨 확인. RustSec greentic 2건 무노출. PART B: A6 CRITICAL **37일차**, A10/HERMES-H1/B83 HIGH + B45 PARTIAL carry-forward 불변, **신규 CRITICAL/HIGH 0**.

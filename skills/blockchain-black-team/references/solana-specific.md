@@ -2471,3 +2471,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 - v1 브랜치 `e21a464d`(merged 2026-09-09T16:43Z): `generate_constraint_realloc` 코드젠에 `realloc::payer.key() == field.key()`(자기-지불) 시 `InvalidArgument` 반환 추가 + `ReallocSelfPayer` 계정 구조(+`realloc::payer = sample` 자기 참조) 부정 테스트("fails when realloc payer matches target"). 동일일 docs #4953 "clarify security boundaries".
 - 패턴 함의: `realloc::payer`는 A135가 정식화한 refund-recipient authority — 상류가 이제 **payer==target 조합 자체를 정의되지 않은 동작이 아니라 명시적 오류**로 분류. 하위 호환 파괴(셀프-페이어 사용 프로그램은 v1 업그레이드 시 컴파일은 되나 실행 거부).
 - 감사 렌즈: Anchor 제약에서 `payer = <같은 계정>` 표기 발견 시 구버전 파인은 「의도된 셀프 환급」이 아니라 「코드젱 미정의 동작」으로 취급할 것.
+
+### 2026-09-11 redteam — B118 Anchor hidden-IDL-instruction account-type-confusion drain (Beosin PoC / Accretion primitives)
+
+171. ☐ 배포 바이너리의 IDL 진입점 부재를 CI가 증명할 것 — `default = ["no-idl", ...]` 유지 게이트 + 배포 아티팩트(.so)에서 IDL 인스트럭션 식별자 부재 검사. `no-idl` 제거·`--no-default-features` 빌드·프론트 IDL 호환성 명분의 IDL 재주입이 B118의 1차 활성화 트리거. 판별자 없는 원시 `AccountInfo`/`UncheckedAccount` 선언 프로그램 소유 lamport PDA(에스크로·수수료 풀)는 금지 — SOL 보관은 판별자 기록 타입 계정 또는 시스템 계정만 (Microstable 실증: Cargo.toml:12 no-idl 기본 + escrow/treasury 타입 계정)
+172. ☐ no-idl을 끊을 수 없는 프로그램은 **배포 직후 IdlCreateAccount를 선점 호출**해 IDL authority를 확보 — 방치 시 permissionless 탈취로 악성 IDL 주입(익스플로러 라벨 조작·IDL 소비 클라이언트 러그·프론트 낚시). 온체인 IDL은 진실원이 아니라 조작 가능한 공개 아티팩트로 취급 — keeper/클라이언트가 IDL 기반 역직렬화·인스트럭션 분류를 자동 신뢰하는 순간이 서브프리미티브 (a)의 활성화 시점
+173. ☐ owner 검사만으로 프로그램 소유 계정을 로드하는 경로(타입 코스프레 노면)를 전수 열거 — IdlCreateBuffer가 임의 콘텐츠·임의 길이의 프로그램 소유 계정을 무료로 찍어 준다는 전제 하에(서브프리미티브 b), 모든 계정 로딩은 구조체 판별자/타입 결속이 필수. `#[account(zero)]`·zero-discriminator 수용부는 프레임워크 내부 코드 포함 전수 조사 대상 — 전제거 계정은 "미초기화"가 아니라 "아직 프레임워크가 서명할 수 있는 계정"이다
