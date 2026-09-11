@@ -2477,3 +2477,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 171. ☐ 배포 바이너리의 IDL 진입점 부재를 CI가 증명할 것 — `default = ["no-idl", ...]` 유지 게이트 + 배포 아티팩트(.so)에서 IDL 인스트럭션 식별자 부재 검사. `no-idl` 제거·`--no-default-features` 빌드·프론트 IDL 호환성 명분의 IDL 재주입이 B118의 1차 활성화 트리거. 판별자 없는 원시 `AccountInfo`/`UncheckedAccount` 선언 프로그램 소유 lamport PDA(에스크로·수수료 풀)는 금지 — SOL 보관은 판별자 기록 타입 계정 또는 시스템 계정만 (Microstable 실증: Cargo.toml:12 no-idl 기본 + escrow/treasury 타입 계정)
 172. ☐ no-idl을 끊을 수 없는 프로그램은 **배포 직후 IdlCreateAccount를 선점 호출**해 IDL authority를 확보 — 방치 시 permissionless 탈취로 악성 IDL 주입(익스플로러 라벨 조작·IDL 소비 클라이언트 러그·프론트 낚시). 온체인 IDL은 진실원이 아니라 조작 가능한 공개 아티팩트로 취급 — keeper/클라이언트가 IDL 기반 역직렬화·인스트럭션 분류를 자동 신뢰하는 순간이 서브프리미티브 (a)의 활성화 시점
 173. ☐ owner 검사만으로 프로그램 소유 계정을 로드하는 경로(타입 코스프레 노면)를 전수 열거 — IdlCreateBuffer가 임의 콘텐츠·임의 길이의 프로그램 소유 계정을 무료로 찍어 준다는 전제 하에(서브프리미티브 b), 모든 계정 로딩은 구조체 판별자/타입 결속이 필수. `#[account(zero)]`·zero-discriminator 수용부는 프레임워크 내부 코드 포함 전수 조사 대상 — 전제거 계정은 "미초기화"가 아니라 "아직 프레임워크가 서명할 수 있는 계정"이다
+
+### 2026-09-12 blackteam — A153 Solana 쌍둥이: SPL delegate 승인의 standing-allowance 평면 (ether.fi/Veda AtomicQueue 계열)
+
+- **EVM 원형**: `solve(..., solver)`가 calldata actor를 미인증하고 제3자 ERC-20 allowance를 소비(A153 본문). **Solana 번역**: SPL Token의 `approve`(delegated spending)가 ERC-20 무한 승인의 구조적 쌍둥이 — `delegate`가 설정된 ATA는 프로그램이 서명 없이 `transfer_checked(delegate)`로 인출 가능. 폐기된 워크플로가 `approve`를 해지(`revoke`)하지 않으면 dormant 위임이 영구 잔존.
+- **점검 패턴**: (a) `anchor_spl::token::approve` / `approve_checked` 호출부 — 위임량이 `u64::MAX`인지, 만료/청산 경로가 `revoke`를 호출하는지; (b) `transfer_checked`의 authority가 인스트럭션 인자·UncheckedAccount에서 유도되는지(PDA/서명자 고정인지); (c) 폐기된 프로그램이 위임된 ATA 잔고를 그대로 두고 업그레이드/마이그레이션 했는지(EOL 시 위임 회수 캠페인 소유자 확인 — A153 서브패턴 2).
+- **Microstable 현재 상태**: `approve`/`delegate` 0매치(2026-09-12 grep) — 위임 평면 자체 미사용, NOT ACTIVE.

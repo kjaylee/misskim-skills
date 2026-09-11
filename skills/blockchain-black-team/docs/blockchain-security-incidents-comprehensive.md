@@ -801,3 +801,12 @@
 
 - **2026-09-09 — Amnext (BSC, ~$116.1K)** — 구형 무손실 복권/상금풀 프로토콜. 공격자가 **Ticket AMC를 대량 발행**한 뒤 PancakeSwap에서 154.02 WBNB 드레인(TenArmor 탐지, tx 0x29eb97…/0x99c996…). RCA 미공개 — 로커스(오라클/입금 회계/특권 민트) 미확정. Vector mapping: **미승인 WATCH(2026-09-10)** — 무담보 영수증 발행+AMM 출구 계열과 동형이나 코드 레벨 메커니즘 부재(DGFiP 선례). 포스트모템 대기.
   Sources: https://x.com/tenarmoralert/status/2097506987554808212 | https://hacked.slowmist.io/
+
+- **2026-09-11 — ether.fi Liquid / Veda AtomicQueue (Ethereum, ~15.4536 ETH ≈ $38K, 11 victims)** — 레거시 인출 큐 `solve(offer, want, users[], runData, solver)`가 **solver 주소를 calldata에서 무검증 수용**하고 `safeTransferFrom`을 solver의 standing allowance에 집행 → 공격자가 무가치 offer 토큰 1단위로 최대치 교환 요청을 사전 배치하고 **피해자 각각을 solver로 지정**, 1년 된 잔여 승인(liquidETH/USDC)을 인출(단일 TX, 블록 25952624). `finishSolve` 안전훅은 EOA·**EIP-7702 Coinbase Wallet 위임 EOA(7/11)**에서 no-op. Uniswap v4/v3 환전 후 Tornado Cash 세탁(10+5×1+5×0.1 ETH). Vector mapping: **A153 NEW(2026-09-12) — settlement actor 필드 미인증·제3자 allowance 리다이렉션 일반형**(+dormant-approval 수확, 7702 no-op 콜백 서브패턴; A152 콜백 계열과 구별).
+  Sources: https://www.cryptotimes.io/2026/09/11/ether-fi-loses-15-45-eth-in-legacy-atomicqueue-exploit-ceo-pledges-full-user-reimbursement/ | https://hacked.slowmist.io/ | ExVul/SlowMist alerts (07:51 UTC, 2026-09-11)
+
+- **2026-09-11 — OMNI404 / O404 (ERC-404 hybrid, ~2.4 WETH)** — `_transfer()`가 ERC-721 mint/burn 수량을 이전 전후 `(balanceOf / units)` **정수 floor-diff만으로 산출** → 플래시론 지원 경계 비대칭 이동으로 ERC-20 잔고와 NFT 공급 회계 desync, 드레인 후 거래 정지. Vector mapping: **A34 강화(2026-09-12) — 파생지표 truncation desync**; ERC-404 하이브리드 표준 = tiny-raw-balance rounding 클래스의 신규 표면(4번째 문서화 재발).
+  Sources: https://x.com/SlowMist_Team (OMNI404 분석) | https://en.cryptonomist.ch/2026/09/11/omni404-flash-loan-attack/
+
+- **2026-09-11 — Symbiosis BridgeV2 / syBTC (BNB Chain + Ethereum, 무담보 syBTC ~46.1B–368.9B)** — 공격자가 "signed BridgeV2 transactions" 8회로 2^62 raw units syBTC 무담보 발행, Uniswap v4에서 4.39 WBTC만 현금화, ~184.5B syBTC BNB Chain 잔존(팀: 비-BTC 라우트 무영향). RCA 미공개 — 서명 재생/멤레버빌리티/권한 침해 미확정. Vector mapping: **WATCH(2026-09-12)** — unbacked-mint 패밀리(Sandbox 08-21 config-plane과 동족) 후보, 코드 레벨 메커니즘 공개 전 미승인.
+  Sources: https://www.cryptotimes.io/2026/09/11/symbiosis-bridge-exploit-hacker-mints-368-9-billion-synthetic-bitcoin/ | Blockaid onchain analysis | DefraudTG alert
