@@ -2485,3 +2485,10 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 - **점검 패턴**: (a) `anchor_spl::token::approve` / `approve_checked` 호출부 — 위임량이 `u64::MAX`인지, 만료/청산 경로가 `revoke`를 호출하는지; (b) `transfer_checked`의 authority가 인스트럭션 인자·UncheckedAccount에서 유도되는지(PDA/서명자 고정인지); (c) 폐기된 프로그램이 위임된 ATA 잔고를 그대로 두고 업그레이드/마이그레이션 했는지(EOL 시 위임 회수 캠페인 소유자 확인 — A153 서브패턴 2).
 - **Microstable 현재 상태**: `approve`/`delegate` 0매치(2026-09-12 grep) — 위임 평면 자체 미사용, NOT ACTIVE.
 
+
+### 2026-09-13 redteam — B119 승격(Whisper/AP2)과 #174 링크 + Anchor/SPL 무보안변화
+
+- **B119 named 승격**(attack-matrix 본문 참조): Whisper Attacks 원 논문 표면(에이전트 지급 의사결정 × 프로토콜 서명 분리)의 일반형 등재. 블랙팀 09-12 #174(B14 강화)는 전송계 결정 필드 vs VAA 서명 필드 결속 — B119는 형성된 의도 자체의 미결속. 결속 대상 상이, 상호 참조 확립(#174 ↔ B119).
+- **Anchor 창 내(09-10 이후)**: `905a5f367`(rustc argfile CLI 확장)·`5e12a0253`(access_control 표현식 파싱) — 빌드 호환성·매크로 기능 확장, 보안 경계 무관 기각. #4804/#4953는 09-10 배치 기커버.
+- **SPL/RustSec**: 창 내 보안 관련 0건.
+- **Microstable**: B119 NOT ACTIVE — keeper 결정론적 실증(agent_loop.rs, aig.rs 챌린지 티어, tournament). LATENT: LLM 파라미터 탐색·자연어 인터페이스·x402 계열 자율 지급 도입 시 즉시 재평가.

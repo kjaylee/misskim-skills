@@ -12665,6 +12665,18 @@ attacker:
 
 **Defense additions (post-postmortem)**: (6) EOL playbooks must treat surviving user approvals as **open liabilities to be swept** (allowance-registry diffing + active revocation campaign at deprecation time, not after exploitation); (7) wallet-side: default-revert unknown calls (Gnosis Safe model) — callback success must never be read as consent; (8) immutable/permissionless spenders: design the asset-side operator-denylist transfer hook **before** deployment, with the deny action fork-simulation-tested as part of the incident runbook; (9) detection-publication discipline: treat an imminent third-party report as an active-threat event — operator mitigation (denylists, pausing) should race the publication, not follow it.
 
+## B119. Agent-Payment Intent-Binding Collapse — Signed-Protocol-Output vs Unbound-Decision-Formation Gap (Whisper Attacks / AP2)
+
+**아키타입**: 에이전트 결제 프로토콜(AP2, Google)은 완료된 구매에 대해 암호학적으로 유효한 서명을 생성하지만, **그 서명으로 이어진 의사결정 형성 컨텍스트(자연어 리스팅·재고/계보 주장·카트 조립)를 구속하지 않는다**. 공격자는 상품 설명 텍스트만으로 (1) 타인 결제 크리덴셜 인출 유도(성공률 90%), (2) 사용자에게 보인 것과 불일치하는 암호학적으로 유효한 카트(56%), (3) 단일 사실 주장으로 저가 표시→고가 항목 전환(73.3%)을 성공시킨다 — 카트는 모든 프로토콜 검사를 통과한다. Gemini Flash-Lite(AP2 기본 샘플 에이전트 지정 모델) 기준 3공격 실측, 17개 Google 모델·3개 무관 에이전트 프레임워크·2개 크로스벤더 앵커·Google 소비자 어시스턴트 전반에서 동일 취약 재현 — 구현 결함이 아니라 **프로토콜 설계의 구조적 간극**.
+
+**Why distinct**: A3 오라클 서명 의미론(Ostium 「signature valid ≠ price accurate」, Bonzo 「verifier authenticates wrong statement」)은 **온체인 검증기의 인증 문**이 무너지는 것 — 검증 계층 결함. B119는 검증기가 완벽하게 정상 동작할 때 **의사결정 입력의 의미론적 출처가 프로토콜 바인딩 밖에 존재**하는 간극 — 결정 형성 계층(LLM/컨텍스트) 결함으로, 검증 게이트는 원래 통과가 보장된다. B14 강화(2026-09-12, solana-specific #174)는 **전송계 결정 필드(parsed JSON) vs 서명 페이로드(VAA)**의 필드 결속 — 서명된 산출물의 구성 요소 문제. B119는 **형성된 의도 자체가 사용자 의도와 미결속** — 서명이 완전해도 그것이 「무엇을 사려 했는가」와 무관. A153은 settlement actor 필드 미인증(온체인 인자 신뢰), B117은 스킬 설치 클로저, B119는 **지급 의사결정-서명 바인딩 부재**. 페이즈·결속 대상 모두 상이.
+
+**Defense (A-VIP 원칙, 프로토콜-레이어)**: 서명된 인텐트를 capability grant로 취급 — (1) 모든 크리덴셜 조회를 요청한 세션에 바인딩(공격 1·2는 구조적 흔적 → 제로 오탐 차단), (2) 모든 카트 라인을 사용자가 실제로 본 리스팅에 바인딩, (3) 구조적 흔적이 없는 전환(공격 3)은 미승인 지출으로 상정해 사용자 확인으로 승격. 판단 기준을 「가맹점 설명의 내용」에 두지 말고 「서명이 부여하는 능력의 범위」에 둔다.
+
+**Microstable applicability**: **NOT ACTIVE — 구조적 사전 요건 부재 (2026-09-13 실증)**: keeper는 결정론적 Rust 루프(agent_loop.rs AIG 챌린지 티어 + tournament 스코어링)이며 LLM/자연어 의사결정 계층·인바운드 자연어 표면 부재(B115 때 HTTP 평면 부재 실증). 오라클 입력(VAA)은 guardian 서명 체인에 데이터 필드가 결속되므로 「서명 유효 ≠ 데이터 의미 유효」의 온체인 대응물은 A3-보강(exception-lane 승격 방지) + Hermes handoff(posted≠consumed, HIGH) + B14-174(parsed↔VAA 필드 결속 게이트)로 이미 3중 추적 중. **LATENT 트리거**: (a) keeper/AIG에 LLM 기반 파라미터 탐색·뉴스/자연어 소비 도입, (b) 자연어 지시 인터페이스 도입, (c) x402/에이전트 지갑 계열 자율 지급 도입.
+
+**Sources**: arXiv 2609.11757 「Signing the Transaction but Not the Decision: Whisper Attacks and a Binding Defense for AP2」(v1 2026-09-10T16:11Z, abs 직접 fetch 2026-09-13) | AP2 = Google Agent Payments Protocol, 샘플 에이전트 Gemini Flash-Lite 기본 | A-VIP 방어 + 기계검증 불변식 + AP2-WhisperBench 1,544 시나리오 동반 공개 | 선행 부분 흡수: 블랙팀 09-12 solana-specific #174(B14 강화 인용) — 본 항목은 원 논문 표면(에이전트 지급 의도 바인딩)의 named 승격.
+
 ### 2026-09-12 blackteam batch — A153 NEW (ether.fi AtomicQueue) + A34 강화 (OMNI404) + Symbiosis WATCH
 
 - **A153 NEW** (위 본문) — ether.fi/Veda AtomicQueue solver 미인증 + dormant approval 수확 + 7702 no-op 콜백($38K, 11피해자). Microstable 3중 NOT ACTIVE 실증, LATENT 트리거 문서화.
@@ -12676,3 +12688,16 @@ attacker:
 **Matrix state as of 2026-09-12 (black-team daily evolution)**: **A153 NEW — settlement actor 필드 미인증·제3자 allowance 리다이렉션 일반형**(ether.fi/Veda, $38K) + **A34 강화(OMNI404 파생지표 truncation desync)**. Symbiosis syBTC WATCH 등록(RCA 대기). Microstable PART B: **신규 CRITICAL/HIGH 0** — A153 3중 NOT ACTIVE(SPL approval 평면 부재·actor 필드 부재·keeper 무노출), A34-강화 N/A(하이브리드 회계 부재·checked 산술 A5 DEFENDED). A6 CRITICAL **38일차**(lib.rs:2395-2396 bare, 코드 mtime 02-28 동결·HEAD 08a981a·dirty 40파일 불변), A10/HERMES-H1/B83 HIGH + B45 PARTIAL carry-forward 불변.
 
 **Matrix state as of 2026-09-13 (black-team daily evolution)**: **신규 named 벡터 0 — A153 공식 포스트모템 강화(서브패턴 3 정정 + 서브패턴 4·5 신규)**. Window (09-11 18:00→09-12 18:00 UTC) 소스 스윕: rekt 1면 전건 기흡수(Nesa/KII/TAC/MANTRA→B106, Term→C23/META-73, Harmony→A32, Coinsbuy/Coldcard→B15, VerusCoin→A125), SlowMist Solana 최신 08-31 Aquifer(A150) 그대로, OSV anchor-lang 4건·solana-program 0건 전부 기매핑(5월 어드바이저리), Immunefi 창 내 신규 솔라나 공개 0건, OtterSec/Neodyme/ToB 무풍. **WATCH: Symbiosis syBTC 유지**(팀 "보안리서치팀과 협의 중" — RCA 계속 미공개, 09-12 확인). Liquid Network 후속(09-11 Unchained): 블록생산 재개·peg 운영 동결 지속, 미반환 598.5 BTC "도난" 규정 — B114 타임라인 갱신만, 신규 메커니즘 없음. Microstable PART B: **신규 CRITICAL/HIGH 0** — A153(강화판) NOT ACTIVE 재실증(프로그램·키퍼 `approve`/`delegate` 0매치 재grep, CPI 전부 pinned program), A6 CRITICAL **39일차**(lib.rs:2395-2396 bare mut 라이브 재확인), A10 HIGH(burn CPI 1362 전달 mint), HERMES-H1 HIGH(hermes.rs:61-69 7필드), B83 HIGH(quinn-proto 0.11.13, Cargo.lock:2984), B45 PARTIAL(audit-attestation.json 부재). 코드 동결 재확인(mtime 02-28 전량, HEAD fac530e, dirty 39파일).
+
+### 2026-09-13 redteam batch — B119 NEW (Whisper/AP2 intent-binding) + Anchor/SPL 무보안변화 + RustSec 무활동
+
+- **B119 NEW** (위 본문) — Whisper Attacks(arXiv 2609.11757, 09-10 발표): AP2 에이전트 결제의 「서명된 산출물 vs 미결속 의사결정 형성」 간극. 3공격 90%/56%/73.3%, 17모델·3프레임워크·소비자 어시스턴트 전반 재현 — 구조적 간극. Microstable NOT ACTIVE(LLM 의사결정 계층 부재 실증), LATENT 트리거 3건 문서화. 선행 부분 흡수(블랙팀 09-12 solana-specific #174 B14 강화 인용)와의 관계 명시 — 본 승격은 에이전트 지급 의도 바인딩 표면의 named 일반형.
+- **Anchor**: 창 내 신규 보안 경계 변화 0 — #4804/#4953(09-09)는 09-10 배치 기커버, `905a5f367`(09-10, rustc argfile 확장)·`5e12a0253`(09-07, access_control 표현식 파싱)은 빌드 호환성·기능 확장으로 보안 경계 무관 — 기각. coral-xyz→otter-sec 리다이렉트(301) 재확인 = B115 09-10 노트의 3-네임스페이스 통과 재확인(신규 아님).
+- **SPL**: since 09-06 커밋 스윕 — 보안 관련 0건.
+- **RustSec**: 09-10 이후 어드바이저리 DB 커밋 0건(빈 배열 실증).
+- **CTF/Audit**: DVD v3/v4·Neodyme CTF·OtterSec/ToB 창 내 에버그린만 — 신규 0건.
+- **MEV**: Flashbots 「MEV and the Limits of Scaling」— 스팸 봇이 롤업 가스 50%+/Solana 블록스페이스 40% 소비의 시장 구조 분석. 공격 기법이 아닌 에코노믹 스터디, keeper 운영 비용 표면 참고로만 기록 — 벡터 미승격(기각).
+- **arXiv cs.CR**: 리스팅 50편 스윕 — Whisper 승격(위), 「Frontrunning Resistance 조건」(2609.11535, 방어 논문 — A8/MEV 축 역설계 참고), 「Autonomous Agents Lose Control」(2609.11024, B117/B119 에이전트 축 실증 배경), 「DeFiFusion」(2609.11008, 가격조작 탐지 — 우회 연구 참고) 전부 기각/참고 등급.
+- **헤더 카운트**: +1(B119) = **230/222** (09-12 blackteam 229/221 상속).
+
+**Matrix state as of 2026-09-13 (red-team daily evolution)**: **B119 NEW — 에이전트 결제 의도-바인딩 붕괴 일반형**(Whisper/AP2, 90/56/73.3% 실측). Anchor/SPL/RustSec/CTF/Audit/MEV 6소스 무보안변화. Microstable: **신규 CRITICAL/HIGH 0** — B119 NOT ACTIVE(결정론적 keeper 실증: agent_loop.rs AIG+tournament, LLM 계층·인바운드 자연어 평면 부재; 온체인 대응물은 A3-보강+Hermes handoff+B14-174로 3중 추적). A6 CRITICAL 39일차·A10/HERMES-H1/B83 HIGH·B45 PARTIAL은 블랙팀 09-13 배치 carry-forward 그대로.
