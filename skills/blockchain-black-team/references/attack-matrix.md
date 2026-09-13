@@ -1,4 +1,4 @@
-# Attack Matrix — 229 Active Named-Vector Headings / 221 Unique Named IDs + META-01~83
+# Attack Matrix — 231 Active Named-Vector Headings / 223 Unique Named IDs + META-01~83
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -563,6 +563,25 @@ function handleIBCDeposit(bytes calldata payload) external {
 **Microstable applicability (live-code verified 2026-09-10)**: no cross-chain forwarding lane exists (program grep "forward/passthrough" = 0 matches); the analogous custom lane is the Pyth `UncheckedAccount` price path — re-verified fully body-bound this run (`require_keys_eq!(pyth_price_account.key(), vault.pyth_price_feed)` + feed_id equality + freshness + price bounds, lib.rs:3147-3178) ✅. The Microstable conservation surface remains A6/A10 (Redeem `mstb_mint` unbound → burn CPI charges attacker-chosen mint) — the A32 lesson lands on the same carry-forward locus, no new locus.
 
 **Sources**: https://x.com/osmosis/status/2097623097696251926 (official statement) | https://hacked.slowmist.io/ (2026-09-09 entry) | https://x.com/WuBlockchain/status/2097628051953922505 | https://www.kucoin.com/news/flash/osmosis-pauses-btc-synthetic-asset-minting-and-redemption-due-to-nomic-nbtc-bridge-incident | 본 파일 A32 Harmony/Secret/Coreum reinforcements, B106, META-70
+
+### A32 — 2026-09-14 Reinforcement: Chainflip TRON Memo Reinterpretation — Same Validator-Signed Deposit Consumed as a Second Failed Swap → Duplicate Refund
+
+**Historical Reinforcement**: Chainflip cross-chain swap protocol, TRON USDT integration (2026-09-12, **736,442.17 USDT** taken; official X statement confirms amount + user make-whole; network paused, restart targeted Monday 2026-09-14; SlowMist Hacked entry 2026-09-12, "Protocol logic vulnerability").
+
+**Mechanism (SlowMist incident-grade; full engineering RCA pending restart)**: the attacker **attached a custom memo to a transaction already signed by the validators**, causing the system to treat the same deposit as a separate failed swap and issue a **duplicate refund**. The attack was repeated **8 times over ~90 minutes**, producing **6 unauthorized payouts**; a pending user swap of 115,654.41 USDT remained safe in the vault.
+
+**Sub-pattern named for reviews — payout identity must bind to the materialized custody event, never to attacker-editable routing metadata**: the validators' threshold signature attests the payment itself, but the memo — the field the backend uses to bind that payment to a specific swap/deposit identity — is attacker-controllable content riding alongside the signed object. One custody event, two logical identities, two payouts. This is the deposit-side twin of the receipt-replay pattern (Harmony 2026-08-23): no stale receipt needed — the *same live event* is reinterpreted under a second routing label. (Exact signature-vs-memo binding topology — which fields the threshold signature covered and how the memo escaped it — stays admission-partial until the post-restart engineering RCA.)
+
+**Why audits miss**: signature-validity review confirms "the payout transaction was legitimately signed" — true under both interpretations. Nothing in the signing ceremony covers *which swap the memo claims the payout belongs to*, so the uniqueness/idempotency check that would catch double-consumption lives in off-chain indexing logic that key-management-path audits never reach.
+
+**Defense**:
+1. Idempotency keys must derive from the signed/materialized event itself (txid / outpoint / vault action index), never from memo content.
+2. Treat routing metadata (memo/reference/tag) as **advisory data that cannot mint a new claim**: one deposit binds to at most one swap lifecycle; a second binding attempt for the same custody event must alarm, not refund.
+3. Duplicate-payout invariant monitor: `sum(payouts) ≤ sum(distinct settled deposits)` per asset per vault, alarmed on divergence.
+
+**Microstable applicability (live-code verified 2026-09-14)**: no memo-routed intake path — program parses zero memos (word-boundary grep 0), and the keeper's only memo usage is **outbound watchdog telemetry** (watchdog.rs:230, `build_memo_instruction` tagging emergency txs) that no acceptance logic reads back. Payouts (redeem) bind to instruction-account pairs, not reference metadata. NOT ACTIVE.
+
+**Sources**: https://x.com/Chainflip (official statement 2026-09-13: "736,442.17 USDT was taken… impacted users will be made whole") | https://hacked.slowmist.io/ (2026-09-12 entry)
 
 ### A32 — 2026-06-25 Reinforcement: Taiko Bridge SGX-Prover Registration Forgery
 **Historical Reinforcement**: Taiko Bridge / ERC20 Vault (2026-06-21~22, ~$1.7M).
@@ -12684,6 +12703,35 @@ attacker:
 
 **Sources**: arXiv 2609.11757 「Signing the Transaction but Not the Decision: Whisper Attacks and a Binding Defense for AP2」(v1 2026-09-10T16:11Z, abs 직접 fetch 2026-09-13) | AP2 = Google Agent Payments Protocol, 샘플 에이전트 Gemini Flash-Lite 기본 | A-VIP 방어 + 기계검증 불변식 + AP2-WhisperBench 1,544 시나리오 동반 공개 | 선행 부분 흡수: 블랙팀 09-12 solana-specific #174(B14 강화 인용) — 본 항목은 원 논문 표면(에이전트 지급 의도 바인딩)의 named 승격.
 
+## A154. Unbounded Leniency Clamp — Rounding Safeguard Generalized into Shortfall Suppression / Paired-Ledger Completion Desync (Zentra Finance repayWithATokens)
+
+**Origin**: Zentra Finance lending pool (Citrea mainnet, exploit 2026-09-09 12:59:37 UTC, 140,000 ctUSD + 30 USDC.e ≈ $140K; operations multisig pause +16m50s; official postmortem 2026-09-11). Lending core = **Aave V3 Core v3.0.x fork**. Recovery: 10.19% proportional haircut on zctUSD + staged restart targeted 2026-09-15.
+
+**Mechanism (postmortem-verified, code-level)**:
+1. The aToken implementation carried a **leniency safeguard** for a rounding corner case: when a scaled token amount exceeded an account's scaled balance "by one unit", the safeguard **reduced the burn to the available balance instead of reverting** — and critically **imposed no explicit maximum difference between the requested burn and the available balance**.
+2. `repayWithATokens(outstanding debt + 1 wei)` — the debt token's **ceil-rounding** cleared the debt in full while the attacker **held zero aTokens** → available balance 0 → burn clamped to 0.
+3. The Pool's completion predicate watched only the **debt-side ledger**: "debt reduced to zero" ⇒ repayment complete. The paired aToken-burn ledger settled at a different value (0). **The reserve received no value for the debt reduction recorded by the Pool.**
+4. Attack shape: 200,000 USDC.e of **flash liquidity as temporary collateral** → borrow ctUSD → `repayWithATokens(debt+1)` → withdraw original collateral, keep borrowed assets. Single tx, fresh wallet, zero probing.
+
+**The reusable primitive — error-tolerance generalized into error-suppression**: a graceful-degradation branch written to absorb a ±1 rounding artifact becomes an acceptance path for **arbitrary shortfall** (here 100%) because the branch carries no bound. Completion and paired settlement verify against different ledgers, so `debt == 0` no longer implies `value received ≈ debt`. The exploit amounts (`debt + exactly one base unit`) were deliberately chosen to trip the debt-token ceil-rounding into full-clear semantics.
+
+**Why audits miss**: the safeguard reads as defensive polish ("don't revert on a 1-wei overshoot — reduce instead"), and rounding unit tests pass because ±1 behaves as intended. Nobody writes the invariant `requested_burn − actual_burn ≤ 1` or `debt_cleared ⇒ burned ≥ repaid − 1` — the tolerance *bound* is the security property, and it is invisible in both the diff and happy-path tests. META-73 family (verification orthogonal to security property), but here the gap lives *inside* the tolerance branch itself.
+
+**Distinction**: not A5 (arithmetic behaved exactly as coded), not A34 (not a known-bug registry failure — the postmortem explicitly states the March 2026 upstream Aave V3 pre-3.5 rounding class was **not** the path used). This is A10's predicate asymmetry instantiated as a **clamp**: forks inherit upgrade obligations *and* add local accommodations that upstream semantics never sanctioned.
+
+**Defense**:
+1. Any "reduce instead of revert" branch must carry an explicit bound: `require!(requested − available <= 1)` (exact tolerance), else revert.
+2. Paired-ledger completion invariant: a repayment records complete only when `value_received ≥ debt_cleared − 1` — check the **counterpart ledger's actual delta**, not the requesting ledger's post-state.
+3. Forbid zero-settlement completions outright: `burn == 0 && debt_delta > 0` is by construction an exploit shape.
+4. Fork discipline: when upstream publishes a vulnerability class, diff the fork's *local accommodations* against upstream semantics — Zentra's clamp was a local deviation.
+5. Fuzz boundary amounts (`debt ± 1 wei`, `balance ± 1 wei`) on every paired-ledger function with ceil/floor rounding on either side.
+
+**Solana twin (solana-specific.md #175)**: SPL Token `burn` cannot clamp (owned-account requirement), so the EVM shape needs a synthetic paired ledger (protocol-internal receipt math). Audit target: any `saturating_sub`/`.min()` on a **value-transfer quantity** whose clamped remainder is silently accepted as a completed operation.
+
+**Microstable applicability (live-code verified 2026-09-14)**: all `saturating_sub`/`.min()` usages are bounded gates or defensive parameter clamps (staleness windows lib.rs:702/1005/3196, cooldown bounds 1690/1790/1986-1991, rent-shortfall saturation 3001 in the benign direction, ceil-round-up helpers 3304/3439, TWAP decay clamp 3567-3569); burn path requires `expected_user_mstb` equality (1355-1360) before CPI; **no reduce-instead-of-revert branch on any paired value quantity — NOT ACTIVE**.
+
+**Sources**: https://x.com/ZentraFinance/status/2098415552293195831 (official postmortem) | https://hacked.slowmist.io/ (2026-09-09 entry) | exploit tx https://etherscan.io/tx/0x31ca0dfcbcb7b340bb997e469c6bde73caafd702d568fe7af880b865a2f8ea94
+
 ### 2026-09-12 blackteam batch — A153 NEW (ether.fi AtomicQueue) + A34 강화 (OMNI404) + Symbiosis WATCH
 
 - **A153 NEW** (위 본문) — ether.fi/Veda AtomicQueue solver 미인증 + dormant approval 수확 + 7702 no-op 콜백($38K, 11피해자). Microstable 3중 NOT ACTIVE 실증, LATENT 트리거 문서화.
@@ -12708,3 +12756,14 @@ attacker:
 - **헤더 카운트**: +1(B119) = **230/222** (09-12 blackteam 229/221 상속).
 
 **Matrix state as of 2026-09-13 (red-team daily evolution)**: **B119 NEW — 에이전트 결제 의도-바인딩 붕괴 일반형**(Whisper/AP2, 90/56/73.3% 실측). Anchor/SPL/RustSec/CTF/Audit/MEV 6소스 무보안변화. Microstable: **신규 CRITICAL/HIGH 0** — B119 NOT ACTIVE(결정론적 keeper 실증: agent_loop.rs AIG+tournament, LLM 계층·인바운드 자연어 평면 부재; 온체인 대응물은 A3-보강+Hermes handoff+B14-174로 3중 추적). A6 CRITICAL 39일차·A10/HERMES-H1/B83 HIGH·B45 PARTIAL은 블랙팀 09-13 배치 carry-forward 그대로.
+
+### 2026-09-14 blackteam batch — A154 NEW (Zentra unbounded leniency clamp) + A32 강화 (Chainflip memo reinterpretation) + 헤더 카운트 정합화
+
+- **A154 NEW** (위 본문) — Zentra Finance repayWithATokens: ±1 rounding leniency safeguard가 unbounded clamp로 일반화 → debt-side 완결(debt=0)이 aToken burn=0과 공존, 무가치 채무 소멸 ($140K, 공식 포스트모텀 코드 레벨 승인등급). Aave V3 v3.0.x fork의 로컬 편차 — upstream 3월 rounding 클래스와 별개 경로임이 포스트모텀에서 명시됨.
+- **A32 강화** (위 본문) — Chainflip TRON memo reinterpretation: validator-서명 입금 이벤트에 커스텀 memo 부착 → 동일 입금이 제2의 실패 스왑으로 재해석 → 중복 환불 ($736,442.17, 8회 시도·6회 지급). 서브패턴 명명: *payout identity must bind to the materialized custody event, never to attacker-editable routing metadata*. 전체 엔지니어링 RCA는 재시작(09-14 목표) 후까지 admission-partial.
+- **Timeline +3**: Zentra (09-09, A154), BeatSwap (09-09, BSC — Uniswap V3 slot0 단일 오라클 + flash dump → LP mint 조작, $77.5K — Arrakis/Float과 동일 고전 클래스로 **타임라인-only**, 신규 프리미티브 없음), Chainflip (09-12, A32 강화).
+- **Advisory sweep**: RustSec 최신 = RUSTSEC-2026-0282 (aligned_box realloc double-free, 09-09) 기흡수 확인, Cargo.lock 0매치(무동작). OSV anchor-lang 4건·solana-program 0건 무변화(5월 어드바이저리 기매핑). Anza 0건, Immunefi JS 렌더 검증불가(선례 유지), Neodyme/OtterSec/ToB 창 내 무풍.
+- **헤더 카운트 정합화**: 09-13 redteam B119 승격 시 라인1 헤더가 미갱신(229/221 방치) 상태였음 — 본 런에서 **231/223**으로 정정 (B119 +1 헤딩/+1 ID, A154 +1 헤딩/+1 ID).
+- **WATCH 갱신**: Symbiosis syBTC (RCA 미공개 유지), Amnext (RCA 미공개 유지), Nomic (포스트모텀 대기 유지), **Chainflip 전체 RCA (재시작 09-14 목표 — 신규 등록)**, Zentra 패치/재시작 (09-15 목표 — 패치 적용·2일 타임락 검증 대기).
+
+**Matrix state as of 2026-09-14 (black-team daily evolution)**: **A154 NEW — unbounded leniency clamp / paired-ledger completion desync 일반형** (Zentra, $140K, 공식 포스트모텀) + **A32 강화 (Chainflip TRON memo 재해석 중복 환불, $736K)**. Window (09-12 18:00→09-13 18:00 UTC) 소스 스윕: rekt 1면·SlowMist Solana(최신 08-31 Aquifer) 무변화, **SlowMist 전체 페이지에서 미매핑 3건 발견·심사** — Chainflip 09-12 / Zentra 09-09 / BeatSwap 09-09 (BeatSwap은 A2 slot0 고전으로 타임라인-only). RustSec 0282 기흡수·Cargo 0매치, OSV/Anza/Immunefi/연구블로그 무풍. Microstable PART B (live-code read): **신규 CRITICAL/HIGH 0** — (1) **A154 NOT ACTIVE**: lib.rs의 `saturating_sub`/`.min()` 13곳 전수 열거 — 전부 유계 게이트(신선도 702/1005/3196, 쿨다운 1690/1790/1986-1991)·방어적 파라미터 클램프(3567-3569)·양방향 보수 연산(3001 rent, 3304/3439 ceil)이며 값 전송량에 대한 reduce-instead-of-revert 부재, burn 경로 `expected_user_mstb` 등식 require 선행(1355-1360); (2) **A32-Chanflip NOT ACTIVE**: 프로그램 memo 파싱 0(단어경계 grep), keeper 유일 memo 사용처 = watchdog 아웃바운드 텔레메트리(watchdog.rs:230)로 소비·수용 로직 부재, 지급은 instruction-account 결속; (3) 대시보드 docs/index.html 위험 싱크(innerHTML/document.write/eval) 0매치; (4) **A6 CRITICAL 40일차** (lib.rs:2395-2396 bare `#[account(mut)]` mstb_mint 라이브 재확인 — HEAD 제약 복원·트리 커밋 지시 09-05 개정안 재확인); (5) A10 HIGH (burn CPI ~1360 전달 mint) / HERMES-H1 HIGH (hermes.rs:61-69 7필드, `posted_price_account` 부재) / B83 HIGH (solana/Cargo.lock:2984 quinn-proto 0.11.13) / B45 PARTIAL (`security/` 존재, `audit-attestation.json` 부재) 불변. 코드 동결 재확인 (mtime 02-28 전량).

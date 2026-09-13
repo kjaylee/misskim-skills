@@ -2492,3 +2492,7 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 - **Anchor 창 내(09-10 이후)**: `905a5f367`(rustc argfile CLI 확장)·`5e12a0253`(access_control 표현식 파싱) — 빌드 호환성·매크로 기능 확장, 보안 경계 무관 기각. #4804/#4953는 09-10 배치 기커버.
 - **SPL/RustSec**: 창 내 보안 관련 0건.
 - **Microstable**: B119 NOT ACTIVE — keeper 결정론적 실증(agent_loop.rs, aig.rs 챌린지 티어, tournament). LATENT: LLM 파라미터 탐색·자연어 인터페이스·x402 계열 자율 지급 도입 시 즉시 재평가.
+
+175. ☐ **(A154 쌍둥이, 2026-09-14) 값 전송량에 대한 "감소 후 수용" 분기는 반드시 유계여야 한다.** SPL Token `burn`은 소유 계정 요구로 클램프 자체가 불가능하므로 EVM형 unbounded leniency clamp(Zentra repayWithATokens)는 프로토콜 자체 수학 안의 합성 쌍대 원장에서만 재현된다. 감사 대상: `saturating_sub`/`.min()`이 **값 전송량(지급·소각·상환 수량)**에 적용되고 클램프된 잔여가 완결 연산으로 묵인되는 경로. 필수 불변식: `요청량 − 실제량 ≤ 명시적 허용오차(1)` 위반 시 revert; `완결 기록 ⇔ 상대 원장 실델타 ≥ 기록 델타 − 1`; `settlement==0 && debt_delta>0`는 구조적으로 익스플로잇 형태이므로 즉시 거부. Microstable 실증: lib.rs saturating/.min 13곳 전수 — 전부 유계 게이트·방어적 파라미터 클램프·보수 연산, 값 전송 clamp 부재 (NOT ACTIVE).
+
+176. ☐ **(A32-Chanflip 쌍둥이, 2026-09-14) 지급 멱등성 키는 서명·구체화된 커스터디 이벤트에서 유도하라 — memo/참조 메타데이터에서 유도 금지.** Chainflip TRON 사고: validator 서명 트랜잭션에 커스텀 memo 부착 → 동일 입금이 제2 스왑으로 재해석 → 중복 환불($736K, 8회 시도 6회 지급). 서명 의식은 "어느 스왑에 속하는가"를 커버하지 않는다 — 멱등성 검사는 오프체인 인덱싱에 살고, 키관리 경로 감사는 도달하지 않는다. Solana 적용: (a) SPL Memo 데이터는 advisory — 지급·청구·환불 수용 로직이 memo 내용을 키로 소비하면 안 됨(입력은 instruction-account 결속으로만); (b) 입금 1건 = 스왑/청구 라이프사이클 1개, 동일 커스터디 이벤트의 제2 결속 시도는 환불이 아니라 경보; (c) 불변식 모니터 `Σ지급 ≤ Σ(구별된 정산 입금)` per asset/vault. Microstable 실증: 프로그램 memo 파싱 0, keeper 유일 memo 사용처 = watchdog 아웃바운드 텔레메트리(watchdog.rs:230)로 소비 로직 부재 (NOT ACTIVE).
