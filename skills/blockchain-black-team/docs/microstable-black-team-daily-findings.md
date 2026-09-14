@@ -1,3 +1,19 @@
+## 2026-09-15 (KST 03:00)
+
+**Evolution delta**: **0 new vectors, 1 reinforcement (A2 — Spiral tx.origin 가드 EOA 로테이션 우회)** + 백로그 타임라인 2건(ORBToken/Dominion, 09-11) + Tectonic 확정치 갱신($120.4M 확정·10,961블록 롤백으로 $111.2M 원복). RustSec 신규 2건: **RUSTSEC-2026-0285 rustls — Microstable Cargo.lock 0.23.36 적중(MEDIUM, PATCH 권고)**, RUSTSEC-2026-0284 lockfree 미사용. OSV(anchor 4건 기매핑)/Anza/Immunefi/연구블로그 무풍.
+
+### PART B — 전수 대입 (live code, 09-14 18:00 UTC)
+
+| 벡터 | 판정 | 근거 (live code) |
+|---|---|---|
+| A2-Spiral (식별자 키 동일블록 가드 우회) | ✅ NOT ACTIVE | 담보 평가 온체인 스팟 읽기 부재 — keeper oracle 전용(is_stale oracle.rs:297/563 + deviation_bps oracle.rs:849, 기확립); 쿨다운/백오프 전부 protocol-state·포지션 결속 슬롯 산술(lib.rs:1985-1991 slot 기반 manual-oracle backoff 금일 재열람) — tx.origin/지갑 신원 키 가드 0건 |
+| A154 (unbounded leniency clamp) | ✅ NOT ACTIVE | 전일 전수 열거 재승계(13곳 saturating_sub/.min() 전부 유계 게이트·방어 클램프, burn 경로 expected_user_mstb 등식 require lib.rs:1355-1360) — 코드 동결로 불변 |
+| **RUSTSEC-2026-0285 (rustls 0.23.36)** | ⚠️ **MEDIUM — PATCH 권고** | Cargo.lock 3308행 엔트리 0.23.36 ∈ affected [0.23.13, 0.23.45); quinn-proto(B83)/hyper-rustls 경유 keeper 네트워크 평면. CVSS C:L/I:N/A:N(네트워크 인접 공격자 필요, 핸드셰이크 트랜스크립트는 인증 유지 — 기밀성 국소 영향). 조치: `cargo update -p rustls` (→0.23.45+). rustls 0.21.12(3296행)은 unaffected |
+| A6 (mstb_mint bare mut) | ❌ CRITICAL 41일차 | lib.rs:2395-2396 라이브 재확인 — HEAD 제약 복원 지시(09-05 개정안) 미집행 |
+| A10 / HERMES-H1 / B83 / B45 | carry-forward | HIGH×3 + PARTIAL — 전일 판정 재승계(코드 동결) |
+
+코드 동결 재확인: lib.rs·keeper 전 파일 mtime 2026-02-22~28. 신규 CRITICAL/HIGH 0 → 즉시 알림 미발동.
+
 
 ## 2026-09-07 (KST 03:00)
 
