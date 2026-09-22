@@ -2934,3 +2934,24 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - 신규 CRITICAL/HIGH: **0** (신규 서브패턴 3건 모두 부분방어/구조적 방어/NOT ACTIVE).
 - Carry-forward: **A6 CRITICAL 29일째 — 동일 1-line fix 대기**, A10·HERMES-H1·B83 HIGH, B45 PARTIAL. 블루팀 수정 순서 불변: **A6 → HERMES-H1 → B83 → B45**.
 - 오늘의 신규 교훈 요약: 오라클 인프라 키 승인 침해에 대해서는 소비자측 검증이 무력하다 — Microstable의 `deviation_bps`+stale-pause가 유효 방어선이며, 보조 오라클(checklist 105)이 남은 유일한 구조적 개선.
+
+## 2026-09-23 — 일일 점검 (A155 신규 승격 + A32-Nomic 종결 반영, HEAD 23c0163·dirty 39·mtime 02-28 동결)
+
+**적용 신규 벡터**: A155 (Radix borrowed-reference capability downgrade) + A32-Nomic 종결("two mints, one delivery"). **결과: 신규 CRITICAL/HIGH/MEDIUM 0.**
+
+| 항목 | 위치 | 판정 | 증거 |
+|---|---|---|---|
+| **A155 대여-참조 권한 다운그레이드 (NEW)** | lib.rs UncheckedAccount 전수 | ✅ **DEFENDED(소비-프레임)** | pyth 경로가 소비 함수 내부에서 권한 재유도 — `require_keys_eq!(pyth_price_account.key(), vault.pyth_price_feed)` lib.rs:3159-3162 + feed_id 동등 + publish_time ≤60s + PRICE_MIN/MAX + confidence 상한 + owner/authority(3145-3185); 마이그레이션 UncheckedAccount(2100-2120·2618-2621) 바디 결속 승계, remaining_accounts 0, invoke 2지점(446/3002) 구성 시스템 전송 |
+| **A32-Nomic 이중 민트 (WATCH 종결)** | lib.rs 포워딩 경로 | ✅ NOT ACTIVE(구조적) | forward/passthrough grep 0매치 재실행 — 커스텀 포워딩 레인 부재 |
+| **A6 fake-MSTB redeem (CRITICAL carry)** | lib.rs:2394-2396 | ❌ **CRITICAL STILL ACTIVE — 49일차** | bare `#[account(mut)] mstb_mint` 라이브 재확인; mint 경로 pin(~2321)과의 비대칭 지속 |
+| **A10 redeem burn passed-in mint** | lib.rs:1352·1364 | ❌ HIGH UNFIXED | `expected_user_mstb`가 전달 mint로 자기참조 도출(1352), burn CPI가 전달 mint 사용(1364) |
+| **HERMES-H1 가격 계정 미검증 업데이트** | keeper/src/hermes.rs:62-69 | ❌ HIGH UNFIXED | `HermesPostedUpdate` 7필드, `posted_price_account` 부재 |
+| **B83 quinn-proto 0.11.13** | Cargo.lock | ❌ HIGH UNFIXED | 라이브 확인 |
+| **B45 audit attestation** | security/ | ⚠️ PARTIAL | 8파일 존재·`audit-attestation.json` 부재 — **금일 신규 논거**: A155 방어5·A32-Nomic audit-revision drift 모두 commit×path 결속 증명 문서를 요구, 이 갭이 재지목 대상 |
+| **RUSTSEC-0285 rustls 0.23.36** | Cargo.lock | ⚠️ MEDIUM | `cargo update -p rustls` 권고 유지 |
+| 키퍼/대시보드 | keeper/src·docs/index.html | ✅ 정상 | 하드코딩 시크릿 0매치, innerHTML/document.write/eval 0매치 |
+
+### Today's Verdict
+- 신규 CRITICAL/HIGH/MEDIUM: **0** (A155·A32-Nomic 모두 DEFENDED/NOT ACTIVE).
+- Carry-forward: **A6 CRITICAL 49일째 — 동일 1-line fix 대기**(`#[account(mut, mint::authority = protocol_state)]` 또는 `require_keys_eq!(mstb_mint.key(), protocol_state.mstb_mint)`), A10·HERMES-H1·B83 HIGH, B45 PARTIAL. 블루팀 수정 순위 불변: **A6 → HERMES-H1 → A10 → B83 → B45**. B45 신규 권고: 감사 아티팩트에 커버 경로 목록+커밋 해시 포함(commit×path 결속 — audit-revision drift 탐지 전제).
+- 오늘의 신규 교훈 요약: 권한이 참조의 분류에서 유도되면 대여가 분류 세탁이 된다(A155) — 소비 프레임 재유도가 교리; 감사 라벨은 커밋에 결속되고 재작성이 재검토를 연다(audit-revision drift). Radix 공식 포렌직의 AI-발견 귀속: 공개 소스 인가 경로의 연속 자동 재검토가 방어의 대칭 의무.
