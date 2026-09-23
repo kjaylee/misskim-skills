@@ -2955,3 +2955,12 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - 신규 CRITICAL/HIGH/MEDIUM: **0** (A155·A32-Nomic 모두 DEFENDED/NOT ACTIVE).
 - Carry-forward: **A6 CRITICAL 49일째 — 동일 1-line fix 대기**(`#[account(mut, mint::authority = protocol_state)]` 또는 `require_keys_eq!(mstb_mint.key(), protocol_state.mstb_mint)`), A10·HERMES-H1·B83 HIGH, B45 PARTIAL. 블루팀 수정 순위 불변: **A6 → HERMES-H1 → A10 → B83 → B45**. B45 신규 권고: 감사 아티팩트에 커버 경로 목록+커밋 해시 포함(commit×path 결속 — audit-revision drift 탐지 전제).
 - 오늘의 신규 교훈 요약: 권한이 참조의 분류에서 유도되면 대여가 분류 세탁이 된다(A155) — 소비 프레임 재유도가 교리; 감사 라벨은 커밋에 결속되고 재작성이 재검토를 연다(audit-revision drift). Radix 공식 포렌직의 AI-발견 귀속: 공개 소스 인가 경로의 연속 자동 재검토가 방어의 대칭 의무.
+
+## 2026-09-24 — 일일 점검 (C23-Neutron 강화 + 퍼플 큐 8건 흡수, HEAD 23c0163·dirty 39·mtime 02-28 동결 50일)
+
+- **신규 CRITICAL/HIGH: 0건.** 코드 동결 재확인(전 파일 mtime 2026-02-28, HEAD 23c0163, dirty 39 — 50일째 불변).
+- **C23-Neutron NOT ACTIVE(구조적)**: 권한 평면 = TRUSTED_INITIALIZER `require_keys_eq` + 2-of-3 keeper_set(lib.rs:153-163), EmergencyShutdown = keeper_one+keeper_two 이중 서명(lib.rs:2602-2610). 온체인 거버넌스/제안 평면 부재 — admin 재할당 명령 자체가 없음. `devnet_force_reinit`(lib.rs:2085-2093)은 devnet-admin 피처 게이트(비기본).
+- **A153-gasless NOT ACTIVE**: approve/delegate/session 프로그램·키퍼 전체 0매치 — 가스리스/모듈 실행자 표면 부재.
+- **A152 NOT ACTIVE 재실증**: UncheckedAccount 11곳(MigrateLegacyState 6 PDA/owner 바디 결속 + DevnetForceReinit 2 devnet 게이트 + pyth 3 주소 고정) — 호출자 지정 주소의 가치 이동 신뢰 0건.
+- **Carry-forward 50일차 라이브 재확인**: A6 CRITICAL(lib.rs:2395-2396 bare `#[account(mut)] mstb_mint`), A10 HIGH(burn CPI lib.rs:1360-1366 전달 mint), HERMES-H1 HIGH(hermes.rs:61-69 7필드, posted_price_account 부재), B83 HIGH(solana/Cargo.lock quinn-proto 0.11.13), B45 PARTIAL(audit-attestation.json 부재), RUSTSEC-0285 MEDIUM(rustls 0.23.36).
+- **블루팀 수정 지시(50일차 불변)**: ① HEAD Redeem 제약 복원 + 34파일 트리 커밋(최우선 — A6는 "새 제약 작성"이 아니라 HEAD 59588c5 제약 복원) ② quinn-proto 0.11.13 업그레이드 ③ hermes.rs `posted_price_account` 필드 추가 ④ audit-attestation.json 생성 ⑤ devnet-admin/USDS feed-id 배포 게이트 문서화.
