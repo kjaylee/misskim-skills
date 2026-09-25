@@ -1,4 +1,4 @@
-# Attack Matrix — 232 Active Named-Vector Headings / 224 Unique Named IDs + META-01~83
+# Attack Matrix — 232 Active Named-Vector Headings / 224 Unique Named IDs + META-01~84
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -13034,6 +13034,16 @@ attacker:
 - **Microstable PART B (HEAD 23c0163·51일차 코드 불변)**: ☐185 NOT ACTIVE(구조적 — jito/bundle/private-rpc 0매치·표준 RPC 제출, 사유 레인 방어 클레임 부재), ☐186 NOT ACTIVE(구조적 — Anchor 클라 이벤트 리스너 소비 부재, addEventListener/onLogs/Event::decode 0매치). 신규 CRITICAL/HIGH 0. 캐리포워드 불변: **A6 CRITICAL 51일차**, A10 HIGH, HERMES-H1 HIGH, B83 HIGH(quinn-proto 0.11.13), B45 PARTIAL, RUSTSEC-0285 MEDIUM 10일차.
 - 헤더 카운트 **232/224 불변**(named 신규 0).
 
+## META-84: Authorization-Plane Input Integrity / Signer Truth Inheritance (APII) — 승인면 입력 무결성·서명자 진실 상속 (퍼플팀 2026-09-26)
+
+- **사건**: Bitget (09-24 18:31 UTC 감지, $351.6M → Zcash·TRON 포함 **$387.5M 상향**; FT ~$390M 「올해 최대」). CEO Gracy Chen 공식: 지갑 스택의 핵심 백엔드 시스템 침해 → **거래 데이터 스푸핑** → **거래소 자체 승인 프로세스가 정상 발동**해 자금 이동. **개인키 탈취 배제·가짜 출금 요청 배제**. 콜드월렛·Bitget Wallet 무영향. DPRK 혐의 예비(VPN IP).
+- **핵심 비대칭**: 서명/승인 프로세스는 **가장 신뢰가 낮은 입력면의 진실을 상속**한다. 키 커스터디 토폴로지(hot/warm/cold 분리, 멀티시그 쿼럼, MPC, TEE)는 *키 재료가 어디 사는가*를 기술할 뿐 *결정 입력이 정직한가*는 기술하지 않는다. 고립은 **데이터 경로도 함께 고립될 때만 실재**한다 — Bitget 반사실 증명: 콜드월렛·Bitget Wallet은 침해된 백엔드의 데이터를 소비하지 않는 다른 승인 경로에 있어 무영향이었다. 핫/웜 평면은 모든 커스터디 감사 기준을 통과하면서 **하나의 백엔드 승인 경로를 공유**했다.
+- **왜 감사·방어가 놓치는가**: ① 커스터디 통제가 키 재료 경계(hot/cold 분리·쿼럼) 중심으로 모델링되고, 승인 프로세스에 공급되는 데이터 경로는 별도 보안 도메인으로 취급되지 않는다. ② 지갑 운영 스택 내부의 거래데이터 무결성은 백엔드/인프라 영역으로 분류돼 프로토콜 보안 감사 스코프 밖(META-82 계열 — 보증 라벨 스코프 ≠ 사건 경로 스코프의 운영 인프라 인스턴스). ③ **「설계대로 작동하는」 승인 프로세스가 그 자체로 취약점** — 올바르게 서명되고 잘못된 전제를 가진 트랜잭션에 대한 이상탐지 모델이 없다. ④ 탐지 시스템은 낯선 주체의 서명(키 도난 시그니처)을 감시하지, 친숙한 주체가 공격자 전제 페이로드에 서명하는 것은 감시하지 않는다. ⑤ 서명 전 독립 재계산(제2 데이터 경로에서 예상 amount/destination 재도출, 불일치=정지)이 방어 요구로 승격되는 일이 드물다 — 위협 모델이 「침해=키 탈취」를 전제한다.
+- **방어 코롤러리**: ① **온체인 상한은 승인면 침해를 무한손실에서 유한손실로 변환** — 완전히 스푸핑된 서명자도 컨트랙트층 상한을 넘을 수 없다(META-63 런타임 불변식 승격의 서명면 쌍둥이). ② 키 고립의 실효성 감사는 키 재료 경로와 **데이터 경로를 함께 감사**해야 한다 — 고립 주장은 「이 자산의 승인 경로는 어떤 데이터 평면을 소비하는가」까지 열거해야 증명된다.
+- **구별**: **B15** 「keys not code」는 키·자격증명 *재료* 침해(Duelbits·Triple-A·SingularityNET 클라우드→authorizer 키 유출) — Bitget은 키 무사·프로세스 무사·**입력만 거짓** (실패 로커스 상이). **META-57 ③**은 관측기/검증기가 같은 데이터 평면을 공유할 때의 *탐지* 실패 — META-84는 동일 상관 데이터평면 구조의 *집행* 쌍둥이(소비자가 모니터가 아니라 서명자). **☐187**(레드 09-26, ToB TEE+MPC 호스트 롤백→논스 재사용→키 쉐어 유출)은 종착점이 키 유출이라 축이 다르다. META-54(역할 대비 권한)·META-69(임시상태)와도 축 상이.
+- **증거 등급**: 메커니즘 클래스는 CEO 공식 발언·SlowMist 게재·Reuters/FT/CNBC 3중 독립 보도로 공개 완료. 상세 RCA(어느 백엔드 시스템·지속 벡터·탐지 시계) 대기 — **포스트모템이 스푸핑 프레임을 반박하면 재평가**. DPRK 어트리뷰션은 예비.
+- Sources: https://hacked.slowmist.io/en/ | CoinDesk 2026-09-25 (CEO 발언) | Reuters 2026-09-25 | FT 2026-09-25 | CNBC 2026-09-25
+
 ### 2026-09-26 blackteam batch — B15 강화(SingularityNET rekt 심층: 비대칭 limit 커버리지 + silent-authorizer 프로파일 / Bitget $351.6M WATCH) + A153 standing-allowance 6th member(Magic Eden/Limit Break legacy-approval 2년 dormancy) + 금일 Advisory 11건 전건 0매치
 
 1. **SingularityNET rekt 심층 (09-19 사고, rekt 아티클 ~09-24 공개 — 09-24 배치 Fetch.ai/NuNet named 매핑의 심층 보강)**: 클라우드 인프라 침해로 **conversion authorizer 서명 키** 유출 → `conversionIn()` 1회 서명으로 컨버터 전체 FET 8.72M(~$1.53M) 드레인(20:21 UTC, 2분 24초 내 522.78 ETH 스왑) + 이후 9시간 AGIX/WMTX/CGV 무담보 발행 + NuNet mint-role 직접 `mint()`(408.5M NTX). 코드 레벨 신규 디테일 4점:
@@ -13071,3 +13081,12 @@ attacker:
 - **SPL**: 모노레포 동결 재실증(마지막 커밋 2025-03-10). token 신규 홈 리포 이번 런 미특정(solana-labs/anza-xyz 오그 탐색 0건 — 한계 명시) — 블랙팀 09-26 창 스윕과 교차해 창 내 보안 델타 0으로 기록.
 - **Microstable PART B**: 신규 렌즈 2건(TEE-MPC 롤백·에이전트 트레이스) 모두 NOT ACTIVE(구조적). **A6 CRITICAL 52일차**·HIGH(A10/HERMES-H1/B83)·MEDIUM(RUSTSEC-0285 — ☐182 `cargo update -p rustls` 미집행 11일차) 캐리포워드 불변.
 - 헤더 카운트 **232/224 불변**(named 신규 0).
+
+### 2026-09-26 purple-team batch — META-84 승격(Bitget 승인면 입력 무결성: 키 무사·프로세스 무사·입력 스푸핑) + Payy 미흡수 블랙 큐 + deprecation≠revocation 3-연속 기록 + 리서치 에버그린 무풍
+
+- **META-84 승격 (APII — full section above)**: 블랙 09-26 「Bitget B15 타임라인 WATCH, $351.6M, RCA pending」 판정 이후 금일 04:02 KST SlowMist 스냅샷·CEO 공식 발언(CoinDesk 09-25)으로 **메커니즘 클래스 공개** — 백엔드 침해→tx 데이터 스푸핑→자체 승인 프로세스 정상 발동, **키 탈취 배제**. 금액 $387.5M 상향(Zcash·TRON 포함; FT ~$390M 올해 최대; 102.9M XRP ≈ $157.5M 최다 단일 자산). 실패 로커스가 키 재료(B15)가 아니라 **결정 입력 평면**이므로 신규 META로 정식화 — 콜드월렛·Bitget Wallet 무영향이 데이터 경로 고립의 반사실 증명. 포스트모템이 스푸핑 프레임 반박 시 재평가 조항 명시.
+- **Payy Network (09-24, ~1,832,149 USDC) — 그렙 실증 미흡수(black-team 트리 「Payy」 0매치), 블랙 큐**: Ethereum 브리지 컨트랙트 완전 드레인, 피해자금 = 사용자 논커스터디얼 예치, 전체 정지·RCA 진행 중. 브리지 전량 드레인 형태(A32-패밀리 후보) — RCA 대기 전 named 보류(Nomic·Meter Passport 절차 준용). #54(09-25) 스냅샷 미포재분 백픽.
+- **Magic Eden/Limit Break(09-25) — 블랙 09-26 A153 6th member 완전 흡수 확인, 퍼플 갭 없음**. 계보 기록: ether.fi(승인 잔존) → Internet Token(민트 롤 미회수) → Magic Eden(레거시 승인 2년 dormancy)로 「deprecation ≠ revocation」 **3-연속 데이터포인트**(META-64/META-68 EOL 페이셋) 성립.
+- **리서치 스트림**: FV·인버리언트·바운티·IR 창 에버그린 재노출뿐(감사 가격 가이드·ethereum.org 문서 — 퍼플 급 메타 0). FV 10주+ 연속 조용. AI-agent 스트림은 레드 09-26 B119 3-페이셋(트레이스 변조·모니터 회피·은밀 공모) 커버 — 퍼플 갭 없음.
+
+**Matrix state as of 2026-09-26 (purple-team daily evolution #55)**: **META-84 added** (Authorization-Plane Input Integrity — Bitget $387.5M: signer truth inheritance, custody topology ≠ input-path isolation, cold-wallet counterfactual). named 232/224 불변(META는 named 카운트 외) → **총 84 META entries**. Payy 블랙 큐 1건. Microstable: 신규 CRITICAL/HIGH 0 — META-84 적용성 판정: 키퍼 데이터평면(Pyth 계정·RPC 입력) 스푸핑 시나리오에서 키퍼 키 관리(2-of-3)는 키 재료 경계만 보호하나, **온체인 다중 상한(2%/tx·6%/slot·rate-limit·CR bound·redeem 3%/slot·EmergencyShutdown 이중 서명)이 승인면 피해를 유한손실로 구속 = 클래스 방어 실재** — Keeper↔On-chain HIGH carry-forward 행에 META-84 주석. 경계 7종 전량 carry-forward.
