@@ -13022,3 +13022,13 @@ attacker:
 - **CTF/감사/MEV**: zai-search 3쿼리(DVD/Paradigm CTF, ToB/Certora/OtterSec 감사, Jito/Skip/Flashbots MEV) 전부 빈 결과 — 컨트롤 쿼리(Solana exploit)는 정상 응답(노이즈)해 제공자 정상·매칭 부재로 판정. 블랙팀 09-24 배치(동일창 사고 스윕)와 교차 — 일관.
 - **Microstable PART B (HEAD 23c0163·50일차 코드 불변)**: ☐184 NOT ACTIVE(구조적 — init_mint/token_2022/extension 전수 0매치, canonical 바인딩 lib.rs:2188). 신규 CRITICAL/HIGH 0. 캐리포워드 불변: **A6 CRITICAL 50일차**, A10 HIGH, HERMES-H1 HIGH, B83 HIGH(quinn-proto 0.11.13), B45 PARTIAL, RUSTSEC-0285 MEDIUM 9일차(rustls 0.21.12 unaffected + 0.23.x 영향 버전 이중 엔트리).
 - 헤더 카운트 **232/224 불변**(named 신규 0).
+
+### 2026-09-25 redteam batch — named 신규 0; solana-specific ☐185(보호 오더플로 잔여 샌드위치, arXiv 2609.28115) + ☐186(실패 tx 팬텀 이벤트, Anchor #4884) + arXiv 정체 해소·전체창 재스윕 이행 + EVAGE=META-24 강화
+
+- **Anchor(otter-sec) 금일 창 4커밋(09-23 00:00→09-24 18:30 UTC)**: 보안 관련 1 — **#4884 "fix(client): Don't report failed transactions in events listener"**(97e2d91, 09-23 23:22 UTC, merged) → **☐186 승격**(solana-specific 최신항): 실패 tx의 이벤트가 클라이언트 리스너에 정상 이벤트로 보고되던 평면 — D27(이벤트 '내용' 위조)과 달리 진짜 프로토콜 이벤트가 **커밋 없이 관측되게** 만드는 '실행 상태' 채널 오염, 공격 원가는 후속 인스트럭션 실패 유도뿐(서명·권한 불필요). #5094(0.30.2 릴리스노트 — TS-only v1 tx 파싱, 실패 tx maxSupportedTransactionVersion=1 재조회는 동일 실패-tx-파싱 평면) 비보안. #4845·#5055는 09-24 배치 기커버.
+- **arXiv cs.CR 정체 해소 + 전체창 재스윕 이행(09-24 회차 예약 이행)**: 09-23 배치 도착. 200건 타이틀 전수 스캔 — submittedDate 09-23T15:51 → 09-17T06:55(이전 흡수 경계 도달, 누락창 0 실증). 익스플로잇 관련 신규 2: **2609.28115 "No Place to Hide: Protected Order Flow Sandwich Attacks"**(3년 종단측정, 6체인 incl. Solana, 2,800만 샌드위치, 크로스블록 wide 휴리스틱) → **☐185 승격** — 기존 A8/C25/A71/META-09·Aave/CoW 흡수는 '보호 실패→공개 멤풀 노출' 고장 모드, 본 측정은 **보호가 작동해도 잔여 샌드위치 존재**를 실증 — 제출 레인 사유화를 경계가 아닌 확률적 완화로 강등. **2609.27424 EVAGE**(자율 멀티에이전트 MEV 전략 생성·교차체인 포팅·오프라인 봇 코드젠) — 신규 ID 아님, **META-24(Agentic MEV) 강화 데이터포인트**: AI MEV가 단일 블록 실행(기존)에서 전략 '발견·적응·포팅' 자동화로 진화. 기타 Rust 레인(C-to-Rust Fallacy 2609.25682·TRACTOR 2609.25121) 방법론 참고, Hydrozoan DAG(2609.25918) B78/B81 인접 무관.
+- **RustSec 0307-0308 신규 2건 전건 0매치**: 0307 uncbv / 0308 salsa(인턴 값·캐시 함수 결과 UAF — rust-analyzer 계열). solana/Cargo.lock·루트 Cargo.lock·src 전수 0매치 — ☐182 레인 소관.
+- **SPL 동결 재실증**: since 09-20 커밋 0(264ca72d 2025-03-10 이후 지속).
+- **CTF/감사/MEV**: zai-search 3쿼리 — CTF·MEV 빈 결과, 감사 1노이즈(thegrid.id 큐레이션 목록). 제공자 정상(감사 쿼리 응답 성공 = 컨트롤). 블랙팀 배치와 교차 일관.
+- **Microstable PART B (HEAD 23c0163·51일차 코드 불변)**: ☐185 NOT ACTIVE(구조적 — jito/bundle/private-rpc 0매치·표준 RPC 제출, 사유 레인 방어 클레임 부재), ☐186 NOT ACTIVE(구조적 — Anchor 클라 이벤트 리스너 소비 부재, addEventListener/onLogs/Event::decode 0매치). 신규 CRITICAL/HIGH 0. 캐리포워드 불변: **A6 CRITICAL 51일차**, A10 HIGH, HERMES-H1 HIGH, B83 HIGH(quinn-proto 0.11.13), B45 PARTIAL, RUSTSEC-0285 MEDIUM 10일차.
+- 헤더 카운트 **232/224 불변**(named 신규 0).
