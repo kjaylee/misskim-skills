@@ -838,7 +838,7 @@
 
 - **2026-09-16 — Nimiq / OpenGSN Polygon HTLC (~$50,463)** — OpenGSN 메타트랜잭션 어댑터의 `open/execute`가 **실제 사용자 서명 없이 위조된 `from` 수용**(릴레이 평면 신원 위조 — 포워더가 calldata 신원 신뢰) → 유동성 지갑 0x24cb…6773의 **잔여 사실상 무한 ERC-20 승인**으로 USDC/USDT0/USDC.e를 공격자 수신자·`secretHash=sha256(1)` HTLC에 락 → CREATE2 컨트랙트가 `secret=1`로 즉시 회수. 3층 스택: 릴레이 신원 미결속(A153) + 무한 승인 수확 + 공격자 선택 trivial 해시락. Vector: **A153 강화(2026-09-20) — 서브패턴: 릴레이 경계 무인증 actor + caller 선택 해시락은 락이 아님**. Sources: https://x.com/DefimonAlerts/status/2100868892742602793 | https://hacked.slowmist.io/
 
-- **2026-09-17 — Nostra (Starknet 머니마켓, ~$3.5M)** — NSTR 오라클 가격 **$0.006→$49.5(~8,250x) 펌핑** → 단일 계정이 부풀려진 NSTR 담보로 ETH/STRK/USDC/USDT/WBTC/DAI ~$3.5M 차입, ~$1.92M는 이미 Ethereum 브리지. 시총 $547K 자기 거버넌스 토큰이 자기시총 ~6.4배 노출 허용 — 노출 상한이 가조작 가능 유동성과 미결속, 피드 소비자에 편차 경계·새니티 클램프 부재. 2025년 동일 프로토콜 오라클 사고 재발(리메디에이션 불변식 미인코딩). 머니마켓 정지·자금 추적 중. Vector: **A2/A3 강화(2026-09-20) — exposure-진입 유동성 미결속 + feed valid ≠ price plausible + 동일 프로토콜 오라클 클래스 재발**; NSTR 피드 출처 RCA WATCH. Sources: https://x.com/nostrafinance/status/2100577538053493076 | https://hacked.slowmist.io/ | PeckShield 경위 PANews 2026-09-18
+- **2026-09-17 — Nostra (Starknet 머니마켓, ~$3.5M)** — NSTR 오라클 가격 **$0.006→$49.5(~8,250x) 펌핑** → 단일 계정이 부풀려진 NSTR 담보로 ETH/STRK/USDC/USDT/WBTC/DAI ~$3.5M 차입, ~$1.92M는 이미 Ethereum 브리지. 시총 $547K 자기 거버넌스 토큰이 자기시총 ~6.4배 노출 허용 — 노출 상한이 가조작 가능 유동성과 미결속, 피드 소비자에 편차 경계·새니티 클램프 부재. 2025년 동일 프로토콜 오라클 사고 재발(리메디에이션 불변식 미인코딩). 머니마켓 정지·자금 추적 중. Vector: **A2/A3 강화(2026-09-20) — exposure-진입 유동성 미결속 + feed valid ≠ price plausible + 동일 프로토콜 오라클 클래스 재발**; NSTR 피드 출처 RCA WATCH. **[2026-09-25 보강]** rekt 아티클 공개 — 배수 **8,306x로 정정**, 오라클 벤더 **Pragma가 사전에 해당 피드 고위험 경고**했다는 주장(경고-무시 갭 = META-66 「scanner exists ≠ assurance owned」 데이터 포인트), 머니마켓 여전히 정지·포스트모템 계속 미공개. Sources: https://x.com/nostrafinance/status/2100577538053493076 | https://hacked.slowmist.io/ | PeckShield 경위 PANews 2026-09-18 | https://rekt.news/nostra-rekt
 
 - **2026-09-17 — Haruko (런던 크립토 백오피스 SaaS, 15 고객)** — 표적 사이버공격으로 **접근 토큰 탈취** → IP 화이트리스트 미적용 15개 헤지펀드 고객의 **read-only 거래소 API 상세·거래 데이터 노출**, 일부 고객 자금 피해. read-only 크리덴셜 노출도 (a) 데이터 유출·프론트러닝 신호 (b) 접근 토큰 자체의 확장 권한으로 피해 전이. 온체인 아님. Vector: **타임라인-only (B15 인접 — SaaS 자격증명 평면, read-only 노출의 피해 전이)**. WATCH(메커니즘 상세 대기). Sources: CoinDesk 2026-09-19 | financefeeds.com 2026-09-19
 
@@ -870,3 +870,15 @@
 
 - **2026-09-19 — MultiversX (L1, VM 수준 원자성 결함)** — 공격자가 VM 수준 원자성 문제를 악용해 **무효 온체인 상태 변경** 유발 → 네트워크 일시정지 → 섀도우 포크에서 수정 검증 → 확정 히스토리·합법 사용자 상태 보존하고 **사고 관련 무효 변경만 되돌리는 선택적 복구** 준비(제3 액추에이터 변이 — 퍼플 09-23 도ctrine 확장: 분류기 자체가 신뢰 표면). EGLD/ESDT 브리지·거래소 입출금 중단 권고. 코드 경로 미공개. Vector mapping: **WATCH(2026-09-24) — 포스트모템 대기, named 매핑 보류**(Harmony 08-15→08-23 선례).
   Sources: https://x.com/multiversx/status/2101341591277391953 | https://hacked.slowmist.io/
+
+- **2026-09-24 — Duelbits (크립토 카지노, 멀티체인 핫월렛, ~$4.9M)** — ETH·BSC·Tron·BTC **4체인 핫월렛 사설키 침해 의심** → ~$4.9M를 신규 생성 주소로 이체, 대부분 ETH로 스왑, 사이트 오프라인 전환·조사 중. 스마트컨트랙트 결함 아닌 **운영 크리덴셜 평면 침해** — 멀티체인 핫월렛 통합 운영이 단일 키 침해로 4체인 노출을 동시에 여는 구조. Vector mapping: **B15 강화(2026-09-25) — 멀티체인 핫월렛 통합 평면 단일 침해**("keys not code" 테이시스 재실증, rekt 「Wrong Attack Surface」 계보; 체인별 키 분리·지갑 주기 재생성의 실전 근거 데이터 포인트).
+  Sources: https://x.com/realScamSniffer/status/2103059906303869042 | https://publicaml.org/news/2026-09-24-duelbits/ | https://hacked.slowmist.io/
+
+- **2026-09-24 — Meter Passport (Meter.io 브리지, BNB Chain, ~$2.3M+, 공격 진행 중 보고)** — 브리지에서 **무담보 wMTRG 대량 민트**(경보 시점 약 2개 트랜잭션에서 ~$2.3M분) → PancakeSwap에서 일부 매도, Blockaid 실시간 경보·공격 진행 상태 보고. 근본 원인(검증인 서명·롤리스 검증·커스텀 릴레이 중 어느 평면 침해인지) 미공개 → named 승격 보류. Vector mapping: **A32 패밀리 WATCH(2026-09-25) — 무담보 랩드 발행, RCA 대기**(Nomic 09-10 WATCH→09-23 종결 선례 절차 준용).
+  Sources: https://x.com/blockaid_/status/2103121249706877178 | https://publicaml.org/news/2026-09-24-meter-passport/ | https://hacked.slowmist.io/
+
+- **2026-09-23 — Jack Kong 개인 X 계정 (Nano Labs 창업자 — timeline-only)** — 개인 X 계정 침해로 가짜 AI 트레이딩 토큰 $BWA 홍보(수수료 수익 공유 주장), Nano Labs 공식 부인·경고. 코드 표면 아닌 소셜 계정 침해 — 매트릭스 변경 없음. Vector mapping: **B15 소셜계정 클래스(timeline-only)**.
+  Sources: https://x.com/NanoLabsLtd/status/2102935346057273829 | https://publicaml.org/news/2026-09-23-the-personal-x-account-of-nano-labs-founder-jack-kong/
+
+- **2026-09-18 — Likwid (BNB Chain 마진-차입 프로토콜, 74.31 BNB ≈ $55.7K; 09-20 런 흡수 누락 백필)** — `LikwidMarginPosition`의 **leverage=0 경로가 페어 준비금을 갱신하지 않아 동일 quote가 매 차용마다 재사용** → 공격자가 얇은 밈풀을 먼저 펌프한 뒤 담보/차입 사이클을 반복 복제해 볼트에서 74.31 BNB 드레인, Tornado Cash로 세탁. FoxMarket(08-15)과 동일 계보(조작 가능한 소스에서 유도된 가치평가가 소스 상태 변이 후에도 유효 지속)이나 변이 축이 다름: FoxMarket은 동일 tx 내 스냅샷 고착, Likwid은 **상태 갱신 누락으로 다중 오퍼레이션 사이클 간 스테일 quote 재사용**. Vector mapping: **A2 강화(2026-09-25) — 명명 서브패턴 「stale-quote state reuse across operation cycles」(A10 복합)**.
+  Sources: https://x.com/SlowMist_Team/status/2100785330849009937 | https://hacked.slowmist.io/
