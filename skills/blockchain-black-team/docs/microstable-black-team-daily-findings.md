@@ -1,3 +1,24 @@
+## 2026-09-25 (KST 03:00)
+
+**Evolution delta**: **0 new named vectors, 2 reinforcements (A2 — Likwid stale-quote reuse 백필 + B15 — Duelbits 멀티체인 핫월렛)** + timeline 4건(Duelbits/Meter Passport/Jack Kong/Likwid) + Nostra rekt 보강 + WATCH +1(Meter Passport RCA). OSV/GitHub Advisory 신규 0건, 퍼플 신규 큐 없음(09-23 큐는 09-24 전량 흡수).
+
+### PART B — 전수 대입 (live code, 09-25 00:35 UTC)
+
+| 벡터 | 판정 | 근거 (live code) |
+|---|---|---|
+| A2-Likwid (스테일 quote 상태 재사용) | ✅ NOT ACTIVE | 가격 원천(Pyth/키퍼 레인)과 사용자 오퍼레이션이 분리 — mint/redeem은 가격 원천을 변이시키지 않으므로 오퍼레이션 반복이 quote를 스테일하게 만드는 경로 부재; 가격은 인스트럭션 내 신선 소비(publish_time ≤60s PTV2-002 lib.rs:3170, PRICE_MIN/MAX $0.50-$1.50 절대경계 lib.rs:123-124/693, canonical_twap_price lib.rs:996/3134); 담보 4종 전부 주요 스테이블코인 |
+| A32-Meter (브리지 무담보 발행) | ✅ NOT ACTIVE | 프로그램 내 forwarding/passthrough/relayer/bridge 0매치 — 브리지 레인 구조적 부재 |
+| B15-Duelbits (운영 키 평면) | ✅ NOT ACTIVE | keeper 하드코딩 시크릿/프라이빗키 0매치; config.rs 키페어 경로 정책·HMAC 설정 서명 검증·RPC 화이트리스트 기확립 승계 |
+| **A6 (mstb_mint bare mut)** | ❌ **CRITICAL 51일차** | lib.rs:2395-2396 Redeem `mstb_mint` bare `#[account(mut)]` 라이브 재확인 — Mint path(2320) `mint::authority = protocol_state` 핀과 비대칭, 1라인 수정 계속 미집행 |
+| A10 (burn CPI 전달 mint) | ❌ HIGH carry | lib.rs:1360-1366 `token::burn`이 전달 mstb_mint 사용(A6와 동일 근원) |
+| HERMES-H1 (posted 계정 미저장) | ❌ HIGH carry | hermes.rs:61-69 `HermesPostedUpdate` 7필드 — `posted_price_account` 부재 재확인 |
+| B83 (quinn-proto 0.11.13) | ❌ HIGH carry | Cargo.lock:2984 재확인 + RUSTSEC-0285(rustls 0.23.36) MEDIUM 동반 |
+| B45 (감사 증명) | ⚠️ PARTIAL carry | security/ 존재, audit-attestation.json 부재 |
+| D-대시보드 | ✅ 방어됨 | docs/index.html innerHTML/document.write/eval 0매치 |
+
+코드 동결 재확인: HEAD 23c0163, dirty 39, lib.rs/keeper/index.html mtime 2026-02-28(51일째). **신규 CRITICAL/HIGH 0** → 즉시 알림 미발동. 블루팀 지시 계속 유효: ① A6 1라인 핀(`mstb_mint` address=·authority 결속) ② keeper `HermesPostedUpdate`에 `posted_price_account` 필드 추가 ③ `cargo update -p rustls -p quinn-proto`.
+
+
 ## 2026-09-15 (KST 03:00)
 
 **Evolution delta**: **0 new vectors, 1 reinforcement (A2 — Spiral tx.origin 가드 EOA 로테이션 우회)** + 백로그 타임라인 2건(ORBToken/Dominion, 09-11) + Tectonic 확정치 갱신($120.4M 확정·10,961블록 롤백으로 $111.2M 원복). RustSec 신규 2건: **RUSTSEC-2026-0285 rustls — Microstable Cargo.lock 0.23.36 적중(MEDIUM, PATCH 권고)**, RUSTSEC-2026-0284 lockfree 미사용. OSV(anchor 4건 기매핑)/Anza/Immunefi/연구블로그 무풍.
