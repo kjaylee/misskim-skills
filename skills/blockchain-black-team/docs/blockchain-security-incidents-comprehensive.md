@@ -778,6 +778,9 @@
 
 - **2026-09-04 — Notional Finance V1 Escrow (Ethereum, ~$1.73M)** — free-collateral 평가의 unsafe uint128 cast로 위조 부채 ≈2^128이 0으로 절단, solvency 우회 → 가짜 fCash 민트 → 69,257 DAI + 1,658,524 USDC 인출, ~689.2 ETH 전환 후 Tornado. Vector: **A5 강화(2026-09-08) — cast-narrowing solvency bypass**(산술 오버플로 아닌 변환 축소). Sources: https://x.com/NotionalFinance/status/2095905726094856391 | https://hacked.slowmist.io/
 
+- **2026-09-04 — Vesu (Starknet lending, 총 청구 ~$1.40M — 공격자 부재, 퍼플 09-27 미흡수 백픽·블랙 큐)** — 업스트림 가격평 fault로 Vesu가 의존하는 오라클이 다수 자산 **실제 시세의 약 절반**을 보고 → 이후 **109초** 동안 7개 풀의 차입 포지션 47건이 실재하지 않는 가격으로 청산(허위 청산). 총 청구 $1,395,300(대출자 bad-debt $657K + 차입자 $738K); Vesu Security Council·Starknet Security Council·풀 큐레이터 협조로 **회수율 95%**(사고일 가격 기준 93%, 회수 $1.33M), 큐레이터별 균일 회수 팩터 환불 설계(09-13 환불 블로그). rekt/SlowMist 미노출 — Nostra rekt(09-17) 크레딧 링크로 발견(23일 미흡수). Vector mapping: **A3 강화 후보(2026-09-27, 퍼플 큐 → 블랙 승계) — 하방 방향 oracle fault·즉각 청산 권한**(2026-07-22 42DAO 원칙의 두 번째 실증, Nostra 상방 8,306x의 대칭 쌍둥이; deviation 가드 방향 대칭성 점검 규칙).
+  Sources: https://docs.vesu.xyz/blog/2026-09-13-incident-refunds | https://rekt.news/nostra-rekt (크레딧 경유 발견)
+
 - **2026-09-05 — Rocket (perp, $287K)** — 휴면·저유동 perp 시장에서 버너 파산/반대편 가짜 수익 셀프트레이드 → $287K 양성 PnL 인출, 손실 사회화. Vector: **A36 + META-60 강화(2026-09-08) — dormant-market mark-model 추출**. Sources: https://x.com/rcktfoundation/status/2096594778863669498 | https://hacked.slowmist.io/
 
 - **2026-09-05 — Secured Finance (Ethereum lending, ~$104K)** — 플래시론+셀프트레이드로 당신 블록 주문장 평균가 조작, 가짜 lend 포지션을 담보로 승격. 원 공격자 WBTC 대형 시도는 gas 부족 revert, 프론트러너 0.9 WBTC. Vector: **A93 강화(2026-09-08)**. Sources: https://x.com/DefimonAlerts/status/2096855557575458950 | https://hacked.slowmist.io/
