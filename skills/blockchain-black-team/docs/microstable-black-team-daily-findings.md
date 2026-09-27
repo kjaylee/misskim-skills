@@ -2985,3 +2985,38 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - **A152 NOT ACTIVE 재실증**: UncheckedAccount 11곳(MigrateLegacyState 6 PDA/owner 바디 결속 + DevnetForceReinit 2 devnet 게이트 + pyth 3 주소 고정) — 호출자 지정 주소의 가치 이동 신뢰 0건.
 - **Carry-forward 50일차 라이브 재확인**: A6 CRITICAL(lib.rs:2395-2396 bare `#[account(mut)] mstb_mint`), A10 HIGH(burn CPI lib.rs:1360-1366 전달 mint), HERMES-H1 HIGH(hermes.rs:61-69 7필드, posted_price_account 부재), B83 HIGH(solana/Cargo.lock quinn-proto 0.11.13), B45 PARTIAL(audit-attestation.json 부재), RUSTSEC-0285 MEDIUM(rustls 0.23.36).
 - **블루팀 수정 지시(50일차 불변)**: ① HEAD Redeem 제약 복원 + 34파일 트리 커밋(최우선 — A6는 "새 제약 작성"이 아니라 HEAD 59588c5 제약 복원) ② quinn-proto 0.11.13 업그레이드 ③ hermes.rs `posted_price_account` 필드 추가 ④ audit-attestation.json 생성 ⑤ devnet-admin/USDS feed-id 배포 게이트 문서화.
+
+## 2026-09-28 — 일일 점검 (B120 신규 승격 + A3 Vesu 강화, HEAD 23c0163·dirty 39·mtime 02-28 동결 54일)
+
+### PART A — 스킬 진화
+
+- **B120 NEW (DYORSWAP/fake GIWA, 09-27, ~$2M)**: 미론침 공식 GIWA 메인넷의 예정 Chain ID 9134를 선점한 가짜 메인넷(사기 RPC+브리지)을 DYORSWAP 체인 온보딩이 통합 → 신뢰된 UI에서 사용자 ETH가 가짜 브리지로 드레인. 제네시스 전 체인 식별자 = claimable namespace(위조 0, 식별자 소유 스푸핑). 방어: 론칭 후 genesis hash 바인딩·≥2 독립 소스 교차 확인·미론칭 ID "official" 라벨 금지·신규 체인 브리지 초기 한도. 축 구분: META-78(풀 주소 세탁)/D27(정상 RPC 거짓 이벤트)/D33·D42·B15(패키지 네임스페이스)와 별개.
+- **A3 강화 (Vesu, 09-04, 퍼플 09-27 큐 흡수)**: 하방(약 절반 시세) 오라클 fault → 109초·47포지션·7풀 허위 청산(~$1.40M 청구, 공격자 부재, 회수 95%). 편차 가드 방향 대칭성 점검 규칙 신설(Nostra 상방 8,306x ↔ Vesu 하방 ~0.5x 같은 달 양방향 실증). 공격자 없는 실패 = 해커 중심 사고 DB 밖 → 2차 인용 스트림 상시 스윕. IR: 균일 회수 팩터 환불 설계.
+- **Payy WATCH 강화**: `verifyRollup` 직접 호출로 RollupV1 단일 tx 전량 인출(블록 26,044,909; PeckShield 683.38 ETH 변환·Railgun 펀딩) — 검증 평면 단일 진입점=전량 드레인 형상. A32-후보, RCA 대기 named 보류.
+- **WATCH 불변**: Bitget(RCA 미공개·레드 09-27 재큐는 중복으로 미흡수)/Nostra("still no post-mortem" rekt 재확인)/Meter Passport/Blink/DCENT/Startale.
+- **Advisory**: RustSec DB 09-25(0309/0310) 이후 신규 0 — 11× 0매치 승계. Anchor GHSA 2건(5-6월) 기매핑. Solana/Anchor/SPL 신규 CVE 0건. ToB/OtterSec/Neodyme: 레드 09-27 검증 승계 + 증분 창 인프라 침묵(web_search 비활성·zai-search 2회 공백 — 침묵≠조용).
+
+### PART B — Microstable 전수 점검 (전 벡터 대입, 코드 실측)
+
+| 렌즈 | 판정 | 근거(실측 라인) |
+|---|---|---|
+| **A3 방향 대칭성 (Vesu, 신규)** | ✅ DEFENDED | 전 가드 스택 크기 기반(abs_diff): PRICE_MIN/MAX $0.50/$1.50 양 경로(lib.rs:123-124·:693·:3176) / price_deviation_ppm abs(:3579) / dynamic_oracle_staleness_limit 편차≥1.25% 양방향 강화(:3597) / vault_oracle_degraded >2.5% 양방향(:3610) / mint_haircut_ppm depeg=abs_diff 대칭(:3754) + depeg≥3% mint 즉시 정지(:58·:1013·:3758) / redeem_discount_ppm worst_depeg abs 대칭. **청산 엔진 부재**(grep 2매치 = 열거 라벨:2684+테스트:4290) → 허위 청산 구조적 불가 |
+| **B120 (DYORSWAP, 신규)** | NOT ACTIVE (구조적) | 단일 Solana 클러스터·멀티체인 온보딩 표면 부재·키퍼 RPC 정적 운영자 config(D27/META-84 축) |
+
+- **경계 하드닝 노트 (신규 발견 아님)**: PRICE_MIN=500_000이 `>=`라 정확히 $0.50 하방 fault가 하한 통과 — 그러나 depeg 50% ≥ 3% → mint 즉시 정지 + redeem 할인 + canonical_twap_price TWAP 감쇠(:3543) + 2%/tx·6%/slot mint·3%/slot redeem 상한이 잔여 경로 전부 유한 구속. 개선 여지: 하한 strict `>` 또는 이전 게시가 대비 시간 편차 게이트(우선순위 낮음 — 정지 스택이 이미 구속).
+
+### 캐리포워드 (54일째 코드 불변, HEAD 23c0163·dirty 39·mtime 02-28)
+
+- **A6 CRITICAL 54일차** — Redeem `mstb_mint`(lib.rs:2395-2396) bare `#[account(mut)]` vs mint 경로(:2320) `mint::authority` 비대칭 지속.
+- A10 HIGH(burn CPI ~1360 전달 mint) · HERMES-H1 HIGH(hermes.rs:60-68 7필드, posted_price_account 부재) · B83 HIGH(quinn-proto 0.11.13) · B45 PARTIAL(audit-attestation.json 부재) · RUSTSEC-0285 MEDIUM(☐182 `cargo update -p rustls` 14일차 미집행, dual-stack 0.21.12+0.23.36).
+- **신규 CRITICAL/HIGH: 0건.**
+
+### 블루팀 지시 (52일차 불변)
+
+1. HEAD 제약 복원 + 트리 커밋(최우선 — dirty 39)
+2. quinn-proto 0.11.13 → 최신 업그레이드 (B83 HIGH)
+3. hermes.rs `posted_price_account` 필드 추가 (HERMES-H1 HIGH)
+4. audit-attestation.json 생성 (B45)
+5. devnet-admin/USDS feed-id 배포 게이트
+
+**매트릭스 카운트 232/224 → 233/225** (B120 승격).
