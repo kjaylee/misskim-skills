@@ -13149,3 +13149,21 @@ attacker:
 4. **블루팀 지시 55일차 불변**: ① HEAD 제약 복원+트리 커밋(dirty 39, 최우선) ② quinn-proto 0.11.13→최신(B83 HIGH) ③ hermes.rs posted_price_account 필드 추가(HERMES-H1 HIGH) ④ audit-attestation.json 생성(B45) ⑤ devnet-admin/USDS feed-id 배포 게이트.
 
 **매트릭스 카운트 233/225 불변**(named 신규 0, 강화 0 — quiet window 로그만).
+
+## A156. Codegen Identifier Shadowing — Macro-Hygiene Collision Silently Disables First-Party Constraints (Anchor #5105)
+
+**First seen (research)**: 2026-09-29 red-team promotion — 상류 수정 otter-sec/anchor PR #5105 (commit bce16223, merged 2026-09-28T15:07Z, master 전용·미출시). **미발생 벡터** — 실전 사고 0, 어드바이저리 미발행.
+
+**Definition**: 매크로 기반 프레임워크(Anchor `#[derive(Accounts)]` 코드젠 계열)가 `call_site()` 위생으로 내부 `let` 바인딩을 전개할 때, 사용자 영역 식별자(Accounts 구조체 필드명·제약 표현식 타깃·`#[instruction]` 인자명)가 프레임워크 내부 식별자와 **이름 충돌**하면 제약 검사의 피연산자가 사용자 계정이 아니라 매크로 내부 변수로 해석되어 **검증이 자기 자신과 비교**되고 조용히 통과한다. 상류 서술 원문: "This causes keys to be compared against themselves, bypassing validation." CHANGELOG 기재는 "Improve macro hygiene to address potential issues with key validation" — 보안 버그가 아닌 '위생 개선'으로 서술되어 릴리스 노트 독자가 심각도를 과소평가할 위험.
+
+**Mechanism**: (1) 영향 버전: #5105 이전 라인 전부("Macro spans were not being properly applied" — 고질; Microstable 사용 0.31.1 포함 계열 추정, 전개문 검증은 ☐189(c) 절차). 수정은 master 커밋뿐 — **출시 버전으로 빌드되는 모든 Anchor 프로그램에 잔류**. (2) 영향 식별자(패치 `private_ident` 전수 ~50종): has_one/close 축 `my_key`·`target_key`·`my_owner`·`close_authority`·`owner_address`·`wallet_address`·`owner_program`, address 축 `actual`·`expected`·`actual_owner`·`actual_field`, rent/space 축 `space`·`required_lamports`·`lamports`, 핸들러/CPI 축 `ctx`·`ix`·`accounts`·`value`·`result`·`e`·`_arg`·`cpi_program_id`·`cpi_ctx`·`cpi_context`·`cpi_accounts`·`return_data`, Token-2022 코드젠 축 `transfer_hook`·`permanent_delegate`·`pausable`·`extensions`·`metadata_pointer`·`group_pointer`·`group_member_pointer`, + `__`-접두 내부 family(`__data`·`__disc`·`__bump`·`__seeds_slice`·`__remaining_accounts` 등). (3) 공격 전제: 소스 명명 영향력(내부 기여자·악성 포크·템플릿·AI 생성 코드 — B60 인접) + 충돌명 식별자가 제약·CPI 표현식에서 참조될 것. (4) 원시형: 컴파일 경고 0·런타임 에러 0 — 소스 리뷰에서 제약이 "보이므로" 통과.
+
+**Exploit scenario (PoC 수준)**: 기여자가 PR에서 `#[account(mut, close = space)]` + `pub space: Signer<'info>` 추가 — close 램포트 목적지 검증이 `space == space`로 자기비교 전환, 폐쇄 계정 램포트가 공격자 지갑으로 흐른다. `space`/`value`/`result`는 자연스러운 필드명이라 코드 리뷰에서 무해해 보인다.
+
+**Why auditors miss it**: ① 소스에 제약이 보이면 시행된다고 간주 — `cargo expand` 전개문의 실제 비교문을 리뷰하지 않는다. ② 충돌 필드명은 관용적 명명이라 무해해 보인다. ③ 실패 신호가 전혀 없다(검증이 조용히 통과). ④ 프레임워크 업그레이드 리뷰는 "macro hygiene" 수사를 비보안으로 분류한다.
+
+**Cross-references**: A39(상류 결함 상속)와 구별 — A156은 상위 취약점 전이가 아니라 **자기 소유 제약이 코드젠 네임충돌로 무력화**되는 1차 벡터. A155(참조 분류 세탁)의 컴파일 시점 쌍둥이 — 런타임 프레임 경계가 아닌 컴파일 전개 경계에서 검증 근거가 세탁. 이름-기반 식별자↔내용-주소 증명 간극 패밀리(B120·Nomic audit-revision drift·09-28 퍼플 관찰, 매트릭스 81행)와 수렴 — 제로-포저리 패밀리의 코드젠 판: 서명·키 위조 없이 **정상 컴파일 파이프라인을 통과하는 검증 무력화**. RustSec-2026-0312(x509-validator — excluded all-zero iPAddress 이름제약 미적용, 09-28)와 같은 날 수렴: "검증은 존재하지만 조용히 적용되지 않는다" 패밀리의 독립 데이터포인트.
+
+**Microstable verdict (2026-09-29, HEAD 23c0163, anchor-lang 0.31.1 — Cargo.toml:24)**: **NOT ACTIVE(실측)** — 충돌 식별자 세트 전수를 프로그램 필드 선언에 grep **0매치**; 제약 사이트 전수 무충돌(`close = claimant` lib.rs:2515 ClaimStake·`address = token::ID` 2331/2401 경로 표현식·seeds 무충돌). LATENT: 신규 Accounts 필드에 일반명(`space`/`value`/`result`/`ctx`)+제약 참조 조합 시 즉시 활성화 → ☐189 명명 금지 목록으로 예방.
+
+**Defense**: ① 충돌 식별자 금지 목록 CI lint(#5105 포함 버전 전 빌드 대상); ② 치명 제약(close/has_one/address)의 전개문 실제 비교문 샘플 검증을 감사 절차로; ③ #5105 포함 릴리스 출시 즉시 anchor-lang 업그레이드; ④ AI 생성 코드 기여(B60)는 명명 충돌 스캔 우선 통과.
