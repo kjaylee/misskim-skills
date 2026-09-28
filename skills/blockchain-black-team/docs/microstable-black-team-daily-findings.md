@@ -3020,3 +3020,35 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 5. devnet-admin/USDS feed-id 배포 게이트
 
 **매트릭스 카운트 232/224 → 233/225** (B120 승격).
+
+## 2026-09-29 — 일일 점검 (quiet window — 신규 벡터 0, HEAD 23c0163·dirty 39·mtime 02-28 동결 55일)
+
+### PART A — 수집 창 스윕 (09-27 18:00→09-28 18:00 UTC)
+
+- **신규 사고/취약점/연구 0건.** rekt 1면 전건 기흡수(SingularityNET 09-26·Nostra 09-28·Nomic·Liquid·Tectonic·Nesa/KII/TAC·Term·DGFiP). SlowMist 최신 09-27 DYORSWAP(B120 기승계). Immunefi 신규 솔라나 공개 0. OSV anchor-lang=5월 기매핑·solana-program 0. ToB/OtterSec/Neodyme 신규 0. X = Bitget 후속뿐.
+- **Bitget WATCH 후속 1줄(신규 메커니즘 없음)**: THORChain, 해킹 자금 연계 주소 스왑 차단 요청 거부 — 운영자가 소유하지 않은 레일에는 사후 액추에이터 부재(ether.fi 재배치 교리의 역명제). B15/META-84 타임라인에만 기록.
+
+### PART B — Microstable 전수 점검 (전 항목 실코드 읽기)
+
+| 렌즈 | 판정 | 근거(실측) |
+|---|---|---|
+| A3 방향 대칭성 | ✅ DEFENDED (재실증) | abs_diff(:3454) 전 가드 대칭·basket_max_depeg fold(:3659-3662)·MINT_DEPEG_PAUSE(:1013·:3762)·하드스톱(:57)·weight-sum(:3501)·청산 엔진 부재 |
+| B120 (키퍼 제네시스 핀, 레드 09-28 MEDIUM 승계) | ⚠️ MEDIUM 지속 | keeper config.rs "genesis" 0매치 — 클러스터 식별 핀 부재, rpc_url 정적 config(:65-66·:213-214) |
+| B114 (검증 캐시) | ✅ 0매치 재실증 | keeper memoize/cache grep 0결과 |
+| A6 | 🔴 CRITICAL 55일차 | lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` 라이브 재확인 vs :2320 mint::authority 비대칭 |
+| A10 | 🟠 HIGH | burn CPI :1360-1366 전달 mint 라이브 확인 |
+| HERMES-H1 | 🟠 HIGH | hermes.rs:61-69 HermesPostedUpdate 7필드, posted_price_account 부재 |
+| B83 | 🟠 HIGH | quinn-proto 0.11.13 (solana/Cargo.lock 실측) |
+| B45 | ⚠️ PARTIAL | audit-attestation.json find 0결과 |
+
+- **신규 CRITICAL/HIGH: 0건.**
+
+### 블루팀 지시 (55일차 불변)
+
+1. HEAD 제약 복원 + 트리 커밋(dirty 39, 최우선)
+2. quinn-proto 0.11.13 → 최신 (B83 HIGH)
+3. hermes.rs `posted_price_account` 필드 추가 (HERMES-H1 HIGH)
+4. audit-attestation.json 생성 (B45)
+5. devnet-admin/USDS feed-id 배포 게이트
+
+**매트릭스 카운트 233/225 불변.**
