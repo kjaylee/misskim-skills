@@ -13191,3 +13191,21 @@ attacker:
 6. **Solana 특화 델타: 0** — 창 내 신규 Solana/Anchor/SPL 사고·취약점·연구 부재. `solana-specific.md` 변경 없음.
 
 **매트릭스 카운트 233/225 불변**(신규 named 0 — 강화 3건[A70/A2×A42/A4-adjacent] + WATCH 1건[NEAR Intents]).
+
+---
+
+**A157 · Anchor Optional-None 제약 극성 반전 (Constraint Polarity Inversion)** — 선언적 검증의 1토큰 의미 뒤집기
+
+**Signal**: solana-foundation/anchor PR #5007 「feat(lang): Add support for `None` in `mint::authority` and `mint::freeze_authority`」 2026-10-02 머지(commit 29d3231) — 패치 전문·코드젠 diff 직접 열람. CHANGELOG 미출시 "Additions" 섹션(v1.x 이후 라인). CVE·RustSec 미발급(기능 커밋).
+
+**Root mechanism**: (1) 신규 `generate_coption_pubkey`가 제약식의 `None` 리터럴 여부를 `parser::expr_is_none()` **구문 테스트**로 판별 — None이면 기대값 `COption::None`, 아니면 `COption::Some(#expr.key())`. 즉 `mint::authority = X`의 검증 의미가 "authority == X"에서 "authority 미설정"으로 **RHS 1토큰 교체로 극성 반전**. (2) `generate_optional_account_check`는 None일 때 `quote! {}` — 계정 존재 검사를 무음 스킵(컨텍스트에서 해당 계정이 통째로 사라져 tx가 오히려 저렴해져 "정리"로 위장 가능). (3) init 비대칭: `freeze_authority = None`+`init` 허용(프리즈 권한 없는 민트 생성), `authority = None`+`init` 금지(SPL이 초기 발행 요구) — 문법 전이 오용 표면. (4) `expr_is_none`이 구문(literal)만 보므로 None으로 평가되는 간접 식은 계정 경로로 잔류 — A156과 동일한 구문↔의미 간극.
+
+**Exploit scenario (PoC 수준)**: 대형 리팩터링 PR에 `mint::authority = protocol_state` → `mint::authority = None` 1토큰 편집 삽입(B60 AI 생성·내부 기여자 경로). diff는 "미사용 계정 정리"로 보여 리뷰 통과 — 실제로는 승인 검증이 부재 검증으로 반전. 런타임에 폐기(renounced) 민트가 제약을 통과하고, 다운스트림 로직이 "제약 통과 = 프로토콜 소유 민트"로 간주하는 순간 승인 위조 완성. 에러코드·IDL·정적 리뷰 전 영역에서 `Some(x)` 검증과 구분 불가.
+
+**Why auditors miss it**: ① 1토큰 diff가 "선택 정리"로 위장 — 본체 로직 0줄 변경. ② 선언부는 그대로 존재하므로 "제약 있음"으로 통과(A155/A156과 동일한 에피스테믹 세탁). ③ 무검사 `quote! {}` 경로는 컴파일·런타임 신호 0. ④ 문법 자체가 #5007 이후 신규 — 기존 감사 체크리스트에 존재하지 않음.
+
+**Cross-references**: A156(코드젠 식별자 섀도잉)의 형제 — 같은 "매크로 전개 경계에서 검증 근거 세탁" 패밀리이나 1차 메커니즘 상이(A156=비교문 자기비교화, A157=기대값 극성 반전). A150/A12(decoy·신원 검증 우회) 계열과 수렴: "검증 통과 ≠ 의도한 신원 보증". 주입 경로 B60. 방어측 함정: 폐기 민트 "renounced = safe" 전제 오류.
+
+**Microstable verdict (2026-10-03, HEAD 23c0163, anchor-lang 0.31.1 — programs/microstable/Cargo.toml:24)**: **NOT ACTIVE(실측)** — 0.31.x 코드젠은 `#mint_authority.key()` 직접 전개 라인만 존재해 `= None`이 컴파일 불가(문법 부재 자체가 방어). lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]`이 정확한 반전 대상 형태 — #5007 포함 릴리스로 업그레이드하는 순간 LATENT. ☐190으로 예방.
+
+**Defense**: ① ☐190 — CI lint: `mint::authority =`·`mint::freeze_authority =`(향후 optional 문법 제약 전반 확장) RHS를 건드리는 diff 자동 하이라이트+수동 승인; ② #5007+ 업그레이드 절차에 전체 mint 제약 사이트 cargo expand 감사 포함(☐189(c)와 통합); ③ 폐기 민트 승인 설계 시 freeze 권한·선행 발행량 별도 검증.
