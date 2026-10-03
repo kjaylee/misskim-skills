@@ -13222,3 +13222,13 @@ attacker:
 **Microstable verdict (2026-10-03, HEAD 23c0163, anchor-lang 0.31.1 — programs/microstable/Cargo.toml:24)**: **NOT ACTIVE(실측)** — 0.31.x 코드젠은 `#mint_authority.key()` 직접 전개 라인만 존재해 `= None`이 컴파일 불가(문법 부재 자체가 방어). lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]`이 정확한 반전 대상 형태 — #5007 포함 릴리스로 업그레이드하는 순간 LATENT. ☐190으로 예방.
 
 **Defense**: ① ☐190 — CI lint: `mint::authority =`·`mint::freeze_authority =`(향후 optional 문법 제약 전반 확장) RHS를 건드리는 diff 자동 하이라이트+수동 승인; ② #5007+ 업그레이드 절차에 전체 mint 제약 사이트 cargo expand 감사 포함(☐189(c)와 통합); ③ 폐기 민트 승인 설계 시 freeze 권한·선행 발행량 별도 검증.
+
+### 2026-10-04 blackteam batch — 조용한 창(신규 벡터 0 · 강화 0 · WATCH 0) + RustSec rutie/decompress 0매치 + 레인 열람불가 3건 정직 기록
+
+**Window (10-03 03:00 → 10-04 03:00 KST)**: 7개 수집 레인 전부 신규 흡수 대상 0. (1) rekt 1면 전건 기흡수(Bitget→META-84/B15, SingularityNET→B15 09-26, Nostra→09-28, Nomic→A32, Liquid→B114, Tectonic→09-15, Cosmos EVM 클러스터→B106, Term Labs→C23/META-73, DGFiP→기각 유지). (2) SlowMist 최신 엔트리 10-01 그대로(NEAR Intents·FlashLoopAdapter — 10-03 런 5aa28bc 흡수 완료). (3) OSV: anchor-lang 4건 전부 5~6월 기흡수, solana-program/spl-token 0건. (4) RustSec 신규 rutie(호출자 공급 포인터 슬라이스 역직렬화)·RUSTSEC-2026-0328 decompress — solana/Cargo.lock 전수 0매치(루비 바인딩·압축 라이브러리, 무관 확정); wasmtime 0320-0325 배치는 레드 10-03 기흡수. (5) Anchor 커밋: #5076(client v1-tx 지원, 비보안)·#4051/#4772(툴링) — #5007은 A157로 레드 10-03 기흡수. (6) Neodyme 최신 3월(하드웨어) 무풍. (7) ToB RSS 날짜 검증: 최신 10-02 SequenceHash(해시 구성 도구, 사고 아님) → 다음 09-25 TEE+MPC(☐187 기흡수) — 홈페이지에 노출된 Provenance 마커-계정·v4-hook 7패턴 포스트는 RSS 심층에서 8월 이전 구형으로 확인, **창 외**. zai-search oneWeek Solana 신규 0.
+
+**레인 열람불가(정직 기록)**: OtterSec ECONNRESET / Immunefi Medium JS-렌더 공백(zai-search 교차확인 신규 0으로 대체 검증) / Anza 어드바이저리 repo 404(OSV 평면 대체확인 0건). 발견 눈 멀었음을 가정한 다음 런 재시도 대상.
+
+**Microstable day 60 (HEAD 23c0163, 파일 mtime 02-28 동결 — 코드 0이동)**: **A6 CRITICAL 라인레벨 재실증** — Redeem lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` (mint 경로 2321-2325 `associated_token::mint` 시드 바인딩과의 비대칭 지속, 본문·컨텍스트 canonical 바인딩 부재). A10 HIGH(burn CPI 1360-1364 전달 mint)·HERMES-H1 HIGH(hermes.rs:61-69 `HermesPostedUpdate` 7필드, `posted_price_account` 부재)·B83 HIGH(quinn 0.11.9/quinn-proto 0.11.13, solana/Cargo.lock:2964/2984)·B45 PARTIAL(`security/` 리포트 있음, `audit-attestation.json` 부재) carry 불변. A157 NOT ACTIVE(anchor-lang 0.31.1, Cargo.toml:24 — 문법 부재; #5007 포함 릴리스 업그레이드 시 LATENT, ☐190 선행). 10-03 신규 렌즈(module-auth/two-moment/round-trip) 코드 동결로 NOT ACTIVE 판정 승계. **신규 CRITICAL/HIGH 0.**
+
+**매트릭스 카운트 233/225 불변.**
