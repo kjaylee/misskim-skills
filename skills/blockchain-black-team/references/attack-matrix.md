@@ -98,7 +98,7 @@
 - **Research lanes**: Echidna v2.3.3 (07-27) / Medusa v1.5.1 (03-11) GitHub-API date-verified unchanged; Immunefi quiet (black 10-03 sweep); AI-agent lane off-window/evergreen (HP fake-AI-agent malware 09-17 = B119 social-engineering family, off-window; MetaMask guidance above). Collection infra **partially recovered** vs the 09-29 total outage: zai-search (noLimit queries), SlowMist direct, GitHub API, news RSS all live; web_search still disabled; zai-search recency-filter returns empty (tool quirk — use noLimit; red 10-03 recorded the same pattern on its lanes, arXiv API 0 entries).
 - **Cross-lane bookkeeping flag**: file header still reads 233/225 while red's running count is now 235/225 (A156, A157) and black 10-03 restates 233/225 — reconcile at the next black/red run; not purple's inventory to edit.
 
-**META-01~84 unchanged; no new named vectors (purple adds meta only). Counts per owning lanes: black 233/225, red 235/225 (gap flagged).**
+**META-01~84 unchanged. Counts per owning lanes: black 233/225, red 236/225 (A156/A157/A158 red-owned; 10-04 red run reconciled purple's gap flag — black restates its own count at next black run).**
 
 ## A. Smart Contract Vectors
 
@@ -13232,3 +13232,19 @@ attacker:
 **Microstable day 60 (HEAD 23c0163, 파일 mtime 02-28 동결 — 코드 0이동)**: **A6 CRITICAL 라인레벨 재실증** — Redeem lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` (mint 경로 2321-2325 `associated_token::mint` 시드 바인딩과의 비대칭 지속, 본문·컨텍스트 canonical 바인딩 부재). A10 HIGH(burn CPI 1360-1364 전달 mint)·HERMES-H1 HIGH(hermes.rs:61-69 `HermesPostedUpdate` 7필드, `posted_price_account` 부재)·B83 HIGH(quinn 0.11.9/quinn-proto 0.11.13, solana/Cargo.lock:2964/2984)·B45 PARTIAL(`security/` 리포트 있음, `audit-attestation.json` 부재) carry 불변. A157 NOT ACTIVE(anchor-lang 0.31.1, Cargo.toml:24 — 문법 부재; #5007 포함 릴리스 업그레이드 시 LATENT, ☐190 선행). 10-03 신규 렌즈(module-auth/two-moment/round-trip) 코드 동결로 NOT ACTIVE 판정 승계. **신규 CRITICAL/HIGH 0.**
 
 **매트릭스 카운트 233/225 불변.**
+
+### 2026-10-04 redteam batch — A158 NEW(Anchor 1.0 Context 수명 사운드니스 공백, #5107) + 리포지토리 이동 실측 + 레인 열화 3건 정직 기록
+
+**A158 · Anchor 1.0 Context 수명 사운드니스 공백 — 내부 가변성 계정 타입의 댕글링 참조 (Interior-Mutability Lifetime Escape)** — 컴파일러 수명 보증이 매크로 경계에서 소멸하는 프레임워크 계층 결함
+
+- **Signal**: otter-sec/anchor(구 coral-xyz/anchor — **리포지토리 이동 301 실측**, `repositories/325891672` 경로로 스윕 재확보) commit `1cecf30` (#5107, 2026-09-28) — `docs(-v2)/…/footguns.mdx` +14행 패치 전문 직접 열람: "Anchor 1.0 uses simplified `Context` lifetimes, which can make a reference retained through `Cell`/`RefCell` or similar interior mutability **outlive the value it points to**". 창 내(09-27→10-04) Anchor 14커밋 전수 대조 결과 신규 = 본 건 단 1건(#5007=A157·#5105=A156·#5076/#4051/#4772=블랙 10-04 관찰·#5119/#5086=레드 10-03 관찰·#5081/#5122=비보안 확정).
+- **Technique**: `Context`와 함께 쓰이는 계정 타입이 소유 값 대신 참조를 보유할 때(`struct Borrowed<'info> { value: Cell<Option<&'info u64>> } }`류), Anchor 1.0의 단순화된 Context 수명 체계에서 내부 가변성(Cell/RefCell)으로 유지된 참조가 가리키던 값보다 오래 생존할 수 있다. **"컴파일되면 댕글링 참조 불가"라는 러스트 대여 검사기 보증 자체가 프레임워크 계층에서 무효화** — 감사자·정적 분석의 전제(컴파일러 메모리 안전성)가 코드젱 경계에서 소멸. 공격 원시자: Anchor 1.0 계열 프로그램의 계정 타입 정의에서 `Cell<`/`RefCell`/`Option<&'info` grep → 적중 시 낡은/댕글링 계정 데이터 읽기(계정 내용 타입 혼동) 후보. `AccountInfo`의 lamports/data 배킹 참조를 `ctx.accounts` 필드 참조로 교체하는 패턴도 동일 부류(상류 지침: "mutate the account contents instead of their backing references"). 실용 도달성은 낮음(병리적 계정 타입 작성이 전제) — 연구 등급.
+- **Why distinct from nearest vectors**: **A155**(Radix borrowed-reference downgrade)는 참조의 권한 **분류**가 프레임 경계에서 세탁되는 인가 의미 결함(「참조가 *무엇을 하도록 승인됐는가*」) — A158은 참조의 **대상 존재 자체**가 무효화되는 메모리 안전 결함(「참조가 *가리키는 것이 아직 존재하는가*」). **A156**(식별자 섀도잉)·**A157**(제약 극성 반전)은 "선언된 검증 ≠ 실행되는 검증" — A158은 "컴파일러가 보증한 메모리 안전 ≠ 런타임 실제". 매크로 경계 패밀리(A153×A156×A157)의 **보증-소멸 계열 신규 멤버**. 매트릭스 내 `Cell<`/`RefCell`/내부 가변 선행 커버리지 0매치(실측).
+- **Microstable verdict (2026-10-04, HEAD 23c0163, anchor-lang 0.31.1 — `programs/microstable/Cargo.toml`)**: **NOT ACTIVE(이중 근거)** — (1) 0.31.1은 Anchor 1.0 수명 체계 이전 버전; (2) lib.rs 4,669행 전수에서 `Cell<`/`RefCell` **0매치** — 계정 타입이 전부 소유 값(`Box<Account<'info, …>>`)이므로 **업그레이드만으로는 활성화 경로 자체가 부재**(참조-보유 계정 타입 도입이 선행 필요). A157(#5007 문법)·A123(1.0.0–1.0.1 sentinel)과 함께 업그레이드 리뷰 소유 표면.
+- **Defense**: ☐191 — Anchor 1.0+ 업그레이드 리뷰 게이트: (a) 계정 타입 정의 전수에서 `Cell<`/`RefCell`/`Option<&`/배킹 참조 교체 패턴 금지 lint(CI); (b) 계정 타입은 소유 값만 허용하는 코딩 표준 명문화; (c) ☐189(c)/☐190 cargo expand 감사와 동일 업그레이드 절차에 통합 실행.
+
+**Window (10-03 03:30 → 10-04 03:30 KST) 수집 상태**: SPL 커밋 API 실측 **0건**(quiet) · RustSec 신규 **0**(마지막 발행 10-03 07:49 rutie/decompress — 블랙 10-04 양쪽 Cargo.lock 0매치 확정, 이후 증분 없음) · arXiv cs.CR API **0엔트리(2일 연속 열화)** · zai-search CTF/MEV/감사 3레인 전부 빈 결과·도메인-세일 스팸(**발견 블라인드 — 정직 기록**) · 감사사 레인(ToB/Neodyme/OtterSec/Immunefi)은 블랙 10-04 런과 중복 스윕 불필요(동일 창 무풍 확정).
+
+**Microstable day 61 (HEAD 23c0163 불변 실측)**: **A6 CRITICAL 캐리 라인 재확인** — `programs/microstable/src/lib.rs:2395-2396` `mstb_mint` bare `#[account(mut)]` (정정: 크론 지시서의 `programs/microstable_core/src/lib.rs`는 오래된 경로 — 실제 프로그램 디렉토리 `programs/microstable`, 향후 런 지시서 갱신 권장). A157 트립와이어 lib.rs:2320 `mint::authority = protocol_state` 정상(극성 미반전). A158 NOT ACTIVE(위). **신규 CRITICAL/HIGH 0.**
+
+**매트릭스 카운트 red 236/225 (A158 +1, META 84 불변).** 퍼플 10-03 이월 카운트 조정 플래그 처리: black 233/225 / red 236/225 — 차분 A156·A157·A158은 레드 소유 흡수, 블랙은 다음 블랙 런에서 자체 카운트 재진술.
