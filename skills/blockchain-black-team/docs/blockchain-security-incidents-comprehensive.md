@@ -901,3 +901,15 @@
 
 - **2026-09-27 — DYORSWAP / fake GIWA mainnet (Ethereum→가짜 GIWA 브리지, ~$2M — 블랙 09-28 B120 승격)** — 사기꾼이 **미론칭 공식 GIWA 메인넷의 예정 Chain ID 9134를 선점**해 가짜 메인넷(사기 RPC + 사기 브리지) 구성. 멀티체인 DEX DYORSWAP의 체인 온보딩이 해당 "GIWA"를 통합 → 사용자가 DYORSWAP UI에서 Ethereum 메인넷 ETH를 "GIWA"로 브리징 → 가짜 브리지 컨트랙트에서 자금 드레인. 공식 GIWA는 미론칭 상태. **제네시스 전 체인 식별자 = claimable namespace** — chainId 키잕 체인 등록이 공격자 데이터 평면 전체를 신뢰된 UI로 반입(위조 0, 식별자 소유 스푸핑). 방어: 론칭 후 genesis hash 바인딩·≥2 독립 소스 교차 확인·미론칭 ID "official" 라벨 금지. Vector mapping: **B120 NEW(2026-09-28 승격 — Pre-Genesis Chain-Identifier Squatting)**.
   Sources: https://hacked.slowmist.io/en/ (2026-09-27 entry) | https://x.com/dyorswapdex/status/2104120544178344112
+
+- **2026-10-01 — NEAR Intents (크로스체인 스왑/인텐트 플랫폼, ~$3.8M — WATCH)** — Omni 입출금 인프라와 스마트컨트랙트의 **상호작용 버그**로 추정 손실 ~$3.8M(USDT, BNB Smart Chain 축 보도). 11개 네트워크에서 12시간 출금 동결, 전액 보상 약속, 법 집행 보고. 컨트랙트측 패치 완료·서비스 재개(공동창업자 Polosukhin "취약성 1시간 내 수정" 발언). 침해 축(검증 평면·서명·회계·인프라↔컨트랙트 경계 중 어디서 무너졌는지) 미공개. Vector mapping: **A32-패밀리 WATCH(2026-10-03) — 인프라↔컨트랙트 상호작용 축, RCA 대기 named 보류**(Nomic 09-10→09-23 종결·Meter Passport 09-25·Payy 09-26 절차 준용).
+  Sources: https://x.com/near_intents/status/2105642219357241796 | https://hacked.slowmist.io/ (10-01 entry) | https://mempoolbrief.com
+
+- **2026-10-01 — FlashLoopAdapter / Aave V3 Loop Safe Module (Ethereum, ~$305K — A70 강화)** — 공격자가 **Safe 인증을 스푸핑해 모듈 인가 체크를 우회**하고 `execTransactionFromModule()`로 피해 Safe 2곳에서 무단 트랜잭션 실행. **swapRouter·swapCalldata를 공격자가 제어**하는 파라미터 전달면 + Morpho WETH 플래시론으로 피해 Safe의 Aave V3 부채 상환·담보 해제 → weETH 드레인, 순이익 ~114.09 ETH(~$305K). Gnosis Safe V4 LP 모듈(09-15)과의 축 차이: V4는 접근체크 부재, 본건은 **인가 체크 존재하나 신뢰 뿌리(Safe 인증)가 스푸핑 가능** — "검증의 존재 ≠ 검증의 신뢰-뿌리 방어". Safe-모듈 평면 2.5주 내 2번째 라이브 인스턴스(제로-포저리 패밀리). Vector mapping: **A70 강화(2026-10-03) — named 서브패턴 「module-auth check present-but-spoofable: trust-root axis」**.
+  Sources: https://x.com/SlowMist_Team/status/2105855276536725599 | https://hacked.slowmist.io/ (10-01 entry)
+
+- **2026-09-30 — MCN Labs LPBonus (Ethereum, ~$92.6K — A2×A42 강화)** — 보상 회계가 동일 경제량(MSN reserve)을 **두 의미론적 모멘트에 걸쳐 참조**: accrual은 당시 reserve(~89.33 MSN로 조작)로 reward index 갱신, withdrawal은 claim 시점 reserve(~491.11 MSN로 재상향)로 user weight 계산 → 신규 등록 LP가 개입 보상 펀딩(~940,041 FIST)을 초과하는 ~1,442,165 FIST 청구. 하나의 값이 두 산정 단계에서 서로 다른 시점값을 참조하는 **snapshot semantic drift** — FoxMarket(동일 tx 고착)·Likwid(사이클 간 재사용) 계보의 제3축. Vector mapping: **A2 강화(2026-10-03) — named 서브패턴 「two-moment reserve accounting drift」(A42 복합)**.
+  Sources: https://x.com/SlowMist_Team/status/2105145534126358819 | https://hacked.slowmist.io/ (09-30 entry)
+
+- **2026-09-30 — MUSystem (Ethereum, ~$36.9K — A4/META-20-adjacent 강화)** — `deposit()`가 첫 예치 보너스를 ETH 즉시 환급과 MUS 할당 **양쪽에 이중 계상** + `withdraw()`가 동일 트랜잭션 상환을 허용하되 **반환 ETH를 예치액으로 상한 없음** → 16개 신규 주소가 deposit→withdraw 사이클 반복, 컨트랙트 ETH 드레인. deposit-credit/withdraw-debit 비대칭 + 동일-tx 왕복 회로 + 반환 상한 누락의 3중 결합. Vector mapping: **A4 강화(2026-10-03) — 동일-tx 왕복 회로 페이셋(META-20 tx-범위 수명의 회계 쌍둥이)**.
+  Sources: https://x.com/SlowMist_Team/status/2105167166639407447 | https://hacked.slowmist.io/ (09-30 entry)

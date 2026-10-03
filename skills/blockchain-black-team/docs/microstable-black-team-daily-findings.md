@@ -3052,3 +3052,38 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 5. devnet-admin/USDS feed-id 배포 게이트
 
 **매트릭스 카운트 233/225 불변.**
+
+## 2026-10-03 — 일일 점검 (4일 보강 창 — 신규 named 0·강화 3·WATCH 1, HEAD 23c0163·dirty 39·mtime 02-28 동결 59일)
+
+### PART A — 수집 창 스윕 (09-29 18:00 → 10-03 04:00 UTC, 09-30~10-02 런 부재로 확대)
+
+- **신규 사고 4건 흡수(전부 EVM/NEAR — Solana 델타 0)**: ① NEAR Intents($3.8M, A32-패밀리 WATCH — RCA 대기 named 보류) ② FlashLoopAdapter/Aave V3 Loop Safe Module($305K, **A70 강화** — 모듈 인가 체크 존재하나 신뢰 뿌리[Safe 인증] 스푸핑 + 공격자 제어 swapRouter/swapCalldata + Morpho 플래시론 부채상환·담보해제) ③ MCN Labs($92.6K, **A2×A42 강화** — 이중 모멘트 reserve 회계 drift) ④ MUSystem($36.9K, **A4 강화** — 동일-tx 왕복 + 보너스 이중계상 + 반환 상한 누락).
+- **Advisory**: RustSec 0313-0325(wasmtime 패밀리·anymap2·matrix-sdk-crypto·sheets-diff 등) — Cargo.lock **전건 0매치**(`wasi`/`wasip2`는 별개 패키지, 대상 아님 실측 구분). GHSA anchor-lang 2건(05-13) 기매핑·agave advisories 0·Neodyme 무신호·Immunefi 솔라나 신규 0·ToB date-unverified 리서치(레드-레인 이관)·rekt 1면 기흡수.
+- **수집 인프라**: zai-search 정상 복구(09-29 전면 중단 이후 첫 정상). OtterSec 렌더 공백(JS) — 검색 크로스체크 무신호로 quiet 판정, 한계 명시.
+
+### PART B — Microstable 전수 점검 (전 항목 실코드 읽기, mtime 02-28 동결 59일)
+
+| 렌즈 | 판정 | 근거(실측) |
+|---|---|---|
+| **A70 유사 — 모듈 인가 스푸핑 (FlashLoopAdapter 신규)** | ✅ NOT ACTIVE (구조적) | 모듈 인가 평면 부재 — 키퍼 2-of-3 오프체인·온체인 권한. 키퍼 서명 데이터 신뢰 뿌리(hermes VAA·RPC)는 HERMES-H1/D27 기추적 |
+| **A2×A42 — 이중 모멘트 회계 (MCN 신규)** | ✅ NOT ACTIVE (실측) | mint haircut(:1017-1018)·redeem discount(:1279) 산정 즉시 적용 — 크로스-인스트럭션 스테일 참조 부재, 오라클 인스트럭션별 단일 읽기 |
+| **A4 유사 — 동일-tx 왕복+보너스 이중계상 (MUSystem 신규)** | ✅ NOT ACTIVE (실측) | `bonus` grep 2매치 = 회로차단기 `adaptive_bonus`(:4069-4070) 내부 변수 — 사용자 보너스 메커니즘 부재; mint haircut+redeem discount 왕복 비용 구조 |
+| A6 | 🔴 CRITICAL 59일차 | lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` 라이브 재확인 vs :2320 `mint::authority = protocol_state` 비대칭 |
+| A10 | 🟠 HIGH | burn CPI :1360-1366 전달 mint 라이브 확인 |
+| HERMES-H1 | 🟠 HIGH | hermes.rs:61-69 HermesPostedUpdate 7필드(symbol/collateral_index/price/confidence/publish_time/observed_slot/signature) — posted_price_account 부재 |
+| B83 | 🟠 HIGH | quinn-proto 0.11.13 (solana/Cargo.lock 실측) |
+| B45 | ⚠️ PARTIAL | audit-attestation.json find 0결과 |
+| B120 | ⚠️ MEDIUM | keeper config "genesis" 0매치 — 클러스터 식별 핀 부재, rpc_url 정적 config |
+| RUSTSEC-0285 (☐182) | ⚠️ MEDIUM 16일차 미집행 | Cargo.lock rustls 0.21.12+0.23.36 듀얼스택 실측(0.23.36 < 0.23.45 패치 목표) — `cargo update -p rustls` 미집행 |
+
+- **신규 CRITICAL/HIGH: 0건.** 신규 렌즈 3종 전부 NOT ACTIVE.
+
+### 블루팀 지시 (59일차 불변)
+
+1. HEAD 제약 복원 + 트리 커밋(dirty 39, 최우선)
+2. quinn-proto 0.11.13 → 최신 (B83 HIGH)
+3. hermes.rs `posted_price_account` 필드 추가 (HERMES-H1 HIGH)
+4. audit-attestation.json 생성 (B45)
+5. devnet-admin/USDS feed-id 배포 게이트
+
+**매트릭스 카운트 233/225 불변**(강화 3 + WATCH 1).
