@@ -13259,3 +13259,20 @@ attacker:
 **Microstable day 61 (HEAD 23c0163 불변 실측)**: **A6 CRITICAL 캐리 라인 재확인** — `programs/microstable/src/lib.rs:2395-2396` `mstb_mint` bare `#[account(mut)]` (정정: 크론 지시서의 `programs/microstable_core/src/lib.rs`는 오래된 경로 — 실제 프로그램 디렉토리 `programs/microstable`, 향후 런 지시서 갱신 권장). A157 트립와이어 lib.rs:2320 `mint::authority = protocol_state` 정상(극성 미반전). A158 NOT ACTIVE(위). **신규 CRITICAL/HIGH 0.**
 
 **매트릭스 카운트 red 236/225 (A158 +1, META 84 불변).** 퍼플 10-03 이월 카운트 조정 플래그 처리: black 233/225 / red 236/225 — 차분 A156·A157·A158은 레드 소유 흡수, 블랙은 다음 블랙 런에서 자체 카운트 재진술.
+
+### 2026-10-05 redteam batch — A159 신규 승격 1(Anchor #5129 deploy program-id 의도-정체성 분기+IDL 세탁) + OtterSec Keychain 감사 부채 청산(서명 경로 클러스터 가족 강화) + arXiv API 부활(10-01 배치 0·백로그 3일 미커버) + zai 감사 레인 부활
+
+#### A159. Anchor CLI Deploy Program-ID Intent-Identity Divergence / IDL Artifact Laundering
+
+- **소스**: otter-sec/anchor PR #5129 (2026-09-30T15:41Z 생성, **open 미머지 — 모든 출시 Anchor CLI에 잔류**), swaroop-osec(OtterSec) 작성, 선행 #4694 폐쇄 후 재제출. PR 본문+전체 diff+CHANGELOG 라인 직접 열람.
+- **기법**: `anchor program deploy`는 배포 대상을 **프로그램 키페어 공유키로만** 결정(pre-fix: `let program_id = loaded_program_keypair.pubkey();`)하고 명시적 `--program-id` 의도 파라미터를 무시(해당 플래그는 `--program-keypair` 존재 검사에만 사용). 불일치 시 (a) 운영자 의도(X)가 아닌 키페어 프로그램(Y)을 업그레이드하고 (b) **그 Y 주소를 IDL에 기록** — 의도-효과의 침묵 분기가 '신뢰 원본' 아티팩트로 세탁되어 하위 스트림(클라이언트·CI·탐색기)이 Y를 따라감. 수정(`resolve_program_id()`)은 mismatch를 RPC·지갑·security-metadata 해석 **이전에** 거부. 공격 전제: 키페어 교체/변조(CI 침해·리포 탬퍼·키관리 침해) + 운영자 의도 고정. **축 신규**: A155–A158 '명시적 보증 ≠ 실효 보증' 계열의 도구-계층 전개 — 선언된 파라미터가 폐기되고 분기가 아티팩트에 영속화. A109(배포 파이프라인 우회)는 실행 경로 주입, D31(IDL 과신)은 소비자측 과신 — A159는 **도구 자체가 의도를 폐기하고 증거 아티팩트를 조작**하는 생산자측.
+- **Microstable** (2026-10-05, HEAD 23c0163): **NOT ACTIVE** — 창고 내 `--program-id` 사용 0매치(Anchor.toml localnet 단일 핀, scripts/ 3개 ts 전수 deploy 플래그 부재). **LATENT**: 메인넷 배포 파이프라인이 `--program-id` 표준 관행(별도 키페어/업그레이드 시나리오) 채택 시 즉시 상속 — ☐192(CI 배포 게이트)로 예방.
+- **동창 관찰**: #5124 security.json 체크 기능(09-29 open) — #5129가 id 검증을 security-metadata 해석 선행으로 배치한 것과 순서 관계(비공격, 기록만).
+
+**OtterSec × Solana Foundation "Solana Keychain" 감사 부채 청산** (리포트 09-22 발행 46pp, 4M/15L/8I — OtterSec 레인 ECONNRESET 열화 기간 미흡수, 금일 zai-search 부활로 회수; 창 밖 부채 정직 표기): 신규 벡터 아닌 **가족 강화** — 서명 경로 클러스터: ADV-02(M) `normalizeMessageBytes`의 `.slice()` 공유-메모리 뷰 → 비동기 서명 중 호출자 변조가 로컬 검증 통과(**검증-서명 스냅샷 분기 / 메모리 앨리어싱 TOCTOU** — B84/B97/B102 representation-confusion + A150 '검사 존재≠효력' 직렬화 경계의 신규 인스턴스), ADV-03(M) 이중 JSON 직렬화(해시 바이트≠전송 바이트), ADV-15(L) 지정 서명자 참조 저장 가변성, ADV-14(L) UTF-8 BOM 제거가 서명 검증 파괴(정규화≠서명 보존), ADV-16(L) 공백 기반 시크릿 길이 검증 우회(잘못된 표현위 검증), ADV-06(L) Fordefi 비정규 캐스팅 서명 반환. 검증-서명 사이 스냅샷 불변성(독립 바이트 복사)은 SDK 서명 경로 불변 원칙으로 기록.
+
+**Window (10-04 03:30 → 10-05 03:30 KST) 수집 상태**: Anchor 커밋 0(10-03T18:30Z 이후) — PR 레인에서 #5129 확보 · #4884(실패 tx 이벤트) 머지일 09-23 API 실측 → ☐186 기흡수(09-25 배치) 재확인 · #4863/#4866(7월 lang-v2 정렬/소유권 수정, closed) 창 밖 관찰 · SPL 0(모노레포 동결 재실증) · RustSec 증분 0(10-03 07:49 rutie/decompress 이후 없음) · arXiv API 부활 후 10-01 발표 배치 30편 전수(블록체인 신규 공격 0 — SoK 2건·LLM-에이전트 보안 3편은 B119 인접 관찰), **09-28~09-30 발표 백로그 미커버(타임아웃×2+429×1 — 다음 런 이월)** · zai-search 감사 레인 부활(Keychain 시그널), CTF/MEV 빈 결과 지속(열화 정직 기록).
+
+**Microstable day 62 (HEAD 23c0163 불변 실측)**: **A6 CRITICAL 캐리 라인 재확인** — `programs/microstable/src/lib.rs:2395-2396` `mstb_mint` bare `#[account(mut)]`. A157 트립와이어 lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` 정상(극성 미반전, 금일 재확인). A159 NOT ACTIVE(위). **신규 CRITICAL/HIGH 0.**
+
+**매트릭스 카운트 red 237/225 (A159 +1, META 84 불변).**
