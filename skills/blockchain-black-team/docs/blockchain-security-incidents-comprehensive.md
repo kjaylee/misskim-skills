@@ -913,3 +913,9 @@
 
 - **2026-09-30 — MUSystem (Ethereum, ~$36.9K — A4/META-20-adjacent 강화)** — `deposit()`가 첫 예치 보너스를 ETH 즉시 환급과 MUS 할당 **양쪽에 이중 계상** + `withdraw()`가 동일 트랜잭션 상환을 허용하되 **반환 ETH를 예치액으로 상한 없음** → 16개 신규 주소가 deposit→withdraw 사이클 반복, 컨트랙트 ETH 드레인. deposit-credit/withdraw-debit 비대칭 + 동일-tx 왕복 회로 + 반환 상한 누락의 3중 결합. Vector mapping: **A4 강화(2026-10-03) — 동일-tx 왕복 회로 페이셋(META-20 tx-범위 수명의 회계 쌍둥이)**.
   Sources: https://x.com/SlowMist_Team/status/2105167166639407447 | https://hacked.slowmist.io/ (09-30 entry)
+
+- **2026-10-03 — MALT (Ethereum, ~$72K — A4/A2×A42 패밀리 강화)** — 미미한 입력으로 external `rebalanceHook` 트리거 → hook이 Capital Source의 DAI를 풀로 인출 → swap invariant가 **post-hook 잔액 기준**으로 검증 → **treasury 공급 DAI를 caller 기여로 귀속** → 과도한 MALT 인출. 회계-모멘트 패밀리 제3축: 검증이 provenance(자금 출처 증명)를 balance-state(시점 잔액)로 대체 — MCN(이중 모멘트)·MUSystem(동일-tx 왕복)과 동일 상위 클래스("하나의 경제량이 단일 모멘트·단일 출처로 확정되지 않은 채 소비"). Vector mapping: **A4/A2×A42 강화(2026-10-06) — named 서브패턴 「post-hook balance attribution」**.
+  Sources: https://x.com/SlowMist_Team/status/2106418632041668784 | https://hacked.slowmist.io/ (10-03 entry)
+
+- **2026-10-02 — GoldPesa GPXHooks (Base, ~$114.9K — A4/A42 패밀리 강화)** — Uniswap v4 hook(GPXHooks)이 **shared flash-accounted PositionManager**로 재조정하며 **currency delta 미정산 확인 없이** burn credit을 미정산 phantom debt(~115K USDC)과 **상계(netting)** → PoolManager에서 인출(~114,900 USDC). 공격 순서: unlock 개설 → 미정산 WETH/USDC 포지션 구성 → GPX 풀 스왑으로 시간당 reBalance 트리거 → burn credit-netting → 자기 포지션 burn·인출. 패밀리 제4축: 미정산 상태의 정산된 크레딧 소비(정산 불변식 delta=0이 netting으로 우회). Vector mapping: **A4/A42 강화(2026-10-06) — named 서브패턴 「unsettled-delta netting」**.
+  Sources: https://x.com/SlowMist_Team/status/2106415554492059872 | https://hacked.slowmist.io/ (10-02 entry)

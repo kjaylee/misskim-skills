@@ -3087,3 +3087,39 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 5. devnet-admin/USDS feed-id 배포 게이트
 
 **매트릭스 카운트 233/225 불변**(강화 3 + WATCH 1).
+
+## 2026-10-06 — 일일 점검 (2일 창 — 신규 named 0·패밀리 강화 2, HEAD 23c0163·dirty 39·mtime 02-28 동결 62일)
+
+### PART A — 수집 창 스윕 (10-04 03:30 → 10-06 03:00 KST, blackteam 10-05 런 부재로 2일 창)
+
+- **신규 사고 2건 흡수(전부 EVM — Solana 델타 0)**: ① MALT($72K, 10-03 — **패밀리 강화**: post-hook balance attribution — 검증이 provenance를 시점 잔액으로 대체) ② GoldPesa GPXHooks($114.9K, 10-02 Base — **패밀리 강화**: 미정산 delta 상태의 크레딧 netting). 귀속/정산-모멘트 패밀리 **8일 내 4인스턴스 수렴**(MCN→MUSystem→GoldPesa→MALT).
+- **Quiet lanes**: rekt 1면 재노출 전건 기흡수(SingularityNET→B15·Nostra→09-17 큐·Nomic→A32·Term→C23·Cosmos EVM 클러스터→B106·DGFiP→기각 전례) · Immunefi 재노출(war-room/Scoreboard/93.9%) · ToB SequenceHash(10-02) purple 흡수 · Neodyme 최신 2026-03·OtterSec 렌더 공백 무신호 · OSV solana-program/spl 0건(anchor-lang 최신=GHSA-429q=A124 5월 선점) · Anza repo 404 재실측 · zai 「Drift $270M」(adbit.biz) — rekt/SlowMist 무노출+4월 기록 → **재노출 노이즈 기각**.
+- **Advisory**: OSV/Anza 신규 0건. RustSec 증분 — red 10-05 실측 rutie/decompress(10-03) 이후 없음 상속.
+
+### PART B — Microstable 전수 점검 (전 항목 실코드 읽기, mtime 02-28 동결 62일)
+
+| 렌즈 | 판정 | 근거(실측) |
+|---|---|---|
+| **MALT — post-hook 잔액 기반 귀속 (신규)** | ✅ NOT ACTIVE | 임의 실행 external hook 평면 부재 — 직접 `invoke` 2곳(@446 agent→escrow system-transfer·@2002 devnet-admin feature-gate) 전부 프로그램·서명자 고정; rebalance는 keeper 쿼럼 커밋-리빌(I25, :1488/:1527-1529) 구조; 잔여 귀속 축 = A6 파생(전달 mint 자기참조) 기 추적 |
+| **GoldPesa — 미정산 delta netting (신규)** | ✅ NOT ACTIVE (구조적) | flash-accounting/delta 구조 부재 — `flash` lib.rs 0매치·keeper 0매치 실측; CPI 경계 상태 소비는 B112/HERMES-H1 축 기 추적 |
+| A6 | 🔴 CRITICAL 62일차 | lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` 라이브 재확인 vs :2320 hardening 비대칭 |
+| A157 트립와이어 | ✅ 정상 | :2320 `mint::authority = protocol_state` 극성 미반전 재확인 |
+| A10 | 🟠 HIGH | burn CPI :1360-1366 전달 mint 라이브 확인 |
+| HERMES-H1 | 🟠 HIGH | hermes.rs:61-69 7필드 — posted_price_account 부재 |
+| B83 | 🟠 HIGH | quinn-proto (Cargo.lock:2984 실측) |
+| B45 | ⚠️ PARTIAL | audit-attestation.json 부재 (find 0결과) |
+| B120 | ⚠️ MEDIUM | keeper "genesis" 0매치 — 클러스터 식별 핀 부재 |
+| RUSTSEC-0285 (☐182) | ⚠️ MEDIUM 19일차 미집행 | rustls 0.21.12(:3296)+0.23.36(:3308) 듀얼스택 — 0.23.45 미달, `cargo update -p rustls` 미집행 |
+
+- **신규 CRITICAL/HIGH: 0건.** 신규 렌즈 2종 전부 NOT ACTIVE.
+
+### 블루팀 지시 (62일차 불변)
+
+1. HEAD 제약 복원 + 트리 커밋(dirty 39, 최우선)
+2. quinn-proto 업데이트 (B83 HIGH)
+3. hermes.rs `posted_price_account` 필드 추가 (HERMES-H1 HIGH)
+4. audit-attestation.json 생성 (B45)
+5. devnet-admin/USDS feed-id 배포 게이트
+6. `cargo update -p rustls` (RUSTSEC-0285, 19일차 미집행)
+
+**매트릭스 카운트 black 233/red 237 불변**(패밀리 강화 2).
