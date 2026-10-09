@@ -919,3 +919,30 @@
 
 - **2026-10-02 — GoldPesa GPXHooks (Base, ~$114.9K — A4/A42 패밀리 강화)** — Uniswap v4 hook(GPXHooks)이 **shared flash-accounted PositionManager**로 재조정하며 **currency delta 미정산 확인 없이** burn credit을 미정산 phantom debt(~115K USDC)과 **상계(netting)** → PoolManager에서 인출(~114,900 USDC). 공격 순서: unlock 개설 → 미정산 WETH/USDC 포지션 구성 → GPX 풀 스왑으로 시간당 reBalance 트리거 → burn credit-netting → 자기 포지션 burn·인출. 패밀리 제4축: 미정산 상태의 정산된 크레딧 소비(정산 불변식 delta=0이 netting으로 우회). Vector mapping: **A4/A42 강화(2026-10-06) — named 서브패턴 「unsettled-delta netting」**.
   Sources: https://x.com/SlowMist_Team/status/2106415554492059872 | https://hacked.slowmist.io/ (10-02 entry)
+
+- **2026-10-09 — BitBay StableVault (Polygon DAI/USDC vault UsdcDaiV4Vault, ~$14K — 퍼플 큐 2026-10-10, 블랫 승계 대기)** — 공격자가 `reposition()` 호출로 볼트 유동성을 0으로 강제한 뒤 최소 1 셰어만 리딤. `_withdraw()`는 `liquidity == 0`일 때 비례 셰어가 아니라 **컨트랙트 전체 토큰 잔액**을 지급 → ~14,838.47 DAI(~$14K) 드레인. 경계상태(0 유동성)에서 셰어 회계가 전액 지급으로 붕괴 — 블랫 10-06 귀속/정산-모먼트 패밀리(provenance×moment)와는 다른 축: **경계값에서의 지급 semantics 미정의**. Vector mapping: **퍼플 큐 — 「degenerate-state whole-balance payout」 서브패턴 후보(A2/A4-adjacent; 인버리언트 테스트 1급 대상: 0/최소/빈 집합 경계)**.
+  Sources: https://hacked.slowmist.io/en/ (10-09 entry) | https://x.com/SlowMist_Team/status/2108399198035202138
+
+- **2026-10-09 — EtherVista (Ethereum 풀, ~$18.6K — 퍼플 큐 2026-10-10, 블랫 승계 대기)** — `EtherVistaPair.swap()`의 K-인버리언트 검사에서 **uint112×uint112 reserve 곱이 랩어라운드** — 실제 reserve 곱이 급락해도 검사 통과. 공격자는 자기 통제 컨트랙트를 **인가 라우터로 자체 등록** 후 2회 크래프티드 스왑으로 WETH+VISTA 드레인. 이중 축: ① 검증 코드 내부의 폭 가정(검증자 자체 오버플로 — verifier-internal overflow) ② 라우터 등록 표면(B120 계열 온보딩 신뢰면). Vector mapping: **퍼플 큐 — A5 강화 후보 「the invariant checker itself wraps」 + B120-adjacent 라우터 자가등록 서브패턴**.
+  Sources: https://hacked.slowmist.io/en/ (10-09 entry) | https://x.com/SlowMist_Team/status/2108427455572918626
+
+- **2026-10-08 — X7 Finance / X7Pioneer (Ethereum, ~$16.5K — 퍼플 큐 2026-10-10, 블랫 승계 대기)** — `claimRewards()`가 호출마다 `address(this).balance − lastETHBalance`를 totalRewards에 **무조건 가산**하되 `lastETHBalance`는 `claimable > 0`일 때만 갱신 → 빈 배열 호출로 동일 미계상 델타 반복 가산, per-token 보상 부풀리기. 공격자 ETH 기부로 델타 확대 후 6.78 ETH 드레인. 외부 관측 델타 소비(기부 벡터) × 조건부 갱신 비대칭의 결합. Vector mapping: **퍼플 큐 — A2/A42 패밀리 강화 후보 「bookkeeping asymmetry: conditional update vs unconditional consumption」(회계 대칭 규칙: 소비되는 모든 외부 델타는 정확히 1개의 무조건 갱신 지점을 가져야 한다)**.
+  Sources: https://hacked.slowmist.io/en/ (10-08 entry) | https://x.com/SlowMist_Team/status/2108142452888776907
+
+- **2026-10-07 — 79th Vault (BSC, ~$12.5M — 퍼플 큐 2026-10-10, 블랫 승계 대기)** — **운영자 핫월렛 사설키 침해** → `OPERATOR_ROLE` 함수로 PancakeSwap 79AU/USDT 페어에서 2.01M 79AU를 7회 이체로 인출, ~95회 스왑으로 되팔아 풀 USDC 리저브 $15.2M→$3.9M 절감, 16,249 BNB(~$12.5M) 현금화. 드레인 41초 후 **동일 운영자 키가 3.79 BNB를 공격자 주소로 전송**(침해 키 이중 사용 또는 내부자 위장 지표 — 귀속 모호성 관찰 포인트, IR 레인). 스마트컨트랙트 결함 아닌 운영 평면 + **롤 광역(무상한 이동 권한) 증폭** — 디싱크 휴면축의 증폭 데이터포인트(권한 범위가 운영 실체와 재조정되지 않음). Vector mapping: **퍼플 큐 — B15 강화 「role-breadth amplification: 핫 키 × 무상한 OPERATOR_ROLE × LP 인출 경로」 + 귀속 모호성 IR 관찰**.
+  Sources: https://hacked.slowmist.io/en/ (10-07 entry) | https://x.com/79thVault/status/2108244949963833685
+
+- **2026-10-06 — Set Protocol actualizeFee (Ethereum, ~$13.7K — 퍼플 큐 2026-10-10, 블랫 승계 대기; 07-30 ExchangeIssuance state-locking 사건과 별개 메커니즘)** — 수수료 0 발행에도 `actualizeFee()`가 `unitShares`를 4,927→4,928로 **상향 반올림** → 갱신 전 이슈/갱신 후 동량 리딤으로 반올림 유발 단위 증가분을 담보로 추출. Uniswap v4 플래시 어카운팅으로 규모 확장. 규칙: **no-op 전이는 상태 항등함수여야 한다 — 0입력 sync가 상태를 옮기면 그 자체가 익스플로잇 가능한 오라클이다**. Vector mapping: **퍼플 큐 — 「rounding-direction × no-op non-identity」 서브패턴 후보(A10-adjacent)**.
+  Sources: https://hacked.slowmist.io/en/ (10-06 entry) | https://x.com/SlowMist_Team/status/2107382337654951943
+
+- **2026-10-06 — MakerDAO ETH-A 청산 키퍼 봇 (Ethereum, ~$538K — 퍼플 승격 2026-10-10)** — Tornado Cash 펀딩 주소가 **2020년 이후 휴면한 제3자 청산 키퍼(업그레이더블 프록시)**의 보호 없는 드레인 함수 호출. 키퍼는 2020년 Flipper 옥션 #1457–1460에서 낙찰(200 WETH)했으나 `deal()`을 호출하지 않아 담보가 Flipper에 잔존 → 공격자가 `deal()` 호출 → `Vat.flux`로 담보 이동 → `GemJoin.exit()`로 200 WETH 인출·언랩. 결함은 MakerDAO 코어가 아닌 제3자 키퍼. **6년 휴면 권한의 실증: 권한 상태는 운영 주의와 무관하게 생존한다** — 감사는 활성 코드를 스코프하고 휴면은 코드 리뷰에 보이지 않는 운영 상태다. Vector mapping: **퍼플 승격 — 디싱크 패밀리 제6 멤버 「dormancy axis: authority state ≠ operations state — privilege decays only by explicit revocation, never by attention decay」(퍼플 메타분석 #63·attack-matrix 10-10 노트) + D-패밀리 「dormant-authority exposure」 강화 후보(블랫 승계 대기)**.
+  Sources: https://hacked.slowmist.io/en/ (10-06 entry) | https://x.com/DefimonAlerts/status/2107391959853600812
+
+- **2026-10-05 — Based Visa Card 내부 대시보드 (Web2 운영 평면, $0 직접손실·KYC 노출 — 퍼플 노트 2026-10-10)** — 카드 프로그램 관리용 **내부 대시보드 무단 접근**으로 일부 카드홀더 KYC(이름·ID/여권번호·생년월일·주소) 유출 가능. 카드번호·CVV·PIN·지갑·카드 자금 무영향. META-84의 대시보드/데이터 신뢰 평면 반향(운영 도구가 의사결정 입력 평면이 되는 축) — 체인 외 사건, 노트 등급(신규 벡터 아님). Vector mapping: **META-84 반향 노트**.
+  Sources: https://hacked.slowmist.io/en/ (10-05 entry) | https://x.com/BasedOneX/status/2108121017461924090
+
+- **[2026-10-10 rekt 갱신 — Duelbits 보강(퍼플)]**: rekt 심층 공개로 금액 ~$4.9M→**~$6.07M·4체인→5체인** 상향 + 핵심 신규 사실: **2024년 $4.6M 절도 후 만든 대체 지갑이 그 사건 이름을 따 명명됐는데 이번에 함께 드레인됨** — 사고 대응 산출물(대체 지갑)이 실패한 아키텍처를 복제. 재오픈 후 원인 미공개("What changed since 2024?"). Vector mapping: **B15 강화 — 「remediation-replicates-failure: IR 교체 자산이 동일 취약 클래스 상속」 + 재피해자(2024→2026) 타임라인**.
+  Sources: https://rekt.news/duelbits-rekt
+
+- **[2026-10-10 rekt 갱신 — NEAR Intents WATCH 갱신(퍼플)]**: 팀이 **48시간 최후통첩 후 전액 회수 발표·조사 종결** — 그러나 **실패 메커니즘은 여전히 미공개**(RCA-less closure). 회수 주장·조사 종결은 방어 학습의 종결이 아님 — RCA 부재로 클래스 불변식 소유자 여전히 부재(10-03 퍼플 동일-제품 재발 관찰의 연장). Vector mapping: **A32-패밀리 WATCH 갱신 — RCA-less closure 관찰**.
+  Sources: https://rekt.news/near-intents-rekt
