@@ -2586,3 +2586,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 **창内 Anchor 관찰(승격 없음)**: (1) #5165 — TS `SystemAccountsCoder.memcmp`가 `appendData` 인자 무시(사전 TODO 원문 존재): nonce 계정 fetch가 dataSize 필터만 적용, 의도 부분집합 아닌 전체 반환 — 오프체인 계정집합 신뢰 오염(A163 소비축 가족). (2) #5170 (lang-v2) — IDL 타입 저하의 Pod 래퍼 원시형 표기(PodU64→u64, 구조체 패딩·bool zero-copy 무효): declare_program! 재구성 레이아웃 어긋남 — 단, 컴파일 실패로 침묵 경로 부재(방어형, A162 가족의 라우드-실패 변형). (3) #5172 — `bump(canonical)` 문법 추가: IDL에 PDA 시드 유지·프로그램은 주어진 bump 검증 — 커스텀 bump 사용 시 IDL 시드 탈락(#5121)이라는 클라이언트 리졸버 공백의 상류 해소(기능, 비보안). (4) #5169 — 보안 어드바이저리 제출 프로세스 문서화(비보안, Anchor 보안 채널 정비 관찰).
 
 **B83(RustSec quinn-proto 0338·0339·0342 — 0.11.13 라이브 핀 무조건 3건 적중, 패치 목표 ≥0.11.18)**: Solana 스택 특수성 — solana-client/QUIC 경로의 전이 의존성 quinn-proto가 신규 원격 DoS 5건 배치 등록(10-12). keeper 표준 RPC(HTTP/WS) 구성에서 악용 전제는 '악의 QUIC 피어'이므로 런타임 도달성은 2차(신뢰 RPC 가정). 의존성 감사 규칙: **Cargo.lock 핀 버전의 RustSec 영향 범위는 어드바이저리 단위(unaffected/patched 구간)로 매번 재평가** — 이번 3건은 'unaffected <0.5.0/0.6.0'처럼 사실상 전 버전 구간이라 노출 판정이 자동 갱신됐다.
+
+### 2026-10-14 redteam — Anchor v2.0.0-rc.2 페이스 마커: A161 탑재·A164 미탑재(☐197 갱신) + #5124 security.json 소비측 도구
+
+**☐197/A164 페이스 갱신 (v2.0.0-rc.2 = #5173, 10-13T12:22Z)**: CHANGELOG [Unreleased](rc2 본문)에 #4871(A161) "Block mutable aliasing between accounts marked `zero` and `init`" 탑재 확정 — 반면 **#5168(A164 수정) 미탑재**: PR API 실측 `state: open`·`merged_at: null`. fix-of-fix 갭(remediation↔coverage desync)이 v1.2.x 전 출시 버전에 이어 **v2 라인 첫 RC까지 지속** — AccountLoader 채택 즉시 활성 트리거(☐197)와 '출시 버전 AccountLoader 포함 실증' 종료조건 모두 잔류. v2 정식 출시 시점 #5168 머지 여부 재실증 의무.
+
+**#5124 소비측 강제(관찰, Microstable 비적용)**: `anchor security fetch`가 온체인 `security.json` 판독·검증 + mainnet 배포 시 `--security-metadata` 부재 경고 + `anchor init` 템플릿과 동일한 security.json **거부** — META-82(security.json 온체인, 09-23 #4177 등록) future-watch의 '소비자 등장' 트리거 진전. 템플릿-미변경 거부는 배포 평면의 보증-세탁(A156 계열) 차단 인스턴스. Microstable은 보안 메타데이터 미사용 — NOT ACTIVE. 배포 파이프라인 채택 시 ☐192(CI deploy gate)와 결합 리뷰.
