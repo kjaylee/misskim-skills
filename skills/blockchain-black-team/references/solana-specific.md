@@ -2578,3 +2578,11 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 **관찰: owner= 제약과 Owner 트레잇 (anchor #5149, 10-07 머지 8d47347 — 승격 없음)** — `#[account(owner = X)]`는 Owner 트레잇 구현 계정 타입(Account<T> 등)의 소유자 검사를 재정의하지 못함(T::owner() 선행 거부). 기본이 더 엄격해 우회가 아니라 혼동/DoS 축 — "명시적 제약이 실제 검사를 대체한다는 착각" 관찰로만 기록. 올바른 패턴은 UncheckedAccount+owner=(상류 문서화).
 
 **감시 갱신: dup-mut 검사 구조 유동 (#4871·#4874 머지, #5091 open)** — #4871이 pure-init의 dup-mut 제외를 has_composites 조건으로 변경, #4874가 HashSet→키 스캔 재작성, #5091(v2 dispatch 수준 제거 제안) 잔존 open — 중복 가변 계정 보호막 구조가 유동 중. v2 채택 전 load/load_mut 경로 전수 통과 + raw AccountInfo 접근 잔존 grep 재선행(기존 감시 유지·강화).
+
+### 2026-10-13 redteam — Anchor #5168 AccountLoader exit 직렬화 재발견 → A164 승격 + 창内 Anchor 패턴 관찰
+
+**A164 (PR #5168, 10-12 open 미머지)**: AccountLoader는 exit에서 `T::DISCRIMINATOR`를 바이트 0..8에 기록한다(`AccountsExit for AccountLoader`) — "AccountLoader는 exit 직렬화 없음"이라는 #4871(A161) 코드젱 타입 필터의 전제가 거짓으로 실증됨. zero/init 가변 별칭 검사에서 AccountLoader 제외 → 단일 신규 계정이 init 슬롯 + (cross-composite) `#[account(zero)] AccountLoader<T>` 슬롯 동시 만족. Solana 특유의 함정: **zero_copy(`#[account(zero_copy(unsafe))]`)·`load_init()` 경로가 Account 계열과 다른 직렬화 관습을 가지므로 'exit 부작용 없음' 직관이 문서가 아닌 구현에서 반증된다** — 검사·래퍼 타입 열거는 직렬화 부작용 표(모든 `AccountsExit` 구현 전수)에서 파생해야 한다. Microstable NOT ACTIVE(AccountLoader/zero_copy/load_init 전수 0매치) / LATENT ☐197.
+
+**창内 Anchor 관찰(승격 없음)**: (1) #5165 — TS `SystemAccountsCoder.memcmp`가 `appendData` 인자 무시(사전 TODO 원문 존재): nonce 계정 fetch가 dataSize 필터만 적용, 의도 부분집합 아닌 전체 반환 — 오프체인 계정집합 신뢰 오염(A163 소비축 가족). (2) #5170 (lang-v2) — IDL 타입 저하의 Pod 래퍼 원시형 표기(PodU64→u64, 구조체 패딩·bool zero-copy 무효): declare_program! 재구성 레이아웃 어긋남 — 단, 컴파일 실패로 침묵 경로 부재(방어형, A162 가족의 라우드-실패 변형). (3) #5172 — `bump(canonical)` 문법 추가: IDL에 PDA 시드 유지·프로그램은 주어진 bump 검증 — 커스텀 bump 사용 시 IDL 시드 탈락(#5121)이라는 클라이언트 리졸버 공백의 상류 해소(기능, 비보안). (4) #5169 — 보안 어드바이저리 제출 프로세스 문서화(비보안, Anchor 보안 채널 정비 관찰).
+
+**B83(RustSec quinn-proto 0338·0339·0342 — 0.11.13 라이브 핀 무조건 3건 적중, 패치 목표 ≥0.11.18)**: Solana 스택 특수성 — solana-client/QUIC 경로의 전이 의존성 quinn-proto가 신규 원격 DoS 5건 배치 등록(10-12). keeper 표준 RPC(HTTP/WS) 구성에서 악용 전제는 '악의 QUIC 피어'이므로 런타임 도달성은 2차(신뢰 RPC 가정). 의존성 감사 규칙: **Cargo.lock 핀 버전의 RustSec 영향 범위는 어드바이저리 단위(unaffected/patched 구간)로 매번 재평가** — 이번 3건은 'unaffected <0.5.0/0.6.0'처럼 사실상 전 버전 구간이라 노출 판정이 자동 갱신됐다.
