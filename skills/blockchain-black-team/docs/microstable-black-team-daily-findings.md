@@ -3123,3 +3123,39 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 6. `cargo update -p rustls` (RUSTSEC-0285, 19일차 미집행)
 
 **매트릭스 카운트 black 233/red 237 불변**(패밀리 강화 2).
+
+## 2026-10-14 — 일일 점검 (quiet window — 신규 named 0·신규 렌즈 A164 NOT ACTIVE, HEAD 23c0163·dirty 39·mtime 02-28 동결 70일)
+
+### PART A — 수집 창 스윕 (10-13 12:10 → 18:00 UTC, ~6h — 전 레인 무풍)
+
+- **신규 사고/취약점/연구 0건.** rekt 1면 최신 = NEAR Intents(10-01)·Duelbits 갱신본 — 전건 기흡수. SlowMist 최신 = Papertrade(10-10) 기흡수. GH Advisory anchor-lang 2건(2026-05) 기매핑·solana-program/spl-token-2022 0건. RustSec 0344 부재(증분 없음 — 레드 10-13 0338/0339/0342 승계). ToB 최신 = SequenceHash(10-02, 비사고). Immunefi war-room featured 재노출(발행일 미실증 한계 승계). **수집 인프라**: web_search 비활성 + zai-search 세션 부재 — 발견(discovery) 축 봉쇄, canonical-URL 직접 fetch로 레인 정합(09-29 인프라 침묵 규약 승계: 도구 침묵 ≠ 조용).
+- **크로스 레인 흡수**: 레드 10-13(36859ca) **A164 — Anchor `AccountLoader` zero/init 체크 배제**(#5168 fix-of-fix gap) 신규 기법 → 금일 블랙 렌즈 대상. 퍼플 큐 블랙 잔여 없음(Papertrade 10-13 동일 흡수 확인).
+
+### PART B — Microstable 전수 점검 (전 항목 실코드 읽기, mtime 02-28 동결)
+
+| 렌즈 | 판정 | 근거(실측) |
+|---|---|---|
+| **A164 — AccountLoader zero/init 체크 배제 (레드 10-13, 신규)** | ✅ NOT ACTIVE (구조적) | lib.rs `AccountLoader` grep **0매치** — 프로그램 전 계정이 `Account<'info, T>` Anchor 타입 검증 경로, AccountLoader 역직렬화 평면 자체 부재 |
+| A6 | 🔴 CRITICAL 70일차 | lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` 라이브 재확인 vs :2320 `mint::authority = protocol_state` 비대칭 |
+| A157 트립와이어 | ✅ 정상 | :2320 극성 미반전 재확인 |
+| A10 | 🟠 HIGH | burn CPI :1361-1368 전달 mint 라이브 확인 |
+| HERMES-H1 | 🟠 HIGH | hermes.rs:61-69 7필드(symbol/collateral_index/price/confidence/publish_time/observed_slot/signature) — `posted_price_account` 부재 |
+| B83 | 🟠 HIGH | quinn-proto 0.11.13 (solana/Cargo.lock 실측 — RUSTSEC-0338/0339/0342 히트 승계) |
+| B45 | ⚠️ PARTIAL | audit-attestation.json 부재 (find 0결과) |
+| B120 | ⚠️ MEDIUM | keeper config "genesis" 0매치 — 클러스터 식별 핀 부재, rpc_url 정적 config |
+| B114 | ✅ 0매치 재실증 | keeper memoize/cache grep 0결과 |
+| RUSTSEC-0285 (☐182) | ⚠️ MEDIUM 27일차 미집행 | Cargo.lock rustls 0.21.12+0.23.36 듀얼스택 실측(0.23.36 < 0.23.45 패치 목표) — `cargo update -p rustls` 미집행 |
+| 대시보드 위험 싱크 | ✅ 0매치 | docs/index.html innerHTML/document.write/eval 0결과 |
+
+- **신규 CRITICAL/HIGH: 0건.** 신규 렌즈 A164 NOT ACTIVE.
+
+### 블루팀 지시 (70일차 불변)
+
+1. HEAD 제약 복원 + 트리 커밋(dirty 39, 최우선)
+2. quinn-proto 0.11.13 → 최신 (B83 HIGH — RUSTSEC-0338/0339/0342)
+3. hermes.rs `posted_price_account` 필드 추가 (HERMES-H1 HIGH)
+4. audit-attestation.json 생성 (B45)
+5. devnet-admin/USDS feed-id 배포 게이트
+6. `cargo update -p rustls` (RUSTSEC-0285, 27일차 미집행)
+
+**매트릭스 카운트 233/225 불변.**
