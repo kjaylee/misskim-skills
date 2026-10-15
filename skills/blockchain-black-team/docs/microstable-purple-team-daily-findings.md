@@ -75,3 +75,12 @@ Compared to black team's attack-matrix.md and red team references:
 - **A6 CRITICAL day 71 (canonical)**: 블랙 10-15(e6dac70 — lib.rs:2320 vs 2395-2396 라이브 재실증) + 레드 10-15(독립 실측 수렴) 이중 검증 인용 — 프로그램 불변(HEAD 23c0163·mtime 02-28 동결)으로 검증 이후 상태 드리프트 원천 불가. 카운트 불일치 기록: 블랙 PART B 「day 72」·레드 「day 72」 vs 10-04=60 앵커 산술 day 71 — 레인 기록 보존, 정본 71(09-26=52 연속 카운트).
 - **META-85(CDSO) 사전 코롤러리 등록**: 배포 시점 「툴 기본값 대비 diff」 아티팩트(오소리티·PDA·계정 제약·기능 플래그) — 배포 전 체크리스트 항목 권장. B45(audit-attestation.json 부재)와 동형 보증 공백의 설정-평면 쌍둥이. 오늘 Microstable NOT ACTIVE(구조) — 활성화 트리거 없음.
 - **신규 CRITICAL/HIGH/MEDIUM 0.** 블루팀 지시 5항(HEAD 제약 복원·quinn-proto·hermes.rs·audit-attestation·배포 게이트) 블랙 10-15 승계 불변.
+
+## 2026-10-16 Purple Team Daily Evolution — Microstable 구조 점검 (A6 day 72·비례-회계 렌즈 구조적 NOT ACTIVE·dirty 39→40 무코드변동 실증)
+
+- **경계 스윕(창 10-15 10:00 → 10-16 04:00 KST)**: Keeper↔On-chain / Oracle↔Price↔Mint·Redeem / Agent↔Governance / Dashboard↔RPC — 창 내 신규 사건의 Microstable 구조 매핑 0. UNCX RCA(공유 베스팅 풀·주당율 — 단일 프로그램·포지션 기반 회계로 평면 부재)·Gamdom(운영 서버 침해 — 핫월렡 서버 평면 부재)·Starknet PQ 투표(거버넌스 평면 부재)·Uniswap VolatilePair(레드 레인 훅 조합) 전부 구조적 미적용.
+- **UNCX/비례-회계 경계 패밀리 렌즈 — NOT ACTIVE(실측)**: lib.rs 전수 grep `share`(대소문자 무시) 및 `shares_per`·`share_rate`·`unit_share` **전부 0매치** — 주당율·공유 풀 비례 청구 회계 평면 자체 부재(포지션 기반). Set/BitBay/X7/UNCX 4면 패밀리의 Microstable 표현형은 기존 A6/A10 로커스(미바인딩 `mstb_mint` = 한 포지션 청구가 타인 자산에 도달하는 경로)로 수렴 — 블랙 10-15 판정 승계, 신규 무방비 면 0.
+- **A6 CRITICAL day 72(canonical, 퍼플 연속 카운트 — 10-15=71 익일)**: lib.rs:2320 `mint::authority = protocol_state` vs :2395-2396 bare `#[account(mut)] mstb_mint` 라이브 재실증. 1차 실증: HEAD **23c0163**·git log 최신 09-13 불변·mtime **2026-02-28 13:21:13**(161,059 bytes). 레드 10-16 「day 73」 오프-바이-원 레인 기록 보존(10-15 불일치 기록의 연장).
+- **dirty 39→40 변동 조사 — 코드 변동 0 실증**: `find -newermt 2026-10-14`(target/.git/node_modules 제외) 전수 = 마이크로스테이블 저장소 내 블랙 findings 문서(10-15 10:12 어펜드) **단 1건**. 미추적 18건 birth-time 전수 02-24~07-23(신규 파일 0)·프로그램/키퍼 소스 mtime 불변·optimizer_checkpoint 07-19. 결론: 40번째 라인 = 블랙 findings 문서의 09-13 커밋 이후 첫 수정 반영(블랙 「dirty 39」는 10-15 어펜드 전 카운트) — **소스·설정 변동 없음**. dirty 인벤토리 정합 확인은 블랙 다음 런 이관(소관).
+- **AutoProver 채택 후보 등록(Certora 09-21 발표 — ~11월 Solana Breakpoint 초기 릴리스 목표)**: Solana 네이티브 FV 출시 시 A6급 계정-제약 불변식의 기계 검증 창구 — 블루/오렌지 배포 게이트(A159·B45)와 병렬 검증 축으로 릴리스 시 재평가. 오늘 Microstable NOT ACTIVE(도구 미출시).
+- 경계 7종 전량 carry-forward(프로그램 코드 7개월+ 동결). ☐182(rustls 듀얼핀·0349 네트워크 벡터 포함)·☐189·☐193~☐199 캐리 승계. B83(quinn-proto ≥0.11.18 상향 목표)·HERMES-H1(posted_price_account 미핀)·B45(audit-attestation 부재) 캐리. **신규 CRITICAL/HIGH/MEDIUM/PT-ARCH 0.**
