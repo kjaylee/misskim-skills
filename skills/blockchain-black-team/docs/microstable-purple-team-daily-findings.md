@@ -68,3 +68,10 @@ Compared to black team's attack-matrix.md and red team references:
 - **Active화 트리거**: (1) 업그레이드 오소리티 도입, (2) 프로그램의 두 번째 배포(다른 브랜드·테넌트 재사용 포함), (3) keeper·dashboard가 복수 클러스터 RPC를 동시에 향하는 구성.
 - **사전 등록 불변식 (배포 전 체크리스트에 추가 권장)**: ① 배포 인벤토리 파일(프로그램 주소·버전·수탁 가치·테넌트·마지막 업그레이드)을 보안 산출물로 유지, ② 신버전 배포 시 구버전 권한 명령 자동 동결(supersede-freeze), ③ "업그레이드 미수신 + 수탁 가치 증가" 모니터링 알림.
 - **연결**: attack-matrix.md META-76, B101(Rain/Avici), C23(Term), Enjin 08-25, Moonwell 08-27(3회차).
+
+## 2026-10-15 Purple Team Daily Evolution — Microstable 구조 점겅 (A6 day 71 canonical)
+
+- **경계 스윕(창 10-13 21:25 → 10-15 10:00 KST)**: Keeper↔On-chain / Oracle↔Price↔Mint·Redeem / Agent↔Governance / Dashboard↔RPC — 창 내 신규 사건 중 Microstable 매핑 0. **Autheo**(10-12, 브릿지 메시징/ISM 평면 — 단일 체인·브릿지 레인 부재, A32 NOT ACTIVE 승계) 구조적 미적용. **Drift 포스트모템**(디바이스/멀티시그 평면 — keeper 단일 바이너리·멀티시그 거버넌스 부재) NOT ACTIVE. **UNCX**(공유 에스크로 격리 — 블랙 10-15 WATCH, A6/A10 로커스 수렴 기록 승계) 퍼플 별도 무면.
+- **A6 CRITICAL day 71 (canonical)**: 블랙 10-15(e6dac70 — lib.rs:2320 vs 2395-2396 라이브 재실증) + 레드 10-15(독립 실측 수렴) 이중 검증 인용 — 프로그램 불변(HEAD 23c0163·mtime 02-28 동결)으로 검증 이후 상태 드리프트 원천 불가. 카운트 불일치 기록: 블랙 PART B 「day 72」·레드 「day 72」 vs 10-04=60 앵커 산술 day 71 — 레인 기록 보존, 정본 71(09-26=52 연속 카운트).
+- **META-85(CDSO) 사전 코롤러리 등록**: 배포 시점 「툴 기본값 대비 diff」 아티팩트(오소리티·PDA·계정 제약·기능 플래그) — 배포 전 체크리스트 항목 권장. B45(audit-attestation.json 부재)와 동형 보증 공백의 설정-평면 쌍둥이. 오늘 Microstable NOT ACTIVE(구조) — 활성화 트리거 없음.
+- **신규 CRITICAL/HIGH/MEDIUM 0.** 블루팀 지시 5항(HEAD 제약 복원·quinn-proto·hermes.rs·audit-attestation·배포 게이트) 블랙 10-15 승계 불변.

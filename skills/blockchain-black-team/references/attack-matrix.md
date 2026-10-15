@@ -169,6 +169,15 @@
 
 **META-01~84 unchanged. Counts per owning lanes: black 233/225, red 242/225 (A164, red 10-13 36859ca).**
 
+### 2026-10-15 purple-team meta note (META-85 승격: 배포-상태 고아/설정-상속 간극 — Autheo 제3면 + Drift 제1당사자 포스트모템 퍼플 4축 + postmortem-starvation 반대 데이터포인트)
+
+- **META-85 승격 — Configuration/Deployment-State Orphan (Autheo 10-12가 제3의 면으로 확정)**. Autheo THEO (10-12, Base, ~$1.7M — grep-verified 미흡수 → **블랙 큐**): Hyperlane Warp Route가 **TrustedRelayerIsm**(단일 릴레이어 주소가 임의 메시지 실행, 검증자 서명 0)으로 보호 — 공격자가 오리진 도메인 2127에서 메시지 전달 → zero address 19M 무담보 THEO 민트 → 54스왑(THEO/USDC·Uniswap v4·Hydrex) → 700.8 ETH(~$1.76M) Ethereum 브릿지. **메타 실패: 이 ISM은 Hyperlane CLI 신규 warp route 기본값(테스트용)이며 벤더 프로덕션 가이드의 remove-trusted-relayer 단계가 문서로 존재했으나 미시행** — 기본값 상속인지 의도 설정인지는 RCA 대기(META-83 예비 등급), 어느 쪽이든 프로덕션 신뢰 토폴로지가 단일 주소였고 문서화된 필수 단계의 소유자가 없었다. 제3의 면: ① Nostra/Pragma(사전 론칭 위험 신호 무소유) ② Papertrade(공격-경제적 OI 한도 t=0, 10-13 axis-2) ③ Autheo(테스트 기본값 프로덕션 방치). 전체 엔트리는 아래 META-85.
+- **Drift 제1당사자 포스트모템(~10-10/11, $280M) — 역학 블랙 기흡수(TestFlight/repo 감염·durable nonce 타임라인), 퍼플 4축 보완**: ① **클래스 재발 제4인자·최초 크로스-프로토콜 전파 실패** — Radiant(10-2024, B33) 포스트모템 공개 18개월 후 동일 클래스(디바이스→멀티시그)로 Drift 실패: **한 프로토콜의 포스트모템은 타 프로토콜 배포를 구속하지 않는다**(Meter/NEAR/Duelbits 도그마의 생태계 확장). ② **신뢰 경작에 자기 자본** — Ecosystem Vault 온보딩+자금 $1M+ 수개월 운용: skin-in-the-game이 농가 가능한 신뢰 신호로 실증(ERC-8004 WATCH·META-54 수렴). ③ **서명→실행 도미넌시 = 감지 평면** — 사전서명 tx 9일간(3-23→4-1) 미실행 잔존: durable-nonce 상태는 온체인 공개 가독 → 「미실행 특권 승인 N시간 초과」 모니터 가능 불변식(B77 운영 코롤러리). ④ **Circle CCTP 232M USDC 6시간 탈출**(ZachXBT) — 동결 권한은 체인-범위, 공격 이동성은 체인 간: 대응-경계 vs 가치-이동성 비대칭(Bitget 비동결 지갑·Allbridge CCTP 수렴).
+- **postmortem-starvation WATCH — 반대 데이터포인트**: 2026년 최대 DeFi 해킹($280M)이 귀속·타임라인·감염 벡터 포함 제1당사자 포스트모템 공개(Immunefi 처방의 라이브 실례). 기아 데이터포인트 5건 불변(BlockSec 10-09도 Duelbits 「Root Cause Undisclosed」 기존 확인만). 승격 기준 미충족 → WATCH 유지, 후보 번호 **META-86으로 이동**(선승격 선번호 원칙, 10-13 후보 지정 기록 보존).
+- **BlockSec 10-09 격주($418.4M, 8건 09-21→10-04)**: 전 사건 grep-verified 기흡수; 「Unnamed Base Vault 10-04 ~$6M」 무명·무메커니즘 단일 소스로 흡수 바 미달. 「양 상세 사례 모두 하류 서명·실행이 거짓 상류 정보 위에서 작동」= META-84/51/PCAG 제3자 수렴(강화만). Notional shattered.io 10-14 기사 = 09-04 사건 재전달 기각(A5/META-68 기흡수).
+- **레인 상태**: Certora DNS **4회 만에 회복**(HTTP 200, 104.26.10.189 — 3회 연속 ENOTFOUND 탈출; 콘텐츠 재베이스라인 다음 런). Echidna v2.3.3(2026-07-27 GitHub API 금일 재실증) 불변 · Medusa releases/latest 빈 응답(03-11 승계, API 이상 기록 — 「무변경」으로 위조 안 함). ToB 10-14(패키지 매니저 무결성 — 블랙 10-15 흡수 승계) · RV 09-30 승계 · arXiv 회복 레드 10-15 승계(LLM-에이전트 방어=B119). **카운트: black 233/225 · red 243/225(A165) · purple META 84→85.**
+- **레이스 기록(3중 동시런 — 블랙 e6dac70 커밋됨·레드 10-15 배치 미커밋 발견)**: 레드 테일 보존, 본 노트는 헤더 영역+META 목록 중간 삽입(파일 끝 미접촉) — 커밋 시 레드 미커밋 분(A165 등) 동반 반영을 메시지에 명시. 메타분석 파일 10-03(#59) 이후 공백 — 오늘 #60 재개, 10-04→10-13 정본=매트릭스 헤더 노트.
+
 ### A1. Reentrancy
 **Historical**: The DAO (2016, $60M), Curve/Vyper (2023, $70M), Cream Finance ($130M), Joe Agent ($45K, 2026-05-28 — low-level BNB send before LP balance update)
 **Mechanism**: External call executes before state update completes. Attacker's callback re-enters the vulnerable function, draining funds in a loop.
@@ -13163,6 +13172,15 @@ attacker:
 - **구별**: **B15** 「keys not code」는 키·자격증명 *재료* 침해(Duelbits·Triple-A·SingularityNET 클라우드→authorizer 키 유출) — Bitget은 키 무사·프로세스 무사·**입력만 거짓** (실패 로커스 상이). **META-57 ③**은 관측기/검증기가 같은 데이터 평면을 공유할 때의 *탐지* 실패 — META-84는 동일 상관 데이터평면 구조의 *집행* 쌍둥이(소비자가 모니터가 아니라 서명자). **☐187**(레드 09-26, ToB TEE+MPC 호스트 롤백→논스 재사용→키 쉐어 유출)은 종착점이 키 유출이라 축이 다르다. META-54(역할 대비 권한)·META-69(임시상태)와도 축 상이.
 - **증거 등급**: 메커니즘 클래스는 CEO 공식 발언·SlowMist 게재·Reuters/FT/CNBC 3중 독립 보도로 공개 완료. 상세 RCA(어느 백엔드 시스템·지속 벡터·탐지 시계) 대기 — **포스트모템이 스푸핑 프레임을 반박하면 재평가**. DPRK 어트리뷰션은 예비.
 - Sources: https://hacked.slowmist.io/en/ | CoinDesk 2026-09-25 (CEO 발언) | Reuters 2026-09-25 | FT 2026-09-25 | CNBC 2026-09-25
+
+## META-85: Configuration/Deployment-State Orphan (CDSO) — 배포-상태 고아·설정-상속 간극 (퍼플팀 2026-10-15)
+
+- **정의**: 실행 중 배포의 보안-관련 설정 — 배포 도구 기본값, 런치 시점 경제 파라미터, 메시징/신뢰 토폴로지 — 은 코드 리뷰·감사·바운티 어느 스코프도 상속하지 않는다. 보증 아티팩트는 커밋된 코드에 결합하지만 **그 코드가 실행되는 설정 상태는 소유자 없는 채 공격-경제적 값으로 방치될 수 있다.**
+- **3면 실증**: ① Nostra/Pragma(사전 론칭 위험 신호 존재·무소유) ② Papertrade(10-10, $1.28M — OI 한도 t=0부터 공격-경제적; 감사 스코프=컨트랙트 로직, 런치 값의 경제 설정 아님) ③ Autheo(10-12, ~$1.7M — Hyperlane TrustedRelayerIsm 테스트 기본값 프로덕션 방치: 단일 릴레이어 주소가 임의 메시지 실행, 벤더 remove 단계 미시행 → 19M 무담보 THEO 민트→54스왑→700.8 ETH).
+- **기존과의 변별**: META-68(deprecated 표면 잔존 가치)=옛 코드가 가치 보관 — CDSO는 **새 배포가 리뷰되지 않은 설정을 상속**. B114/Liquid(audit-revision drift)=커버된 코드의 감사 후 변경 — CDSO는 설정이 애초에 리뷰된 적 없음. META-76(인스턴스 토폴로지)=배포 인벤토리 부재 사전 등록 — CDSO는 그 인벤토리 항목이 「기본값 대비 diff+서명」을 가져야 한다는 내용 규칙. B38/공급망=도구 신뢰 — CDSO는 도구가 아니라 **도구 산출물의 배치 상태**.
+- **방어 불변식**: ① 실행 배포의 모든 보안-관련 기본값/파라미터/신뢰 구성은 「도구 기본값 대비 diff」 아티팩트로 캡처 + 명명된 리뷰어 서명(배포 상태 리뷰=코드 리뷰와 별도의 보증 아티팩트). ② 벤더 가이드의 필수 프로덕션 단계(제거/전환)는 배포 파이프라인의 기계적 게이트로 변환 — **문서 단계는 소유자가 없다**. ③ 경제 파라미터는 모든 값(런치 값 포함)에서 「조작 비용 > 추출 가능 가치」 서명(Papertrade axis-2 일반화).
+- **Microstable (2026-10-15)**: NOT ACTIVE(구조) — 크로스체인 메시징/ISM 평면 부재(A32 승계), 런치 파라미터=온체인 상한 강제(10-13 3축 NOT ACTIVE 승계). **사전 배포 코롤러리**: Anchor/SPL 툴링 기본값 대비 diff(오소리티·PDA·계정 제약·기능 플래그)를 배포 체크리스트 항목으로 — Microstable 인스턴스는 「배포 시점 diff 아티팩트」 부재 자체(B45 audit-attestation 부재와 동형 보증 공백).
+- **연결**: Papertrade(10-13 axis-2)·Nostra/Pragma·Autheo(10-12)·Hyperlane remove-trusted-relayer 가이드·B45·META-82(설정 평면은 감사 스코프 자체가 미형성).
 
 ### 2026-09-26 blackteam batch — B15 강화(SingularityNET rekt 심층: 비대칭 limit 커버리지 + silent-authorizer 프로파일 / Bitget $351.6M WATCH) + A153 standing-allowance 6th member(Magic Eden/Limit Break legacy-approval 2년 dormancy) + 금일 Advisory 11건 전건 0매치
 
