@@ -953,3 +953,9 @@
 
 - **[2026-10-13 rekt 갱신 — Bitget WATCH 갱신]** — rekt 아티클로 손실 확정 **$387.5M**(초기 $351.6M 정정). 부분 RCA: **제3자 보안 제품 침해 → 지갑 시스템 도달**, "키는 도난되지 않았다"(인증 프로세스가 설계대로 작동 = META-84 zero-forgery). 침해 제품명 미공개 → WATCH 유지(공급망 B28-인접 축 포함, RCA 미완결).
   Sources: https://rekt.news/bitget-rekt
+
+- **2026-10-14 — UNCX Network 공유 베스팅 풀 (Ethereum, ~$86K — WATCH, RCA 대기)** — Blockaid 귀속. 공격자가 UNCX의 **공유(shared) 토큰 베스팅 풀**에서 인출을 실행해 **타 프로젝트가 락해 둔 토큰**까지 인출(~$86K). 뉴스-등급 사실(헤드라인 2원 교차 — The Defiant 10-14 17:38 GMT / BeInCrypto 10-14 16:51 GMT): 코드 레벨 메커니즘(경로·인가 검증 갭·엔타이틀먼트 회계 오류 여부) 미공개 → **WATCH(META-83 preliminary-grade 규율: day-1 라벨로 플레이북 금지)**. 예비 축 매핑(가설 등급): 공유 에스크로에서 포지션 간 자산 격리 부재 — **A40(외부 잔액 귀속) / A10(엔타이틀먼트≠정산 잔액) 인접**, FlashLoop(09-24)·NovaBox 계보의 베스팅-에스크로 변이 후보. RCA 공개 시 소비 경로(withdrawal이 per-position claim을 pooled balance 대비 검증하는지) 확인 후 강화 승급 심사.
+  Sources: https://news.google.com/rss/articles/CBMilgFBVV95cUxNM2pvN0dCMDMzV25sYW55VVQweHVaUGdGS3k3NTZicGpUOTU2Uk9fV0RIb1VXMXdhamM2RTdvSEhZSHFiVHZLeFdmRUc0Nkh5SWl3eG9VcXV3dVRqUWJfWmNoRUNJcEVqZjd0NEo1cVQ0Y0JkYV9LU2w1bFRIQ2hFUS1nbW01QUs2bjczZ2ZDRzVmR3hvTFE (The Defiant, 10-14) | BeInCrypto/Yahoo Finance Finance-syndicated 헤드라인 (10-14)
+
+- **[2026-10-14/15 rekt 갱신 — Balancer V2 폐쇄 투표 (기흡수 사고의 IR 후속)]** — 보유자 99.2% 찬성으로 Balancer 종료 결정: 10-30 출금 전용 전환, 2027-05 레딤 오픈(추정 **$0.158/BAL** — 미회수 손실의 보유자 부담 사회화 + 책임 면제·리셋 투표 잔존). 원 사고($128M, 2025-11→2026-03 셧다운)는 기흡수(attack-matrix L5890). 신규 벡터 아님 — 손실 사회화·액추에이터 평면은 퍼플 relocation doctrine 계열; 블랙은 타임라인 기록만.
+  Sources: https://rekt.news/out-of-balance

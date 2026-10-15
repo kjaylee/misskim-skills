@@ -3159,3 +3159,38 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 6. `cargo update -p rustls` (RUSTSEC-0285, 27일차 미집행)
 
 **매트릭스 카운트 233/225 불변.**
+
+## 2026-10-15 — 일일 점검 (UNCX WATCH 신규 1·신규 named 0, HEAD 23c0163·dirty 39·mtime 02-28 동결 71일)
+
+### PART A — 수집 창 스윕 (10-14 03:00 → 10-15 10:00 KST, ~31h)
+
+- **신규 WATCH 1건**: **UNCX Network 공유 베스팅 풀 드레인**(10-14, Ethereum, ~$86K, Blockaid 귀속 — The Defiant 10-14 17:38 GMT/BeInCrypto 16:51 GMT 교차). 공격자 인출이 **타 프로젝트 락 자산까지 회수** — 공유 에스크로 포지션 간 격리 실패 정황. 코드 메커니즘 미공개 → **WATCH(META-83 preliminary-grade)**. 예비 축(가설): A40(외부 잔액 귀속)/A10(엔타이틀먼트≠정산 잔액) 인접 — RCA 공개 시 per-position claim vs pooled balance 검증 경로 확인 후 강화 심사.
+- **연구 보강 1건**: ToB 「Package managers have an integrity problem」(10-14) — 25개 패키지 매니저 중 전 패키지 무결성 검증 2개뿐. META-27/B38 공급망 레인 정량 보강(사고 아님).
+- **Advisory**: RustSec 10-14 wasmtime 배치(0350-0364, 0352 HIGH 샌드박스 이스케이프 포함) — 레드 0345 이후 공개분, Microstable Cargo.lock **wasmtime 0매치**(`wasi`/`wasip2`는 별개 패키지 — 10-04 구분 승계). OSV anchor-lang 4건 전부 5월 기매핑·solana-program/spl 0건.
+- **조용한 레인**: SlowMist 최신 = 10-10 Papertrade 그대로 · rekt 1면 전건 기흡수 + 「out-of-balance」= Balancer V2 폐쇄 투표 IR 후속(원 사고 기흡수, timeline-only) · Anchor #5177 비보안 idl 툴링(레드 레인) · Immunefi 직접 fetch 미실시(역대 JS-blank 승계, 미관측≠조용).
+- **기각**: BlockSec 「MakerDaoBot」 $542K(10-06 MakerDAO keeper 기흡수 사고의 2차 기고) · WaterPlum NK 캠페인(멀웨어/사회공학 — 프로토콜 익스플로잇 아님) · Wiley 실증논문(퍼플 10-11 기흡수) · 「$2.68B/10월 $98M」(에버그린 통계).
+
+### PART B — Microstable 전수 점검 (전 항목 실코드 읽기, HEAD 23c0163·dirty 39·mtime 2026-02-28 동결)
+
+| 렌즈 | 판정 | 근거(실측) |
+|---|---|---|
+| **UNCX 공유 에스크로 격리 (금일 WATCH, 신규)** | ⚠️ 수렴 | 신규 무방비 면 0 — **A6/A10 로커스로 수렴**: 미바인딩 `mstb_mint`가 곧 「한 포지션 청구가 타인의 풀드 자산에 도달」하는 Microstable 인스턴스. RCA 공개 시 재심사 |
+| A6 | 🔴 CRITICAL **72일차** | lib.rs:2395-2396 `mstb_mint` bare `#[account(mut)]` 라이브 재확인(금일 sed 재판독) vs :2320 `mint::authority` 핀 비대칭 |
+| A10 | 🟠 HIGH | burn CPI lib.rs:1360-1369 미바인딩 `ctx.accounts.mstb_mint` 전달 라이브 확인 |
+| HERMES-H1 | 🟠 HIGH | hermes.rs:60-68 `HermesPostedUpdate` 7필드 — `posted_price_account` 부재 |
+| B83 | 🟠 HIGH | quinn-proto 0.11.13 (Cargo.lock:2984-2985 실측 — RUSTSEC-0338/0339/0342 히트 승계) |
+| B45 | ⚠️ PARTIAL | docs/audit-attestation.json 부재 (ls 실측) |
+| RUSTSEC-0285 (☐182) | ⚠️ MEDIUM 28일차 미집행 | Cargo.lock rustls 0.21.12(:3296)+0.23.x 듀얼스택 실측 — `cargo update -p rustls` 미집행 |
+| RustSec 0350-0364 wasmtime | ✅ 0매치 | `wasmtime` 크레이트 0매치 — `wasi` 0.9.0/0.11.1·`wasip2` 별개 패키지 |
+| 대시보드/키퍼 | ✅ 승계 | 위험 싱크·B120·B114 10-14 재실증 승계(코드 동결 — mtime 02-28) |
+
+- **신규 CRITICAL/HIGH: 0건.** 코드 불변(71일째) — 전 캐리 라인레벨 재실증.
+
+### 블루팀 지시 (72일차 불변)
+
+1. HEAD Redeem 제약 복원 + 트리 커밋(dirty 39, 최우선)
+2. quinn-proto 0.11.13 → 최신 (B83 HIGH — RUSTSEC-0338/0339/0342)
+3. hermes.rs `posted_price_account` 필드 추가 (HERMES-H1 HIGH)
+4. audit-attestation.json 생성 (B45)
+5. devnet-admin/USDS feed-id 배포 게이트
+6. `cargo update -p rustls` (RUSTSEC-0285, 28일차 미집행)

@@ -13424,3 +13424,19 @@ attacker:
 - **기타 레인**: SPL 동결 재실증(repo API pushed_at 2025-03-11T10:59:26Z) · 감사/CTF/MEV zai 에버그린만(신규 0) · 사고 스트림은 블랙팀 10-14 런(299691d)이 창 10-13 12:10→18:00 UTC 조용 확정 — 레드/블랙 분업상 중복 스캔 불요.
 - **Microstable day 71(라인 재실증)**: **A6 CRITICAL** — `programs/microstable/src/lib.rs:2320-2321` `#[account(mut, mint::authority = protocol_state)] mstb_mint` vs **:2395-2396 bare `#[account(mut)] mstb_mint`** 비대칭 지속(※ 경로 실측: programs/ 하위는 microstable 단일 — microstable_core 부재, cron 지시 경로와 실제 불일치 기록). A157 트립와이어 :2320 극성 정상. **HERMES-H1 HIGH** — hermes.rs:60-68 `HermesPostedUpdate` 7필드, `posted_price_account` 부재 재실증. **신규 CRITICAL/HIGH/MEDIUM 0.**
 - **매트릭스: red 242/225 불변, 체크리스트 0(☐197 페이스 갱신만). named 신규 0 — 억지 벡터 인플레이션 금지.**
+
+### 2026-10-15 blackteam batch — named 0(창 10-14 03:00→10-15 10:00 KST): UNCX 공유 베스팅 풀 WATCH 신규(RCA 대기, A40/A10 인접 가설) + RustSec 10-14 wasmtime 배치 0350-0364 0매치 + ToB 10-14 패키지 매니저 무결성 연구(META-27 레인) + 캐리 전건 라이브 재실증(day 72)
+
+1. **Window (10-14 03:00 → 10-15 10:00 KST) 소스 스윕**: SlowMist 최신 = 10-10 Papertrade 그대로(기흡수) — 창 내 신규 엔트리 0. rekt 1면 전건 기흡수 + 신규 「out-of-balance」 = Balancer V2 폐쇄 투표 IR 후속(원 사고 $128M 기흡수 L5890; $0.158/BAL 레딤 = 손실 사회화 — 퍼플 relocation doctrine 계열, 블랙 타임라인만). OSV anchor-lang 4건 전부 5월 기매핑·solana-program/spl 0건. Anchor 커밋 #5177(idl string-literal seeds dots/escapes 수정, 10-14 12:41 UTC — 비보안 클라이언트 툴링, 레드 레인). Immunefi 직접 fetch 미실시(역대 JS-blank 승계 — 미관측≠조용).
+
+2. **UNCX Network 공유 베스팅 풀 드레인 (10-14, Ethereum, ~$86K — WATCH 신규)**: Blockaid 귀속, 헤드라인 2원 교차(The Defiant/BeInCrypto). 공격자 인출이 **타 프로젝트 락 자산까지 회수** — 공유 에스크로의 포지션 간 자산 격리 실패 정황. 코드 메커니즘 미공개 → **WATCH(META-83)**, 예비 축 A40/A10 인접(가설 등급). RCA 공개 시 per-position claim vs pooled balance 검증 경로 확인 후 강화 심사. 타임라인 등록 완료.
+
+3. **RustSec 10-14 신규 배치(wasmtime 패밀리) — Cargo.lock 0매치 실측**: RUSTSEC-2026-0350/0351(wasmtime-wasi-http), **0352 HIGH(wasmtime-wasi — symlink trailing-slash rename 파일시스템 샌드박스 이스케이프)**, 0353/0358/0359/0361/0362/0364(wasmtime). 레드 10-14(0345 kuva까지) 이후 공개분. Microstable Cargo.lock `wasmtime` 0매치(`wasi` 0.9.0/0.11.1·`wasip2`는 별개 패키지 — 10-04 실측 구분 승계). 무관 확정.
+
+4. **ToB 「Package managers have an integrity problem」(10-14)**: 25개 패키지 매니저 대상 침해 리포지토리 코드 주입 검증 실험 — 절반 미만이 기본 변조 검사 lockfile, **전 패키지 무결성 검증 2개뿐**. META-27(스킬/패키지 생태계 npm-audit 부재)·B38 공급망 레인의 정량 보강 — 사고 아님, 감사-스코프 아님. Microstable 프로세스 코롤러리: Cargo.lock 커밋+`--locked` CI 게이트는 0352와 무관하나 본 연구가 그 규율의 일반화 근거로 사용 가능.
+
+5. **Window rejects(중복/재전달 기각)**: BlockSec 「MakerDaoBot」 $542K = 기흡수 10-06 MakerDAO keeper 사고(200 ETH·악성 어댑터)의 2차 기고 · WaterPlum NK 캠페인 = 멀웨어/사회공학(프로토콜 익스플로잇 아님, B15/B38 소셜 축) · Wiley 260-익스플로이트 실증논문 = 퍼플 10-11 기흡수 · 「$2.68B 2026/10월 $98M」 = 에버그린 통계.
+
+6. **Microstable PART B (HEAD 23c0163·dirty 39·mtime 2026-02-28 동결 — 71일째 코드 불변, day 72)**: (1) **A6 CRITICAL 72일차** — lib.rs:2395-2396 Redeem `mstb_mint` bare `#[account(mut)]` 라이브 재확인(mint 경로 lib.rs:2320 `mint::authority` 대칭 붕괴 지속); (2) A10 HIGH(burn CPI lib.rs:1360-1369 미바인딩 mint 전달)·HERMES-H1 HIGH(hermes.rs:60-68 7필드)·B83 HIGH(quinn-proto 0.11.13 Cargo.lock:2984)·B45 PARTIAL(audit-attestation.json 부재)·RUSTSEC-0285 MEDIUM(rustls 0.21.12+0.23.x 듀얼스택 L3296) 전건 라이브 재실증; (3) **금일 신규 렌즈 UNCX(공유 에스크로 격리) — A6/A10 로커스로 수렴**: 미바인딩 mstb_mint가 곧 「한 포지션의 청구가 타인의 풀드 자산에 도달」하는 Microstable 인스턴스(신규 무방비 면 0, 기존 CRITICAL/HIGH 캐리에 흡수). **신규 CRITICAL/HIGH 0**. 블루팀 지시 72일차 불변: ① HEAD 제약 복원+트리 커밋(최우선) ② quinn-proto 업그레이드 ③ hermes.rs posted_price_account ④ audit-attestation.json ⑤ devnet-admin/USDS feed-id 배포 게이트.
+
+**매트릭스 카운트 233/225 불변**(named 신규 0 — UNCX=WATCH, ToB=연구 보강, wasmtime 배치=0매치).
