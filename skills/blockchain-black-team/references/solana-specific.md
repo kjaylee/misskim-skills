@@ -2602,3 +2602,13 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 **SPL pushed_at 정정**: 금일 solana-foundation/solana-program-library repo API 실측 **2026-09-30T10:55:38Z**(직전 런 기록 2025-03-11과 불일치 — 어느 쪽이 아카이브/리다이렉트 변인지 미판정, 다음 런 커밋 API 재실증 이월). 어느 쪽이든 창 개시(10-13 18:30Z) 이전 → 창 내 활동 0.
 
 **arXiv cs.CR 레인 3차 시도 회복**(http 2회 빈 응답 → https 성공): 최신 20편 제목 전수 — 블록체인 신규 공격 메커니즘 0. LLM 에이전트 방어 클러스터(Kairos 거래적 보안 강제·Jev-Guard 편집가능 정책 트리 감사·Computer Use 자율성)는 B119 standing 매핑(결정론 Rust keeper — NOT ACTIVE 구조적).
+
+### 2026-10-16 redteam — A166 승격: 폐쇄소스 Solana 프로그램 비트정합 소스 재구축(OtterSec GoonFi V2, ☐199 신설)
+
+**A166 (https://osec.io/blog/goonfi-decompilation/, 2026-10-15 발행 — 창 내)**: 폐쇄소스 propAMM GoonFi V2를 온체인 바이너리와 **동일 바이너리를 산출하는 Rust 소스로 재구축** — 정지조건 = 재컴파일 바이트 정합. 판정기: 함수별 명령어 diff 스코어(누락/추가 100·순서 60·레지스터/즉시값 5·스택오프셋 1/바이트) + 결정론 1단계(무 LLM), 컴파일러를 결정론적 오라클로 사용 — "총점 상향+어떤 함수도 악화 없음+부정행위 없음"일 때만 머지. 입력 전부 공개: 배포 바이너리 + IDL + 온체인 tx + crates.io 시그니처. Rust 결정론 단서 익스플로잇: `items_in_deterministic_order`(로컬=소스 순·크로스크레이트=심볼명 순 → 소스 배치 복원), `core::panic::Location`(파일:라인:컬럼 임베드 → 소스 구조 누출), 라이브러리 함수 Cargo.toml 분리. 결과: hash-perfect 재컴파일 공개(renato-osec/goonfi-v2-decompiled) + $6.1M 크리티컬 발견(볼트 라이브 SPL 잔고 신뢰 → 증여로 스큐 바닦 → 반대편 자산 무료화 — **A34 external balance attribution의 Solana 쌍둥이**, 고전 정적분석이 놓치는 회계 오류).
+
+**솔라나 특수성**: 프로그램 바이너리가 온체인에 영구 공개되므로 **'비공개 소스'는 배포 순간 무의미** — 적대자 감사 표면과 방어자 감사 표면이 대칭화된다. desync 패밀리(A153-A165, 주장≠아티팩트 발산)의 역축: 발산이 아니라 아티팩트의 완전 공개성.
+
+**감사 규칙**: (1) 폐쇄소스 배포의 보안 평가는 재컴파일 정합 검증 가능성을 은폐 가정에 포함하지 말 것. (2) 가치 보유 프로토콤이라면 배포 .so를 독립 재컴파일과 바이트 diff — ☐199(A159 pub키 게이트의 바이너리 확장, 도구 자기증언이 아닌 아티팩트측 검증).
+
+**Microstable**: NOT ACTIVE(오픈소스·증여-스큐 가격산정 부재 실측 — lib.rs `usd_balance`는 포지션 회계 필드, 가격=HERMES/Pyth). LATENT: 첫 메인넷 배포 시 ☐199 게이트 적용.
