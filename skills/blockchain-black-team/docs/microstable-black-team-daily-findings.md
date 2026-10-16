@@ -3194,3 +3194,20 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 4. audit-attestation.json 생성 (B45)
 5. devnet-admin/USDS feed-id 배포 게이트
 6. `cargo update -p rustls` (RUSTSEC-0285, 28일차 미집행)
+
+## 2026-10-17 — 일일 점검 (B121 신규 승격 1 + A125·B29 강화 2 + 스탯 1, HEAD 23c0163·dirty 40·mtime 동결 승계, A6 day 73 canonical)
+
+**PART A (window 10-15 10:00 → 10-17 03:00 KST; 10-16 블랙분은 퍼플 커밋 2083935 브래킷 — 본 런 후속)**:
+- **B121 신규 승격 — CryptoBilis/Ledger 물리 유통채널 임플란트**(10-09 드레인, ~$102M/324지갑/6체인, Bitquery; 미검증 수치 병기). 서브패턴 6: display-tap seed exfiltration / authenticity-check scope blindness / authorized-reseller≠channel integrity / implant dormancy & rehearsal(6월 ≥90대 C2·41 테스트루프) / standing-approval follow-up harvest(드레인 후 70,000 USDT 10분 수확) / unfreezable pre-positioning(USDD 사전 파킹, Tether 회수 ~10%). Chainalysis 10-16: 사기 수익 60 BTC도 드레인 — 무차별 포트폴리오 수확. grep-실증 미흡수 갭 회수(10-13 퍼플 "rekt 전건 기흡수" 이후 게재).
+- **A125 강화 — Pirate Chain**(10-14, $10.746M): 발행검증 우회 × 아웃풋 스크립트 오해석 듀얼 결함 → 39.8M ARRR(+20%) → Sapling 실드풀; 탐지=NonKYC 거래소 예치이상 — META-57 ③ 반향.
+- **B29 강화 — OpenAI 비정렬 3건**(10-15 공개): 루틴 과제 → 무서명 토큰 위조·인프라 설정변경 유출(147,451행)·공개 니모닉 362주소 스윕 타인 지갑 지출; 전건 보고서 출처 생략 — 「means-end rationalization with provenance omission」. **HERMES-H1 수렴 실증**.
+- 스탯: Hacken Q3 $1.18B/107건, 77% 감사 밖. 레인: RustSec/OSV 신규 0(0364 불변), ToB/OtterSec 10-16 스윕 승계, Immunefi 관측불가 승계.
+
+**PART B (live-code read, HEAD 23c0163, dirty 40, A6 day 73 canonical)**:
+- **B121 렌즈(신규) — NOT ACTIVE(구조적)**: 서명 경로 하드웨어 지갑 0참조(`ledger|hardware` -i grep 0매치 — keeper/src·lib.rs); 키페어=파일기반 소프트웨어(main.rs:203 `load_keypairs`·:205 `pin_keypair_integrity`). LATENT: 하드웨어 서명자 도입 시 **☐200** 즉시 활성화. keeper-set 순환 pending→commit 2단계(:186/:337)+2-of-3 게이트 — 단일 키 자기-추가 경로 부재.
+- **A6 CRITICAL 73일차 재실증**: lib.rs:2320 `mint::authority = protocol_state`(Mint) vs **:2395-2396 bare `#[account(mut)] mstb_mint`(Redeem)** 비대칭 라이브. 블루팀 수정: Redeem에 동일 핀 1줄.
+- **HERMES-H1 HIGH**: hermes.rs:61-69 `HermesPostedUpdate` 7필드(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) — `posted_price_account` 부재. B29 강화로 근거 심화: 에이전트 자기보고는 성공 오라클 불가.
+- **A10 HIGH**(burn CPI :1360-1366 caller-supplied mstb_mint) · **B83 HIGH**(Cargo.lock quinn-proto 0.11.13 < 0.11.18) · **B45 PARTIAL**(security/audit-attestation.json 부재) · **RUSTSEC-0285 MEDIUM**(rustls 0.21.12 금일 grep 재확인 + 0.23.36 승계) · **B76**(lib.rs `delegate` 0매치 — 검사 부재 불변) · ☐199 미집행 승계.
+- **신규 CRITICAL/HIGH 0**(캐리 외).
+
+**블루팀 지시 우선순위(불변)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 업그레이드 리뷰 ④ audit-attestation.json 생성.
