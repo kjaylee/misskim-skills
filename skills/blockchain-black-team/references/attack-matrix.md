@@ -1,4 +1,4 @@
-# Attack Matrix — 234 Active Named-Vector Headings / 226 Unique Named IDs + META-01~84
+# Attack Matrix — 235 Active Named-Vector Headings / 227 Unique Named IDs + META-01~85
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -195,7 +195,7 @@
 - **레인 상태(10-17 04:02–05 KST 스냅샷, 날짜 병기)**: SlowMist 신규 0(최상단 UNCX/Pirate Chain 10-14 불변) · rekt 1면 전건 기흡수(factory-sealed=B121·out-of-balance=타임라인 전례) · ToB lastBuild 10-14(블랙 10-15 흡수) · Certora 최신 Stellar 10-07 불변(zai-reader 전체 인덱스) · Echidna v2.3.3(07-27)/Medusa v1.5.1(03-11) GitHub API 재실증 · RV 페이지 표면 10-02(창 밖 — 10-16 기록 09-30과 정합 노트, 제목 미확인 관찰 등급) · Immunefi 관측 불가(JS 렌더 curl 0매치 — 침묵 아님). 기각: shattered.io 830-flaws = 레드 기흡수 arXiv 2610.13170(매트릭스 L13450) 2차 재구성 · Chainlink 「$292M rival」 = 미실증 2차 수치(기흡수 $280M Drift 집계와 불일치) · MANTRA 장애 포스트모템(30h13m·38검증인·롤백 없는 재시작) = 1차 소스 미확보 → 관찰 보류.
 - **Microstable Phase 4**: A6 CRITICAL **day 73** canonical(L2320 핀 vs L2395-2396 bare 재실증, HEAD 23c0163·mtime 02-28 동결·dirty 40 불변=블랙 findings 문서). **Resolv 정책-평면 렌즈 — 방어 실현(긍정 통제)**: `rotate_keeper_set`(lib.rs:1895) 쿼럼+타임락+2단계 커밋(pending_keeper_set·활성 슬롯, "FIX PTV2-015/PTV3-022")·`update_protocol_params`(L1621) 쿼럼 — 온체인 규칙-재작성 경로가 Resolv 재건이 채택한 분리를 이미 제도화. 잔여 불변: upgrade_authority 미실증(live-authority 인벤토리 캐리 — 프로그램 업그레이드가 이 방어 전체를 우회하는 단일 평면). 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**.
 
-**카운트: black 234/226(B121, 10-17) · red 244/225(A166) · purple META-01~85 불변.**
+**카운트: black 235/227(B122, 10-18) · red 244/225(A166) · purple META-01~85 불변.**
 
 ### A1. Reentrancy
 **Historical**: The DAO (2016, $60M), Curve/Vyper (2023, $70M), Cream Finance ($130M), Joe Agent ($45K, 2026-05-28 — low-level BNB send before LP balance update)
@@ -13566,3 +13566,41 @@ attacker:
 - [합의]: 🟢극복
 
 ✅ Anti-rationalization: Pass — Authority Bias(rekt 전문+CoinDesk 2건+Ledger 성명+SecurityWeek 전문 직접 열람 — 2차 요약 거부) / Confidence Halo($102M 미검증·C2 단일소스·Chainalysis 귀속 병기) / Entropy Ceiling(Immunefi 관측 불가·OSV 배치쿼리 창내성·Pirate Chain 코드미공개 한계 기록) / Recency Illusion(Ledger 임플란트를 '신종'으로 과대포장 않음 — 2025-08 태국 시품·2026-03 Grand 보고 연혁 포함) / Tool Call Halu(grep exit 확인·OSV 응답 파싱·Cargo.lock 라인 직접 확인·hermes.rs 구조체 필드 직접 열람)
+
+## B122. Custodial-Key Bot Fan-Out Drain — Key-Export Feature Leak Surface × Sweep Economics Beyond Platform Kill (TradeWiz / LootBot)
+
+**Origin**: TradeWiz(Solana 카피트레이딩 봇, 텔레그램+앱, 속도를 위해 사용자 개인키 수용) "SOL PVP" 제품, 2026-09-30 13:25–15:52 UTC 드레인, **~$459K / 20,932 지갑**(3,523.29 SOL $422,795 + 189.31 SOL rent $22,718 + USDC/USDT/토큰 ~$14K; bitquery 인덱스 전수조사, 10-15 정정노트 포함 — 주소오염 위장 5개 제외). 패밀리 제2 데이터포인트: **LootBot**(Ethereum 텔레그램 봇, 2026-09-07, 휴면 지갑 2,442개 소진 — 9월 윈도우 누락, grep-실증 0매치, bitquery 교차출처로 회수 흡수).
+
+**Mechanism** (체인-포렌식 등급 — TradeWiz는 누출 경로 미공개, RCA 아님): "a limited private key exposure occurred in the SOL PVP private key export feature"(TradeWiz 공지 09-30 14:41). 플랫폼 측 키 저장소가 key-export 코드 경로에서 유출; 공격자는 N개 유저 키 사본 보유 후 **정상 소유자 서명 전송**으로 각 지갑 소진 — 온체인에서 유저와 구분 불가("There is no exploit and no token approval to find, only a normal transfer that the owner did not make" — bitquery).
+
+**명명 서브패턴**:
+1. **Key-export 누출 표면** — 자기-수용 탈출구(export)가 전 유저 키를 export-가능 단일 코드 경로로 집중; 동시에 FAQ는 "not exporting = 100% security" 주장. 방어: export 경로는 권한 있는 키-소재 표면 — 대량 export-가능성 속도제한/알림, HSM 기반 유저별 파생, 또는 키 비수용(만료 위임 서명/세션 지갑).
+2. **부유층-우선 배치 스윕 × 응답-갭 경제학** — 4회 런, 각 런 개시 초에 최대 지갑부터(최대 232 SOL은 4차 런 95분 시점), 피크 307지갑/분; 봇 수수료 지급은 개시 41분 후 중단, 공지는 그 35분 후 — 그럼에도 **SOL의 73%가 응답 개시 후 인출**. 서비스 정지는 서비스의 서명만 멈춘다. 이미 유출된 키 사본에는 무효화 수단이 없고, 유일한 완화는 사용자 측 신규 키로의 자금 이동(스윕보다 빨라야 함). 방어: 수용형 키 서비스는 키 유출을 kill 불가능한 사고 클래스로 취급 — 사전 배치된 대량-스윕 탐지(N개 지갑이 기계 케이던스로 소진되어 단일 컬렉터로 수렴) + 사용자 방송으로 자기-회전 유도.
+3. **Rent 재수확 2차 패스** — 1차 SOL 스윕 후 별도 가스 지갑으로 ~3,000지갑 재방문, 잔여 USDC/USDT/밈코인 회수 후 **~93,000개 토큰계좌 close로 189 SOL(총액 ~5%) rent 회수**. Solana의 rent-exempt 최소액은 키 보유자가 회수 가능 — 스윕 경제학에 토큰계좌 rent가 자산으로 pricing됨. 방어: 피해 복구는 SOL 잔액만이 아니라 토큰계좌 close/회전 포함; 모니터링은 Transfer와 **CloseAccount 버스트** 둘 다.
+4. **재인출 센트리** — 드레인 후 2개 주소에 재입금이 도착했고 **4초 내 재인출** — 공격자가 감시자 유지; "a drained TradeWiz wallet should be treated as burned". 방어 코롤러리: 침해된 키 주소로 가는 보상/환불 흐름은 재도난됨 — 환불은 소유 증명을 갖춘 신규 사용자 주소로만.
+5. **공격자-선-고객 리컨** — 컬렉터 지갑은 드레인 한 달 전 자체 TradeWiz 거래 지갑 비용 지불(27거래·~1 SOL·MEXC 출금 자금 → 24일 침묵). 포렌식 식별자: 수수료-지갑 서명 패턴(수수료 납부자 35,000+ 중 1/6 드레인 vs 대조군 1/400 — 70배 리프트). 방어: 키 수용 서비스는 자기 제품 대상 시험 거래·소액 거래소-자금 지갑을 공격 전 신호로 취급.
+
+**기존 벡터와의 구별**: B15 패밀리 = 운영자 자체 키/장치 평면(단일 운영 키셋·프로토콜 자금) · B121 = 구매 전 물리 유통채널 임플란트 · Duelbits/79th = 운영자 핫월렛 · **B122 = 플랫폼이 N개 독립 유저 키를 수용, 유출이 N명 피해자로 팬아웃, 플랫폼 kill-switch(봇 정지)가 이미 유출된 사본에 제로 완화** — 응답-갭 사실(73%)이 방어-핵심. Blink Wallet(09-19, 수용 계정 무단 접근·메커니즘 미공개)은 미공개-메커니즘 쌍둥이; B122가 그 WATCH에 부족했던 메커니즘 클래스를 공급.
+
+**Microstable 매핑 (2026-10-18, 라이브 코드 실측, HEAD 23c0163, dirty 40)**: **NOT ACTIVE(구조적)** — 유저 개인키 수용 부재(사용자 지갑 직접 서명, 담보는 PDA/ATA). Keeper는 프로토콜 운영 키만: config.rs:68 `keeper_keypairs: Vec<PathBuf>` 파일 기반 3개, config.rs:432-434 2-of-3 쿼럼 강제. 서브렌즈 실측: (1) key-export 표면 — config.rs/main.rs 'export' 0매치(부재 실증), (2) 응답-갭 — `rotate_keeper_set`(lib.rs:1895, 쿼럼+타임락 FIX PTV2-015/PTV3-022) 키 교체 경로 존재 = **부분 방어 실현**, 잔여: 파일 at-rest 노출(B121 렌즈 승계 노트), (3) rent-harvest — 무관(잔액 보유 ATA/PDA의 close는 온체인 실패; 드레인 자체가 본 손실, rent는 꼬리), (4) 재인출 센트리 — 무관(수용형 유저 지갑·환불 흐름 부재), (5) 선-고객 리컨 — 옵스 관찰 대상, 블랙 벡터 아님.
+
+### 2026-10-18 blackteam batch — B122 신규 승격 1(TradeWiz 수용형-키 봇 팬아웃 드레인 — 9월 LootBot 누락 패밀리 회수 포함) + NEAR Intents WATCH→RCA 해소(포스트모템 공개) + B121 강화(Karpelès 리셀러 2곳 추가) + bOSMO WATCH
+
+**창**: 2026-10-17 03:00 KST → 2026-10-18 03:00 KST. 소스(직접 열람 10-18 03:01–06 KST): bitquery TradeWiz 조사(전문) · thedefiant NEAR Intents 포스트모템(10-16 16:28 UTC 게재 — 본문 JS 미렌더, og 메타 등급으로 zai-reader 회수) · thedefiant bOSMO(10-15 23:18 UTC, 메타 등급) · thedefiant Karpelès 리셀러 2곳(~10-17 16:00 UTC, 헤드라인 등급) · rekt 홈페이지 · SlowMist Hacked 직접 · GitHub Advisory API.
+
+- **B122 승격 (위 본문)**: grep-실증 미흡수 — TradeWiz/LootBot/copy-trad/trading bot 전부 0매치. LootBot(09-07)은 9월 윈도우 누락 — bitquery 교차출처로 B122 패밀리 제2 데이터포인트로 흡수(누락 회수).
+- **NEAR Intents WATCH→RCA 해소 (10-16 포스트모템)**: 메커니즘 공개 — **실패한 입금 알림(failed deposit notifications)이 $3.8M 무담보 잔액 생성**. 대응: 입금 알림 기능 자체 제거(별도 치명 버그 리포트 이후의 조치였음) + 자동 잔액 검증(automatic balance checks) 신설 + 전액 배상 주장. L92 WATCH(10-03) 해소 — 예측 클래스("cross-plane state consumed as final" / deposit-finality 평면)가 1차 포스트모템으로 확정. 파생: (a) 2025-06 인스턴스 패치 후에도 클래스 불변식("미확정 교차-평면 상태를 최종으로 소비하는 경로 전무")은 무소유였음 — Meter 4.6년·NEAR 16개월 재발, 도그마 제3·4 확증; (b) L145 "RCA-less closure" — 클로저 이후에도 포스트모템이 늦게 공개될 수 있음: 클로저≠종결, 최소 관찰 유예 규칙 채택; (c) L165 postmortem-starvation WATCH 반대 데이터포인트 +1.
+- **B121 강화 (Karpelès, ~10-17 16:00 UTC)**: 임플란트 검출이 공인 리셀러 2곳 추가로 확산(CryptoBilis + MediaMarkt + 2 = 최소 4 경로) — 「authorized-reseller collapse」 채널-확산 축 실증 연장. 등급: 헤드라인+실명 발표자(본문 미열람, 1줄 강화).
+- **bOSMO WATCH 신규 (10-15 공개, Osmosis 공시 — thedefiant 메타 등급)**: 상환 버그가 홀더에게 **~50% 초과지급** → bOSMO 담보 부족; 40,508 OSMO 보상; 스냅샷 이후 매수분 미보상; **취약 민트 경로 여전히 활성("contract still allows cheap minting")** — 라이브 표면 방치 = C23 patch-and-forget 리스크 + 퍼플 10-16 비례-회계 경계 패밀리(Set·BitBay·X7·UNCX) 제5면 후보. 코드 경로 미공개 → WATCH 유지(META-83 규율), Osmosis 공시 원문 확보 후 정식 흡수.
+- **관찰·미승격**: HashKey Chain 어드민 임시 컨트랙트 스왑으로 142,818 USDT 이동(10-15) — 공격 아닌 권한-인스턴스화 운영 패턴, 퍼플 렌즈 소관 · Safe Safenet Aegis 3체인 출시(10-15) — 방어측 제품(트랜잭션 방화벽 계열), 도입 후보 관찰 · MakerDaoBot($542K) = 10-06 keeper 사고 2차 기고(L13475 기흡수 확인) · shattered.io 스마트어카운트 = 10-17 기각 승계.
+- **레인 정리(10-18 03:00–06 KST 스냅샷, 날짜 병기)**: SlowMist 신규 0(최상단 UNCX/Pirate Chain 10-14 불변, 18:01 UTC 직접) · rekt 1면 전건 기흡수(Bitget 38·Nomic 144·Duelbits 14·Nesa 13·KiiChain 15·Balancer 21·Tectonic 26·Nostra 22 매치 grep 실증) · GitHub Advisory API affects=anchor-lang/anchor 및 solana-labs/solana 모두 [](창내 0건) · web_search 도구 비활성 에러 실측 → AGENTS.md 규약 zai-search 정상 운용 · Immunefi 관측 불가(JS 렌더) 승계 · ToB/OtterSec/Neodyme 본창 본 미열람(시간 예산 — NEAR/bOSMO 우선, 차기 런 보충).
+
+**Microstable (2026-10-18, HEAD 23c0163, dirty 40, mtime 동결 승계, A6 day 74 canonical)**: **A6 CRITICAL 재실증**(lib.rs:2320 `mint::authority = protocol_state` 핀 vs :2395-2396 bare `mstb_mint` — 라인 실측 불변). **HERMES-H1 불변**(hermes.rs:61-69 HermesPostedUpdate 7필드). **B122 렌즈 최초 대입 — NOT ACTIVE(구조적)**: 상기 B122 본문 매핑(export 0매치·rotate_keeper_set 부분 방어·rent/re-drain 무관). **NEAR Intents 렌즈**: 오프체인 알림-평면 부재(keeper는 가격 관측·게시만 — hermes.rs; 입금/잔액 크레딧 평면 없음), 온체인 민트는 담보 전제(A6 영역 캐리) → NOT ACTIVE(구조적). **0 new CRITICAL/HIGH/MEDIUM/PT-ARCH.**
+
+🔴 Red Team:
+- [공격 1]: "TradeWiz bitquery 단일소스 과신" → 방어: 체인 포렌식 전문(전 수치 온체인 인덱스 기반, 10-15 정정노트 공개 = 검증 문화), TradeWiz 공지 3건 교차. 다만 '키가 어떻게 새었는지'는 미공개 — 본문에 RCA 아님 명시, 드레인 패턴(포렌식 확정)과 누출 경로(미확정) 분리 기술.
+- [공격 2]: "B122는 B15/Duelbits 키 컴프로마이즈 재포장" → 방어: 기존 = 운영자 단일 키셋·프로토콜 자금; B122 = N개 독립 유저 키 팬아웃 + 서비스 킬이 무효인 응답-갭 경제학(73% 실증) + rent 재수확 — 대량 스윕 탐지·환불 주소 정책·CloseAccount 모니터링 방어 목록은 기존 벡터에서 도출 불가. Blink(09-19) WATCH에 메커니즘 클래스 공급.
+- [공격 3]: "bOSMO/NEAR 본문 미열람 등급 남발" → 방어: thedefiant 본문 JS 렌더 실패 → og 메타+타이틀만 인용(메타 등급 명시), bOSMO는 WATCH 한정·정식 흡수 조건(공시 원문) 명시, NEAR는 기존 L92 WATCH 축 예측과 정합.
+- [합의]: 🟢극복
+
+✅ Anti-rationalization: Pass — Authority Bias(bitquery/rekt/SlowMist/GH API 직접 열람; thedefiant 미렌더 등급 명시) / Confidence Halo($459K·20,932지갑 = bitquery 10-15 정정본 기준 병기; LootBot 손실액 미산출 명시) / Entropy Ceiling(TradeWiz 누출 경로 미공개 인지; Karpelès 본문 미열람 헤드라인 등급) / Recency Illusion(bOSMO 단일 사고로 패밀리 확장 주장 않음 — WATCH 한정) / Tool Call Halu(GH Advisory [] = affects 파라미터 창내 0건으로 한정 해석; web_search 비활성 에러를 사실로 오인 않고 zai-search 교차).

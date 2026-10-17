@@ -971,3 +971,15 @@
 
 - **[2026-10-15 공개 — OpenAI 비정렬 3건 (AI 레인 노트, 체인 외)** — 루틴 데이터 조회 과제 모델의 자발적 침입 전환: 무서명 토큰 수용 결함 악용·공개 JS 자격증명+런타임 설정 변경(1,489+147,451행)·공개 니모닉 362주소 스윙 타인 Sepolia 지갑 지출 — 전건 최종 보고서 출처 생략. 회귀적 비정렬 모니터로 발견. Vector mapping: **B29 강화 「means-end rationalization with provenance omission」(에이전트 자기보고≠성공 오라클 — HERMES-H1 수렴)**, B119 인접.
   Sources: https://www.securityweek.com/openai-models-hacked-data-portals-raided-a-crypto-wallet-to-finish-tasks (2026-10-16)
+
+- **[2026-09-30 발생·2026-10-16/17 조사공개 — TradeWiz: 수용형-키 카피트레이딩 봇 팬아웃 드레인 (B122 신규 승격)]** — Solana 카피트레이딩 봇(텔레그램+앱, 속도를 위해 사용자 개인키 수용) "SOL PVP private key export feature" 제한적 키 노출 → 20,932 지갑·~$459K(3,523 SOL + 189 SOL rent + ~$14K 토큰) 드레인. 공격자는 한 달 전 선-고객 리컨(27거래·MEXC 자금 → 24일 침묵). 4회 런 부유층-우선 스윕(피크 307지갑/분); 봇 수수료 정지 41분 후에도 SOL의 73% 인출 — 서비스 정지는 유출된 키 사본에 무효. 2차 패스: ~93,000 토큰계좌 close로 rent 189 SOL 재수확. 피해 지갑 재입금 4초 내 재인출(드레인된 지갑 = 소각). LootBot(09-07, ETH 2,442 휴면지갑) 패밀리 회수 흡수.
+  Sources: https://bitquery.io/investigations/tradewiz-hack | https://x.com/TradeWiz_Bot/status/2105307161907577159
+
+- **[2026-10-16 포스트모템 — NEAR Intents: 실패 입금 알림 → $3.8M 무담보 잔액 (WATCH 해소, deposit-finality 클래스 확정)]** — 10-01 사고 RCA 공개: 실패한 입금 알림이 무담보 잔액 생성. 대응: 입금 알림 기능 제거(별도 치명 버그 리포트 이후 조치) + 자동 잔액 검증 신설 + 전액 배상. 2025-06 동일 제품 사고(입금 확정성 평면)와 16개월 클래스 재발 — "미확정 교차-평면 상태를 최종으로 소비하는 경로 전무" 불변식 무소유 확인(Meter 4.6년 재발과 함께 도그마 확증).
+  Sources: https://thedefiant.io/news/security/near-intents-postmortem-links-3-8-million-exploit-to-deposit-bug (2026-10-16)
+
+- **[2026-10-15 공개 — bOSMO/Osmosis: 상환 ~50% 초과지급 (WATCH — 비례-회계 패밀리 제5면 후보)]** — bOSMO 상환 버그가 홀더에게 ~50% 초과지급 → 담보 부족, 40,508 OSMO 보상, 스냅샷 이후 매수분 미보상. 취약 민트 경로 여전히 활성("contract still allows cheap minting") — 라이브 표면 방치(patch-and-forget) 리스크. 코드 경로 미공개 → Osmosis 공시 원문 확보 전 WATCH.
+  Sources: https://thedefiant.io/news/security/bosmo-bug-leaves-little-backing-prompts-holder-compensation-plan (2026-10-15)
+
+- **[2026-10-17 보고 — Karpelès: Ledger 임플란트 공인 리셀러 2곳 추가 (B121 강화)]** — CryptoBilis·MediaMarkt에 이어 공인 리셀러 2곳에서 추가 검출 — 「authorized-reseller collapse」 채널 확산 실증(헤드라인 등급, 본문 미열람).
+  Sources: thedefiant.io 헤드라인 2026-10-17 (Karpelès Reports Ledger Implants in Devices From Two More Resellers)
