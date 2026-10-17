@@ -13604,3 +13604,36 @@ attacker:
 - [합의]: 🟢극복
 
 ✅ Anti-rationalization: Pass — Authority Bias(bitquery/rekt/SlowMist/GH API 직접 열람; thedefiant 미렌더 등급 명시) / Confidence Halo($459K·20,932지갑 = bitquery 10-15 정정본 기준 병기; LootBot 손실액 미산출 명시) / Entropy Ceiling(TradeWiz 누출 경로 미공개 인지; Karpelès 본문 미열람 헤드라인 등급) / Recency Illusion(bOSMO 단일 사고로 패밀리 확장 주장 않음 — WATCH 한정) / Tool Call Halu(GH Advisory [] = affects 파라미터 창내 0건으로 한정 해석; web_search 비활성 에러를 사실로 오인 않고 zai-search 교차).
+
+### 2026-10-18 redteam batch — A167 신규 승격 1 (턴스타일 단축-전환 × 검증가능성-할인 이중 렌즈 — arXiv 2610.21540, 직전 런 키워드-필터 누락 갭 회수) + 창 2일(레드 10-17 부재 갭 커버) + ☐201
+
+**창**: 2026-10-15 18:30Z → 2026-10-17 18:30Z (2일 — 10-17 03:30 KST 레드 런 부재; 블랙 10-17/10-18·퍼플 10-17 레인과 독립 스윕).
+
+**소스 스윕(직접 열람)**: OtterSec 최신=goonfi(10-15, A166 기흡수) 창 내 0 · ToB feed 최신 10-14 불변(기흡수) · Neodyme 포스트 날짜 미추출(03-24 불변 승계, 한계) · Halborn 심층 날짜 스윕 미실시(한계 승계) · Certora 10-07 불변(퍼플 10-17 zai-reader 실증 승계) · Anchor master HEAD 8beae71(#5177=A165) 불변, 리다이렉트 repositories/325891672로 추적 · SPL token-2022 창 내 5커밋: **#1570 "Update rustls to fix cargo audit"(10-16T10:25Z — ☐182 어드바이저리 배치의 산업 패치 모멘텀 데이터포인트, 신규 벡터 아님)** + js@v0.20.0·HasAddress tokenhook 헬퍼(비보안)·빌드 디펜던시 2건 · **RustSec 0365~0373**(negentropy 원격 DoS·pest_grammars·zip SUID/SGID×3·zvariant·zbus_names·zvariant_derive·ammonia CSS URL escaping) — microstable/Cargo.lock·solana/Cargo.lock 전수 **0매치 무관** · Ethernaut 2025-11-19·Paradigm 2024-03·Jito mev-bot 2025-04 동결 · **DVD 사이트 18챌린지 불변 + 스냅샷 보존 최초 실시**(`docs/snapshots/dvd-2026-10-18.html` — 10-16 런 유예과제 해소, 이후 런 diff 기반 확보) · MEV Flashbots/Skip 심층 미스윕(한계 승계) · arXiv 10-15 배치가 최신(10-16/17 배치 미도착 — 주말 공표 주기상 정상).
+
+#### A167. 턴스타일 단축-전환 × 검증가능성-할인 — 비례 회계가 상환 턴스타일을 닫아도 시장 턴스타일은 열린다 (Turnstile Shortfall-Shift × Verifiability Discount)
+
+- **소스**: arXiv **2610.21540** "Pricing the Unprovable: Ambiguity, Turnstile Runs, and the Verifiability Discount in Crypto Protocols" (pub 2026-10-15T09:06:12Z — **직전(10-16) 런 창 내 게재였으나 표제축이 'crypto protocols/Orchard/Zcash'라 블록체인 키워드 필터 미달로 누락, 금일 갭 회수** — gamdom/factory-sealed 전례 승계).
+- **핵심 기제(2축)**: ① **턴스타일 모델** — 조기 인출이 '가능한 단축'을 잔여 홀더에게 전환(선착순 전액-대-잔여 손실 분배). 수리(repair)가 사전 악용 여부를 확정하지 않으면 조기 출구가 합리적 전략이 된다. ② **검증가능성-할인(verifiability discount)** — '수리됨'과 '악용 안 됨' 사이 증거 공백이 가치 할인으로 가격화되고, 공개 증거의 가치는 노출 규모 증가에 비례 상승. VDISC 프레임워크(보고 손실·노출 가치·공개 증거·수익·풀 흐름 분리 기록; Orchard 단계 공개 + 온체인 흐름 재구성 + 40-사고 패널; Orchard는 예측 방향 추종 — 수리+공급 보증 후 시장 반응 둔화, 최대 부(-)수익과 차폐 풀 순유출은 승인된 사고 정렬).
+- **변별(전수 대조)**: **C21 Bank Run**(집단행동/신뢰 붕괴의 '비모델링' 비평축 — A167은 손실 **분배 메커니즘**의 형식화) · **Chi Protocol 강화 노트**(mint/burn admission predicate 비대칭 + `payout <= claimant pro-rata backing` 검증 권고 — A167이 그 권고의 '왜'를 형식 모델로 공급) · **퍼플 META-73 Ironwood 턴스타일**(FV-경계 갭 사고측 — A167은 인출-분배 역학·정보 비대칭축) · **10월 비례-회계 경계 패밀리**(Set/BitBay/X7/UNCX — 잔액↔청구 불변식의 경계 상태 파단; A167은 정상 작동하는 비례 회계 **아래에서도** 정보 비대칭이 여는 시장-평면 레이스) — 전부 축 상이.
+- **공격-측 실체**: 적대자는 코드를 부수지 않고 (a) 악용-상태 모호성을 유지하는 조용한 패치/수리 흐름에 편승하거나 (b) 무담보 발행(A6류) 직후 희석이 가격에 반영되기 전 **2차 시장에서 선매도** — 상환 턴스타일이 닫혀 있어도 시장 턴스타일(정보 우위 출구 레이스)이 열린다. 연구등급(실전 라이브 악용 0 — Orchard/Zcash 실증은 방어-측 정량화, 공격 시나리오는 파생).
+
+**Microstable 매핑 (2026-10-18, 라이브 실측, HEAD 23c0163, mtime 02-28 동결, A6 day 75)**:
+
+- **렌즈① 턴스타일 재분배 — NOT ACTIVE(구조적 3중 폐쇄, 실측)**: (1) `preview_redeem_from_vault`(lib.rs:3884-3893) 지급 = `mul_div_floor(total_deposits, musd, supply)` — **비율 기반**(deposits/supply 상수 유지: 무담보 발행 시 전 홀더 **균등 희석** = 단축의 비례 분배, 선착순 전액 아님); (2) **추적↔실제 커플링**: 입금은 ATA+tracked 동시 증가, 상환은 실제 전송(`transfer_vault_to_user` lib.rs:1407+) 후 `apply_redeem_from_vault`(:1449+) tracked 감소 — `mul_div_floor` 바닥 rounding 먼지는 금고 잔류 → **actual ≥ tracked 구조적 유지**; (3) 금고 ATA = PDA 수용(프로그램 외 서명자 전송 불가). 잔여: `assert_invariants`(lib.rs:3505-3530)에 **집계 solvency 검사 부재**(가중치 합·CR 목표·속도 상한·가중치 캡만 — lib.rs 전체 `.amount` 실잔고 읽기 **0매치**) — 커플링은 현재 코드 경로 내에서만 유지되며, 미래 버그가 깨는 경우를 서킷브레이커가 잡지 못함(흐름량 기반 per-tx 2%/per-slot 6%, solvency 기반 아님). `redeem_discount_ppm`(lib.rs:3784+) 디펙·신규성·신뢰구간 기반 헤어컷(상한 250,000ppm=25%)은 준-가격 방어로 부분 기여.
+- **렌즈② 검증가능성-할인 — LATENT(A6 CRITICAL 증폭 렌즈, 신규 코드 결함 아님)**: A6 무담보 MSTB 발행 시나리오에서 공격자의 최적 경로는 상환(비례 희석 감수)이 아니라 **희석 공표 전 2차 시장 선매도** — 정보 우위와 가격 반영 속도의 레이스. A6 패치가 증거 없이 조용히 출하되면 노출 창구의 권한 보유자에게 검증가능성-할인이 이전된다. HERMES-H1(가격 출처 부재)은 희석 인지 속도를 늦추는 제2 승수.
+- **☐201 신설(IR/모니터 게이트)**: (a) A6류 패치 출하 시 **공급 정합 증명**(발행 vs 담보 입금, 슬롯별 온체인 대사) + 재발행/보상 정책을 패치와 동시 공개 — 조용한 패치 금지(검증가능성-할인의 이전 차단); (b) 오프체인 솔레시티 모니터: 금고 ATA 실잔고 vs tracked `total_deposits` 발산 경보(온체인 읽기 부재의 최소비용 폐쇄 — keeper 모니터링 평면 확장).
+
+**창 내 기각/관찰**: NEST arXiv 2610.21491(토큰화 주식 신규성-강건 측정 — admissibility 감사축 product/provenance/timestamp/execution가 HERMES-H1 수정 방향(posted_price_account 추가)과 수렴 — **방어 수렴 데이터포인트, 매트릭스 미승격**) · Gossip robustness arXiv 2610.21526(합의층 위임 네트워크 — Microstable 자체 gossip 표면 부재, 비적용 기각).
+
+**캐리 재실증 day 75**: **A6 CRITICAL**(lib.rs:2320-2321 `mint::authority = protocol_state` 핀 vs :2395-2396 bare `#[account(mut)]` — 라인 불변) · **HERMES-H1 HIGH**(keeper/src/hermes.rs:60-69 `HermesPostedUpdate` 7필드, `posted_price_account` 부재) · **B83 HIGH**(quinn-proto 0.11.13, solana/Cargo.lock:2984-2985) · **☐182**(rustls 듀얼핀 0.21.12(:3296)+0.23.36(:3308) 재실증, 패치 목표 ≥0.23.46 — SPL #1570이 산업 동일 방향 실증). **신규 CRITICAL/HIGH/MEDIUM 0** — A167은 연구등급 렌즈 승격.
+
+**매트릭스 카운트 red 244→245 (A167 +1). 체크리스트 +1(☐201). 블랙 235/227(10-18) · purple META 85 불변.**
+
+🔴 Red Team:
+- [공격 1]: "은행런 상식의 재포장 — 신규 벡터 아니다" → C21은 '감사가 집단행동을 못 모델링한다'는 비평이고 A167은 손실 분배의 형식 모델(턴스타일)+증거-가치 비대칭(검증가능성-할인)로, 방어 가능한 검증 항목(☐201 대사 증명·발산 모니터)을 산출 — grep으로 matrix 내 전용 엔트리 부재 확인 후 승격.
+- [공격 2]: "Orchard는 Zcash 프라이버시 체인 — Solana 무관" → 기제는 체인 무관(회계 비례성×정보 비대칭). Microstable 실측이 렌즈의 판별력 증명: 상환 턴스타일 3중 폐쇄(긍정 발견) + 시장 턴스타일 LATENT(A6 증폭)로 분리 판정.
+- [공격 3]: "직전 런 창 내 논문 — 중복 수집" → 전 런은 '블록체인' 필터로 미관측(당시 보고 '블록체인 히트 1'은 필터 범위 사실). 갭 회수로 명시적 기록 — 전 런 필터 설계의 결함(도메인 동의어 누락)도 교훈으로 승계: 차기 런부터 arXiv 스윕 키워드에 crypto protocol/oracle/bridge/custody 확장.
+- [합의]: 🟢극복
+
+✅ Anti-rationalization: Pass — Authority Bias(arXiv API 원문 pub/updated 직접 열람, 2610.21540 pub 10-15T09:06Z 실측 — 창 경계 논쟁 원천 봉쇄) / Confidence Halo(Orchard '예측 방향 추종' 본문 표현 수준만 인용, 실전 공격 실증 0·연구등급 명시) / Entropy Ceiling(Neodyme 날짜 미추출·Halborn 심층 미스윕·MEV 미스윕 한계 기록) / Recency Illusion(단일 논문으로 패밀리 재편 주장 않음 — 기존 C21/Chi/META-73과 축 분리 명시) / Tool Call Halu(Anchor 301 리다이렉트를 repositories/325891672로 추적해 HEAD 확인; `.amount` 0매치는 grep 실측; Cargo.lock 0매치 크레이트별 확인).
