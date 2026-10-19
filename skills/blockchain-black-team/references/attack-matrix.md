@@ -1,4 +1,4 @@
-# Attack Matrix — 235 Active Named-Vector Headings / 227 Unique Named IDs + META-01~85
+# Attack Matrix — 235 Active Named-Vector Headings / 227 Unique Named IDs + META-01~86
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -13660,3 +13660,29 @@ attacker:
 - **Magic Eden/Limit Break PP V2 — 단일소스 미검증 WATCH(매트릭스 미기입)**: shattered.io 단독 주장 — 09-24부터 PP V2 forwarder 스푸핑(전달 트랜잭션 발신자 신원 위조 → 재서명 없이 NFT/토큰 이동)으로 2024-10 마켓플레이스 라우팅 중단 후에도 잔존한 구 승인 드레인, $2.8M / 23,155 NFT 화이트햇 구조 / 660 WETH. 구조적으로는 META-64 제3대형 인스턴스(ether.fi 09-13 오퍼레이터 확정 승계)이나: ①단일소스 ②주장 개시 후 ~25일간 SlowMist·rekt·주요 매체 전무(10-19 02:07 UTC 두 소스 1면 직접 확인) ③시장 규모 대비 커버리지 부재 비정상. 처리: 매트릭스 미기입 — 제2소스 출현 시 META-64 강화 + A167 패치-공개 사분면 병합 심사. 신뢰 규칙(Startale·Papertrade 단일소스 WATCH 전례의 하한): 단일소스 + 생태계 침묵 = 관찰 보류.
 - **레인(10-19 02:07-02:09 UTC 실측)**: SlowMist 0 new(최신 10-14 불변 — UNCX 서술 $86k→$1.49M 다중체인 확대 디테일 관찰, 사건 자체 기흡수) · rekt 전건 기흡수(factory-sealed 본문 MediaMarkt 명명 = 10-17 B121 "리셀러 2곳 추가"의 확인 포인트) · Echidna v2.3.3(2026-07-27)·Medusa v1.5.1(2026-03-11) GitHub API 발행일 불변 · Certora HTTP 500(관측 실패 2일차 — 10-17 관측 → 10-18 이중 실패 → 10-19 500) · Immunefi 404(/bug-bounties/, 관측 불가 지속) · ToB 피드 fetch 실패(feed 빈 응답 + index.xml 404 — 최종 검증 10-14) · RV 200 OK(신규 = 리눅스 커널 검증·WAMR AI 퍼집 — DeFi 평면 무관축, 09-30 최신성 유지) · Zcash 세탁 이동 관찰(3건 해킹 자금 ZEC 유입 — 세탁-평면, 블랙 레인) · Hacken/CoinDesk 감사-배지 보도(블랙 10-17 Q3 스탯의 미디어 메아리, 퍼플 신규 축 없음).
 - **카운트 불변**: black 235/227 · red 245/225(A167) · purple META-01~85. Qubic 3축 전부 기존 패밀리 강화(B15·META-73·META-76·META-64·B122) — 신규 named 0, 신규 META 0(할트-액추에이터 조건은 B122 코롤러리로 처리 — 긍정/부정 데이터포인트 2개로 승격 기준 미달, 제3 인스턴스 시 재심사).
+
+### 2026-10-20 purpleteam batch — Magic Eden 제2소스 충족(META-64 제3 대형 확정) + Cysic 무단 발행(할트-액추에이터 제3 인스턴스 → META-86 승격) + Lightning 패치-선행 공개(A167 사분면 긍정) (named 0 · META +1)
+
+- **Magic Eden/Limit Break PP V2 — 단일소스 WATCH 해소, 다중 소스 확정**: 10-19 단일소스(shattered.io)·생태계 침묵 판정 → **10-20 제2소스 관문 충족**: The Defiant(09-25) · Bitquery 양방향 스윕 온체인 측정(09-25) · Yahoo Tech(09-25) · Binance Square(09-25) · cryptorank/revoke.cash(09-25) · Magic Eden 공식 X 중간 발표. 사실 확정: PP V2(2024-10 라우팅 중단) 승인 표면 잔존 → 공격자 $2.8M 인출, 0xQuit 화이트햇 23,155 NFT/$5.7M+ 구조, **보유자 셀프 철회 잔존 승인은 사고 후에도 여전히 라이브**. **META-64 제3 대형 인스턴스**(ether.fi 오퍼레이터 확정 승계): EOL 통합 표면의 승인은 아무도 소유하지 않는 스윕 대상으로 잔존. 신규 패싯: **죽은 컨트랙트 = 수정-불가능-구조적**(09-13 컨트롤-표면 재배치 교리 인스턴스) — 액추에이터가 발급자-평면이 아니라 **화이트햇 대량-구조 + 사용자 셀프 철회 평면**으로 재배치(교리의 사용자-평면 액추에이터 신규 표현형). A167 사분면 병합 심사(10-19 사전등록) 완료: 수정-불가 표면은 공개-배포 딜레마를 원천적으로 소유 불가 → 잔존 가치의 승자는 철회-속도 경쟁(화이트햇 $5.7M vs 공격자 $2.8M = 경쟁 경제학 데이터포인트), "Holders still need to revoke" = 치료-완결성 잔존.
+- **거짓-침묵 방법론 노트 (ID 없음, 제3 인스턴스 시 재심사)**: 10-19 "생태계 침묵" 판정은 **레인 스코프 맹점**이었다 — SlowMist/rekt 전면(사건-트래커 클래스)만 확인하고 언론/온체인 분석 클래스는 미확인, 실제로는 사건 다음 날(09-25)부터 다중 커버리지 존재. 4일 내 2번째 거짓-침묵 인스턴스(10-16 arXiv 키워드 필터 → 10-19 레인 스코프). 규칙: 침묵 판정은 관측 집합을 명명해야 하고, WATCH급 "단일소스" 분류 전 교차-클래스 확인(언론 검색) 1회 필수. "N개 소스 확인 후 무발견" ≠ "존재 안 함" — 침묵 판정은 관측 집합의 맹점을 상속한다.
+- **Cysic 브릿지 무단 발행 (2026-10-17, BNB Chain 10M CYS 무단 발행, 손실 검토 중)**: 브릿지 메시지-처리 결함 → 무단 발행, 브릿지 정지 + 발급자 블랙리스트로 2.8M CYS 동결(약 7.2M은 동결 전 매도/이동 — Cointelegraph·The Defiant·CryptoBriefing·CoinMarketCap·crypto.news 다중 소스). 무담보-발행 클래스 재발(Meter Passport 09-25 코롤러리·syBTC 감시 계보 — "발행 표면 패치 시 클래스-수준 불변식 전 경로 스윕" 규칙 재확인). named 벡터는 블랙 큐.
+- **META-86 승격 (10-19 사전등록 "제3 인스턴스 시 재심사" 발동)**: 할트-액추에이터 유효성 조건이 제3 인스턴스(Cysic) 도달로 코롤러리에서 정식 META로 승격(전문 섹션 아래). 4 데이터포인트: TradeWiz(부정/페이퍼) · Qubic(긍정/둔중) · Pirate Chain(부정/페이퍼 롤백) · Cysic(조건부 긍정/2-평면).
+- **Lightning LDK/CLN/Eclair 패치-선행 공개 (A167 사분면 긍정 데이터포인트)**: LDK 0.2/0.1 브랜치 2개 자금-절취+2개 DoS 수정(Bitcoin Optech 10-09 하이라이트) · CLN 업그레이드 권고 · Eclair 수수료-손실 수정 → 종합 공개는 10-19("$340M 노출" 집계, drained 아님). **배포→검증→지연-공개 시퀀스의 실전 관측**(10-18 IR 런북 규칙 후보의 긍정 완결 인스턴스) — 패치-공개 딜레마의 소유된 해법 사례. 집계등급(Optech 에코 2경로), 원문 날짜는 Optech 10-09 준거.
+- **레인 (10-19 19:01-19:06 UTC 실측)**: SlowMist 0 new(최신 10-17 Qubic 불변) · rekt 전건 기흡수 · Echidna v2.3.3(2026-07-27) 불변 · Medusa v1.5.1(2026-03-11) repositories/401814297 리다이렉트 추적 재실증 · **Certora 500→200 회복(4일차, 블로그 인덱스 JS 렌더링으로 포스트급 미관측)** · Immunefi 404 캐리 · **ToB 피드 301→index.xml 200 회복(최신 10-14 불변 — 전일 실패는 리다이렉트 미추적)** · RV 200(콘텐츠 재스윕 없음, 09-30 최신성 캐리).
+- **카운트**: black 235/227 불변(Cysic named = 블랙 큐) · red 245/225(A167) 불변 · **purple META 85→86**.
+
+### META-86 — 할트-평면/자산-평면 액추에이터 커버리지 (Halt-Plane / Asset-Plane Actuator Coverage)
+
+**정의**: 사고 대응의 모든 정지 액추에이터에 대해 "정지 가능한 평면이 자산이 사는 평면을 포함하는가, 포함하지 않으면 자산 평면에 도달하는 2차 액추에이터가 존재하는가"를 사전에 검증한다. 종이 액추에이터와 실효 액추에이터의 차이는 대응 의도가 아니라 **평면 포함 관계**가 결정한다. 치료-완결성 척도 = 대응 개시 시점에 모든 액추에이터 평면 밖에 이미 벗어난 가치 비율.
+
+**데이터포인트 (4)**:
+1. **TradeWiz** (2026-10-17, 부정): 플랫폼 킬 ≠ 내보낸 키 사본 무효화 — 자산이 플랫폼 밖 → 페이퍼 액추에이터, 대응 개시 후에도 73% 유출(B122 원 사건).
+2. **Qubic** (2026-10-17/18, 긍정·둔중): 메인넷 할트가 원생 자산 평면을 포함 → 실효(추가 유출 차단, 87.1% 온체인+12.9% 거래소 동결) — 단, 경제 전체 동결 비용(DoS-as-defense).
+3. **Pirate Chain** (2026-10-14, 부정): 체인-수준 롤백 발표 14.5시간 만에 철회 — 실행 불가능한 종이 롤백, 거버넌스 신뢰 비용만 전환.
+4. **Cysic** (2026-10-17/18, 조건부 긍정·2-평면): 브릿지 할트(발행 평면 차단)는 BNB Chain 자산 평면 미포함 → **발급자 블랙리스트가 2차 액추에이터**로 2.8M CYS 동결 — 단 약 7.2M은 2차 액추에이터 도달 전 매도(잔존 = 치료-완결성 갭).
+
+**승격 근거**: 10-19 B122 코롤러리(데이터포인트 2, 승격 기준 미달) 사전등록 "제3 인스턴스 시 재심사" — Cysic 도달로 발동. 규칙 일반성 확보: 키-수용(TradeWiz)·체인-할트(Qubic)·롤백(Pirate)·브릿지-할트+블랙리스트(Cysic) 4 토폴로지에 동일 조건 적용 가능.
+
+**감사/IR 체크리스트 규칙**: ① 킬스위치 인벤토리 각 항목에 "정지 평면 ⊇ 자산 평면?" 명시 ② 미포함 시 자산 평면 도달 2차 액추에이터 명명(발급자 블랙리스트/거래소 동결/화이트햇 구조) ③ 2차 액추에이터 도달 지연 = 잔존 손실 상한 사전 산정 ④ 실행 검증(누가 서명·집행하는가 — 10-17 킬스위치 실행검증 코롤러리 결합).
+
+**Microstable 코롤러리 (2026-10-20 실측)**: 체인-할트 부재(솔라나, 09-23 코롤러리) → 프로그램-평면 액추에이터 2축: `circuit_breaker`(lib.rs:242-251 — **민트 경로 완전 강제 실증**: status[1] `MintPausedByCircuitBreaker` + `mint_rate_limit>0` L924-945, `max_mint=mul_div_floor(gross_musd, mint_rate_limit, SCALE)` L1040-1047 + per-tx/per-slot 흐름 상한) + `emergency_shutdown`(**A6 로커스 Redeem 핸들러 L1208 진입부 게이트 + refresh_circuit_breakers L1221 — A6 로커스가 긴급-정지 평면 내부** 신규 실증). 트리거 소유권: keeper 2-of-3 쿼럼(`activate_circuit_breaker` L1639, FIX HI-04). 자산-평면 판정: 원생 자산이 동일 체인에 거주 → 프로그램-평면 액추에이터가 자산 평면을 포함(구조적으로 Qubic형) — 2차 액추에이터 불필요. 잔여: A6 mstb_mint 미바인딩 자체(캐리) · 브레이커 트리거 실행검증(10-17 코롤러리) · upgrade_authority 미실증(전체 방어 우회 단일 평면).
