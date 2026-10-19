@@ -983,3 +983,6 @@
 
 - **[2026-10-17 보고 — Karpelès: Ledger 임플란트 공인 리셀러 2곳 추가 (B121 강화)]** — CryptoBilis·MediaMarkt에 이어 공인 리셀러 2곳에서 추가 검출 — 「authorized-reseller collapse」 채널 확산 실증(헤드라인 등급, 본문 미열람).
   Sources: thedefiant.io 헤드라인 2026-10-17 (Karpelès Reports Ledger Implants in Devices From Two More Resellers)
+
+- **[2026-10-17/18 발생·공개 — Qubic: 지갑 클라이언트 시드 엔트로피 부족 → 1,404지갑 단일 패스 드레인 (B15 제3면 강화)]** — 브라우저/클라이언트 시드 생성 무작위성 부족 → 열거 가능 시드 공간 → 104분(10-17 23:42→10-18 01:26 UTC)에 1,404지갑·2.94T QU(~$1.3M) 드레인(KuCoin 플래시 29.4B 표기 — 단위 이견 기록). 검증인 네트워크 정지로 87.1% 온체인 동결, MEXC 도달 12.9% 거래소 동결(이중 평면 봉쇄 = B122 역반사). 팀은 「프로토콜 밖 결함」 지적하면서도 프로토콜이 정지 — 프로토콜/공식 지갑 경계의 운영적 무효. B15 불변식(생성 키 재료의 통계적 엔트로피 검증 부재) 3평면 실증: 펌웨어(Coldcard 07-30)→라이브러리(RRWallet 08-06)→애플리케이션(Qubic 10-18), 82일.
+  Sources: https://thedefiant.io/news/hacks/qubic-halts-network-after-1-3-million-wallet-drain | https://x.com/_Qubic_/status/2111796732598403507

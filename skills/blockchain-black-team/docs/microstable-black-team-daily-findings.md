@@ -3211,3 +3211,13 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - **신규 CRITICAL/HIGH 0**(캐리 외).
 
 **블루팀 지시 우선순위(불변)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 업그레이드 리뷰 ④ audit-attestation.json 생성.
+
+## 2026-10-19 — 일일 점검 (B15 제3면 Qubic 렌즈 신규 적용·신규 named 0, HEAD 23c0163·dirty 40·mtime 02-28 동결; 10-18 회차는 커밋 a6f0927 메시지 기록·섹션 미기재 승계)
+
+- **A6 CRITICAL 75일차 재실증**: lib.rs:2320-2321 `mint::authority = protocol_state`(Mint 경로) vs **:2395-2396 bare `#[account(mut)] mstb_mint`(Redeem)** 비대칭 라이브(금일 sed 재확인). 블루팀 수정: Redeem에 동일 핀 1줄.
+- **HERMES-H1 HIGH**: hermes.rs:61-69 `HermesPostedUpdate` 7필드(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) 재확인 — `posted_price_account` 부재 불변.
+- **B15-Qubic 렌즈(금일 신규) → NOT ACTIVE(구조적)**: ① 온체인 프로그램 = PDA 유도만 존재(사용자 키 재료 생성 0) ② 키퍼 서명키 = 외부 생성 파일 키페어(config.rs:68·315-316, 경로정책 검증 :437·:814, 2-of-3 :432-435) — in-process `Keypair::new()`(hermes.rs:199, rebalance.rs:981·1504-1521)는 ed25519-dalek/OsRng 위임, 커스텀·약한 RNG 구현 0매치 ③ 대시보드 `Math.random()`은 JSON-RPC 요청 id 전용(app.js:243·321, 키 재료 무관)·faucet 키페어(app.js:1645)는 devnet 스코프 임베드(기존 관측 승계). 잔여 한계 기록: 키페어 생성 평면(solana-keygen/OS CSPRNG 전제)은 이 저장소 밖 — 통계적 엔트로피 배터리 부재는 환경 전반 공유 리스크.
+- **캐리 불변**: **A10 HIGH**(burn CPI caller-supplied mstb_mint) · **B83 HIGH**(Cargo.lock:2984 quinn-proto 0.11.13) · **RUSTSEC-0285/☐182**(rustls 0.21.12(:3296)+0.23.36(:3308) 듀얼핀 금일 grep 재확인) · **B45 PARTIAL** · **B76**(delegate 검사 부재).
+- **신규 CRITICAL/HIGH 0**(캐리 외).
+
+**블루팀 지시 우선순위(불변)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 업그레이드 리뷰 ④ audit-attestation.json 생성.
