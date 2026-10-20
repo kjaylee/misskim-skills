@@ -13697,3 +13697,23 @@ attacker:
 - **A7 강화**: `valid signature` ≠ `single-use execution`. digest에 wallet/domain/caller/nonce/deadline/실행 파라미터를 모두 결속하고, effect 전에 used-digest 또는 monotonic nonce를 저장하며, 동일 트랜잭션 중복 호출을 부정 테스트한다.
 - **수집 레인**: SlowMist 10-19 신규 1건; Rekt Hub 동일 사건 교차확인; Immunefi 최신 블로그는 신규 코드 공개 없음; Solana 공식 10-08 changelog 이후 창내 새 보안 공지 없음; GitHub/Anchor/SPL 검색은 창내 신규 Microstable 직접 영향 advisory 없음; Trail of Bits/OtterSec/Neodyme는 창내 Microstable 직접 적용 가능한 사고급 신규 메커니즘 확인 없음. 단일소스 X 원문은 403이어서 SlowMist·Rekt 이중 기록으로 교차검증했다.
 - **카운트**: named **235/227**, META **86** 불변; **A4/A7 강화 2건**, 신규 named 0, 신규 META 0.
+
+### 2026-10-21 purpleteam batch — `report received ≠ invariant promoted` 생애주기 단절(NEAR Intents) + FV·IR 교차 검증; 신규 META 0
+
+- **핵심 퍼플 갭 — 제보 수신과 방어 상태 승격의 단절**: NEAR Intents 사후 분석은 23개의 실패 입금 알림이 약 $3.8M의 무담보 잔액을 만들었고, 내부 원장과 토큰 컨트랙트의 실잔액을 대사하지 않아 약 37시간 동안 탐지되지 않았다고 설명한다. 같은 기능에 1월 제보가 있었지만, 두 번째 크리티컬 제보와 $300,000 포상 뒤에야 기능 제거와 자동 잔액 검증이 도입됐다. 블랙팀은 이를 기존 교차-플레인 상태 소비·무담보 발행 패밀리로 포착했고, 레드팀 `☐201`은 공급-조정 모니터를 제안했지만, **제보 → 클래스 불변식 등록 → 운영 경보 → 배포 전 회귀 증명**의 소유자와 에스컬레이션 기한은 기존 문서에 명시되지 않았다.
+- **기존 항목과의 구별**: `META-83`은 공시·트리아지 정보 품질과 판정 SLO를, `META-70`은 valid input을 trusted state로 소비하는 경계를, `☐201`은 잔액 대사 증명을 다룬다. 오늘 관찰은 새 공격 원리가 아니라 이 세 통제가 **같은 finding lifecycle에서 연결되지 않는 운영 단절**을 명시한 강화다. `finding validated ≠ fix mobilized`보다 좁고, `patch ≠ defended state`보다 앞선 단계인 **finding-to-control promotion** 축으로 기록한다.
+- **형식검증 교차 검증**: Certora의 10월 16일 설명은 증명이 명세의 정확성·환경 가정·실행 코드와 모델의 일치·검증 도구의 건전성까지 자동 보장하지 않는다고 명시하고, 가정의 런타임 체크와 프로덕션 불변식 감시를 권고한다. 따라서 “두 번째 제보 후 자동 잔액 검증”은 치료 방향은 맞지만, `notification failure → ledger credit` 경로를 변이시켜도 검출되는지와 배포된 코드·모니터가 같은 불변식을 공유하는지가 별도 증명 대상이다.
+- **방어 규칙 보강**: (1) 모든 고위험 제보에 `invariant_id`, 담당자, 운영 경보, 회귀 테스트, 배포 커밋을 연결한 폐쇄 레코드를 만든다. (2) 교차-플레인 입금·민트·상환은 내부 원장과 원천 자산 잔액을 독립 경로로 대사하고, 불일치 시 기능을 자동 정지한다. (3) 제보가 패치로 닫힐 때 기존 기능의 실패·부분 성공·재시도·가스 고갈 변이를 포함한 상태ful 회귀 증거가 없으면 `closed`가 아니라 `contained/pending-verification`으로 둔다. (4) 포상·공개·기능 제거와 별도로, 불변식 승격까지의 시간과 미탐지 손실 창을 측정한다.
+- **Microstable 적용성**: NEAR의 입금 알림·비동기 교차체인 크레딧 평면은 현재 Microstable에 없어 직접 취약점은 **NOT ACTIVE**다. 다만 동일한 통제 공백은 Keeper↔Oracle↔Mint/Redeem 경계에 구조적으로 적용된다. `☐201`의 금고 ATA 실잔액 대사와 HERMES-H1의 posted-account 소비 결속은 이미 존재하지만, 제보·변경·배포를 이 두 운영 증명에 자동 연결하는 정책 문서는 확인되지 않았다. 기존 `PT-ARCH-2026-0909-01`(어드바이저리 트리아지 SLO)과 `META-83`을 강화하며 신규 PT-ARCH는 만들지 않는다.
+- **레인 판정**: 창 내 직접 신규로 확인된 메타 신호는 NEAR 사후 분석(10-16 공개)과 Certora 형식검증 실패모드(10-16 공개)다. Foundry/Echidna/Medusa에는 창 내 신규 릴리스가 없고, AI 에이전트·크로스체인 신호는 기존 B29/META-70 계열과 중복된다. Oak Security 10-13 통계는 7일 창 경계 밖이므로 보조 근거로만 사용하지 않았다.
+- **카운트**: named **235/227**, META **86** 불변; A4/A7 블랙 강화 승계; 퍼플 신규 META 0, `META-83`·`☐201` 강화 1.
+
+🔴 **Red Team**:
+- [공격 1]: NEAR의 자동 잔액 검증은 이미 `☐201`에 있어 새 갭이 아니다 → 방어: 오늘 추가한 것은 검증 기법이 아니라 제보에서 운영 통제로 승격되는 소유권·기한·회귀 증거의 연결이며, 기존 항목에는 그 lifecycle 계약이 없다. 🟢
+- [공격 2]: Coindaro는 공식 사후 보고서의 2차 해설이다 → 방어: 포스트모템의 핵심 수치와 날짜는 기사 본문이 인용한 10-16 공식 설명으로 등급을 제한하고, 새 META 승격 근거로 사용하지 않았다. 🟡위험수용(1)
+- [공격 3]: Certora의 자기 제품 설명을 FV 일반 법칙으로 확대했다 → 방어: 명세·가정·실행 코드 불일치라는 주장은 원문을 그대로 구조적 교차검증에만 사용했고, 도구 우월성이나 완전성을 주장하지 않았다. 🟢
+- [합의]: 🟢극복(위험수용 1 — NEAR 원문 직접 확보 시 세부 RCA 재확인)
+
+✅ Anti-rationalization: Authority Bias ✅(NEAR는 2차 해설·Certora는 공급자 원문임을 등급 분리) / Confidence Halo ✅(신규 META·PT-ARCH 미승격) / Entropy Ceiling ✅(인과가 아니라 lifecycle 단절 관찰로 한정) / Recency Illusion ✅(10-16 자료만 창 내, 10-13 Oak 통계는 제외) / Tool Call Halu ✅(Microstable 직접 grep·문서 대조 없이 NOT ACTIVE를 코드 결론으로 확대하지 않음)
+
+**Sources**: https://www.coindaro.com/near-intents-exploit-postmortem/ (2026-10-17, 10-16 NEAR postmortem 요약) | https://www.certora.com/blog/formally-verified-code-wrong-how-catch-it (2026-10-16, formal verification failure modes) | `docs/purple-team-meta-analysis.md` 2026-10-18 NEAR reconciliation note | `docs/microstable-purple-team-daily-findings.md` ☐201 mapping
