@@ -3212,6 +3212,38 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 
 **블루팀 지시 우선순위(불변)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 업그레이드 리뷰 ④ audit-attestation.json 생성.
 
+
+## 2026-10-21 — 일일 점검 (A4/A7 Argent-style smart wallet 강화·신규 named 0, HEAD 23c0163·dirty 상태 보존)
+
+### PART A — 수집·분석
+
+- **신규 사고 1건**: 2026-10-19 Argent-style smart wallet system, 약 **$59.8K**. 복구 기간 setter가 caller-controlled deadline 산술 랩어라운드를 허용해 유효 guardian 서명 recovery를 같은 트랜잭션에서 완료하고 소유권을 변경했다. 실행 모듈은 동일 signed payload를 한 트랜잭션 19회·다른 트랜잭션 9회 재실행했다.
+- **흡수 판정**: 신규 named vector/META 없음. **A4 Access Control 강화**(복구 상태 전이의 caller-controlled arithmetic·same-transaction finalization) + **A7 Signature Replay 강화**(valid signature ≠ single-use execution, used-digest/monotonic nonce 및 full-context binding).
+- **소스 레인**: SlowMist Hacked 직접 fetch와 Rekt Hub 검색 결과를 교차확인. Immunefi 최신 블로그는 신규 코드 공개 없음. Solana 공식 changelog(10-08) 이후 창내 신규 보안 공지 없음. GitHub/Anchor/SPL 검색에서 창내 Microstable 직접 영향 advisory 없음. Trail of Bits/OtterSec/Neodyme에서 창내 Microstable 직접 적용 가능한 사고급 신규 메커니즘 없음. SlowMist X 원문은 403으로 직접 fetch 불가하여 이중 기록으로 정합성 확보.
+- **출처**: https://hacked.slowmist.io/ · https://hub.rekt.news/ · https://x.com/SlowMist_Team/status/2112157232624476254
+
+### PART B — Microstable 전수 대입 (현재 코드 실측)
+
+**전수 상태**: attack-matrix의 named **235/227 + META-86** 기존 판정을 현재 `lib.rs`, `keeper/src/`, `docs/index.html`에 대입했다. 오늘 신규 렌즈는 모두 **✅ NOT ACTIVE**이며 기존 미수복 항목만 유지됐다.
+
+| 범위 | 판정 | 실코드 증거 |
+|---|---|---|
+| A4/A7 신규 smart-wallet recovery/replay 렌즈 | ✅ NOT ACTIVE | EVM recovery module·guardian signed-payload executor·used-digest 소비 경로 없음; Solana 번역 체크리스트 ☐202만 조건부 추가 |
+| A6 redeem canonical mint | ❌ CRITICAL carry-forward | `lib.rs:2396` Redeem `mstb_mint`가 bare `#[account(mut)]`; Mint 경로 `:2320-2321`만 `mint::authority = protocol_state` |
+| A10 redeem burn mint binding | ❌ HIGH carry-forward | `lib.rs:1352-1366` 전달 `mstb_mint`로 ATA 기대값·burn CPI가 자기참조 |
+| HERMES-H1 price-account binding | ❌ HIGH carry-forward | `keeper/src/hermes.rs:60-69` `HermesPostedUpdate` 7필드, `posted_price_account` 없음 |
+| B83 quinn-proto | ❌ HIGH carry-forward | `solana/Cargo.lock:2984-2985`, `quinn-proto 0.11.13` |
+| B45 audit attestation | ⚠️ PARTIAL | `audit-attestation.json` 부재; 감사 커밋↔배포 아티팩트 결속 미완 |
+| RUSTSEC-0285 / ☐182 | ⚠️ MEDIUM | `rustls 0.21.12`(:3296)+`0.23.36`(:3308) 듀얼 핀, 업데이트 미집행 |
+| B76 SPL delegate drain | ⚠️ MEDIUM residual | `lib.rs` delegate 검사 0매치; PDA 금고는 안전하나 사용자 ATA 위임 경로 방어 미완 |
+| A43/A75/B120/D26 residual | ⚠️ 유지 | 누적 sub-threshold rebalance·manual oracle parity·RPC genesis pin·dashboard meta-only CSP/devnet faucet keypair 기존 판정 유지 |
+| 나머지 named/META 벡터 | ✅ / N/A / 기존 ⚠️ | 코드 동결과 기존 전수표 대조상 신규 회귀 없음; 신규 사고 표면은 구조적으로 부재 |
+
+- **신규 CRITICAL/HIGH: 0건.** 다만 기존 **A6 CRITICAL**, **A10/HERMES-H1/B83 HIGH**는 실제 코드에서 여전히 열려 있다.
+- **블루팀 지시**: ① Redeem canonical mint/address pin ② HERMES posted-account 결속 ③ quinn-proto 패치 플로어 업그레이드 ④ audit-attestation.json 생성 ⑤ rustls 듀얼 핀 제거/업데이트 ⑥ B76 delegate 명시 거부.
+- **Red Team**: A4/A7을 Microstable에 억지로 활성 판정하지 않고 EVM 모듈 부재를 확인했다. 동일 트랜잭션 중복 실행을 Solana PDA 대리 실행에 조건부 게이트로 남겼다. Anti-rationalization: Authority Bias·Confidence Halo·Entropy Ceiling·Recency Illusion·Tool Call Halu 모두 Pass.
+
+
 ## 2026-10-19 — 일일 점검 (B15 제3면 Qubic 렌즈 신규 적용·신규 named 0, HEAD 23c0163·dirty 40·mtime 02-28 동결; 10-18 회차는 커밋 a6f0927 메시지 기록·섹션 미기재 승계)
 
 - **A6 CRITICAL 75일차 재실증**: lib.rs:2320-2321 `mint::authority = protocol_state`(Mint 경로) vs **:2395-2396 bare `#[account(mut)] mstb_mint`(Redeem)** 비대칭 라이브(금일 sed 재확인). 블루팀 수정: Redeem에 동일 핀 1줄.

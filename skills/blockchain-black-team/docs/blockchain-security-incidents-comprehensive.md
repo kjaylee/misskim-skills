@@ -986,3 +986,6 @@
 
 - **[2026-10-17/18 발생·공개 — Qubic: 지갑 클라이언트 시드 엔트로피 부족 → 1,404지갑 단일 패스 드레인 (B15 제3면 강화)]** — 브라우저/클라이언트 시드 생성 무작위성 부족 → 열거 가능 시드 공간 → 104분(10-17 23:42→10-18 01:26 UTC)에 1,404지갑·2.94T QU(~$1.3M) 드레인(KuCoin 플래시 29.4B 표기 — 단위 이견 기록). 검증인 네트워크 정지로 87.1% 온체인 동결, MEXC 도달 12.9% 거래소 동결(이중 평면 봉쇄 = B122 역반사). 팀은 「프로토콜 밖 결함」 지적하면서도 프로토콜이 정지 — 프로토콜/공식 지갑 경계의 운영적 무효. B15 불변식(생성 키 재료의 통계적 엔트로피 검증 부재) 3평면 실증: 펌웨어(Coldcard 07-30)→라이브러리(RRWallet 08-06)→애플리케이션(Qubic 10-18), 82일.
   Sources: https://thedefiant.io/news/hacks/qubic-halts-network-after-1-3-million-wallet-drain | https://x.com/_Qubic_/status/2111796732598403507
+
+- **2026-10-19 — Argent-style Smart Wallet System (EVM, ~$59.8K — A4/A7 강화)** — 복구 모듈의 unrestricted recovery-period setter가 공격자 제어 기간을 deadline 산술에 넣어 timestamp를 과거로 랩어라운드; 유효 guardian 서명이 있어도 같은 트랜잭션에서 recovery를 완료해 소유권을 변경했다. 실행 모듈은 동일 서명 payload의 재사용을 거부하지 않아 한 트랜잭션에서 19회, 다른 트랜잭션에서 9회 실행되었고 MARK/WETH 저유동성 풀 거래로 손실을 확대했다. **Root cause**: 복구 상태 전이의 caller-controlled deadline 산술 + 서명 실행의 일회성/nonce 결속 부재. **Vector mapping**: A4 Access Control 강화 + A7 Signature Replay 강화; 신규 named vector 아님.
+  Sources: https://hacked.slowmist.io/ | https://hub.rekt.news/ | https://x.com/SlowMist_Team/status/2112157232624476254
