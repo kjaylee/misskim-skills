@@ -2630,3 +2630,7 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 
 201. ☐ **(B122 / TradeWiz, 2026-09-30) 수용형 키 성분 도입 시(현재 Microstable 부재 — 조건부 게이트): (a) 대량 키 노출 경로(export/bulk-derivation)에 속도제한+알림, (b) N-지갑 기계-케이던스 스윕→단일 컬렉터 수렴 탐지(CloseAccount 버스트 포함), (c) 사고 시 보상은 새 주소+소유증명으로만, (d) 서비스 정지가 키 사본 무효화가 아님을 IR 플레이북에 명시.**
 202. ☐ **(A4/A7, Argent-style smart wallet 2026-10-19) 복구·서명 실행 평면을 도입할 때 deadline과 일회성 실행을 함께 결속하라.** 복구 기간 setter는 `checked_add`/범위 제한과 owner·쿼럼 결속 없이 허용하지 말고, guardian 서명은 wallet·program/domain·caller·nonce·deadline·실행 파라미터 전체에 서명해야 한다. 실행 전 used-digest 또는 monotonic nonce를 저장하고 **같은 트랜잭션에서 동일 payload를 두 번 호출하는 부정 테스트**를 포함한다. Microstable은 EVM smart-wallet recovery/execution module과 사용자 서명 payload 소비 경로가 없어 **NOT ACTIVE**; 향후 세션 복구·대리 실행 PDA를 도입할 때 이 항목을 배포 게이트로 승격한다. Sources: https://hacked.slowmist.io/ | https://hub.rekt.news/
+
+### 2026-10-22 — A168 Solana 거버넌스 Silent Veto / terminal-path 영수증 손실
+
+203. ☐ **(A168, svmgov 2026-07 수정·10-14 공개) 보류된 위임 표·승인·청구 영수증은 상대방의 선택적 후속 호출에 의존해 terminal state로 닫지 말 것.** `cast_vote_override`처럼 선행 입력이 per-validator cache에 적재되면, 후속 주체가 영원히 호출하지 않는 순서를 상태 기반 퍼징으로 생성하고 `finalize/close/settle` 자체가 (a) 모든 pending을 합산하거나 (b) pending=0을 요구하도록 한다. 불변식은 `signed receipts = counted effects + pending`, finalized 이후 `counted effects = signed receipts`이며 exactly-once를 요구한다. Microstable은 `svmgov`·delegator vote·VoteOverrideCache가 없어 **NOT ACTIVE**; keeper quorum은 서명자 선택이고 tournament proposals는 로컬 평가 구조다. 향후 비동기 승인·위임 투표·상환 큐 도입 시 즉시 활성화.

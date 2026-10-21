@@ -1,4 +1,4 @@
-# Attack Matrix — 235 Active Named-Vector Headings / 227 Unique Named IDs + META-01~86
+# Attack Matrix — 236 Active Named-Vector Headings / 228 Unique Named IDs + META-01~86
 
 > Inventory reconciled 2026-07-23. Duplicate IDs `A52`, `A70`, `A91`, `A92`, `B49`, `D35`, `D43`, and `D45` each label more than one historical section, so audits must track the section name as well as the ID. Reinforcement-only subheadings are not counted as separate active vectors. Retired aliases `A138 = B83` and `D57 = A40 / META-68` are not counted separately.
 
@@ -13688,6 +13688,20 @@ attacker:
 **감사/IR 체크리스트 규칙**: ① 킬스위치 인벤토리 각 항목에 "정지 평면 ⊇ 자산 평면?" 명시 ② 미포함 시 자산 평면 도달 2차 액추에이터 명명(발급자 블랙리스트/거래소 동결/화이트햇 구조) ③ 2차 액추에이터 도달 지연 = 잔존 손실 상한 사전 산정 ④ 실행 검증(누가 서명·집행하는가 — 10-17 킬스위치 실행검증 코롤러리 결합).
 
 **Microstable 코롤러리 (2026-10-20 실측)**: 체인-할트 부재(솔라나, 09-23 코롤러리) → 프로그램-평면 액추에이터 2축: `circuit_breaker`(lib.rs:242-251 — **민트 경로 완전 강제 실증**: status[1] `MintPausedByCircuitBreaker` + `mint_rate_limit>0` L924-945, `max_mint=mul_div_floor(gross_musd, mint_rate_limit, SCALE)` L1040-1047 + per-tx/per-slot 흐름 상한) + `emergency_shutdown`(**A6 로커스 Redeem 핸들러 L1208 진입부 게이트 + refresh_circuit_breakers L1221 — A6 로커스가 긴급-정지 평면 내부** 신규 실증). 트리거 소유권: keeper 2-of-3 쿼럼(`activate_circuit_breaker` L1639, FIX HI-04). 자산-평면 판정: 원생 자산이 동일 체인에 거주 → 프로그램-평면 액추에이터가 자산 평면을 포함(구조적으로 Qubic형) — 2차 액추에이터 불필요. 잔여: A6 mstb_mint 미바인딩 자체(캐리) · 브레이커 트리거 실행검증(10-17 코롤러리) · upgrade_authority 미실증(전체 방어 우회 단일 평면).
+
+### 2026-10-22 redteam batch — A168 신규 승격 1 (svmgov Silent Veto / Pending-Receipt Finalization Gap)
+
+#### A168. Delegated-Override Cache Silent Veto / Terminal-Path Receipt Loss
+
+- **원형**: Asymmetric Research가 2026-10-14 공개한 Solana `svmgov` 버그. 위임자가 검증자 투표 전에 `cast_vote_override`를 호출하면 override가 `VoteOverrideCache`에 보류되지만, 이 캐시를 합산하는 경로가 검증자의 후속 `cast_vote` 하나뿐이었다. 검증자가 끝까지 침묵하면 permissionless `finalize_proposal`이 캐시를 읽지 않고 종료하여, 온체인 영수증이 존재하는 위임자 표가 최종 집계에서 사라졌다.
+- **공격 의미론**: `valid receipt ≠ counted effect`; 지연 상태를 만드는 입력이 **정상 종료 경로에서 소비되지 않을 때** 참여자는 표를 제출했지만 상대방(침묵 검증자)이 자신의 표를 사실상 폐기하는 silent veto를 갖는다. 표결·쿼럼·보상·상환 등에서 pending cache/queue를 후속 주체의 선택적 호출에만 결속하면 같은 기법이 재현된다.
+- **실증/등급**: Crucible 상태 기반 퍼징이 `override → validator silent → epoch end → finalize` 7-액션 경로와 `every vote cast is counted, exactly once` 불변식 위반을 자동 발견했다. 수정은 2026-07-30 머지, v0.4.0, 2026-08-03 메인넷 배포로 창 내 공개 시점에는 이미 방어됨. 연구·수정 완료 사례이며 실전 악용 증거는 없다.
+- **변별**: A4/A7의 서명·재실행 문제나 B84의 commitment downgrade가 아니다. A168의 핵심은 **보류 영수증의 생애주기 종결자(validator)가 호출하지 않아도 terminal/finalize가 모든 pending receipt를 보존·반영해야 한다는 보존 불변식**이다. META-70/81의 valid input 소비 의미론과 인접하지만, 새 named vector로는 terminal-path cardinality를 소유한다.
+- **방어**: (1) `finalize/close/settle`가 모든 pending cache를 직접 합산하거나 미처리 상태면 종료를 거부, (2) 서명된 영수증 총합과 집계 총합의 보존 불변식 및 exactly-once를 상태 기반 퍼징, (3) 상대방의 선택적 후속 호출이 없어도 terminal state가 닫히는 adversarial sequence 회귀, (4) `receipt exists`와 `effect counted`를 별도 모니터링.
+- **Microstable**: **NOT ACTIVE**. `microstable_core`에는 `svmgov`·validator/delegator 투표·`VoteOverrideCache`가 없고, keeper의 `tournament` proposal은 로컬 평가 자료구조이며 온체인 거버넌스 집계가 아니다. keeper quorum은 2-of-3 서명자 선택이지 pending vote receipt 소비 경로가 아니다. 향후 거버넌스·위임 투표·비동기 승인 큐 도입 시 ☐203을 배포 게이트로 승격.
+- **Sources**: https://asymmetric.com/blog/fuzzing-for-a-solana-governance-bug/ · https://docs.governance.solana.com/svmgov/ · https://www.kucoin.com/news/flash/solana-governance-vulnerability-fixed-before-affecting-sgp-0002-proposal
+
+**Matrix state 2026-10-22**: red **236/228 (A168 +1)** · black 235/227 · purple META-01~86. Solana Alpenglow 전환에서 `processed` 슬롯이 확인되지 않을 수 있다는 운영 경고는 기존 B50/B84 강화로 처리하며 named vector를 추가하지 않았다.
 
 ### 2026-10-21 blackteam batch — Argent-style smart wallet 재현사례로 A4/A7 강화 · Microstable 전수 대입
 
