@@ -13697,11 +13697,19 @@ attacker:
 - **공격 의미론**: `valid receipt ≠ counted effect`; 지연 상태를 만드는 입력이 **정상 종료 경로에서 소비되지 않을 때** 참여자는 표를 제출했지만 상대방(침묵 검증자)이 자신의 표를 사실상 폐기하는 silent veto를 갖는다. 표결·쿼럼·보상·상환 등에서 pending cache/queue를 후속 주체의 선택적 호출에만 결속하면 같은 기법이 재현된다.
 - **실증/등급**: Crucible 상태 기반 퍼징이 `override → validator silent → epoch end → finalize` 7-액션 경로와 `every vote cast is counted, exactly once` 불변식 위반을 자동 발견했다. 수정은 2026-07-30 머지, v0.4.0, 2026-08-03 메인넷 배포로 창 내 공개 시점에는 이미 방어됨. 연구·수정 완료 사례이며 실전 악용 증거는 없다.
 - **변별**: A4/A7의 서명·재실행 문제나 B84의 commitment downgrade가 아니다. A168의 핵심은 **보류 영수증의 생애주기 종결자(validator)가 호출하지 않아도 terminal/finalize가 모든 pending receipt를 보존·반영해야 한다는 보존 불변식**이다. META-70/81의 valid input 소비 의미론과 인접하지만, 새 named vector로는 terminal-path cardinality를 소유한다.
+- **왜 감사가 놓치는가 (퍼플 보강)**: (1) pending cache를 보안 상태가 아닌 비동기 plumbing으로 취급해 `receipt exists → terminal effect`의 보존 관계를 감사 명세에서 빠뜨린다. (2) 상태 기반 퍼징이 validator/상대방의 후속 호출을 협조적으로 생성하면 침묵 actor가 만드는 terminal-path 분기를 탐색하지 못한다. (3) `finalize/close`를 단순 liveness·cleanup 함수로 분리해, 미처리 영수증을 합산하거나 종료를 거부해야 한다는 경제적 책임을 부여하지 않는다. (4) 이벤트·영수증 존재를 성공 지표로 쓰고 최종 집계와의 독립 대사를 운영 모니터에서 생략한다.
 - **방어**: (1) `finalize/close/settle`가 모든 pending cache를 직접 합산하거나 미처리 상태면 종료를 거부, (2) 서명된 영수증 총합과 집계 총합의 보존 불변식 및 exactly-once를 상태 기반 퍼징, (3) 상대방의 선택적 후속 호출이 없어도 terminal state가 닫히는 adversarial sequence 회귀, (4) `receipt exists`와 `effect counted`를 별도 모니터링.
 - **Microstable**: **NOT ACTIVE**. `microstable_core`에는 `svmgov`·validator/delegator 투표·`VoteOverrideCache`가 없고, keeper의 `tournament` proposal은 로컬 평가 자료구조이며 온체인 거버넌스 집계가 아니다. keeper quorum은 2-of-3 서명자 선택이지 pending vote receipt 소비 경로가 아니다. 향후 거버넌스·위임 투표·비동기 승인 큐 도입 시 ☐203을 배포 게이트로 승격.
 - **Sources**: https://asymmetric.com/blog/fuzzing-for-a-solana-governance-bug/ · https://docs.governance.solana.com/svmgov/ · https://www.kucoin.com/news/flash/solana-governance-vulnerability-fixed-before-affecting-sgp-0002-proposal
 
 **Matrix state 2026-10-22**: red **236/228 (A168 +1)** · black 235/227 · purple META-01~86. Solana Alpenglow 전환에서 `processed` 슬롯이 확인되지 않을 수 있다는 운영 경고는 기존 B50/B84 강화로 처리하며 named vector를 추가하지 않았다.
+
+### 2026-10-22 purpleteam batch — A168 terminal-path receipt closure reinforcement (신규 META 0)
+
+- **메타 판정**: A168은 새 공격 primitive 자체보다 `pending receipt → terminal effect`의 lifecycle ownership 공백을 드러낸다. 개별 vote/override 핸들러가 정상이어도, 종결 함수가 상대방의 후속 호출을 기다리면 침묵이 사실상 거부권이 된다.
+- **기존 항목과의 구별**: META-69는 provisional state를 settlement-grade entitlement로 올리는 오류, META-70은 노드 사이 edge semantics의 무주공산을 다룬다. 오늘 보강은 두 축의 교차점인 **terminal-path cardinality 보존**으로 한정하며 신규 META는 만들지 않는다.
+- **운영 계약**: finding마다 `receipt_id → terminal_state → counted_effect`를 추적하고, `finalize/close`가 모든 pending 상태를 합산하거나 명시적으로 거부하는지 회귀 증거를 남긴다. `receipt exists`와 `effect counted`가 어긋나면 `closed`가 아니라 `pending-verification`으로 분류한다.
+- **Microstable**: 온체인 거버넌스·위임 투표·비동기 승인 큐가 없어 **NOT ACTIVE**. 향후 해당 평면 도입 시 `☐203`을 배포 게이트로 사용한다.
 
 ### 2026-10-21 blackteam batch — Argent-style smart wallet 재현사례로 A4/A7 강화 · Microstable 전수 대입
 
