@@ -13744,7 +13744,7 @@ attacker:
 - **방어 계약**: 최종 트리에 대한 독립 클린룸 diff 재생성, 서명 커밋·보호 브랜치·2인 독립 리뷰, 소스 트리 매니페스트와 배포 바이너리의 재현 대조, authority/PDA/mint-burn/emergency/migration의 에이전트 비선택형 부정 불변식, 에이전트 외부 immutable 실행 흔적을 필수화한다. `tests passed`만으로 `reviewed intent preserved`를 닫지 않으며, 대조 증거가 없으면 `closed`가 아닌 `pending-verification`으로 유지한다.
 - **Hemi 교차사례(2026-09-07 사고, 10-19 분석 공개)**: legacy Genesis Drop의 공유 풀에서 caller-chosen lockup 외부 호출 뒤 잔액 갱신이 이뤄져 재진입이 가능했고, 계약은 일시정지·패치가 불가능했다. 이는 기존 A7/A34·META-68/70을 새로 만들 사안이 아니라, `legacy contract retired ≠ residual pool retired`와 `caller-controlled callback ≠ harmless integration`을 함께 회귀해야 한다는 lifecycle 강화다. Microstable은 공유 claim pool·사용자 지정 callback·legacy airdrop 평면이 없어 NOT ACTIVE.
 - **Mezo 교차사례(2026-10-05 사고, 10-07 공식 보고)**: 외부 라이브러리 호출 프레임과 trusted forwarder가 calldata 끝의 sender 해석을 분리해 veBTC 소유권 경계를 깨뜨렸다. 두 설계가 개별적으로 안전하다는 이유로 조합 경계를 놓쳤고, 두 차례 감사와 장기 바운티가 있어도 탐지되지 않았다. A61·META-61/70의 **transitive module + execution-context composition** 강화로 처리한다. Microstable은 EVM meta-transaction·외부 Solidity 라이브러리 호출 평면이 없어 NOT ACTIVE.
-- **레인 결과**: 최근 7일 내 공개된 TrojanForge 연구와 10-19 Hemi 분석, 10-07 Mezo 공식 보고를 직접 대조했다. Formal verification·Foundry/Echidna/Medusa·Immunefi 레인에서 창내 신규 기술은 확인하지 못했으며, 기존 META-66/73/83과 A168 lifecycle 보강으로 흡수한다. 신규 named/META는 0, Microstable 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH도 0.
+- **레인 결과**: 창내 신규 신호는 10-16 공개 TrojanForge 연구와 10-19 Hemi 분석이며, Mezo 10-07 공식 보고는 기존 교차사례로 재대조했다. Formal verification·Foundry/Echidna/Medusa·Immunefi 레인에서 창내 신규 기술은 확인하지 못했으며, 기존 META-66/73/83과 A168 lifecycle 보강으로 흡수한다. 신규 named/META는 0, Microstable 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH도 0.
 - **카운트**: black **235/227** · red **A169 추가(레드 정본 카운트 정합 대기)** · purple **META-86 불변**. ☐204를 A169 잠재 활성화 게이트로 유지한다.
 
 🔴 **Red Team**:
