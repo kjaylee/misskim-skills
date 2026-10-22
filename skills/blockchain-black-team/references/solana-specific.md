@@ -2634,3 +2634,13 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 ### 2026-10-22 — A168 Solana 거버넌스 Silent Veto / terminal-path 영수증 손실
 
 203. ☐ **(A168, svmgov 2026-07 수정·10-14 공개) 보류된 위임 표·승인·청구 영수증은 상대방의 선택적 후속 호출에 의존해 terminal state로 닫지 말 것.** `cast_vote_override`처럼 선행 입력이 per-validator cache에 적재되면, 후속 주체가 영원히 호출하지 않는 순서를 상태 기반 퍼징으로 생성하고 `finalize/close/settle` 자체가 (a) 모든 pending을 합산하거나 (b) pending=0을 요구하도록 한다. 불변식은 `signed receipts = counted effects + pending`, finalized 이후 `counted effects = signed receipts`이며 exactly-once를 요구한다. Microstable은 `svmgov`·delegator vote·VoteOverrideCache가 없어 **NOT ACTIVE**; keeper quorum은 서명자 선택이고 tournament proposals는 로컬 평가 구조다. 향후 비동기 승인·위임 투표·상환 큐 도입 시 즉시 활성화.
+
+### 2026-10-23 — A169 Automated AST-Targeted Repository Poisoning / Agent-Steered Low-Salience Backdoor
+
+**Source**: arXiv 2610.23109, “Trojan Horse: Automated Repository Poisoning against Coding Agents” (2026-10-16).
+
+- AST로 저장소 구조와 에이전트 실행 흔적을 매핑한 뒤, 가장 눈에 띄지 않는 삽입 위치를 고르고 탐지 원인을 역으로 학습해 위장하는 공격이다. 새 크레이트나 명령 주입이 없어도 정상 컴파일·정상 행복경로 테스트를 유지한 채 접근제어·PDA·비상 분기·빌드 보증 코드를 오염시킬 수 있다.
+- **기존 항목과 구별**: D32는 스킬/정책 파일의 행동 오염, D51은 앵커 자바스크립트 의존성 갱신 경계, A156/A165는 앵커 코드젠·아이디엘 재현 오류다. A169는 저장소 코드의 저가시성 배치와 에이전트 피드백 루프가 핵심이다.
+- **솔라나 우선 점검면**: `mint`/`burn` 권한 제약, PDA 시드·범프 헬퍼, stale/failover/emergency 분기, `build.rs`, 키퍼 서명자 선택과 오라클 신선도 게이트. 희귀 분기를 의도적으로 호출하는 부정 테스트가 없으면 에이전트가 고른 행복경로 회귀만으로는 방어되지 않는다.
+- **Microstable**: **NOT ACTIVE(코드 런타임)** / **LATENT(에이전트 개발 경계)**. 현재 검토 트리에서 에이전트 실행 도구는 확인되지 않았고, 키퍼의 `Cargo.lock` 해시·레지스트리 출처 검증은 의존성 무결성만 보증한다. 소스 트리·최종 바이너리의 의미적 일치나 리뷰 흔적의 독립성을 보증하지는 않는다.
+- 204. ☐ **에이전트가 읽거나 수정한 솔라나 저장소는 최종 트리 기준 클린룸 독립 리뷰·서명 커밋·소스 트리 매니페스트·권한/PDA/비상/마이그레이션 부정 테스트를 모두 통과해야 한다.** `Cargo.lock` 고정만으로 저장소 오염을 닫았다고 판정하지 말고, 리뷰된 소스와 배포 바이너리의 빌드 출처를 별도로 대조한다.

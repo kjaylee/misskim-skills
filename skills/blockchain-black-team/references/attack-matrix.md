@@ -13711,6 +13711,32 @@ attacker:
 - **운영 계약**: finding마다 `receipt_id → terminal_state → counted_effect`를 추적하고, `finalize/close`가 모든 pending 상태를 합산하거나 명시적으로 거부하는지 회귀 증거를 남긴다. `receipt exists`와 `effect counted`가 어긋나면 `closed`가 아니라 `pending-verification`으로 분류한다.
 - **Microstable**: 온체인 거버넌스·위임 투표·비동기 승인 큐가 없어 **NOT ACTIVE**. 향후 해당 평면 도입 시 `☐203`을 배포 게이트로 사용한다.
 
+### A169. Automated AST-Targeted Repository Poisoning — Agent-Steered Low-Salience Backdoor Placement (TrojanForge)
+
+**Source**: arXiv 2610.23109, “Trojan Horse: Automated Repository Poisoning against Coding Agents” (submitted 2026-10-16).
+
+**Mechanism**: TrojanForge parses a repository with ASTs, maps the target agent's execution traces onto candidate nodes, ranks low-conspicuity insertion points, and iteratively improves the disguise through adversarial feedback. The attack is not a dependency typosquat and does not require a prompt-injection string: a contributor, generated patch, fixture, helper, or seemingly defensive refactor can carry a backdoor while compiling and preserving the visible happy path. The paper reports >60% poisoning success and >90% backdoor injection on its benchmark, but those figures are research results, not a Microstable exploit measurement.
+
+**Solana-specific attack surface**: The highest-value low-salience targets are (1) `mint`/`burn` authority constraints and account-list checks, (2) PDA seed or bump derivation helpers, (3) rare emergency/fallback branches, (4) `build.rs` and lockfile/provenance gates, and (5) keeper oracle freshness, degraded-mode, or signer-selection branches. A poisoned patch can leave normal mint/redeem tests green while weakening a branch exercised only during stale-price, failover, migration, or emergency conditions.
+
+**Why distinct**:
+- **D32** poisons an agent's skill/identity policy; A169 poisons the repository artifact that the agent is asked to review or modify.
+- **D51** exploits dependency refresh and semver drift; A169 can land with no new dependency and a stable lockfile.
+- **A156/A165** are framework/code-generation semantic divergences; A169 is an adversarial placement and disguise strategy that targets the review process itself.
+
+**Defense**:
+1. Treat agent-generated or agent-reviewed patches as untrusted until a clean-room reviewer replays the exact diff against the final tree.
+2. Require signed commits, protected branches, two independent reviewers, and a source-tree manifest; Cargo.lock attestation alone is not source provenance.
+3. Add invariant/property tests for authority, PDA, mint/burn, emergency, stale/failover, and migration paths, including negative tests that an agent-selected happy-path test suite would not naturally choose.
+4. Compare the final deployed program/keeper artifact against the reviewed source and record build provenance; do not accept “tests passed” as semantic equivalence evidence.
+5. For every autonomous coding workflow, retain an immutable execution trace outside the agent-controlled repository and reject patches whose rationale depends on untrusted repository instructions.
+
+**Microstable assessment (2026-10-23)**: **NOT ACTIVE as a code-runtime exploit; LATENT in the AI-assisted development boundary.** The keeper has a compile-time Cargo.lock hash and registry-source gate (`keeper/build.rs`, `keeper/src/utils.rs:1912-2047`), but those controls do not attest to the source tree or prove that a reviewed semantic invariant matches the final tree. The Microstable repository contains no agent runtime/tooling path in the reviewed `solana/keeper/src` and `programs/microstable/src` trees, and no current in-repo `.github` workflow was found. Activation requires an attacker-controlled repository input reaching an AI coding/review agent or an unreviewed contributor patch; the on-chain program and keeper are otherwise not directly exposed to TrojanForge.
+
+**Status**: Research-grade named vector; no active Microstable CRITICAL/HIGH/MEDIUM finding. Add `☐204` to the Solana checklist.
+
+**Sources**: https://arxiv.org/abs/2610.23109
+
 ### 2026-10-21 blackteam batch — Argent-style smart wallet 재현사례로 A4/A7 강화 · Microstable 전수 대입
 
 **창**: 2026-10-19 03:00 KST → 2026-10-21 03:00 KST. SlowMist Hacked의 2026-10-19 Argent-style smart wallet 사건과 Rekt Hub의 동일 공격 요약을 직접 대조했다. 복구 모듈의 unrestricted recovery-period setter가 deadline을 과거로 랩어라운드해 유효 guardian 서명만으로 같은 트랜잭션에서 소유권을 바꿀 수 있었고, 실행 모듈은 동일 서명 payload를 한 트랜잭션에서 19회·다른 트랜잭션에서 9회 재실행했다. 손실은 약 $59.8K이며, 단순 뉴스 요약이 아니라 setter·deadline·payload 재사용이라는 코드 레벨 메커니즘이 공개되어 **A4/A7 강화**로 흡수했다. 신규 named vector/META는 없다.
