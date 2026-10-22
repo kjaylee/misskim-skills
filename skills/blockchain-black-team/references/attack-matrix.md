@@ -13737,6 +13737,24 @@ attacker:
 
 **Sources**: https://arxiv.org/abs/2610.23109
 
+### 2026-10-23 purpleteam batch — A169 저장소 포이즈닝의 보증 경계 소유권 점검 + Hemi/Mezo 교차사례 (신규 META 0)
+
+- **A169 메타 판정**: TrojanForge는 의존성·프롬프트 주입·런타임 공격이 아니라, 에이전트가 검토·수정하는 저장소의 AST 저가시성 노드에 백도어를 배치하는 공격이다. 기존 B29(에이전트 혼동 대리인), META-66(보증 평면 실패 의미), META-73(무의미한 검증 통과)와 연결되지만, `reviewed patch ≠ final source tree ≠ deployed artifact`라는 **검토 대상 자체의 provenance 단절**은 별도 방어 계약이 필요하다. 신규 META 승격은 중복이므로 보류한다.
+- **왜 감사가 놓치는가**: (1) 에이전트가 선택한 happy-path 테스트가 예외·마이그레이션·비상·stale/failover 분기를 회귀시키지 않는다. (2) Cargo.lock 해시·의존성 스캔·서명 커밋이 저장소 내부 의미 변경이나 최종 트리-빌드 산출물 불일치를 증명하지 않는다. (3) 코드리뷰 로그와 실제 배포 산출물의 동일성 확인이 조직상 소유되지 않는다. (4) clean-room 재검토가 없으면 에이전트가 만든 설명과 테스트가 오염된 변경의 증거로 재사용된다.
+- **방어 계약**: 최종 트리에 대한 독립 클린룸 diff 재생성, 서명 커밋·보호 브랜치·2인 독립 리뷰, 소스 트리 매니페스트와 배포 바이너리의 재현 대조, authority/PDA/mint-burn/emergency/migration의 에이전트 비선택형 부정 불변식, 에이전트 외부 immutable 실행 흔적을 필수화한다. `tests passed`만으로 `reviewed intent preserved`를 닫지 않으며, 대조 증거가 없으면 `closed`가 아닌 `pending-verification`으로 유지한다.
+- **Hemi 교차사례(2026-09-07 사고, 10-19 분석 공개)**: legacy Genesis Drop의 공유 풀에서 caller-chosen lockup 외부 호출 뒤 잔액 갱신이 이뤄져 재진입이 가능했고, 계약은 일시정지·패치가 불가능했다. 이는 기존 A7/A34·META-68/70을 새로 만들 사안이 아니라, `legacy contract retired ≠ residual pool retired`와 `caller-controlled callback ≠ harmless integration`을 함께 회귀해야 한다는 lifecycle 강화다. Microstable은 공유 claim pool·사용자 지정 callback·legacy airdrop 평면이 없어 NOT ACTIVE.
+- **Mezo 교차사례(2026-10-05 사고, 10-07 공식 보고)**: 외부 라이브러리 호출 프레임과 trusted forwarder가 calldata 끝의 sender 해석을 분리해 veBTC 소유권 경계를 깨뜨렸다. 두 설계가 개별적으로 안전하다는 이유로 조합 경계를 놓쳤고, 두 차례 감사와 장기 바운티가 있어도 탐지되지 않았다. A61·META-61/70의 **transitive module + execution-context composition** 강화로 처리한다. Microstable은 EVM meta-transaction·외부 Solidity 라이브러리 호출 평면이 없어 NOT ACTIVE.
+- **레인 결과**: 최근 7일 내 공개된 TrojanForge 연구와 10-19 Hemi 분석, 10-07 Mezo 공식 보고를 직접 대조했다. Formal verification·Foundry/Echidna/Medusa·Immunefi 레인에서 창내 신규 기술은 확인하지 못했으며, 기존 META-66/73/83과 A168 lifecycle 보강으로 흡수한다. 신규 named/META는 0, Microstable 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH도 0.
+- **카운트**: black **235/227** · red **A169 추가(레드 정본 카운트 정합 대기)** · purple **META-86 불변**. ☐204를 A169 잠재 활성화 게이트로 유지한다.
+
+🔴 **Red Team**:
+- [공격 1]: A169는 레드팀의 연구급 named vector라 퍼플이 다시 분류한 것뿐이다 → 방어: 공격 기법 자체는 레드 소관으로 두고, 퍼플은 리뷰 산출물·최종 트리·배포 바이너리 사이의 보증 소유권과 실패 상태만 추가했다. 🟢
+- [공격 2]: Hemi/Mezo는 사고 시점이 오래돼 7일 창의 신규 증거가 아니다 → 방어: 10-19/10-07의 최근 분석·공식 보고 공개를 창내 메타 신호로만 사용하고, 신규 벡터 승격 근거로 쓰지 않았다. 🟡위험수용(1)
+- [공격 3]: Microstable에 에이전트 개발 경계가 없는데 ☐204가 과잉이다 → 방어: 현재 런타임 취약점으로 올리지 않고 NOT ACTIVE/LATENT로 분리했으며, 에이전트 입력·자동 패치·미검토 기여가 실제로 들어오는 경우에만 활성화한다. 🟢
+- [합의]: 🟢극복(위험수용 1)
+
+✅ **Anti-rationalization**: Authority Bias ✅(TrojanForge는 연구 결과, Hemi는 2차 분석, Mezo는 공식 보고로 출처 등급 분리) / Confidence Halo ✅(A169 벤치마크 수치를 Microstable 증거로 확대하지 않음) / Entropy Ceiling ✅(신규 META·Microstable 결함 미승격) / Recency Illusion ✅(사고 날짜와 공개 날짜를 분리) / Tool Call Halu ✅(기존 매트릭스·SKILL·findings 교차대조 후 적용성 판정)
+
 ### 2026-10-21 blackteam batch — Argent-style smart wallet 재현사례로 A4/A7 강화 · Microstable 전수 대입
 
 **창**: 2026-10-19 03:00 KST → 2026-10-21 03:00 KST. SlowMist Hacked의 2026-10-19 Argent-style smart wallet 사건과 Rekt Hub의 동일 공격 요약을 직접 대조했다. 복구 모듈의 unrestricted recovery-period setter가 deadline을 과거로 랩어라운드해 유효 guardian 서명만으로 같은 트랜잭션에서 소유권을 바꿀 수 있었고, 실행 모듈은 동일 서명 payload를 한 트랜잭션에서 19회·다른 트랜잭션에서 9회 재실행했다. 손실은 약 $59.8K이며, 단순 뉴스 요약이 아니라 setter·deadline·payload 재사용이라는 코드 레벨 메커니즘이 공개되어 **A4/A7 강화**로 흡수했다. 신규 named vector/META는 없다.

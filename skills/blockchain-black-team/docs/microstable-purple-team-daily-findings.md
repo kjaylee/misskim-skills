@@ -130,3 +130,11 @@ Compared to black team's attack-matrix.md and red team references:
 - **기존 갭과 연결**: 이는 새 META가 아니라 META-70(edge semantics)·META-69(provisional state) 강화다. A168의 별도 lifecycle 규칙은 `receipt_id → terminal_state → counted_effect` 보존과 exactly-once 회귀 증거이며, 선택적 후속 호출이 없는 adversarial sequence를 반드시 포함한다.
 - **Microstable 잔여 정책**: 현재 `keeper`의 2-of-3 quorum은 서명자 선택이지 pending vote receipt 소비 경로가 아니다. 향후 거버넌스·비동기 승인 큐를 도입할 때 `☐203` 배포 게이트를 적용하고, 증거가 없으면 상태를 `closed`가 아닌 `pending-verification`으로 유지한다.
 - **판정**: 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**. 기존 A6 CRITICAL·HERMES-H1 HIGH·B83 HIGH·B45 partial 및 ☐201 공급-대조 정책 공백은 그대로 carry-forward.
+
+## 2026-10-23 Purple Team Daily Evolution — A169 저장소 포이즈닝 경계 점검 (신규 META 0)
+
+- **경계 스윕**: Keeper↔On-chain / Oracle↔Price↔Mint·Redeem / Agent↔Governance / Dashboard↔RPC에 A169 TrojanForge를 대입했다. 현재 Microstable에는 AI 코딩·리뷰 에이전트, 저장소 포이즈닝 런타임, EVM meta-transaction·외부 Solidity library 평면이 없어 직접 적용성은 **NOT ACTIVE / LATENT**다.
+- **구조적 교훈**: `reviewed diff ≠ final source tree ≠ deployed artifact`. AST 기반 저가시성 백도어는 의존성 변경·프롬프트 주입 없이 authority/PDA/mint-burn/emergency/migration의 희귀 분기에 남을 수 있고, 에이전트가 선택한 happy-path 테스트는 이를 증명하지 못한다.
+- **Microstable 현재 통제**: `keeper/build.rs`와 `keeper/src/utils.rs:1912-2047`의 Cargo.lock·registry-source 게이트는 의존성 provenance만 보강한다. 최종 소스 트리와 reviewed invariant, 배포 산출물의 의미적 동일성은 별도 검증되지 않는다.
+- **향후 게이트**: 공격자 제어 저장소 입력이나 미검토 자동 패치가 들어오면 `☐204`를 활성화한다. 독립 클린룸 diff, 서명 커밋·보호 브랜치·2인 리뷰, 소스 매니페스트-바이너리 재현 대조, 에이전트 비선택형 부정 불변식, 외부 immutable 실행 흔적이 없으면 `closed`가 아닌 `pending-verification`으로 남긴다.
+- **교차사례**: Hemi legacy shared claim pool 재진입은 META-68/70·A7/A34 강화로, Mezo external-library/trusted-forwarder 조합은 A61·META-61/70 강화로 흡수했다. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**, 기존 A6·A10·HERMES-H1·B83·B45 carry-forward 유지.
