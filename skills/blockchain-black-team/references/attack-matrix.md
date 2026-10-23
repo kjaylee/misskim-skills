@@ -13783,3 +13783,22 @@ attacker:
 ✅ Anti-rationalization: Authority Bias ✅(NEAR는 2차 해설·Certora는 공급자 원문임을 등급 분리) / Confidence Halo ✅(신규 META·PT-ARCH 미승격) / Entropy Ceiling ✅(인과가 아니라 lifecycle 단절 관찰로 한정) / Recency Illusion ✅(10-16 자료만 창 내, 10-13 Oak 통계는 제외) / Tool Call Halu ✅(Microstable 직접 grep·문서 대조 없이 NOT ACTIVE를 코드 결론으로 확대하지 않음)
 
 **Sources**: https://www.coindaro.com/near-intents-exploit-postmortem/ (2026-10-17, 10-16 NEAR postmortem 요약) | https://www.certora.com/blog/formally-verified-code-wrong-how-catch-it (2026-10-16, formal verification failure modes) | `docs/purple-team-meta-analysis.md` 2026-10-18 NEAR reconciliation note | `docs/microstable-purple-team-daily-findings.md` ☐201 mapping
+
+### 2026-10-24 blackteam batch — 3일 공백 복귀 조용한 창(신규 named 0) + RustSec 0385/0386 스윕(tokio informational ☐205) + PHP/Railway 미승인 관찰 + Microstable 캐리 전건 재실증
+
+- **창**: 2026-10-21 03:00 → 2026-10-24 03:00 KST(블랙 런 10-22/23 부재 — purple/red 배치가 레인 정합 유지).
+- **소스 스윕**: rekt 1면 전건 기흡수(NEAR Intents rekt 아티클화 = closed-unresolved WATCH 그대로, Duelbits 재개 = postmortem-starvation WATCH 잔존, Liquid=B114, Tectonic 확정치=B106+09-15, Cosmos EVM 5인방=B106) · SlowMist Hacked 최상단 10-09 BitBay 불변(10-19~24 신규 0) · CryptoBilis Bitquery 후속 보도 = B121 본문에 이미 $102M/324지갑/6체인 + shattered $92.9M/311 등급 병기까지 흡수 · Immunefi 관측면 sBTC/ether.fi = 기존 바운티 정보갱신(신규 공개 0) · Drift Tornado $122M 세탁 = 자금이동 타임라인, 신규 메커니즘 없음.
+- **기각/관찰**: **PHP CVE-2026-109618/109619**(10-21 긴급 릴리스, SlowMist·연방 경보) — 크립토 플랫폼 악용 사례 미보고 → 미승인, Web2 인프라 레인(META-27 인접) 관찰 기록, 사고 발생 시 B76/META-27 재평가 · **Railway PaaS 키 노출 의심**($371K, 단일소스 "may have exposed", 메커니즘 미공개) — B15/B17 레인 관찰, WATCH 미승격, 1차 소스 확보 시 재분류.
+- **Advisory**: OSV anchor-lang 4건·solana-program 0건·anchor/agave GH advisory 0건(기매핑 무변화). RustSec 10-23 신규 2건: **RUSTSEC-2026-0385** ctutils(constant-time u128, patched ≥0.4.4) — keeper Cargo.lock 0매치 무관. **RUSTSEC-2026-0386** tokio `AsyncFd::new` 계열 I/O-safety unsoundness(informational=unsound, patched ≥1.51.6<1.52 / ≥1.53.3, affected ≥0.3.2) — keeper tokio **1.49.0**으로 패치 범위 밖이나 keeper 소스 `AsyncFd|AsRawFd|from_raw_fd` **0매치** + tokio 피처(macros/rt-multi-thread/signal/time)에 io 없음 → **잠재적 NOT ACTIVE**, **☐205**(tokio 업그레이드 리뷰) 백로그 등록 — B83 quinn-proto와 keeper 의존성 위생 항목으로 통합 관리.
+- **PART B Microstable**(mtime 02-28 전량 동결·dirty 유지·HEAD 23c0163): **A6 CRITICAL day 77**(10-23 퍼플 canonical 76 승계 — 작업트리 lib.rs:2395-2396 bare `#[account(mut)] mstb_mint` vs HEAD pin 재실증) · HERMES-H1 HIGH(hermes.rs:60-69 7필드) · B83 HIGH(Cargo.lock quinn-proto 0.11.13) · ☐182 rustls 0.21.12/0.23.36(<0.23.46) 캐리 · 브레이커 경로 정합(refresh_circuit_breakers L924 / mint_rate_limit 상한 L1040-1047 / redeem L1208 emergency-gated) · 대시보드 정적 불변(innerHTML/eval/fetch 0매치) · **신규 CRITICAL/HIGH/MEDIUM 0**.
+- **Matrix state**: black **235/227 불변**(신규 named 0 · 강화 0 · ☐205 백로그 +1).
+
+🔴 Red Team:
+- [공격 1]: tokio 0386 unsound를 0매치로 치부하면 keeper 향후 io 피처 추가 시 무방비 → 방어: 판정을 NOT ACTIVE가 아닌 잠재적으로 기록 + ☐205 백로그로 남김. 🟢
+- [공격 2]: PHP/Railway 기각이 놓침이 될 수 있다 → 방어: 기각이 아닌 미승인+관찰, 창 내 재확인 규칙 명시. 🟡위험수용
+- [공격 3]: 3일 창 공백 중 10-22/23 사고 누락 가능 → 방어: rekt+SlowMist+1주일 웹검색 교차, Immunefi는 관측 불가 승계(침묵 아님 명시). 🟢
+- [합의]: 🟢극복(위험수용 1 — 관찰 항목 창 외 방치 금지)
+
+✅ Anti-rationalization: Authority Bias ✅(RustSec 원문 toml 직접 확인 — patched 범위 실측) / Confidence Halo ✅(기각 3건 모두 등급·소스 명시) / Entropy Ceiling ✅(PHP CVE 번호 형식 이상을 사실로 확대하지 않고 관찰로 한정) / Recency Illusion ✅(Q3 통계 재보도를 창 내 신호로 오인하지 않음) / Tool Call Halu ✅(OSV/GitHub API 빈 응답을 침묵이 아닌 관측 불가로 등급 분리)
+
+**Sources**: https://rekt.news/ (2026-10-24 03:00 KST 스냅샷) | https://hacked.slowmist.io/ (동일 스냅샷, 최상단 10-09) | https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/tokio/RUSTSEC-2026-0386.md | https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/ctutils/RUSTSEC-2026-0385.md | https://api.osv.dev/v1/query (anchor-lang/solana-program) | https://thedefiant.io/news/security/slowmist-urges-crypto-platforms-to-prepare-for-critical-php-fixes | https://cryptoticker.io/en/railway-hack-crypto-api-keys (관찰 등급)

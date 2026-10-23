@@ -3253,3 +3253,16 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - **신규 CRITICAL/HIGH 0**(캐리 외).
 
 **블루팀 지시 우선순위(불변)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 업그레이드 리뷰 ④ audit-attestation.json 생성.
+
+## 2026-10-24 — 일일 점검 (블랙 3일 공백 복귀·신규 named 0·RustSec 0386 ☐205 등록; HEAD 23c0163·mtime 02-28 동결)
+
+- **A6 CRITICAL day 77 재실증**(10-23 퍼플 canonical day 76 승계): 작업트리 lib.rs:2395-2396 bare `#[account(mut)] mstb_mint`(Redeem) vs HEAD pin 비대칭 라이브(코드 mtime 02-28·dirty 불변). 블루팀 수정 불변: Redeem에 canonical mint pin 1줄.
+- **HERMES-H1 HIGH**: hermes.rs:60-69 `HermesPostedUpdate` 7필드 재확인 — `posted_price_account` 결속 부재 불변.
+- **B83 HIGH**: Cargo.lock quinn-proto 0.11.13 재실증. **☐182**: rustls 0.21.12+0.23.36 듀얼핀(<0.23.46) 캐리.
+- **신규 ☐205 (RUSTSEC-2026-0386, informational=unsound)**: keeper tokio 1.49.0이 패치 범위(≥1.51.6<1.52 / ≥1.53.3) 밖 — 소스 `AsyncFd|AsRawFd|from_raw_fd` 0매치 + tokio 피처(macros/rt-multi-thread/signal/time)에 io 없음 → **잠재적 비활성**, quinn-proto 업그레이드 리뷰에 통합.
+- **RUSTSEC-2026-0385 ctutils**(constant-time, patched ≥0.4.4): Cargo.lock 0매치 — 무관.
+- **브레이커 경로 정합**: refresh_circuit_breakers(L924)·mint_rate_limit 상한(L1040-1047)·redeem emergency-gate(L1208) 라인 재확인. 대시보드 정적 불변(innerHTML/eval/fetch 0매치).
+- **레인**: rekt 1면·SlowMist Hacked(최상단 10-09) 전건 기흡수, CryptoBilis Bitquery 후속 = B121 기흡수, OSV anchor-lang 4건·solana-program 0건 기매핑. 미승인 관찰: PHP CVE-2026-109618/109619(크립토 악용 미보고)·Railway PaaS 키 노출 의심(단일소스).
+- **신규 CRITICAL/HIGH/MEDIUM 0**(캐리 외).
+
+**블루팀 지시 우선순위(불변 + ☐205 병합)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 + tokio ≥1.51.6 업그레이드 통합 리뷰 ④ audit-attestation.json 생성.
