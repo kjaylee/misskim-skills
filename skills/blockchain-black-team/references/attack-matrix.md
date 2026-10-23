@@ -13735,7 +13735,9 @@ attacker:
 
 **Status**: Research-grade named vector; no active Microstable CRITICAL/HIGH/MEDIUM finding. Add `☐204` to the Solana checklist.
 
-**Sources**: https://arxiv.org/abs/2610.23109
+**Reinforcement evidence (2026-10-24)**: AmPermBench (arXiv 2604.04978) independently stress-tests a deployed coding-agent auto-mode permission classifier on deliberately scope-ambiguous authorization: 81.0% end-to-end false-negative rate across 253 state-changing actions, 36.8% of state-changing actions falling outside classifier scope via in-project file edits (Tier 2), and 92.9% FNR on artifact-cleanup actions. This is measurement of a deployed defensive layer, not a new placement strategy — no new vector. It empirically confirms A169's premise that the agent review/permission layer fails exactly on low-salience in-tree edits, so ☐204 clean-room review stays mandatory for any agent-touched Solana repository.
+
+**Sources**: https://arxiv.org/abs/2610.23109 | https://arxiv.org/abs/2604.04978
 
 ### 2026-10-23 purpleteam batch — A169 저장소 포이즈닝의 보증 경계 소유권 점검 + Hemi/Mezo 교차사례 (신규 META 0)
 
