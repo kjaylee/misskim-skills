@@ -138,3 +138,11 @@ Compared to black team's attack-matrix.md and red team references:
 - **Microstable 현재 통제**: `keeper/build.rs`와 `keeper/src/utils.rs:1912-2047`의 Cargo.lock·registry-source 게이트는 의존성 provenance만 보강한다. 최종 소스 트리와 reviewed invariant, 배포 산출물의 의미적 동일성은 별도 검증되지 않는다.
 - **향후 게이트**: 공격자 제어 저장소 입력이나 미검토 자동 패치가 들어오면 `☐204`를 활성화한다. 독립 클린룸 diff, 서명 커밋·보호 브랜치·2인 리뷰, 소스 매니페스트-바이너리 재현 대조, 에이전트 비선택형 부정 불변식, 외부 immutable 실행 흔적이 없으면 `closed`가 아닌 `pending-verification`으로 남긴다.
 - **교차사례**: Hemi legacy shared claim pool 재진입은 META-68/70·A7/A34 강화로, Mezo external-library/trusted-forwarder 조합은 A61·META-61/70 강화로 흡수했다. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**, 기존 A6·A10·HERMES-H1·B83·B45 carry-forward 유지.
+
+## 2026-10-24 Purple Team Daily Evolution — 창 내 6사건 신규 렌즈 적용(증거-평면·공개-키 자격증명·음수 경계), 신규 결함 0
+
+- **1차 실증**: HEAD 23c0163(블랙 09-13 이후 불변)·dirty 40파일·lib.rs mtime 2026-02-28 13:21:13 — L2395-96 bare `#[account(mut)] mstb_mint` 재실증 → **A6 CRITICAL day 77**(블랙 10-24 정합). L2320 `mint::authority = protocol_state` 핀 정상.
+- **증거-평면 탈결합 렌즈(Slice/NEM/WAX)**: Mint/Redeem 회계는 온체인 강제(2%/tx·6%/slot·redeem 3%/slot) — 오프체인 증거(반환값/이벤트/로그)를 사실로 소비하는 섭취 경로 부재. 유일 증거-평면 = 오라클(Pyth/HERMES 게시) → HERMES-H1(posted_price_account 미핀, HIGH) 기존 캐리가 정확히 그 평면. 신규 NOT ACTIVE.
+- **공개-지식 자격증명 렌즈(AlpsCon)**: live-authority 인벤티 체크리스트(10-10 권고) 신규 항목 — "공개-지식 키 원자재(테스트/데모 계정)가 권한 집합에 있는가; 이 키의 소유자가 존재하는가". keeper 키 생성·운영 상태는 코드 외(미실증 그대로 — 업그레이드 권한 ☐와 동일 보관처).
+- **음수 경계 렌즈(WAX)**: `max_fee|fee: i64` grep 0매치(solana/·programs/ 전수) — 부호 있는 수수료 매개변수 부재, 구조적 NOT ACTIVE.
+- **패키지 무결성 렌즈(ToB 10-14)**: keeper build.rs·utils.rs:1912-2047 Cargo.lock·registry-source 게이트 = ToB 25종 조사의 "lockfile-조건부" Cargo 평면 보강 방어 — 외부 조사와 정합하는 긍정 소유권 기록. ☐182 rustls·☐189·☐193~☐196·☐204·☐205 캐리. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**.

@@ -989,3 +989,31 @@
 
 - **2026-10-19 — Argent-style Smart Wallet System (EVM, ~$59.8K — A4/A7 강화)** — 복구 모듈의 unrestricted recovery-period setter가 공격자 제어 기간을 deadline 산술에 넣어 timestamp를 과거로 랩어라운드; 유효 guardian 서명이 있어도 같은 트랜잭션에서 recovery를 완료해 소유권을 변경했다. 실행 모듈은 동일 서명 payload의 재사용을 거부하지 않아 한 트랜잭션에서 19회, 다른 트랜잭션에서 9회 실행되었고 MARK/WETH 저유동성 풀 거래로 손실을 확대했다. **Root cause**: 복구 상태 전이의 caller-controlled deadline 산술 + 서명 실행의 일회성/nonce 결속 부재. **Vector mapping**: A4 Access Control 강화 + A7 Signature Replay 강화; 신규 named vector 아님.
   Sources: https://hacked.slowmist.io/ | https://hub.rekt.news/ | https://x.com/SlowMist_Team/status/2112157232624476254
+
+## 2026-10-24 Incident Queue — purple-team cross-check (black succession review pending)
+
+> 등록 경위: 블랙 10-24 배치(03:07)는 SlowMist 스냅샷을 "최상단 10-09 BitBay, 10-19~24 신규 0"으로 기록했으나 퍼플 04:01 KST 스냅샷에 10-17~10-23 8건 관측. 그중 Qubic(10-17)·Argent-style(10-19) 2건은 기흡수(10-19 퍼플 배치·10-21 블랙 배치 grep 실증). 잔여 6건 특이 식별자 전수 grep 0매치로 미흡수 실증 후 퍼플 큐 등록(#63 관례 준용). 원인은 백필 또는 블랙 부분 fetch(#61 대안 설명 보존 — 단정 없음). 블랙 복귀 시 승계 심사 요망. 벡터 매핑은 제안 등급.
+
+- **2026-10-18 — AlpsCon AI Trade Hub (BNB Chain — 4-레이어 조합: 휴면 공개-키 화이트리스트 자격증명 × EIP-7702 실행 × 플래시론 × 보상 회계 버그)** — Hardhat 기본 테스트 계정의 **공개된 개인키**가 KYC 화이트리스트에 약 14개월 잔존. 공격자는 EIP-7702로 해당 EOA에 코드 실행을 위임하고, USDC 플래시론으로 ALPS를 매수·스테이크한 뒤, 신규 스테이크를 과거 것으로 간주하는 회계 버그(누적 보상 청구)로 ~$152.8K 순이익 실현. 퍼플 축: **휴면축 제4면 — 공개-지식 자격증명**("소유자 부재 권한"이 아니라 "누구나 아는 키"가 권한 집합에 존재; live-authority 인벤토리 신규 1급 항목). EIP-7702 실행 수단은 기흡수 축(ether.fi A153 sub-pattern-3, WUSD.fi)의 재현 — 신규 벡터 아님. 왜 감사가 놓치는가: 감사 스코프는 회계 로직(실제 버그)이지만 익스플로잇의 권한 평면(화이트리스트 내용)은 운영 상태 — MakerDAO 키퍼(10-10)와 동일 구조(공격 표면 = 권한 집합, 감사 = 활성 코드).
+  Vector mapping (제안): 휴면축(desync family 6th member, 10-10) 제4면 강화 + A153 sub-pattern-3 재현 + A2-adjacent 회계(귀속/정산-모멘트 — 10-06 MCN 패밀리).
+  Source: https://hacked.slowmist.io/en/ (2026-10-24 04:01 KST 스냅샷)
+
+- **2026-10-21 — Fearless Wallet (Polkadot — 제3자 지갑 확장 프로그램 20개월 키 유출)** — 2025-02부터 악성 코드가 잠금 해제 시 사용자 개인키를 공격자 서버로 전송. 8명 사용자 17,286 DOT(~$20K) 무단 거래 보고, Polkadot 공식 경보. 퍼플 축: **클라이언트 키-평면의 분배 면** — Qubic(10-19, 생성 면)과 짝을 이뤄 생성→보관→분배 전체 키-물질 경로에 감사 소유자 없음. 사용자는 시드 구문을 검증하지만 배포된 확장 프로그램 바이너리는 검증하지 못한다. 20개월 미검출 = 탐지 비대칭의 운영 실측. A169 인접(reviewed ≠ shipped)이나 평면 상이: 개발 파이프라인이 아니라 **소비자 분배 채널**(스토어 업데이트 경로).
+  Vector mapping (제안): B15/B17 키-평면 + 09-19 device/key-plane 분리 축의 분배-채널 신규 면 + A169 인접(평면 상이 명시).
+  Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
+
+- **2026-10-21 — Slice (onchain commerce — 호출자 선택 소스의 반환값을 수령 증거로 신뢰)** — FundsModule의 0x9d2edfac 함수가 **호출자가 선택한 소스 컨트랙트가 반환한 해제 금액**을 신뢰하고 해당 ETH/USDC 실제 수령을 검증하지 않았다. 공격자는 자산을 이전하지 않으면서 0이 아닌 금액을 반환하는 두 컨트랙트로 풀드 예약에서 ~$41K 즉시 인출. 퍼플 축: **증거-평면 탈결합 — 기록의 검증이 아니라 사실의 검증 부재**(NEM·WAX와 72시간 3인칭 수렴). 왜 감사가 놓치는가: happy-path 단위 테스트의 소스 컨트랙트는 정직하다; "누가 소스를 선택하는가"는 모듈 사이에 사는 조합 질문 — 어느 스코프에도 속하지 않음(Hemi 10-19 caller-chosen callback과 동일 주).
+  Vector mapping (제안): A4 강화(신뢰-입력 수용) + Hemi caller-chosen callback 패밀리(10-23 기록) 수렴 + 증거-평면 탈결합 WATCH(2026-10-24 매트릭스).
+  Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
+
+- **2026-10-22 — NEM / NemTokenV2 (BSC — 정산 미검증 이벤트 섭취 + AMM 위생 함수 증폭)** — 컨트랙트가 LP로의 **전송을 실제 스왑 정산과 무관하게 매도 거래량으로 계상**. 공격자는 transfer → skim() → flushLpSellRecycle()을 42회 반복해 기존 LP 준비금을 소각·하향 동기화한 뒤 부풀려진 가격에 잔여 NEM을 매도해 ~$821.9K USDT 인출. 퍼플 축: Slice와 동일 축(인터페이스 이벤트 ≠ 정산 사실) + **위생 함수 무기화** — 드리프트 보정용 skim/flush가 공격 증폭기로 전용. 왜 감사가 놓치는가: 토큰 회계 훅은 정직한 AMM 상호작용을 가정; "전송이 스왑이 아니라면?"은 토큰 감사와 AMM 감사 어느 쪽에도 속하지 않는 경계 불변식이다.
+  Vector mapping (제안): A2-adjacent 회계(귀속/정산-모멘트 패밀리) + 증거-평면 탈결합 WATCH(2026-10-24 매트릭스).
+  Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
+
+- **2026-10-22 — WAX Multi-Chain Bridge (WAX/Solana/Ethereum — 음수 경계 매개변수 + 기록/가치 탈결합)** — `eth.token::withdraw`가 차변 전 **max_fee ≥ 0을 강제하지 않아**, 공격자가 max_fee = -quantity로 설정해 차변을 0으로 만들면서도 전체 출금 로그와 브릿지 기록이 정상 생성 → Solana·Ethereum 양측 자산 해제(~$90.5K). 퍼플 축: ① #63 경계값 규칙의 **음수 면**(부호 없는 매개변수의 부호 재해석 — EtherVista 10-09 검증자-내부 폭과 같은 산술-경계 축) ② **A168의 역수 방향** — A168(10-22 연구)은 "유효 영수증 ≠ 계상 효과"(영수증 있음·효과 없음), WAX는 "계상된 기록 ≠ 차변된 가치"(기록 생성·지불 0). 같은 날 독립 수렴로 **기록-생성↔가치-이동의 원자적 결합 양방향 불변식** 완성. ③ 단일 부호 버그의 **크로스체인 승법** — 한 체인의 기록-발행 평면이 두 체인의 가치-검증 평면을 움직임.
+  Vector mapping (제안): A168 패밀리 강화(섭취-측 역방향) + #63 경계값 규칙 음수-면 확장 + A32-adjacent 브릿지.
+  Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
+
+- **2026-10-23 — Kimchi Token (Solana — KOL 인플루언스 러그풀, 귀속 모호성)** — KOL이 500M 토큰을 받고 포스팅(제3자 리포스트 동반) 후 시총 ~$14M 도달, 이후 리포스트 철회·원문 삭제·가격 95% 붕괴. 다중 지갑 저가 매수·고가 매도로 ~$385K 차익(추정 조달 러그풀). 퍼플 축: **영향력-평면** — 분배·포스팅·삭제 전부 설계대로 작동(META-84 패밀리), 공격은 할당·공시 평면에 존재. 귀속 모호성(KOL 공모 vs 유료 홍보 vs 계정 악용) 자체가 구조적 — 온체인 아티팩트가 셋을 구별하지 못한다.
+  Vector mapping (제안): 경제/거버넌스-평면 관찰(META-84 반향) — named 승격 없음.
+  Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
