@@ -146,3 +146,11 @@ Compared to black team's attack-matrix.md and red team references:
 - **공개-지식 자격증명 렌즈(AlpsCon)**: live-authority 인벤티 체크리스트(10-10 권고) 신규 항목 — "공개-지식 키 원자재(테스트/데모 계정)가 권한 집합에 있는가; 이 키의 소유자가 존재하는가". keeper 키 생성·운영 상태는 코드 외(미실증 그대로 — 업그레이드 권한 ☐와 동일 보관처).
 - **음수 경계 렌즈(WAX)**: `max_fee|fee: i64` grep 0매치(solana/·programs/ 전수) — 부호 있는 수수료 매개변수 부재, 구조적 NOT ACTIVE.
 - **패키지 무결성 렌즈(ToB 10-14)**: keeper build.rs·utils.rs:1912-2047 Cargo.lock·registry-source 게이트 = ToB 25종 조사의 "lockfile-조건부" Cargo 평면 보강 방어 — 외부 조사와 정합하는 긍정 소유권 기록. ☐182 rustls·☐189·☐193~☐196·☐204·☐205 캐리. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**.
+
+## 2026-10-25 Purple Team Daily Evolution — Initia 렌즈 적용(VM-기질 상속 신뢰 평면·브리지-아웃 비대칭), A6 day 78 재실증 (신규 결함 0)
+
+- **1차 실증**: HEAD 23c0163(블랙 09-13 이후 불변)·dirty 40파일·lib.rs mtime 2026-02-28 13:21:13 — L2395-96 bare `#[account(mut)] mstb_mint` 재실증 → **A6 CRITICAL day 78**. L2320 `mint::authority = protocol_state` 핀 정상. 브레이커 구조체 L242-251(BreakerStatus·activation_tick·cooldown_until 4-브레이커) 불변.
+- **Initia VM-기질 렌즈**: Solana SBFCL·anchor 런타임 = 리포 외 상속 신뢰 평면. A6급 계정-바인딩 인버리언트는 기질 무결성을 전제 — Initia 교훈(검증된 소스 ≠ 검증된 실행 기질): 보증 인벤토리가 실행 기질(anchor 0.31.1·Solana 런타임)을 **명시적 신뢰 가정으로 명명**할 것(관찰 등급 — 리포 내 조치 대상 아님; Cargo.lock 스냅샷은 09-29 코롤러리로 부분 소유).
+- **Initia 브리지-아웃 비대칭 렌즈**: Microstable 가치 평면 = 원생 SPL 자산의 동일 체인(Solana) 거주. 크로스체인 표현·브리지 평면 부재 → 프로그램-평면 액추에이터(브레이커+비상정지, 10-20 실측)가 자산 평면을 포함 — Initia형 '할트 전 브리지 아웃' 탈출 경로 구조적 부재. NOT ACTIVE.
+- **기질-포크 상속 WATCH 대응**: 단일 배포 체인(Solana) — VM 포크 패치 전파 문제와 직접 무관. WATCH는 참조 기록으로만 캐리.
+- ☐182 rustls·☐189·☐193~☐196·☐204·☐205 캐리. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**.

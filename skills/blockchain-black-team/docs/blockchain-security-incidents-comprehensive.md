@@ -1015,5 +1015,9 @@
   Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
 
 - **2026-10-23 — Kimchi Token (Solana — KOL 인플루언스 러그풀, 귀속 모호성)** — KOL이 500M 토큰을 받고 포스팅(제3자 리포스트 동반) 후 시총 ~$14M 도달, 이후 리포스트 철회·원문 삭제·가격 95% 붕괴. 다중 지갑 저가 매수·고가 매도로 ~$385K 차익(추정 조달 러그풀). 퍼플 축: **영향력-평면** — 분배·포스팅·삭제 전부 설계대로 작동(META-84 패밀리), 공격은 할당·공시 평면에 존재. 귀속 모호성(KOL 공모 vs 유료 홍보 vs 계정 악용) 자체가 구조적 — 온체인 아티팩트가 셋을 구별하지 못한다.
+
+- **2026-10-23 — Initia L1/MoveVM (Cosmos SDK — VM 기질 제로데이 무한 발행 → 할트 전 브리지 아웃; 퍼플 큐 — 블랙 승계 심사 대기)** — 공격자가 **Initia의 MoveVM 구현(Cosmos SDK 상) 제로데이**로 L1에서 무한 무담보 발행, 할트 전 ~$2.7M(AUSD·ETH·USDC)를 브리지로 아웃. L1+롤업 전면 할트로 대응; 원생 INIT 무영향. 퍼플 4축: ① **검증된 소스 ≠ 검증된 실행 기질** — Move Prover/소스-수준 FV는 컨트랙트에 부착되는데 결함은 VM 구현 자체(Ironwood 10-17의 VM-기층 발현; VM은 상속 인프라라 체인별 감사 소유자 부재 — META-73 신규 면 후보) ② **META-86 할트-액추에이터 제4 인스턴스** — 할트 전 브리지 아웃 = 모든 액추에이터 평면 밖 가치(잔존 외부 가치 지표 라이브) + 무담보 IOU 목적지 체인 수출(Cronos 롤백 코롤러리) ③ **기질-포크 상속 WATCH** — 체인별 VM 포크의 상류 결함 상속·소비 체인 패치 전파 무소유(상류-공유 미실증 — 관찰 등급; 승격 기준: 상류-공유 실증 또는 포크 간 동일 결함 재발) ④ 발행-평면 무담보 발행 패밀리(Meter Passport·Cysic)의 **기질-변종** — 발행 경로가 컨트랙트가 아니라 VM 버그. 왜 감사가 놓치는가: 체인 감사 스코프는 컨트랙트/앱 — VM은 상속 인프라로 감사 소유자 부재. 제2소스: The Block·CryptoTicker($2.6~2.7M 범위).
+**Vector mapping (제안 — 블랙 심사 대기)**: 무담보 발행 패밀리(Meter/Cysic 축) × 실행-기질 평면(신규) + META-86 액추에이터 축
+**Sources**: https://hacked.slowmist.io/ | https://www.theblock.co/news/defi/2026-10-23-initia-halts-network-after-security-incident-attacker-reportedly-mints-tokens-427755 | https://cryptoticker.io/en/initia-infinite-mint-network-halt
   Vector mapping (제안): 경제/거버넌스-평면 관찰(META-84 반향) — named 승격 없음.
   Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
