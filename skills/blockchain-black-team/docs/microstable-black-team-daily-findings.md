@@ -3266,3 +3266,19 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - **신규 CRITICAL/HIGH/MEDIUM 0**(캐리 외).
 
 **블루팀 지시 우선순위(불변 + ☐205 병합)**: ① A6 1줄 핀(최장 캐리) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 + tokio ≥1.51.6 업그레이드 통합 리뷰 ④ audit-attestation.json 생성.
+
+## 2026-10-26 — 일일 점검 (블랙 10-25 결석 회차 포함 이중 창·퍼플 큐 7건 승계 심사·신규 named 0; HEAD 23c0163·mtime 02-28 동결)
+
+- **A6 CRITICAL day 79 재실증**: lib.rs:2395-2396 bare `#[account(mut)] mstb_mint`(Redeem) vs L2320 `mint::authority = protocol_state` 핀 비대칭 라이브(작업트리·HEAD·mtime 2026-02-28 13:21:13·dirty 40·161,059B 재실증). 블루팀 수정 불변: Redeem에 canonical mint pin 1줄.
+- **캐리 재실증**: HERMES-H1 HIGH(hermes.rs:60-69 7필드) · B83 HIGH(Cargo.lock quinn-proto 0.11.13) · ☐182 rustls 0.21.12+0.23.36 듀얼핀 · ☐205(tokio 0386 잠재적 비활성). 대시보드 innerHTML/eval/fetch 0매치. 브레이커 초기화 L242-251 불변.
+- **오늘의 렌즈(승계 벡터 실코드 대입, 2026-10-26)**:
+  - **증거-평면(Slice/NEM/WAX — 섭취-측 WATCH 3/4)**: oracle.rs L205 `vault.pyth_price_feed` 결속 + `Pubkey::default()` 거부 · L297 is_stale(max_publish_age_secs) · L849 deviation_bps 검증 — 섭취-측 방어 존재. Slice 패턴(호출자-선택 소스 원시 신뢰) **NOT ACTIVE**(오라클은 온체인 계정 결복에서 옴). 잔여: 단일 오라클(Pyth) 구조 의존 — ☐105 보조 오라클 미구현 캐리.
+  - **음수-경계(WAX)**: 수수료/공제 경로 checked_sub 전수(L615/627/656/1033/1374/1467/1474)·신선도 saturating_sub(L702/1005/1690/1790/1986), max_fee 유사 파라미터 0매치 — **NOT ACTIVE(구조적)** 재확인.
+  - **제로-파라미터(Yapeswap)**: 공허 비교 `>= 0` 실질 1매치(L3296 shift 헬퍼, i32 유효범위 검사 — 무해). 쿼럼 아날로그: config.rs:432-434 키페어 정확히 3 요구(2-of-3 하드코딩) — 제로-쿼럼 구조적 불가. **방어됨**.
+  - **휴면 자격증명(AlpsCon)**: config.rs:216-217 기본 프로필 devnet-keypair.json 기본값(개발용) 존재, 프로덕션 3-키페어 검증 존재. 관찰: 키페어 경로 중복/동일파일 검사 부재 — ☐193-196 live-authority 인벤토리에 병합 권고.
+  - **GHSA-5wjr(tokio Interval 레이스, 10-23 medium)**: 취약 범위 **=1.54.0 단일**(GitHub API 원문) — 키퍼 1.49.0 범위 외 + main.rs:281 `MissedTickBehavior::Delay` → **NOT ACTIVE**(☐205과 무관, 판정 기록).
+  - **GHSA-897f(Cranelift silent miscompilation, 10-23 CRITICAL)·GHSA-4ch3(WASI 하드링크 FilePerms, 10-16)**: Cargo.lock wasmtime/cap-std 0매치 재실증 — 둘 다 **NOT ACTIVE**. 기질-평면 권고(Initia×Cranelift 10-23 독립 수렴): 보증 인벤토리에 실행 기질(SBFCL·Anchor 런타임) 명시적 신뢰 가정 명명 유지(10-25 퍼플 권고 승계 강화).
+  - **Alpenglow(10-21 메인넷 활성, 에포크 1064, ~150ms 확정성)**: 슬롯-기반 신선도/브레이커 상수(ORACLE_STALENESS_MAX L702·mint_staleness_limit L1005·브레이커 창 L1690) 재도출 **☐206 신설**(solana-specific #206) — 코드 동결 해제 시 우선. 커밋먼트 혼재(confirmed 주·processed agent_record L510/rebalance.rs:1055) finalized 승격 검토 병행.
+- **신규 CRITICAL/HIGH/MEDIUM 0**(캐리 외). ☐182·☐189·☐193~196·☐204·☐205·☐206 캐리.
+
+**블루팀 지시 우선순위(불변 + ☐206 추가)**: ① A6 1줄 핀(최장 캐리 day 79) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 + tokio ≥1.51.6 통합 리뷰 ④ audit-attestation.json 생성 ⑤ 동결 해제 시 Alpenglow 슬롯 상수 재도출(☐206).

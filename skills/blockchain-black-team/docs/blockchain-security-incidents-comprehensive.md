@@ -411,6 +411,8 @@
   **Root cause**: Durable nonce transactions remain valid indefinitely, decoupling signature time from execution time. Multisig members signed transactions they didn't understand; attacker held pre-signed admin transfers for 8+ days before execution. No code vulnerability required — the exploit lived in the time separation between review and execution.
   Vector mapping: **A94 Drift Protocol Durable-Nonce Admin Takeover** (full mechanism documented 2026-04-04), **B77 Durable Nonce Approval Laundering / Pre-Signed Multisig Admin Takeover** (generalized pattern).
   Source: https://www.coindesk.com/tech/2026/04/02/how-a-solana-feature-designed-for-convenience-let-an-attacker-drain-usd270-million-from-drift | https://techcrunch.com/2026/04/01/de-fi-platform-drift-suspends-deposits-and-withdrawals-after-millions-in-crypto-stolen-in-hack/ | https://www.theblock.co/post/396183/drift-280m-exploit-zachxbt-circle
+  **[2026-10-26 후속 — 세탁 궤적(관찰)]**: 해커 지갑 10-20/21 $122.3M ETH → Tornado Cash 520회 전송(Arkham) — 2개월 침묵 후 이동 개시. A94/B77 타임라인 관찰, 벡터 변경 없음.
+  Source: https://x.com/arkham/status/2113227479943119166
 
 - **2026-04-02 — Trust Wallet (Discord vanity URL hijack / phishing-server redirect)** — Trust Wallet's official Discord vanity URL (`discord[.]gg/trustwallet`) was hijacked and redirected users to a phishing server. SlowMist listed the incident as **Infrastructure Hijacking** with zero confirmed on-chain loss at disclosure time. Blast radius is larger than a simple fake-link scam because the compromised invite was already embedded in official channels such as website, Telegram, and blogs; users following canonical links could still land on attacker infrastructure. Check Point's Discord invite-link research explains the reusable mechanism class: expired temporary invites, reclaimed vanity links after boost loss, and lowercased-code reuse can silently rebind a previously trusted invite code to an attacker-controlled server.
   **Root cause**: trust anchor collapse in community-entry infrastructure. The protocol's official onboarding link itself became attacker-controlled. Once the invite code was rebound, all first-party surfaces pointing to that invite amplified the phishing path without needing website JavaScript compromise.
@@ -953,6 +955,8 @@
 
 - **[2026-10-13 rekt 갱신 — Bitget WATCH 갱신]** — rekt 아티클로 손실 확정 **$387.5M**(초기 $351.6M 정정). 부분 RCA: **제3자 보안 제품 침해 → 지갑 시스템 도달**, "키는 도난되지 않았다"(인증 프로세스가 설계대로 작동 = META-84 zero-forgery). 침해 제품명 미공개 → WATCH 유지(공급망 B28-인접 축 포함, RCA 미완결).
   Sources: https://rekt.news/bitget-rekt
+  **[2026-10-26 후속 — 세탁 궤적(관찰)]**: Arkham 추적 해커 지갑 $19.48M 52회 이동(비트코인 중심 — 9-24 침해 후 THORChain·Zcash 경유 관측 지속). 벡터 변경 없음 — B15 WATCH(RCA 미완결) 유지.
+  Source: https://crypto.news/bitget-hacker-moves-19-million-52-transfers
 
 - **2026-10-14 — UNCX Network 공유 베스팅 풀 (Ethereum, ~$86K — WATCH, RCA 대기)** — Blockaid 귀속. 공격자가 UNCX의 **공유(shared) 토큰 베스팅 풀**에서 인출을 실행해 **타 프로젝트가 락해 둔 토큰**까지 인출(~$86K). 뉴스-등급 사실(헤드라인 2원 교차 — The Defiant 10-14 17:38 GMT / BeInCrypto 10-14 16:51 GMT): 코드 레벨 메커니즘(경로·인가 검증 갭·엔타이틀먼트 회계 오류 여부) 미공개 → **WATCH(META-83 preliminary-grade 규율: day-1 라벨로 플레이북 금지)**. 예비 축 매핑(가설 등급): 공유 에스크로에서 포지션 간 자산 격리 부재 — **A40(외부 잔액 귀속) / A10(엔타이틀먼트≠정산 잔액) 인접**, FlashLoop(09-24)·NovaBox 계보의 베스팅-에스크로 변이 후보. RCA 공개 시 소비 경로(withdrawal이 per-position claim을 pooled balance 대비 검증하는지) 확인 후 강화 승급 심사.
   Sources: https://news.google.com/rss/articles/CBMilgFBVV95cUxNM2pvN0dCMDMzV25sYW55VVQweHVaUGdGS3k3NTZicGpUOTU2Uk9fV0RIb1VXMXdhamM2RTdvSEhZSHFiVHZLeFdmRUc0Nkh5SWl3eG9VcXV3dVRqUWJfWmNoRUNJcEVqZjd0NEo1cVQ0Y0JkYV9LU2w1bFRIQ2hFUS1nbW01QUs2bjczZ2ZDRzVmR3hvTFE (The Defiant, 10-14) | BeInCrypto/Yahoo Finance Finance-syndicated 헤드라인 (10-14)
@@ -990,9 +994,11 @@
 - **2026-10-19 — Argent-style Smart Wallet System (EVM, ~$59.8K — A4/A7 강화)** — 복구 모듈의 unrestricted recovery-period setter가 공격자 제어 기간을 deadline 산술에 넣어 timestamp를 과거로 랩어라운드; 유효 guardian 서명이 있어도 같은 트랜잭션에서 recovery를 완료해 소유권을 변경했다. 실행 모듈은 동일 서명 payload의 재사용을 거부하지 않아 한 트랜잭션에서 19회, 다른 트랜잭션에서 9회 실행되었고 MARK/WETH 저유동성 풀 거래로 손실을 확대했다. **Root cause**: 복구 상태 전이의 caller-controlled deadline 산술 + 서명 실행의 일회성/nonce 결속 부재. **Vector mapping**: A4 Access Control 강화 + A7 Signature Replay 강화; 신규 named vector 아님.
   Sources: https://hacked.slowmist.io/ | https://hub.rekt.news/ | https://x.com/SlowMist_Team/status/2112157232624476254
 
-## 2026-10-24 Incident Queue — purple-team cross-check (black succession review pending)
+## 2026-10-24 Incident Queue — purple-team cross-check (black succession adjudicated 2026-10-26)
 
 > 등록 경위: 블랙 10-24 배치(03:07)는 SlowMist 스냅샷을 "최상단 10-09 BitBay, 10-19~24 신규 0"으로 기록했으나 퍼플 04:01 KST 스냅샷에 10-17~10-23 8건 관측. 그중 Qubic(10-17)·Argent-style(10-19) 2건은 기흡수(10-19 퍼플 배치·10-21 블랙 배치 grep 실증). 잔여 6건 특이 식별자 전수 grep 0매치로 미흡수 실증 후 퍼플 큐 등록(#63 관례 준용). 원인은 백필 또는 블랙 부분 fetch(#61 대안 설명 보존 — 단정 없음). 블랙 복귀 시 승계 심사 요망. 벡터 매핑은 제안 등급.
+
+> **2026-10-26 블랙 승계 심사 확정**: ① AlpsCon — 휴면축 제4면 확정(「공개-지식 자격증명」, live-authority 인벤토리 1급 항목) ② Fearless — **A82 강화 + B121 소프트웨어-스토어 축**으로 재매핑(퍼플 B15/B17 제안 조정 — 유출 메커니즘은 A82, 채널은 B121 평면) ③ Slice — A4 강화 + 증거-평면 WATCH ① ④ NEM — A2 강화(Projekt 07-25 동일 가계) + 증거-평면 WATCH ② ⑤ WAX — A168 역방향 완성 + #63 음수-면 + 증거-평면 WATCH ③(**META-87 미승격 — 3/4**) ⑥ Kimchi — 관찰 등급 유지 ⑦ Initia — 퍼플 4축 확정(META-73 기질-면 강화·META-86 제4인스턴스·기질-포크 WATCH·무담보 발행 기질-변종). 신규 named 0·META 0·WATCH +1(듀얼-뷰, Yapeswap). 상세: attack-matrix 2026-10-26 blackteam batch.
 
 - **2026-10-18 — AlpsCon AI Trade Hub (BNB Chain — 4-레이어 조합: 휴면 공개-키 화이트리스트 자격증명 × EIP-7702 실행 × 플래시론 × 보상 회계 버그)** — Hardhat 기본 테스트 계정의 **공개된 개인키**가 KYC 화이트리스트에 약 14개월 잔존. 공격자는 EIP-7702로 해당 EOA에 코드 실행을 위임하고, USDC 플래시론으로 ALPS를 매수·스테이크한 뒤, 신규 스테이크를 과거 것으로 간주하는 회계 버그(누적 보상 청구)로 ~$152.8K 순이익 실현. 퍼플 축: **휴면축 제4면 — 공개-지식 자격증명**("소유자 부재 권한"이 아니라 "누구나 아는 키"가 권한 집합에 존재; live-authority 인벤토리 신규 1급 항목). EIP-7702 실행 수단은 기흡수 축(ether.fi A153 sub-pattern-3, WUSD.fi)의 재현 — 신규 벡터 아님. 왜 감사가 놓치는가: 감사 스코프는 회계 로직(실제 버그)이지만 익스플로잇의 권한 평면(화이트리스트 내용)은 운영 상태 — MakerDAO 키퍼(10-10)와 동일 구조(공격 표면 = 권한 집합, 감사 = 활성 코드).
   Vector mapping (제안): 휴면축(desync family 6th member, 10-10) 제4면 강화 + A153 sub-pattern-3 재현 + A2-adjacent 회계(귀속/정산-모멘트 — 10-06 MCN 패밀리).
@@ -1021,3 +1027,6 @@
 **Sources**: https://hacked.slowmist.io/ | https://www.theblock.co/news/defi/2026-10-23-initia-halts-network-after-security-incident-attacker-reportedly-mints-tokens-427755 | https://cryptoticker.io/en/initia-infinite-mint-network-halt
   Vector mapping (제안): 경제/거버넌스-평면 관찰(META-84 반향) — named 승격 없음.
   Source: https://hacked.slowmist.io/en/ (동일 스냅샷)
+
+- **2026-10-25 — Yapeswap (Ethereum AMM DEX — 제로-쿼럼 거버넌스 탈취 + 악성 Registry 듀얼-뷰, ~$21.9K)** — WorkersUnion의 **제로-쿼럼 설정**이 총 투표권의 ~0.000055%만 동원한 제안이 YapeFactory의 feeToSetter 역할 이전을 통과시키게 함. 공격자는 악성 Registry를 설치해 `latestVault()`가 가짜 볼트를 반환하게 하면서 `vaults()`는 여전히 진짜 볼트를 나열 — YapePair가 유도된 예금을 상환 가능한 주식 없이 파밍 자산으로 계상, ~$21.9K 손실. 코드-레벨 3축: ① 쿼럼 산정 ≠ 쿼럼 의미(Term Finance 0.5ETH·BonkDAO 2.9% 계보의 극단치 — **META-73 강화**) ② **듀얼-뷰 레지스트리 분기**(동일 상태에 대한 두 읽기 경로가 불일치하고 소비자·운영자가 서로 다른 뷰를 감사 — WATCH 신규 관찰 1데이터포인트, B106/B116 인접) ③ 예금-주식 발행 분리(A2-인접). 왜 감사가 놓치는가: 거버넌스 파라미터는 운영 상태(감사 스코프 외), 두 접근자의 불일치는 어느 단일 스코프에도 속하지 않는 조합 질문. Vector mapping: **META-73 강화(2026-10-26 블랙) — named 승격 없음; 듀얼-뷰 WATCH**.
+  Sources: https://x.com/SlowMist_Team/status/2114290073546219799 | https://hacked.slowmist.io/en/ (2026-10-26 03:xx KST 스냅샷; SlowMist 단일소스 — 제2소스 미확보 명시)
