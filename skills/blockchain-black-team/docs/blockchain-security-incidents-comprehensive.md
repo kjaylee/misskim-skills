@@ -1030,3 +1030,23 @@
 
 - **2026-10-25 — Yapeswap (Ethereum AMM DEX — 제로-쿼럼 거버넌스 탈취 + 악성 Registry 듀얼-뷰, ~$21.9K)** — WorkersUnion의 **제로-쿼럼 설정**이 총 투표권의 ~0.000055%만 동원한 제안이 YapeFactory의 feeToSetter 역할 이전을 통과시키게 함. 공격자는 악성 Registry를 설치해 `latestVault()`가 가짜 볼트를 반환하게 하면서 `vaults()`는 여전히 진짜 볼트를 나열 — YapePair가 유도된 예금을 상환 가능한 주식 없이 파밍 자산으로 계상, ~$21.9K 손실. 코드-레벨 3축: ① 쿼럼 산정 ≠ 쿼럼 의미(Term Finance 0.5ETH·BonkDAO 2.9% 계보의 극단치 — **META-73 강화**) ② **듀얼-뷰 레지스트리 분기**(동일 상태에 대한 두 읽기 경로가 불일치하고 소비자·운영자가 서로 다른 뷰를 감사 — WATCH 신규 관찰 1데이터포인트, B106/B116 인접) ③ 예금-주식 발행 분리(A2-인접). 왜 감사가 놓치는가: 거버넌스 파라미터는 운영 상태(감사 스코프 외), 두 접근자의 불일치는 어느 단일 스코프에도 속하지 않는 조합 질문. Vector mapping: **META-73 강화(2026-10-26 블랙) — named 승격 없음; 듀얼-뷰 WATCH**.
   Sources: https://x.com/SlowMist_Team/status/2114290073546219799 | https://hacked.slowmist.io/en/ (2026-10-26 03:xx KST 스냅샷; SlowMist 단일소스 — 제2소스 미확보 명시)
+
+- **2026-10-26 — Bloom Trading (Solana — 트레이딩 봇 제3의 모듈 RCE → 위임 서명 평면 드레인, 9,408 SOL ≈ $947K, 49지갑·9사용자)** — 크로스체인 트레이딩 자동화 플랫폼이 제3의 모듈의 원격 코드 실행(RCE) 취약점으로 침해당해 봇이 수용·위임받은 사용자 지갑 49개에서 9,408 SOL을 드레인당함. 공식 성명: 프라이빗 키 무협상·전액 보상 약속·일부 서비스 일시 중지(특정 모듈·RCE 경로 미공개, RCA 대기).
+**Root cause**: 속도 최적화를 위해 봇 백엔드가 사용자 서명 능력을 수용 — 서명 평면(키 물질이 아님)이 실질 보관 경계여서, 의존성 코드 실행이 키 없는 전체 서명 권한 장악으로 직결.
+**Vector mapping**: **B122 강화(2026-10-27 블랙)** — 수용형-키 봇 팬아웃 패밀리 제3 진입 경로(키 내보내기 기능·피싱 → 의존성 RCE) + B121 의존성 축 평면-수렴. 솔라나 체크리스트 207 신설.
+**Sources**: https://hacked.slowmist.io/en/ | https://x.com/BloomTrading/status/2114646392010359238 | https://x.com/SolanaFloor/status/2114660546830049403
+
+- **2026-10-24 — X100 (Ethereum — 플래시론 소수의석(Senate) 탈취·동일 tx 국고 강제 매도, ~$4.85M USDT)** — 공격자가 Aave에서 ~$1.94M USDT를 플래시론으로 차입해 X 토큰을 매입·락업, 3석 Senate 중 2석을 마진 ~0.000001 X로 탈취한 뒤 같은 트랜잭션에서 악성 제안을 통과·실행 — Freezer/Treasury가 공격자가 만든 얇은 유동성 풀에 400,000 X를 ~$35.68에 강제 매도하게 하고 차입을 상환해 ~$4.85M을 실현(추가 X 토큰 별도).
+**Root cause**: 쿼럼 개념 없는 소수의석 기관 + 즉시 실행 — 「마진 1 토큰 = 기관 다수당」 구조에서 락업·스냅샷 지연 등 플래시론 방어와 쿼럼 방어가 전부 무의미.
+**Vector mapping**: **C23 강화(2026-10-27 블랙)** — Beanstalk(플래시론)·BonkDAO(실자본) 계보의 소수의석 변형 + META-73 인접(공허 검증의 의석 버전, 퍼플 큐). 방어 축은 timelock·다단계 승인뿐.
+**Sources**: https://hacked.slowmist.io/en/ | https://x.com/blockaid_/status/2114006384735916278
+
+- **2026-04-30 — Wasabi Protocol (Ethereum/Base — 배포자 키 침해 → ADMIN_ROLE → 프록시 업그레이드 드레인, ~$4.55M~5M) [2026-10-27 회고 분석으로 백필]** — wasabideployer.eth 키를 장악한 공격자가 ADMIN_ROLE을 부여받고 볼트 프록시를 업그레이드해 드레인 — 권한 부여から 볼트 전량 소진까지 **108초**, 크로스체인 완결 ~28분(회고 분석 smart-alert.io 10-25 공개).
+**Root cause**: 배포자 키 단일 평면 + timelock 없는 ADMIN_ROLE 즉시 부여 + 업그레이드 가능 프록시.
+**Vector mapping**: **B15 강화(2026-10-27 블랙)** — 권한 부여→드레인 지연시간 실측 하한 갱신(108초): timelock 없는 권한 부여는 초 단위로 소진.
+**Sources**: https://smart-alert.io/blog/wasabi-admin-grant | https://drains.watch/i/wasabi-protocol-deployer-key-apr-2026
+
+- **2026-06-11→10월 — Abracadabra / MIM·SPELL (Ethereum — 윈드다운 중 재무부·거버넌스 평면 자기-참조, rekt 10-27 조사; 사고 아닌 재정 조사)** — 6월 2개 지갑이 Anubis 스튜어드십 설치 표결 통과(그중 1개는 14개월 전 재무부에서 1.6B SPELL 수령 이력) → 6-11/17 6B SPELL 디펙 기금(DCF) 전액 유출 → 6-25 8B SPELL 발행(3+3+2B) 후 Bybit/Gate/MEXC 예치주소로 각 ~2.67B 라우팅 → MIM ~16¢ 하락. 수정 윈드다운 제안의 기록된 찬성 표결력 ~75%가 재무부 자신의 멀티시그($900K 실행가능 재원 vs 외부 MIM ~$22M; SPELL 유출·발행·7월 Safe 유출의 공개 정산 부재 — rekt는 온체인 기록만 제시, 귀속 단정 없음).
+**Root cause**: 윈드다운 상태에서 발행 권한·펙 기금이 여전히 live + 표결력의 재무부 자기 공급.
+**Vector mapping**: **META-73 강화 후보**(자기-참조 공허 검증 — Yapeswap 제로-쿼럼의 대칭 극단) + **META-64 EOL 축 에코**(EOL 워크플로우가 권한 표면을 남김) — 퍼플 심사 큐행(2026-10-27 블랙).
+**Sources**: https://rekt.news/the-vanishing-act
