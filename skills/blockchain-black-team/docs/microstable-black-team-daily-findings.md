@@ -3317,3 +3317,33 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - **신규 CRITICAL/HIGH/MEDIUM 0**(캐리 외). ☐182·☐189·☐193~196·☐204·☐205·☐206 캐리.
 
 **블루팀 지시 우선순위(불변 + ☐206 추가)**: ① A6 1줄 핀(최장 캐리 day 79) ② HERMES-H1 posted_price_account 결속 ③ quinn-proto ≥0.11.18 + tokio ≥1.51.6 통합 리뷰 ④ audit-attestation.json 생성 ⑤ 동결 해제 시 Alpenglow 슬롯 상수 재도출(☐206).
+## 2026-10-29 (KST 22:45 — 지연 실행)
+
+**Evolution delta**: **0 new named vectors, 0 new META, 2 reinforcements** — zkLink Nova → A32, TranchePool → A2/A10. Hifi Finance는 C23 기존 범위. SlowMist 최신 원문에서 Solana 신규는 Bloom(10-26) 이후 0건; GitHub 10-27 rustls 4건은 기존 RUSTSEC-2026-0346~0349/☐182와 동일 alias·영향 범위, 10-28 Wasmtime/zip은 lock 0매치. Anchor/SPL 창내 exploit-class advisory 0.
+
+### PART B — 전수 대입 (실코드 재열람, day 82)
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 82일차** | `solana/programs/microstable/src/lib.rs:2395-2396`가 bare `#[account(mut)]`; Mint 경로 `:2320-2321`의 `mint::authority = protocol_state` 핀과 비대칭. 파일 mtime 2026-02-28, 작업트리는 동결 상태 |
+| **A10 / HERMES-H1 / B83** | ❌ **HIGH carry** | A10은 전달 `mstb_mint`를 burn CPI에 사용; `keeper/src/hermes.rs`의 `HermesPostedUpdate`는 `posted_price_account` 없는 7필드; `Cargo.lock:2984-2985`는 `quinn-proto 0.11.13` |
+| **B45** | ⚠️ **PARTIAL carry** | 서명된 `security/audit-attestation.json` 부재 |
+| **zkLink Nova / A32 + ☐210** | ✅ **NOT ACTIVE** | `lib.rs`·keeper에 bridge/relayer/proof/root/release 경로, `SyncL2TxHashRelayer`, `finalizeMessageHash` 0매치; 향후 브리지 추가 시 root/nonce exactly-once 게이트 필요 |
+| **TranchePool / A2·A10** | ✅ **NOT ACTIVE** | 트랑슈 vault/share/draw-capacity/date-rollover settlement/duplicate withdrawal 경로 0매치; Microstable은 고정 4담보·PDA 포지션 회계 구조 |
+| **Hifi / C23** | ✅ **NOT ACTIVE** | 온체인 거버넌스·제안 실행·토큰 투표·BalanceSheet 업그레이드 경로 0매치; keeper 변경은 고정 keeper quorum 경로 |
+| **Bloom / B122** | ✅ **NOT ACTIVE(구조)** | keeper에 `libloading`/`dlopen`/plugin 동적 로딩 0매치, `Cargo.lock`에도 해당 크레이트 0매치. 잔여는 컴파일 의존성 공급망(☐204) |
+| **GHSA-897f/9pvw·m665·rustls 4건** | ✅ **NOT ACTIVE 또는 기존 carry** | `wasmtime`, `zip` lock 0매치; rustls 0.23.36은 기존 ☐182에 포함된 0346~0349 범위로, 별도 신규 finding 아님 |
+| **D-대시보드** | ✅ **방어됨** | `docs/index.html`에서 `innerHTML`/`eval`/`document.write` 0매치, mtime 2026-02-28 |
+
+**전체 매트릭스 대입 결론**: canonical named **235 headings / 227 unique IDs**와 META·확장 체크리스트를 기존 판정표 및 오늘 신규 렌즈로 재대입했다. 신규 CRITICAL/HIGH/MEDIUM **0건**이며, 기존 A6 CRITICAL·A10/HERMES-H1/B83 HIGH·B45 PARTIAL만 유효하다. Microstable 변경 대상 코드는 수정하지 않았다.
+
+**즉시 블루팀 수정 권고(기존)**: ① Redeem `mstb_mint`에 Mint 경로와 동일한 `address`·`mint::authority` 결속 복원 ② burn CPI의 민트·ATA·protocol mint 등식 고정 ③ `HermesPostedUpdate`에 소비된 가격 계정 식별자 저장·검증 ④ `quinn-proto`/rustls 패치 및 rustls 0.21 이중 스택 제거 ⑤ 서명된 감사 증명과 배포 게이트 추가.
+
+🔴 Red Team:
+- [공격 1]: zkLink의 공개 세부 원인을 과잉 확정할 위험 → SlowMist 원문과 독립 기술 보도를 분리했고 공개된 root/hash 재사용만 기록했다. 🟢
+- [공격 2]: 새 advisory 발행일을 새 취약점으로 중복 계상할 위험 → GHSA alias와 RustSec 원문·lockfile을 대조했다. 🟢
+- [공격 3]: 235개 벡터 전수 대입을 carry-forward 복사로 오인할 위험 → 오늘 신규 렌즈는 실제 대상 파일·의존성·mtime·grep 결과를 다시 대조하고 기존 판정은 변경하지 않았다. 🟡위험수용(1)
+
+✅ Anti-rationalization: Authority Bias ✅ / Confidence Halo ✅ / Entropy Ceiling ✅ / Recency Illusion ✅ / Tool Call Halu ✅
+
+**Sources**: https://hacked.slowmist.io/ · https://blockfence.io/avalanche-tranche-vault-exploited-for-1-01-million-usdc/ · https://pwn.watch/i/fence-finance-avalanche-tranche-vault-drain-oct-2026 · https://api.github.com/advisories?ecosystem=rust&per_page=100 · https://api.github.com/advisories/GHSA-w44r-93j7-qv28 · https://api.github.com/advisories/GHSA-c8m5-c952-6cm4 · https://api.github.com/advisories/GHSA-h2v8-394m-p7vv · https://solana.com/news

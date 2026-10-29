@@ -13948,6 +13948,25 @@ Sources: https://hacked.slowmist.io/en/ (10-26 04:01 KST) · https://thehackerne
 
 **Sources**: https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-10-23T18:00:00Z (10-26/27 발행 배치) | https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/zstd/RUSTSEC-2026-0391.md · .../RUSTSEC-2026-0392.md | https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/zstd-safe/RUSTSEC-2026-0395.md · .../RUSTSEC-2026-0396.md · .../RUSTSEC-2026-0397.md · .../RUSTSEC-2026-0398.md · .../RUSTSEC-2026-0400.md | https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/rustls-ffi/RUSTSEC-2026-0413.md | https://github.com/gyscos/zstd-rs/pull/384 | https://api.github.com/repos/coral-xyz/anchor/commits?since=2026-10-23T18:00:00Z (0) · https://api.github.com/repos/solana-labs/solana-program-library/commits?since=2026-10-23T18:00:00Z (0) | http://export.arxiv.org/rss/cs.CR (10-27 스윕 — 블록체인 후보 8편 전부 비공격) | https://blog.trailofbits.com/ (10-21 lastBuildDate 승계 + 10-27 백포트=블랙 선행흡수) | https://www.certora.com/ (HTTP 200 — ENOTFOUND 회복, 신규 무풍) | misskim-skills git a32055a, microstable git 23c0163 (cargo tree -i zstd-safe · cargo update --dry-run 실측)
 
+### 2026-10-29 blackteam batch — zkLink Nova 증명-상태 재생(A32 강화) + TranchePool 날짜경계 정산 재사용(A2/A10 강화) (신규 named 0 · META 0 · 체크리스트 210)
+
+- **창**: 2026-10-28 03:00 → 2026-10-29 22:45 KST. SlowMist 최신 원문, Blockfence/Pwn 재현 보도, GitHub Advisory API, Anchor/SPL 커밋, Solana 공식 뉴스, Trail of Bits/OtterSec/Neodyme/RV 공개 인덱스를 대조했다.
+- **zkLink Nova(10-29, ~$783.1K)**: 공개 호출 가능 `SyncL2TxHashRelayer`와 Arbitrator의 transient `finalizeMessageHash` 미소거가 결합됐다. 공격자는 먼저 정상 hash를 채운 뒤 같은 권위 있는 gateway 신원 아래 공격자 선택 `l2LogsRootHashes`를 설치하고, 위조 proof로 ETH/ERC20 출금을 통과시켰다. 이는 receiver를 완전히 우회한 A48이 아니라 의도된 relay/proof 경로 안에서 **정상-looking 증거의 freshness·uniqueness·root binding을 놓친 A32**다. **A32 강화**, 새 벡터 아님.
+- **TranchePool(10-28, ~$1.013M)**: UTC 날짜 경계에서 예정된 principal payment를 실제 USDC 수령으로 오인해 outstanding principal을 줄이고 draw capacity를 복원했다. 공격자는 flash loan으로 초기 자금을 마련한 뒤 같은 withdrawal parameters를 재제출해 동일 금액을 재인출했다. **A2 flash-loan/settlement-boundary + A10 회계 상태 전이 비대칭 강화**, 새 벡터 아님.
+- **Hifi Finance(10-28, ~$1M)**: Tornado Cash 자금 주소의 막판 4표로 Proposal 21을 통과시켜 BalanceSheet 업그레이드·25M HIFI 민트·담보 드레인을 수행한 거버넌스 공격. **C23 기존 범위**이며 신규 delta 없음.
+- **Advisory/research**: 10-27 rustls GHSA 4건은 기존 RUSTSEC-2026-0346~0349/☐182와 동일한 영향 범위의 GitHub 재게시다. 10-28 Wasmtime Cranelift와 zip advisory는 Microstable `Cargo.lock`에서 각각 0매치라 NOT ACTIVE. Anchor 10-28 릴리스 커밋과 SPL 창내 커밋은 새 Solana/Anchor/SPL exploit-class advisory가 아니다. Immunefi는 JS 렌더 관측불가로 침묵 판정하지 않았다.
+- **PART B Microstable**: `lib.rs`에는 bridge/relayer/proof/root/withdrawal replay 경로가 없고, keeper에도 `SyncL2TxHashRelayer`·bridge root·tranche settlement·governance execution이 없다. `docs/index.html`은 오늘 sink grep에서 `innerHTML`/`eval`/`document.write` 0매치. **A32·A2/Tranche·C23·B122 신규 렌즈는 NOT ACTIVE**. 기존 **A6 CRITICAL day 82**(`Redeem.mstb_mint` bare `#[account(mut)]`, lib.rs:2395-2396; Mint path :2320-2321 핀)와 A10/HERMES-H1/B83 HIGH, B45 PARTIAL은 캐리.
+- **Matrix state**: 신규 named 0 · 신규 META 0 · A32 1건 + A2/A10 1건 강화 · ☐210 신설 · named 235/unique 227 불변 · 신규 CRITICAL/HIGH/MEDIUM 0.
+
+🔴 Red Team:
+- [공격 1]: zkLink의 상세 RCA가 아직 공개되지 않은 상태에서 transient-state 원인을 단정할 위험 → 방어: SlowMist 원문과 독립 기술 재현 보도를 분리 인용하고, `finalizeMessageHash` 재사용·root 교체처럼 공개된 메커니즘만 기록. 🟢극복
+- [공격 2]: TranchePool의 flash loan을 새 벡터로 과대분류할 위험 → 방어: flash loan은 자금 조달 수단이고 실제 결함은 날짜경계 회계·동일 출금 재사용이므로 A2/A10 강화로 제한. 🟢극복
+- [공격 3]: GitHub advisory API의 최신 발행 시각을 새 취약점으로 중복 계상할 위험 → 방어: GHSA alias와 RustSec 원문을 대조해 ☐182 재게시로 판정. 🟢극복
+
+✅ Anti-rationalization: Authority Bias ✅(SlowMist·RustSec/GitHub 원문 및 독립 기술 보도 직접 확인) / Confidence Halo ✅(zkLink 공개 RCA 범위와 미확인 세부사항 분리) / Entropy Ceiling ✅(신규 named/META 0, checklist 1만 추가) / Recency Illusion ✅(Solana 필터 최신 Bloom 10-26 이후 신규 0, 전체 레인과 분리) / Tool Call Halu ✅(실코드 grep·Cargo.lock·mtime 원문 재실증)
+
+**Sources**: https://hacked.slowmist.io/ (zkLink Nova 2026-10-29; TranchePool/Hifi 2026-10-28) | https://blockfence.io/avalanche-tranche-vault-exploited-for-1-01-million-usdc/ | https://pwn.watch/i/fence-finance-avalanche-tranche-vault-drain-oct-2026 | https://api.github.com/advisories?ecosystem=rust&per_page=100 | https://api.github.com/advisories/GHSA-w44r-93j7-qv28 | https://api.github.com/advisories/GHSA-c8m5-c952-6cm4 | https://api.github.com/advisories/GHSA-h2v8-394m-p7vv | https://api.github.com/advisories/GHSA-mghf-wjfp-p5xm | https://api.github.com/repos/coral-xyz/anchor/commits?since=2026-10-22T00:00:00Z | https://api.github.com/repos/solana-labs/solana-program-library/commits?since=2026-10-22T00:00:00Z | https://solana.com/news | https://blog.trailofbits.com/index.xml | https://osec.io/blog/ | https://neodyme.io/blog/
+
 ### 2026-10-27 redteam batch — A170 zstd 오류-경로 미초기화 출력군(연구등급) + ☐208 의존성 패치 천장 (신규 named 1 · CRITICAL/HIGH 0)
 
 - **창**: 2026-10-23 18:30Z → 2026-10-27 12:00Z(레드 10-25·10-26 결석 회차 포함 4일 창). 블랙 10-27 03:xx 선행 런(git a32055a)이 사고 평면(Bloom·X100·Wasabi·Abracadabra)과 ToB 10-27 백포트 포스트를 일반 강화로 승계 — 레드는 미래 기법 레인 전담(분업 기록).

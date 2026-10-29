@@ -994,6 +994,17 @@
 - **2026-10-19 — Argent-style Smart Wallet System (EVM, ~$59.8K — A4/A7 강화)** — 복구 모듈의 unrestricted recovery-period setter가 공격자 제어 기간을 deadline 산술에 넣어 timestamp를 과거로 랩어라운드; 유효 guardian 서명이 있어도 같은 트랜잭션에서 recovery를 완료해 소유권을 변경했다. 실행 모듈은 동일 서명 payload의 재사용을 거부하지 않아 한 트랜잭션에서 19회, 다른 트랜잭션에서 9회 실행되었고 MARK/WETH 저유동성 풀 거래로 손실을 확대했다. **Root cause**: 복구 상태 전이의 caller-controlled deadline 산술 + 서명 실행의 일회성/nonce 결속 부재. **Vector mapping**: A4 Access Control 강화 + A7 Signature Replay 강화; 신규 named vector 아님.
   Sources: https://hacked.slowmist.io/ | https://hub.rekt.news/ | https://x.com/SlowMist_Team/status/2112157232624476254
 
+## 2026-10-29 — zkLink Nova / TranchePool / Hifi Finance
+
+- **zkLink Nova (10-29, cross-chain bridge, ~$783.1K)** — 공개 호출 가능한 `SyncL2TxHashRelayer`와 Arbitrator의 transient `finalizeMessageHash` 미소거가 결합됐다. 먼저 정상 hash를 저장한 뒤 이를 재사용해 공격자 선택 `l2LogsRootHashes`를 정당 gateway 신원 아래 설치하고, forged proof로 ETH/ERC20 출금을 통과시켰다. **Vector mapping: A32 강화** — 의도된 relay/proof 경로에서 freshness·uniqueness·root binding이 빠진 증명-상태 재생. A48처럼 receiver를 완전히 우회한 사건으로 분류하지 않는다.
+  **Sources**: https://hacked.slowmist.io/ (2026-10-29 원문) · https://x.com/SlowMist_Team/
+
+- **TranchePool / Fence Finance·Valinor Digital·Oatfi (10-28, Avalanche, ~$1.013M)** — UTC 날짜 경계의 scheduled principal payment를 실제 USDC 수령으로 잘못 계상해 outstanding principal을 줄이고 draw capacity를 복원했다. 공격자는 flash loan으로 초기 자금을 만들고 동일 withdrawal parameters를 재제출해 같은 금액을 재인출했다. **Vector mapping: A2/A10 강화** — flash loan은 조달 수단이고, 근본 원인은 날짜경계 정산 상태 전이와 가치 수령 검증의 비대칭이다.
+  **Sources**: https://hacked.slowmist.io/ · https://blockfence.io/avalanche-tranche-vault-exploited-for-1-01-million-usdc/ · https://pwn.watch/i/fence-finance-avalanche-tranche-vault-drain-oct-2026
+
+- **Hifi Finance (10-28, Ethereum, ~$1M)** — Tornado Cash로 자금이 공급된 주소들이 막판 4표로 Proposal 21을 통과시켜 BalanceSheet를 업그레이드하고 25M HIFI를 민트한 뒤 사용자 담보를 인출했다. **Vector mapping: C23 기존 거버넌스 공격** — 신규 벡터나 새 메커니즘은 아니다.
+  **Source**: https://hacked.slowmist.io/
+
 ## 2026-10-24 Incident Queue — purple-team cross-check (black succession adjudicated 2026-10-26)
 
 > 등록 경위: 블랙 10-24 배치(03:07)는 SlowMist 스냅샷을 "최상단 10-09 BitBay, 10-19~24 신규 0"으로 기록했으나 퍼플 04:01 KST 스냅샷에 10-17~10-23 8건 관측. 그중 Qubic(10-17)·Argent-style(10-19) 2건은 기흡수(10-19 퍼플 배치·10-21 블랙 배치 grep 실증). 잔여 6건 특이 식별자 전수 grep 0매치로 미흡수 실증 후 퍼플 큐 등록(#63 관례 준용). 원인은 백필 또는 블랙 부분 fetch(#61 대안 설명 보존 — 단정 없음). 블랙 복귀 시 승계 심사 요망. 벡터 매핑은 제안 등급.
