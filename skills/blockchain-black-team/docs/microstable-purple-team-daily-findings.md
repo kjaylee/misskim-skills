@@ -154,3 +154,14 @@ Compared to black team's attack-matrix.md and red team references:
 - **Initia 브리지-아웃 비대칭 렌즈**: Microstable 가치 평면 = 원생 SPL 자산의 동일 체인(Solana) 거주. 크로스체인 표현·브리지 평면 부재 → 프로그램-평면 액추에이터(브레이커+비상정지, 10-20 실측)가 자산 평면을 포함 — Initia형 '할트 전 브리지 아웃' 탈출 경로 구조적 부재. NOT ACTIVE.
 - **기질-포크 상속 WATCH 대응**: 단일 배포 체인(Solana) — VM 포크 패치 전파 문제와 직접 무관. WATCH는 참조 기록으로만 캐리.
 - ☐182 rustls·☐189·☐193~☐196·☐204·☐205 캐리. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**.
+
+## 2026-10-30 Purple Team Daily Evolution — 캐시-권위·표현 등가 드리프트 렌즈 (신규 결함 0)
+
+- **경계**: Keeper↔On-chain / Oracle↔Price↔Mint·Redeem / Agent↔Governance / Dashboard↔RPC. Initia stale script approval, Certora SDK representation mismatch, Certora Solana cross-instruction audit guidance를 대입했다.
+- **A6 CRITICAL carry-forward**: HEAD `23c0163`, dirty 작업트리, `lib.rs` mtime 2026-02-28 13:21:13 재확인. Mint `lib.rs:2321`의 `mint::authority = protocol_state` 고정과 대조해 Redeem `lib.rs:2396`의 bare `#[account(mut)] mstb_mint`가 그대로 남아 있다.
+- **HERMES-H1 HIGH carry-forward**: `keeper/src/hermes.rs`의 `HermesPostedUpdate`는 `symbol/collateral_index/price/confidence/publish_time/observed_slot/signature`만 보유하며 `posted_price_account` 식별자 결속이 없다. A6와 함께 기존 release blocker다.
+- **새 렌즈 판정**: 프로그램·키퍼에 Initia식 script approval/cache/VM 구현이나 애플리케이션 bridge-relayer 출금 경로는 확인되지 않았다. `Proof` 매치는 Pyth accumulator 입력 경로이며 공격자 승인 캐시가 아니다. 따라서 **캐시-권위 무효화·브리지-출구 변종 NOT ACTIVE**. Agent governance는 존재하므로 향후 정책·파라미터 캐시를 도입할 경우 코드/스키마 버전과 전체 입력을 승인 키에 결박하는 게이트를 추가한다.
+- **대시보드**: RPC `fetch`는 기존 Dashboard↔RPC 정상 운영 경로로 확인했으며, 이번 창에 새 sink finding으로 승격하지 않았다.
+- **판정**: 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**. A6·HERMES-H1·B83·B45·upgrade authority 미실증 및 기존 운영 캐리 승계.
+
+**Sources**: https://rekt.news/initia-rekt · https://www.certora.com/blog/cve-2026-32322-soroban-sdk-bug · https://www.certora.com/blog/auditing-smart-contracts-solana
