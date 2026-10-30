@@ -165,3 +165,14 @@ Compared to black team's attack-matrix.md and red team references:
 - **판정**: 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**. A6·HERMES-H1·B83·B45·upgrade authority 미실증 및 기존 운영 캐리 승계.
 
 **Sources**: https://rekt.news/initia-rekt · https://www.certora.com/blog/cve-2026-32322-soroban-sdk-bug · https://www.certora.com/blog/auditing-smart-contracts-solana
+## 2026-10-31 Purple Team Daily Evolution — Binance 제출-경로 렌즈(무-키-유출·누적-윈도) 적용, A6 day 84 재실증 (신규 결함 0 · WATCH +1)
+
+- **1차 실증**: HEAD `23c0163`(블랙 09-13 이후 불변)·dirty 40파일. Mint `lib.rs:2320` `mint::authority = protocol_state` 핀 정상 ↔ Redeem 측 `lib.rs:2396` bare `#[account(mut)] mstb_mint` 재실증 → **A6 CRITICAL day 84**(블랙 10-28 day 81 기준 일진법). HERMES-H1(`HermesPostedUpdate` posted_price_account 미결속) 그대로 캐리.
+- **경계 스윕(창 10-30 04:00 → 10-31 04:00 KST)**: Keeper↔On-chain / Oracle↔Price↔Mint·Redeem / Agent↔Governance / Dashboard↔RPC에 Binance $5.9~6.3B 침해(발생 10-29 20:30 UTC = 10-30 05:30 KST — 10-30 퍼플 창 마감 1.5시간 후, 퍼플/블랙/레드 전 레인 미흡수)를 대입.
+- **제출-경로 렌즈(Keeper↔On-chain)**: Binance 공격은 개인키 유출 없이 "이미 출금 제출이 신뢰된" 내부 service container의 권한을 상속(submission-path facet — Bybit B57의 approval-UI facet과 구별). Microstable 등가 질문: "키퍼 키 하나가 침해되면 무엇을 제출할 수 있는가" — 답은 오라클 가격 게시(HERMES/Pyth)이며 mstb 발행·상환 직접 제출 경로가 아님. 단 허위 가격이 게시되면 per-tx/per-slot 상한이 최종 둑인데, `hourly|daily|per_hour|cumulative` lib.rs grep **0매치** — 시간-윈도 누적 상한 없이 slot-window(6%/3%·refresh_slot_flow_window)만 존재. 오늘날 NOT ACTIVE(허위 게시 경로 자체가 HERMES-H1 posted-account 결속 + 2-of-3 서명 게이트 뒤)지만 **누적-윈도 맹점 WATCH**를 매트릭스에 등록(승격 기준: +1 생산 데이터포인트 → META 후보; Ronin 2022 6일 인출이 역사 수렴).
+- **동결-평면 렌즈(Oracle↔Price↔Mint·Redeem)**: Binance 억제는 발행자 프리즈 연합(Tether $1.57B·Circle $800M·Ripple·WLF·Arbitrum SC·First Digital ≈ $3B, 도난액 ~50%)이었음 — "누가 무것을 동결할 수 있는가"는 감사 스코프 밖 비명시 보안 의존성. Microstable은 mstb 원생 발행 + 4-브레이커(L242-251)·비상정지를 프로그램이 자체 소유 → 외부 발행자-프리즈 의존 구조적 부재(NOT ACTIVE, 10-25 "자산 평면이 프로그램-평면 브레이커에 포함" 판정 승계).
+- **Agent↔Governance / Dashboard↔RPC**: Binance형 내부 service container 제출 경로·거버넌스 승인 큐에 해당하는 평면 없음 — 기존 판정 승계.
+- **판정**: 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH **0**. A6·HERMES-H1·B83·B45 partial·upgrade authority 미실증 캐리. WATCH +1(누적-윈도 — 매트릭스 purpleteam 2026-10-31 배치 참조).
+
+**Sources**: microstable git 23c0163(lib.rs sed/grep 1차 실증) · https://deixtra.com/blog/binance-hack-october-2026-what-we-know · https://www.bbc.com/news/live/cqrmynd3042gt
+
