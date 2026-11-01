@@ -1,3 +1,21 @@
+## 2026-11-01 (KST 12:42 — 스케줄 03:00 지연 실행)
+
+**Evolution delta**: **0 new named vectors, 5 reinforcements** — D26 관측-벤더 스크립트 평면(Polymarket Intl·DebugBear) / D26 registrar 3차 실증(Flap) / B15 문서-사이트 상류 공급망(Predict.fun) / B15 민트-권한 상류 액세스 키(Diamante) / A153 미래-배포 주소 선승인(Avalanche Safe 멀시그). + **timeline 7건 회수**(Binance 10-29 · Polymarket Intl 10-29 · Safe 멀시그 10-26 · Predict.fun 10-27 · Diamante 10-27 · Flap 10-31 · VergeX 10-31 — 이중 10-26/27 3건은 grep 0매치 미흡수 실증 후 회수, 10-24 큐 사례와 동일 백필/부분-fetch 인프라 한계 가능성·원인 단정 없음) + russh **GHSA-vp5q-ff62-jwqv**(CVE-2026-116794, confirm-constraint bypass 0.50.0-beta.12~0.64.1) 신규 발행 **NOT ACTIVE**(트리 밖) + ToB 10-21 patching-bugs·regression-hunt AI 패칭 플러그인(B29/META-70 방어측, 회귀 FP 25% 감소 보고). anchor-spl affects 어드바이저리 0건.
+
+### PART B — 전수 대입 (live code, day 85 — 11-01 03:42 UTC)
+
+| 벡터/렌즈 | 판정 | 근거 (live code) |
+|---|---|---|
+| **A6 (mstb_mint bare mut)** | ❌ **CRITICAL 85일차** | lib.rs:2395-2396 bare `#[account(mut)]` vs :2320-2321 `mint::authority = protocol_state` 핀 — 금일 라인 재열람(출력 보존). HEAD 23c0163 동결 |
+| A10 / HERMES-H1 / B83 / B45 | ❌ HIGH×2 + PARTIAL carry | hermes.rs:60-68 `HermesPostedUpdate` 7필드(`posted_price_account` 부재) 재실증 · Cargo.lock quinn-proto 0.11.13 · rustls 0.21.12+0.23.36 이중 스택 · zstd-safe 7.2.4 · anchor-lang 0.31.1 전부 재실증 |
+| **신규 렌즈 ① 관측-벤더 스크립트(D26)** | ✅ NOT ACTIVE | index.html 외부 로드 0건 — `./vendor/solana-web3-1.95.3.iife.min.js`+`./app.js` 전부 로컬 벤더링(grep `src=http`/`href="http`/`fetch(`/XHR/XSS sink 0매치) |
+| **신규 렌즈 ② 문서-사이트 상류(B15/Predict.fun)** | ✅ NOT ACTIVE(코드 평면) | keeper/src ssh·russh 0매치 — 에이전트 서명 평면 부재. 문서/호스팅·레지스트라 통제는 오프체인(D26 ☐지시문 캐리: 레지스트라 MFA·정적 호스팅) |
+| **신규 렌즈 ③ 미래-배포 주소 선승인(A153/Safe)** | ✅ NOT ACTIVE | lib.rs `approve`/`delegate` 0매치 — 프로그램 내 승인 부여 경로 부재(B45 사용자-ATA 위임 PARTIAL 캐리) |
+| **신규 렌즈 ④ russh confirm-bypass** | ✅ NOT ACTIVE | Cargo.lock russh 0매치 — GHSA-vp5q-ff62-jwqv 영향 범위 밖 |
+| 시간-경계 회계(A2/A10 TranchePool) | ✅ NOT ACTIVE | lib.rs+keeper/src `day_rollover`/`hourly`/`daily`/`cumulative` 0매치(테스트 epoch 카운터만 — 정산 경로 아님) — red 10-31 실측과 정합 |
+
+코드 동결 실증: `find -newermt 2026-03-01` → 소스 0건(optimizer_checkpoint.json 상태 파일만 갱신). **신규 CRITICAL/HIGH/MEDIUM 0** → 즉시 알림 미발동(A6는 85일차 스탠딩·매일 보고 중). **블루팀 지시 불변(유효 85일)**: ① A6 1라인 핀(`mstb_mint`에 address=·authority 결속) ② keeper `HermesPostedUpdate`에 `posted_price_account` 필드 추가 ③ `cargo update -p rustls -p quinn-proto`.
+
 ## 2026-10-28 (KST 03:00)
 
 **Evolution delta**: **0 new named vectors, 0 reinforcements — 전 레인 무풍**. rekt 1면 전건 기흡수(grep 실증 12/12: Bitget·Liquid·Tectonic·Nomic·Nostra·Near Intents·Duelbits·Balancer·SingularityNET·CryptoBilis·factory-sealed 등), SlowMist 창내(10-27~28) 신규 0(최신 10-26 Bloom = B122 기흡수), GitHub Advisory anchor-lang 최신 2건(2026-05 발표 GHSA-429q/c6rc) 기존 존재 실증·solana-program/spl-token/solana-sdk/anchor-spl 창내 0, Neodyme 최신 SwitchBot 10-26(하드웨어, Solana 무관), ToB 어제 10-27 백포트 포스트 흡수 승계, Immunefi JS-blank 관측불가 승계(미관측≠조용). Xchange 재관측 → **기각 유지**(동일 단일 Facebook 소스·2차 소스 미확증, 원칙 #61).

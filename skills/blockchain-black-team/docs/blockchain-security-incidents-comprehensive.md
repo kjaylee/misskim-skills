@@ -1005,6 +1005,29 @@
 - **Hifi Finance (10-28, Ethereum, ~$1M)** — Tornado Cash로 자금이 공급된 주소들이 막판 4표로 Proposal 21을 통과시켜 BalanceSheet를 업그레이드하고 25M HIFI를 민트한 뒤 사용자 담보를 인출했다. **Vector mapping: C23 기존 거버넌스 공격** — 신규 벡터나 새 메커니즘은 아니다.
   **Source**: https://hacked.slowmist.io/
 
+## 2026-11-01 — 창 회수: Binance / Polymarket Intl / Safe 멀시그 / Predict.fun / Diamante / Flap / VergeX
+
+- **Binance (10-29, Ethereum·다중 체인, ~$5.9-6.3B)** — DevOps 엔지니어 노트북 침해 경로로 핫월렛(Binance 14 등)이 EIP-7702 위임으로 제어되어 다중 체인 스윕. 입출금 정지·사용자 전액 보상·스테이블코인 발행사 대규모 동결. 매트릭스 메커니즘·메타 처리는 퍼플 10-31(META-82 재배치 앵커·제출-경로 인가 우회)·레드 10-31 소관 — 본 엔트리는 블랙 타임라인 보강(중복 금지). **Vector mapping: B15/D27 계열(퍼플 META-82)**
+  Sources: https://hacked.slowmist.io/ (2026-10-29) · https://x.com/binance/status/2115993361517891592
+
+- **Polymarket International (10-29, ~$2.65-2.7M)** — 서드파티 웹 성능 모니터링 벤더 **DebugBear** 침해 → 악성 JavaScript가 일부 사용자 계정에서 자금 인출. ~1시간 거래 정지 후 재개, 전액 보상·영국 법 집행 의뢰. **Vector mapping: D26 강화 — 신규 서브패싯 「관측-벤더 스크립트 평면」**(사이트가 직접 포함하지 않은 분석/모니터링 스크립트가 정상 도메인에서 실행). 2026-06-25 Polymarket 프론트엔드 인젝션(별건, L176)과 구분 — 날짜·금액·표적으로 식별.
+  Sources: https://hacked.slowmist.io/ (2026-10-29) · https://x.com/PolymarketTrade/status/2115874609014726842
+
+- **Avalanche 2-of-7 Safe 멀시그 (10-26, ~$7.45M)** — 무제한 승인이 **코드가 아직 배포되지 않은 주소**(누구나 배포 가능 misconfig)에 부여. 공격자 배포 시도를 MEV 봇이 선점해 선탈취(화이트햇 주장·5-10% 바운티 협상). **Vector mapping: A153 강화 — 신규 페이싯 「미래-배포 주소 선승인」**(승인 시점 수혜자 미정 → 최초 배포자가 수혜자 선택)
+  Sources: https://hacked.slowmist.io/ (2026-10-26) · https://x.com/DefimonAlerts/status/2115005055619260758
+
+- **Predict.fun (10-27, ~$397.7K)** — 서드파티 API 문서 사이트 침해 → Kernel/ZeroDev 기반 29 사용자 스마트지갑 owner 키 유출 → 10-22·10-27 두 차례 드레인. 프로토콜 컨트랙트 무결·전액 보상·포스트모템 예고. **Vector mapping: B15/B122 강화 — 「문서/API 사이트 = 키 평면의 상류 공급망」**
+  Sources: https://hacked.slowmist.io/ (2026-10-27) · https://x.com/predictdotfun/status/2115089547528950108
+
+- **Diamante (10-27, BSC)** — 회사 액세스 키 도난으로 $DIAM 컨트랙트 제어 → 161M 무단 민트 → 거래소 협조 ~70% 동결·신규 MPC 지갑 전환. **Vector mapping: B15 강화 — 민트 권한의 상류 액세스 키**(Microstable mint-authority 키 위생 직결 렌즈)
+  Sources: https://hacked.slowmist.io/ (2026-10-27) · https://x.com/diamante_io/status/2115183662954356858
+
+- **Flap (10-31)** — 도메인 레지스트라 수준 DNS 하이재킹 → flap.sh가 악성 클론(StepDrainer 배포)으로 리다이렉트 → 무한 승인 서명 드레인. flap.cool으로 이주. **Vector mapping: D26 registrar-layer 3번째 실증**(Neutrl 03-19 · CoW Swap 04-14 계보)
+  Sources: https://hacked.slowmist.io/ (2026-10-31) · https://x.com/flapdotsh/status/2116400269445509360
+
+- **VergeX (10-31, $3.7K, Unknown)** — 공격 트리거 출금 인증 이메일 발송, 1분 내 위험 통제·전액 반환. 마이너·타임라인만.
+  Sources: https://hacked.slowmist.io/ (2026-10-31) · https://x.com/vergex_ai/status/2116549211110129781
+
 ## 2026-10-24 Incident Queue — purple-team cross-check (black succession adjudicated 2026-10-26)
 
 > 등록 경위: 블랙 10-24 배치(03:07)는 SlowMist 스냅샷을 "최상단 10-09 BitBay, 10-19~24 신규 0"으로 기록했으나 퍼플 04:01 KST 스냅샷에 10-17~10-23 8건 관측. 그중 Qubic(10-17)·Argent-style(10-19) 2건은 기흡수(10-19 퍼플 배치·10-21 블랙 배치 grep 실증). 잔여 6건 특이 식별자 전수 grep 0매치로 미흡수 실증 후 퍼플 큐 등록(#63 관례 준용). 원인은 백필 또는 블랙 부분 fetch(#61 대안 설명 보존 — 단정 없음). 블랙 복귀 시 승계 심사 요망. 벡터 매핑은 제안 등급.
