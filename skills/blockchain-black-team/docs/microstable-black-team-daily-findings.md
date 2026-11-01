@@ -3365,3 +3365,32 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 ✅ Anti-rationalization: Authority Bias ✅ / Confidence Halo ✅ / Entropy Ceiling ✅ / Recency Illusion ✅ / Tool Call Halu ✅
 
 **Sources**: https://hacked.slowmist.io/ · https://blockfence.io/avalanche-tranche-vault-exploited-for-1-01-million-usdc/ · https://pwn.watch/i/fence-finance-avalanche-tranche-vault-drain-oct-2026 · https://api.github.com/advisories?ecosystem=rust&per_page=100 · https://api.github.com/advisories/GHSA-w44r-93j7-qv28 · https://api.github.com/advisories/GHSA-c8m5-c952-6cm4 · https://api.github.com/advisories/GHSA-h2v8-394m-p7vv · https://solana.com/news
+
+## 2026-11-02 (KST 03:00 — 정시)
+
+**Evolution delta**: **0 new named vectors, 0 new META, 1 reinforcement(대형) + 1 WATCH** — Initia RCA(rekt 11-01 공개) → **B114 제2 인스턴스·크로스-기질 패밀리 승격**(MoveVM 스크립트-검증 캐시: 롤백 생존 + 동일 주소 재발행 문맥 치환, "checked once, trusted twice") · b14g(10-31, $1.36M) WATCH 신규(메커니즘 Unknown, 예비 B15/A4) · russh/pageant DoS 4건(662x/fw5c/9wfm/4p9f)+Cedar c33x 트리 0매치 NOT ACTIVE · OSV anchor-lang 4건 기매핑(0.31.1 영향 밖) · 싱가포르 $3.5M=B121 에코·Ekubo 기흡수.
+
+### PART B — 전수 대입 (실코드 재열람, day 86)
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 86일차** | lib.rs:2395-2396 bare `#[account(mut)]` vs :2320 `mint::authority = protocol_state` 핀 — 오늘 sed 재열람. HEAD 23c0163·mtime 2026-02-28 동결 |
+| **A10 / HERMES-H1 / B83 / ☐182 / B45** | ❌ HIGH / ⚠️ carry | A10 burn CPI :1360-1369 · hermes.rs `HermesPostedUpdate` 7필드 · quinn-proto 0.11.13(Cargo.lock:2984-2985) · rustls 0.21.12+0.23.36 듀얼스택(:3296/:3308) · audit-attestation.json 부재(ls 재확인) |
+| **B114-Initia (스크립트-캐시/낡은 판정 재사용)** | ✅ **DEFENDED** | 프로그램 캐시 구조물 0매치; `pending_reveal` 디스크 판정은 소비 시점 온체인 commit_hash 재결속(rebalance.rs:242-247)+만료 GC(:216-228)+HMAC/권한 게이트(:1199-1230); rotate_keeper_set 커밋 재쿼럼+타임락+pending 재결속(lib.rs:1895-1931) |
+| **b14g (프로토콜 보관 인출 권한)** | ✅ NOT ACTIVE(구조적) | 담보 이동 = 사용자 서명 burn(:1353-1360 선행 검사) 또는 2-of-3 쿼럼 — 단일 키 인출 레일·스테이크 수용 구조 부재 |
+| **russh/pageant 4건·Cedar** | ✅ NOT ACTIVE(트리 밖) | `solana/Cargo.lock` russh/pageant/cedar 0매치 |
+| **D-대시보드** | ✅ 방어됨 | docs/index.html innerHTML/eval/document.write 0매치 |
+
+**전체 매트릭스 대입 결론**: canonical named 235 headings/227 IDs + META·체크리스트 재대입 — 신규 CRITICAL/HIGH/MEDIUM **0**, 기존 A6 CRITICAL·A10/HERMES-H1/B83 HIGH·☐182 MEDIUM·B45 PARTIAL 캐리 유효. 대상 코드 수정 없음.
+
+**즉시 블루팀 수정 권고(기존 ①~⑤ 불변 + 신규 ⑥)**: ① Redeem `mstb_mint`에 Mint 경로와 동일한 `address`·`mint::authority` 결속 복원 ② burn CPI의 민트·ATA·protocol mint 등식 고정 ③ `HermesPostedUpdate`에 소비된 가격 계정 식별자 저장·검증 ④ `quinn-proto`/rustls 패치 및 rustls 0.21 이중 스택 제거 ⑤ 서명된 감사 증명과 배포 게이트 추가. ⑥(신규, B114 계열 예방): 영속 판정(pending_reveal 디스크 체크포인트 등)의 **소비-시점 온체인 재결속 + 만료 가비지컬렉션** 속성을 회귀 테스트로 고정하라 — 이 속성이 깨지는 순간 Initia급(롤백 생존 검증 캐시) 사고로 직결된다. 오늘 실측에서 이 속성은 양호(rebalance.rs:242-247 재결속·:216-228 만료 폐기).
+
+🔴 Red Team:
+- [공격 1]: B114-Initia 렌즈 판정이 "지금 캐시가 없다"는 현재 시점 논증일 수 있다 → 방어: 미래 유발 트리거(B114 본문 latent 3종) 승계 + 신규 ⑥ 권고로 속성을 테스트로 고정해 회귀 방지. 🟢
+- [공격 2]: 0xCanzi 재현은 실제 공격 서열 미확정 → 방어: "가능한 메커니즘" 등급 분리 인용, Initia 공식 성명과 구분. 🟢
+- [공격 3]: b14g 예비 매핑 과잉 → 방어: WATCH·provisional 명시, 승격 조건=RCA 공개. 🟢
+- [합의]: 🟢극복
+
+✅ Anti-rationalization: Authority Bias ✅ / Confidence Halo ✅ / Entropy Ceiling ✅ / Recency Illusion ✅ / Tool Call Halu ✅
+
+**Sources**: https://rekt.news/initia-rekt · https://hacked.slowmist.io/ (2026-11-01 18:01 UTC) · https://x.com/b14g_network/status/2116570456245596580 · https://api.osv.dev/v1/query · microstable HEAD 23c0163 — lib.rs/rebalance.rs/hermes.rs/Cargo.lock/index.html 2026-11-02 전수 실측
