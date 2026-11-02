@@ -3394,3 +3394,19 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 ✅ Anti-rationalization: Authority Bias ✅ / Confidence Halo ✅ / Entropy Ceiling ✅ / Recency Illusion ✅ / Tool Call Halu ✅
 
 **Sources**: https://rekt.news/initia-rekt · https://hacked.slowmist.io/ (2026-11-01 18:01 UTC) · https://x.com/b14g_network/status/2116570456245596580 · https://api.osv.dev/v1/query · microstable HEAD 23c0163 — lib.rs/rebalance.rs/hermes.rs/Cargo.lock/index.html 2026-11-02 전수 실측
+
+## 2026-11-03 (KST 03:00 — 정시)
+
+**Evolution delta**: **0 new named vectors, 0 new META, 2 reinforcements + 2 WATCH** — BTCPay Server(11-01 사고·11-02 RCA: 미패치 ≤2.4.1 플릿 대량 스윕, 동일 취약점 「다른 방법」 재악용, 호스팅-벤더 IR 액추에이터) → **META-76 기함급 인스턴스**로 흡수; Premia V3(10-31, ~$400.5K: 무허가 빈 옵션 풀에 언더라이터 부보 락인) → **A98 신규 표면(부보-라우팅 provenance)** WATCH(RCA 대기). 어드바이저리 신규 0.
+
+### PART B — 전수 대입 (실코드 재열람, day 87)
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 87일차** | lib.rs:2395-2396 bare `#[account(mut)]` vs :2320 `mint::authority = protocol_state` 핀 — 오늘 sed 재열람. HEAD 23c0163 불변 |
+| **A10 / HERMES-H1 / B83 / ☐182 / B45** | ❌ HIGH / ⚠️ carry | A10 burn CPI :1360-1369 · hermes.rs:61-69 7필드 · quinn-proto 0.11.13(Cargo.lock:2984-2985) · rustls 0.21.12+0.23.36(:3296/:3308) · `security/` 부재(ls 재확인) — 전부 오늘 라이브 |
+| **Premia 렌즈 (A98 부보-라우팅 provenance)** | ✅ **NOT ACTIVE(구조적)** | lib.rs swap/jupiter/orca/raydium/amm/market/pool/route 전부 0매치 — 외부 유동성 라우팅 다리 부재; 자산 이동 = 사용자 서명 burn(:1353-1360) 또는 2-of-3 쿼럼. keeper "pool" 매치 = 에이전트 가중랜덤 선택(agent_loop.rs:405-413) |
+| **BTCPay 렌즈 (META-76 미패치 플릿)** | ⚠️ **캐리 강화(신규 등급 없음)** | 온체인 단일 배포(플릿 표면 부재) · 키퍼 Cargo.lock = 「자금이 사는 곳」의 패치 상태(B83/☐182가 구체 인스턴스) · 키퍼 온-호스트 2-of-3 파일 키 = 핫월렛 동형(오프-서버 키 분리 부재 — BTCPay 유일 작동 방어의 부재 면) |
+| **신규 CRITICAL/HIGH** | — | **0건** |
+
+**블루팀 지시**: A6 87일차 ①~⑥ 승계 + ⑦ 신규 — (a) 향후 모든 패치는 클래스-불변식 스윕(수정 함수 재감사 아님) + 미배포 인스턴스 재수입 불가 확인; (b) 키퍼 키-평면 오프-서버 분리(HSM/서명-프록시) 평가 착수.

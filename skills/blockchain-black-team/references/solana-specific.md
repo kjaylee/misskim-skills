@@ -2681,3 +2681,9 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 - **RustSec 신규 15건(0414~0428, 10-28~10-30 발행) 전량 Microstable 트리 밖**: pulldown-cmark 0414 · juniper 0415~0417/0419 · libz-sys 0418 · wasmtime군 0420~0424 · nix-nar 0425 · orion 0426/0428 · sn-releases 0427 — solana/Cargo.lock(keeper 포함 워크스페이스 단일 락) 전 크레이트 grep 0매치. zstd-safe 7.2.4·anchor-lang 0.31.1 lock 재실증(☐208 전제 불변).
 - **신규 공격 기법 0(7일 창)**: SPL 0커밋 · arXiv cs.CR 10-30 신규 63편 블록체인 관련 0 · 감사보고서(7일 검색) 0 · CTF/MEV 레인 노이즈. Anchor #4884(실패-tx 이벤트 리스너)는 09-23 머지·☐186 흡수 완료 상태 — 중복 제외 확인.
 - **Microstable Phase 4**: #5224 대입 — `declare_program!`·`u256`·`i256` microstable_core·keeper 전부 0매치(**NOT ACTIVE**) · keeper anchor-client 이벤트 구독 미사용(☐186 무관) · 신규 CRITICAL/HIGH/MEDIUM 0.
+
+### 2026-11-03 blackteam — BTCPay 키퍼-플릿/키-평면 렌즈 + Premia A98 부보-라우팅 provenance 게이트 (신규 체크리스트 번호 없음 — 기존 게이트 재강조·신규 통합 예정문 2)
+
+**Premia → Anchor 렌즈 (A98 부보-라우팅 provenance)**: 프로토콜 소유 가치(부보·국고·리저브)가 외부 계정으로 이동하는 모든 명령에서, 상대방 계정의 provenance는 채널 무결성과 별개의 **승인 검사(admission check)**여야 한다 — 호출자가 공급하는 market/pool/venue 계정은 canonical 배포 경로(PDA 시드·소유자 프로그램·파생 주소 핀) 검증 없이는 가치 유입 상대방이 될 수 없다. 「풀 존재 + 초기화됨 + 유동성 존재 ≠ canonical 시장」(Rhea 04-16·Premia 10-31 연속 실증). Microstable 현재: 해당 라우팅 다리 구조적 부재(lib.rs venue 키워드 0매치 — NOT ACTIVE). 향후 스왑/베뉴 통합 시 게이트: **가치 유입 상대방 = canonical 배포 경로 검증 통과 계정만** — 검사 목록에 owner-program·seeds·canonical-mint-pair 포함.
+
+**BTCPay → 키퍼 인프라 렌즈 (META-76 자체호스트 변형)**: ① 자체호스트 키퍼 바이너리가 「자금이 사는 곳」 평면 — 의존성 패치 상태(Cargo.lock quinn-proto 0.11.13 = B83, rustls 듀얼스택 = ☐182)가 존속 META-76 인스턴스; 패치 정책은 코드 헤드가 아니라 **배포된 바이너리의 lockfile**을 기준으로 측정할 것. ② 키퍼 온-호스트 키(2-of-3 파일 키페어) = BTCPay 핫월렛 동형 — BTCPay 실증에서 유일하게 작동한 방어는 **오프-서버 키 분리**(하드웨어 지갑 무영향). 키퍼 키-평면 오프-서터화(HSM/서명-프록시/멀티-장치 쿼럼) 평가 항목화. ③ 변형-방법 재악용 교리: 최초 패치 후 탐지 시그니처는 인스턴스가 아니라 **클래스**(취약점의 전 악용 경로)에 대해 재유도할 것 — BTCPay는 8월 패치 이후에도 변형 경로가 3개월간 무탐지 체류(주소 선행 활동 실증).

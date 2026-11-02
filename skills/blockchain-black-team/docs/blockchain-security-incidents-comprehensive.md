@@ -1092,3 +1092,13 @@
 - **2026-10-31 — b14g (Bitcoin 듀얼-스테이킹 프로토콜 — 스테이크 ~97M CORE 무단 인출, $1.36M) [WATCH]** — 프로토콜을 통해 스테이크된 CORE 토큰이 무단 인출되어 공격자 주소로 이체. 팀은 영향 컨트랙트 일시정지, Core 팀·보안 파트너·거래소와 추적·동결·회수 협의 중. **Bitcoin 원생 BTC 스테이크는 Bitcoin 타임락에 남아 무영향** — 실패 평면은 Core-측 인출 권한(프로토콜 보관 서명/크리덴셜 추정, 메커니즘 미공개). 구조적 관찰: Bitcoin-측 타임락이 방어 백스톱으로 작동해 **가치 평면이 자산별로 분리** — 단일 프로토콜의 자산별 결밑(custodial binding) 비대칭 실측.
   Vector mapping(예비): B15(프로토콜 보관 인출 권한 평면)/A4 — **WATCH(RCA 대기)**. RCA 공개 시 B15/A4 강화 심사.
   Sources: https://hacked.slowmist.io/ (2026-11-01 18:01 UTC 스냅샷) · https://x.com/b14g_network/status/2116570456245596580
+
+## 2026-11-03 — BTCPay Server / Premia V3 (블랙 일일 진화 흡수)
+
+- **2026-11-01 — BTCPay Server (셀프호스팅 Bitcoin 결제 프로세서 — BTC/LTC 핫월렛 다중 인스턴스 스윕, 손실 총액 미확정) [WATCH: 취약점 메커니즘 미공개]** — 11-01 13:46 UTC 드레인 · 20:56 최초 신고 · 22:25 전면 셧다운 권고(`./btcpay-down.sh`). 11-02 공식 RCA: 취약점은 **2.4.2(8-07)에서 이미 수정** — 공격자는 「다른 방법」으로 동일 취약점을 ≤2.4.1 미패치 서버에서 악용; 2.4.2+ 무영향. 수취 주소 활동이 신고 도난에 선행(악용 개시 미확정). 오프-서버 키(하드웨어 지갑) 무영향 — 키-평면 분리가 유일 작동 방어. 벤더가 사용자 플릿에 도달 불가 → VPS 호스팅사(LunaNode 등)에 인스턴스 오프라인 요청(호스팅-벤더 IR 액추에이터 관측). 복구: 신규 시드+신규 VM 재구축(「잔액 불변 ≠ 미침해」).
+  Vector mapping: **META-76 기함급 인스턴스**(patched in latest ≠ patched where funds live — 배포 인벤토리 무소유) + A34 에코(활발 유지 소프트웨어의 구 인스턴스 가치-잔존) + Meter 09-25 클래스-규약 역방향 쌍둥이(미패치 플릿의 클래스 재수입) — **WATCH(메커니즘 대기)**.
+  Sources: https://blog.btcpayserver.org/btcpay-server-security-incident-2-4-1-and-earlier/ · https://x.com/BtcpayServer/status/2117020340815819262 · https://hacked.slowmist.io/
+
+- **2026-10-31 — Premia V3 (Arbitrum 옵션 프로토콜 — 언더라이터 볼트 6개 드레인, ~$400.5K 경보 시점) [WATCH: RCA 대기]** — Blockaid 실시간 탐지: 무허가 생성 **빈 옵션 풀** + 플래시론 옵션 매수 → **언더라이터 부보가 공격자-생성 풀에 락인** → 유동성으로 인출(~2 tx, 공격 진행 중 탐지). 실패 평면: 부보-라우팅 계층의 풀-증명(provenance) 게이트 부재 — canonical 시장과 동일 승인 검사로 공격자 풀 수용.
+  Vector mapping: **A98 강화 — 신규 표면(부보-라우팅 provenance)**: Rhea(04-16) 자산/풀-증명 승인 → Premia 가치-이동 라우팅 승인(오라클 무관). 09-16 제로-위조 코롤러리 라이브 인스턴스. **WATCH(RCA 대기 — b14g 동일 규율)**.
+  Sources: https://x.com/blockaid_/status/2116745378674463229 · https://hacked.slowmist.io/ (2026-11-02 18:01 UTC 스냅샷)
