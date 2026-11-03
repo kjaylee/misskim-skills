@@ -1102,3 +1102,21 @@
 - **2026-10-31 — Premia V3 (Arbitrum 옵션 프로토콜 — 언더라이터 볼트 6개 드레인, ~$400.5K 경보 시점) [WATCH: RCA 대기]** — Blockaid 실시간 탐지: 무허가 생성 **빈 옵션 풀** + 플래시론 옵션 매수 → **언더라이터 부보가 공격자-생성 풀에 락인** → 유동성으로 인출(~2 tx, 공격 진행 중 탐지). 실패 평면: 부보-라우팅 계층의 풀-증명(provenance) 게이트 부재 — canonical 시장과 동일 승인 검사로 공격자 풀 수용.
   Vector mapping: **A98 강화 — 신규 표면(부보-라우팅 provenance)**: Rhea(04-16) 자산/풀-증명 승인 → Premia 가치-이동 라우팅 승인(오라클 무관). 09-16 제로-위조 코롤러리 라이브 인스턴스. **WATCH(RCA 대기 — b14g 동일 규율)**.
   Sources: https://x.com/blockaid_/status/2116745378674463229 · https://hacked.slowmist.io/ (2026-11-02 18:01 UTC 스냅샷)
+
+## 2026-11-04 — EU 법인 다중거래소 / Mercado Bitcoin / King MEV 봇 / Solana 검증인 5곡 (블랙 일일 진화 흡수)
+
+- **2026-11-01 — EU 법인 다중 거래소 계정 드레인 (신원 미공개, USDC/USDT ~$106M→$133M 의심) [WATCH: 신원·메커니즘 대기]** — 미확인 EU 법인이 Kraken·Crypto.com·OKX 등 복수 거래소 계정에서 11-01 USDC/USDT로 인출당함(ZachXBT 11-02 플래그). Bitquery 11-03 추적: $108.8M USDC 이체 확인·$78.3M 잔존, crypto.news는 커버업 의혹 제기하며 총액 $133M 확대. 실패 평면 = **거래소 계정 크리덴셜/API 키 평면**(온체인 키 아님) — 단일 법인의 다중 거래소 계정이 하나의 크리덴셜-평면으로 수렴해 상호 거래소 동시 인출.
+  Vector mapping: **B15 강화 — 서브패턴 「multi-CEX account-credential plane」** + META-53 에코(커버업 의혹 = 투명성 규율). WATCH(RCA·신원 대기).
+  Sources: https://www.coindesk.com/tech/2026/11/02/eu-entity-suspected-of-losing-usd106-million-from-crypto-exchange-accounts-zachxbt-says · https://bitquery.io/investigations/eu-106m-crypto-theft · https://crypto.news/zachxbt-alleges-cover-up-as-suspected-crypto-theft-tops-133m
+
+- **2026-11-02 — Mercado Bitcoin (브라질 최대 거래소 — 10체인 지갑 드레인, $38-40M, Hypernative 탐지) [WATCH: RCA 대기]** — 「시스템 중 하나의 보안 사고」로 입출금 정지. 10개 체인 지갑 동시 소진(Binance 10-29·Bitget 09-24에 이은 다중 체인 핫월렛 평면 패밀리 제3의 인스턴스, 5일 간격). 회사는 고객 손실 없음·전액 회사 부담 발표(11-03 Coindesk), 침해 경로 미공개.
+  Vector mapping: **B15 강화(다중 체인 핫월렛 평면 — Bitget/Binance 패밀리)** — WATCH(RCA 대기).
+  Sources: https://bitcoinmagazine.com/news/brazils-mercado-bitcoin-freezes-40-million · https://www.coindesk.com/business/2026/11/03/mercado-bitcoin-pledges-to-cover-all-user-losses-after-near-usd40-million-hack · https://hacked.slowmist.io/
+
+- **2026-11-02 — King (Solana 아비트라지 MEV 봇 — 자체 키 5건 단순 전송 드레인, $856K)** — 봇이 밤새 거래 후 07:32 UTC 정지, 24초 후 본 지갑에서 전 신규 주소로 전송 개시, 146초 전량 소진(4.26K WSOL·191 SOL·스테이블·누락분 69,869 USDT 포함 $856K — 초기 보도 $786K는 USDT 미계상). **전 전송이 봇 자체 키로 서명 — 컨트랙트 버그·승인 트릭 0**(봇 프로그램 주소 「King」 시작, 운영자 미확인, 11시간 ~30,000 tx·96% 실패 = 정상 MEV 프로파일). 인출 수집 주소 Ace7hX가 온체인 20% 바운티 제안(무응답). SOL 스왑→Mayan/Relay 브리지→Ethereum 251 ETH($574K, 11-03 09:17 UTC까지 미이동) — **브리지 2곡이 $280K(1/3) 동결 = 결제 계층 서킷브레이커 부분 작동**.
+  Vector mapping: **B15 강화 — 서브패턴 「autonomous-bot own-key plain-transfer sweep + pre-drain quiescence 신호」**(MEV 봇 단일 핫키 = 자율 운용 인프라의 최대 평면; 운용 정지→드레인 24초 시차는 탐지 선행 신호).
+  Sources: https://bitquery.io/investigations/king-arbitrage-bot-hack · https://x.com/OnchainLens/status/2117318995460476935 · https://hacked.slowmist.io/ (2026-11-02)
+
+- **2026-10-26~27 — Solana 검증인 5곡 운영 키 침해 (Solflare·Blockdaemon·Astraeus·미확인 1·비활동 Slow Ventures — $135K, Bitquery 10-29 조사·11-02/03 언론 확산)** — 상이 조직 5개 검증인의 운영 키가 동시 침해(공통 도구/운영 인프라 평면 암시, 경로 미공개) — 3분 내 4개 활성 검증인 자산 1,188 SOL(총 1,343 SOL·$135K, 637 JitoSOL≈833 SOL 포함) 단일 지갑 집결. **voting account 잔액을 비워 참여 수수료 고갈 → 10-27 4개 검증인 동시 투표 정지**(스테이킹 보상 중단). 위임 고객 스테이크 계정은 무접근 실측 — **운영 vs 위임 권한 분리가 폭발 반경 절단**. JitoSOL→SOL→Bridgers/Chainflip→Ethereum→**첫 브리지 페이아웃 후 9분 내 Tornado Cash**(10-28까지 57 ETH).
+  Vector mapping: **B15 강화(서브패턴 「cross-operator correlated operational keys」) + A11 강화(운영 계좌 rent-drain의 참여-DoS 무기화 — voting account 고갈→투표 정지)** — SwissBorg/Kiln(2025-09, solana-specific) 제공자-API 패밀리와 축 구분(타인 위임 자산 무침해 = 권한 분리 성공 대조).
+  Sources: https://www.bitquery.io/investigations/solflare-validator-hack · https://coinpaper.com/38253/solana-validator-hack-exposes-five-operators-as-135-000-in-crypto-flows-into-tornado-cash

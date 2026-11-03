@@ -3410,3 +3410,21 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 | **신규 CRITICAL/HIGH** | — | **0건** |
 
 **블루팀 지시**: A6 87일차 ①~⑥ 승계 + ⑦ 신규 — (a) 향후 모든 패치는 클래스-불변식 스윕(수정 함수 재감사 아님) + 미배포 인스턴스 재수입 불가 확인; (b) 키퍼 키-평면 오프-서버 분리(HSM/서명-프록시) 평가 착수.
+
+## 2026-11-04 (KST 03:00 — 정시)
+
+**윈도우**: 2026-11-02 18:00 → 2026-11-03 18:00 UTC · **대상 코드**: HEAD 23c0163 · dirty 40 · lib.rs mtime 2026-02-28 동결(4,669행) · keeper 24파일
+
+**신규 흡수(타임라인 +4)**: EU 법인 다중 거래소($106M→$133M WATCH) · Mercado Bitcoin($38-40M WATCH) · King MEV 봇($856K, Bitquery 확정급) · 검증인 5곡($135K). 매핑: **B15 ×4 + A11 ×1 강화, named/META 0**, 매트릭스 235/227 불변.
+
+| 벡터 | 판정 | 근거(실코드) |
+|---|---|---|
+| **King 렌즈 (B15 own-key plain-transfer sweep)** | ✅ **NOT ACTIVE(구조적)** | keeper 키 = 2-of-3 파일 키페어(main.rs:203-205 `load_keypairs`+`pin_keypair_integrity`, utils.rs:320-326 공개키 중복 제거) — 단일 핫키 자율 지갑 부재; 자산 인벤토리 = PDA 볼트 — 봇식 소유-지갑 구조 0매치. 잔여: ☐200(HSM 오프-서버 분리 LATENT) 승계 |
+| **검증인 렌즈 (A11 voting-account 참여-DoS)** | ⚠️ **PARTIAL(경화)** | 투표 계좌·검증인 평면 부재(구조적 NOT ACTIVE) — 단 keeper fee-payer 잔액 자체 점검 0매치(get_balance/lamport grep 11-04 전 파일), monitor.rs 와치독 = 프로토콜 지표 전용(config.rs:86-97 supply/CR/oracle/weight — 자기-생존 지표 부재). fee 고갈 = B20 라이브니스 정지 가능(특권과 분리 평면이라 CRITICAL 아님) |
+| **Mercado/EU 렌즈 (B15 다중 체인·다중 CEX 평면)** | ✅ **NOT ACTIVE(구조적)** | 단일 클러스터·온체인 PDA 볼트 — 다중 체인 지갑 평면 부재, CEX 계정·API 통합 0매치 |
+| **A6 (CRITICAL, day 88)** | ❌ 캐리 | lib.rs:2395-2396 Redeem `mstb_mint` bare `#[account(mut)]`(mint::authority 핀 부재) vs :2316-2320 Mint 경로 `mint::authority = protocol_state` 핀 — 비대칭 라이브 재실증(sed 11-04) |
+| **A10 / HERMES-H1 / B83 / ☐182 / B45** | ❌ HIGH·⚠️ carry | A10 burn CPI :1360-1366 · hermes.rs:58-72 HermesPostedUpdate 7필드(posted_price_account 부재) · quinn-proto 0.11.13(solana/Cargo.lock:2984) · rustls 0.21.12(:3296)+0.23.36(:3308) 듀얼스택 · B45 attestation 부재 — 전부 오늘 라이브(sed/grep 11-04) |
+| **RustSec 0435/0436 (thrift/calamine)** | ✅ 트리 밖 | solana/Cargo.lock 0매치(grep 11-04) |
+| **신규 CRITICAL/HIGH** | — | **0건** |
+
+**블루팀 지시(경화 1건)**: monitor.rs 와치독 루프에 (i) keeper fee-payer SOL 최소액 경보(예: 0.5 SOL 미만 alert) (ii) 마지막 성공 tx 경과시간 경보(임계 초과 alert — King pre-drain quiescence 신호 대응) 추가 — B20급 라이브니스 경화, 특권 평면과 무관하므로 즉시 착수 가능. A6 88일차 수정 지시 ①~⑦ 승계.
