@@ -2706,3 +2706,10 @@ Solana 프로그램의 실제 공격 표면 절반은 keeper/oracle 같은 오�
 
 **패턴: 검증인 운영 키 상관 침해 + voting-account 고갈 참여-DoS (2026-10-26/27, $135K)** — (a) 상이 조직(Solflare·Blockdaemon·Astraeus 등) 운영 키 동시 침해 = **공통 운영 도구/인프라 평면** 암시(경로 미공개) — 「다섯 조직이 우연히 동시에」가 아니면 공유 평면이 존재한다는 역증; (b) **voting account 잔액 드레인 → 투표 수수료 고갈 → 4개 검증인 동시 투표 정지**: rent-exempt 운영 계좌조차 참여 자격의 선결제 조건 — A11 rent-drain이 자산 절도가 아니라 **네트워크 참여 질식 무기**로 쓰인 첫 실측; (c) 위임 고객 스테이크 무접근 = 운영/위임 권한 분리의 성공 대조(SwissBorg/Kiln cross-customer 폭발의 정반대); (d) Microstable 대조: 투표 계좌·검증인 운영 평면 부재(구조적), keeper 수수료 지갑 잔액 자체 점검 0매치(get_balance/lamport grep 11-04) — **keeper fee-payer 고갈 시 라이브니스 정지(B20)** 가능하나 특권 평면과 분리 — 경화 권고: monitor.rs 와치독에 (i) fee-payer SOL 최소액 경보 (ii) 마지막 성공 tx 경과시간 경보 추가.
 Sources: https://www.bitquery.io/investigations/solflare-validator-hack · https://bitquery.io/investigations/king-arbitrage-bot-hack
+
+### 2026-11-04 redteam — A173 TS 클라이언트 제네릭 레이아웃 분기 + A174 verifiable-deploy 레인 사멸 (Anchor 3중 패치 릴리스 무보안 확인)
+
+- **Anchor v0.30.4/v0.31.3/v0.32.3(2026-11-03 동시 컷)** — 태그 compare 실측 전량 CI·SBPF v3 빌드플래그 백포트·TS v1 tx 파서. **0.31.x 레인 보안 내용 0 → Microstable 0.31.1 핀 무영향·무업그레이드 압박.** #5158/#5223은 main 머지로 패치 릴리스 미포함(다음 1.x까지 잔류).
+- **A173(#5158, 11-03 14:13Z 머지)**: 중첩 제네릭 IDL에서 TS BorshCoder `resolveGenericArgs` 치환 불완전 — 인자 시프트·내부 평탄화·배열길이 NaN. **정당한 IDL + 공식 클라이언트가 오해석 레이아웃 생산**(A159 자기증명의 역방향). 온체인 아님·클라이언트 코덱 축 — 제네릭 계정 없는 프로그램은 비발화. Microstable NOT ACTIVE(programs 제네릭 0·IDL 무제네릭 실측). ☐213: 제네릭 계정 도입 시 TS 클라이언트 #5158 포함 릴리스 상향 후 도입.
+- **A174(#5223, 11-03 14:03Z 머지)**: #4099가 `anchor deploy`→`anchor program deploy` 이관하며 `--verifiable` 미이관 — 하드코딩 `false`로 **항상 native 빌드만 배포**, target/verifiable 산출물 소비 경로 부재. 감사 규칙: **보안 플래그마다 산출물을 소비하는 하류 단계를 지목하라 — 없으면 플래그는 장식.** Microstable NOT ACTIVE(동결·anchor-deploy 무사용) — 첫 mainnet 배포 게이트 ☐214에서 온체인 배포 바이너리 해시 대조로 아티팩트 정합 증명(☐192 신원 대조와 한 쌍).
+- 매트릭스 red 250→252/225 · A6 CRITICAL day 88 승계(HEAD 23c0163·keeper 무변경) · RustSec 0436 calamine 트리 밖(블랙 11-04 선행 흡수).
