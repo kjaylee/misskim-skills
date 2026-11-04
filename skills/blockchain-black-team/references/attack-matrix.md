@@ -14279,3 +14279,23 @@ Sources: https://hacked.slowmist.io/en/ (10-26 04:01 KST) · https://thehackerne
 - **Source**: https://arxiv.org/abs/2611.04701
 
 - **매트릭스 카운트 red 252→253/225 (+A175) · 체크리스트 ☐214→☐215.** 신규 CRITICAL/HIGH 0 — 현재 Microstable에는 zkVM 발화 조건이 없어 NOT ACTIVE/LATENT.
+
+### 2026-11-05 purpleteam batch — 복구-회계 종료성 + 증명-컴파일러 경계 + live-state 보증 갭 (named 0 · META 0 · WATCH +1)
+
+- **창**: 2026-11-04 04:01 → 2026-11-05 04:00 KST. 블랙 최신 11-04(2122f24), 레드 최신 11-05(2da29b0, A175) 대조. 7일 소스는 Sovryn 11-03, Binance 11-03, Certora 11-03/10-16, Immunefi 11-02, Foundry 현재 가이드다.
+- **복구-회계 종료성 WATCH +1**: Sovryn 공식 보고는 31일 대출·마진 순유출, 1일 AMM 지급, 출금 큐 에스크로, Exchequer custody, 후속 BTC/ETH 전환을 별도 측정하고 같은 수익을 중복 손실로 더하지 않는다. 퍼플 규칙을 다음처럼 명시한다: **`containment state` ≠ `loss allocation` ≠ `authority retired`**. 동결은 회수가 아니고, 회수는 사용자 배분이 아니며, 배분은 권한 폐기가 아니다. 동일 구조의 두 번째 생산 사고군 확인 시 META 후보로 승격한다. 기존 B15/META-53/66 강화이며 신규 META는 아니다.
+- **Binance 복구 갱신**: 공식 11-03 보고의 98% 자산 보충·PoR 반영·시스템 재구축은 남은 저유동성 자산과 독립 재검토를 닫지 않는다. `replenished/PoR/rebuilt`를 권한 회전·잔여 signer 무효화·배포 산출물 대조의 대체 증거로 취급하지 않는 기존 B15/META-53/86 규칙을 강화한다.
+- **A175 + Certora**: 레드 A175 zkVM 오컴파일 연구와 Certora의 명세·가정·실행 코드·검증 도구 4중 실패 분류를 교차해 **`proof valid` ≠ `compiled output correct`**를 META-73/META-66 보강 규칙으로 등록한다. zkVM guest compiler/backend는 proof surface 안에 보이지 않는 별도 trust edge다. 현재 Microstable은 NOT ACTIVE/LATENT.
+- **Immunefi / Foundry**: Alchemix V3가 5회 리뷰 후 실운영 critical을 받은 사례는 **`review count` ≠ `live-state assurance`**를 META-76/META-66으로 보강한다. Foundry의 invariant·fuzz corpus·mutation·symbolic testing은 독립 assurance plane이며 도구 목록이나 green 결과만으로 coverage ownership·recovery closure를 증명하지 않는다.
+- **Microstable**: HEAD `23c0163b`·dirty 40·`lib.rs:2320-2321` mint pin vs `2395-2396` redeem bare 재실증 → A6 CRITICAL day 89. 브리지·다중 체인·off-chain recovery ledger·zkVM 0매치로 신규 렌즈는 모두 NOT ACTIVE. 재개 전 자산별 원금·순유출·에스크로·보관·회수·배분·잔여 권한을 분리한 독립 장부와 권한 폐기·배포 해시 대조를 릴리스 게이트로 기록한다. 신규 CRITICAL/HIGH/MEDIUM/PT-ARCH 0.
+- **판정**: 신규 named 0 · 신규 META 0 · WATCH +1(복구-회계 종료성). 블랙 236/228·레드 253/225·META-01~86 유지.
+
+🔴 **Red Team**:
+- [공격 1]: Sovryn 장부 분리는 보고 품질이지 공격면이 아니다 → 방어: 재개·회수·배분·권한 폐기는 서로 다른 state/actuator이며 혼합 시 재개 판단과 잔여 공격면이 동시에 오염된다. 🟢
+- [공격 2]: A175는 단일 연구라 일반화가 과하다 → 방어: 신규 벡터·META 승격 없이 기존 verification-boundary 패밀리 강화와 Microstable LATENT로 제한했다. 🟢
+- [공격 3]: Alchemix 5회 리뷰를 감사 실패로 단정할 위험 → 방어: 감사 품질을 판정하지 않고 snapshot assurance와 live-state assurance의 범위 차이만 기록했다. 🟢
+- **합의**: 🟢극복.
+
+✅ Anti-rationalization: Authority Bias(공식 Sovryn·Binance·Certora·Immunefi 원문과 로컬 배치 교차) / Confidence Halo(손실·보충·보관·배분 상태 분리) / Entropy Ceiling(동일 운영자 여부·최종 원인 미확정 보존) / Recency Illusion(11-02~11-05 창과 기존 흡수 대조) / Tool Call Halu(agent-reach doctor 실패를 관측-공백으로 기록하고 mcporter Exa + web 원문 fetch로 대체).
+
+**Sources**: https://forum.sovryn.com/t/sovryn-incident-report-31-october-1-november-2026/3609 | https://www.binance.com/en/square/post/384328127385979 | https://www.certora.com/blog/devcon-india-2026-ai-formal-verification | https://www.certora.com/blog/formally-verified-code-wrong-how-catch-it | https://immunefi.com/case-studies/alchemix/ | https://www.getfoundry.sh/guides/index.html | https://arxiv.org/abs/2611.04701
