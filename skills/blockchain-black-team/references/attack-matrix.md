@@ -14266,3 +14266,16 @@ Sources: https://hacked.slowmist.io/en/ (10-26 04:01 KST) · https://thehackerne
 ✅ Anti-rationalization: Authority Bias ✅(CSA 이해관계 명시·CVE cve.org/kodem 이중 확인) / Confidence Halo ✅(Binance 수치 타임스탬프·체인 분리·$3B는 발행자 집계 등급) / Entropy Ceiling ✅(META 0·WATCH 강화 2 승격조건 유지·Clawdrain 관찰 등급) / Recency Illusion ✅(창 내 2건 블랙 흡수 grep 실증·Nexus 미흡수 0매치 실증) / Tool Call Halu ✅(Echidna/Medusa API 직독·SlowMist 최상단 11-02 확인·Microstable sed 원문 재실증)
 
 **Sources**: https://kenhuangus.substack.com/p/how-binance-lost-63-billion-in-minutes (day-6 컨트롤 타임라인 — CSA 관계자 발행) · https://arxiv.org/abs/2603.00902 (Clawdrain) · https://www.promptfoo.dev/lm-security-db/vuln/stealthy-tool-call-token-exhaust-68b36ede · https://arxiv.org/html/2610.35835v2 (I-HITL) · https://www.cve.org/CVERecord?id=CVE-2026-118668 · https://www.kodemsecurity.com/cve-archive/cve-2026-118668 · https://www.coinspect.com/blog (색인) · https://hacked.slowmist.io/en/ (2026-11-03 19:01 UTC 스냅샷) · https://blog.trailofbits.com/index.xml (lastBuildDate 11-03 — 전자투표 도메인 밖) · https://api.github.com/repos/crytic/echidna/releases/latest (v2.3.3, 2026-07-27) · https://api.github.com/repos/crytic/medusa/releases/latest (v1.5.1) · https://www.kucoin.com/news/flash/bitcoin-dex-on-nexus-suffers-685k-loss-in-btc-theft-via-legacy-signature-vulnerability · misskim-skills git 2122f24·a98ed29·8a75a4f, microstable git 23c0163
+
+### 2026-11-05 redteam batch — A175 zkVM 컴파일러 오컴파일 유도형 wrong-program proof (arXiv 2611.04701)
+
+#### A175. zkVM Guest Compiler-Miscompilation Trigger / Valid Proof of Wrong Output
+
+- **Signal**: arXiv `2611.04701`(2026-11-03 제출) — SP1/Jolt 대상 첫 실증 연구. 알려진 rustc·LLVM 오컴파일 88건 중 SP1 48건·Jolt 46건이 잘못된 guest 출력으로 이어졌고, 공격자가 guest에 기여한 코드로 트리거를 의도적으로 만들 수 있었다. LLM이 정상 최적화처럼 보이는 패치로 366개 project-bug 조합 중 12개를 노출시킨 사례도 보고됐다.
+- **기법**: 증명은 소스가 아니라 **컴파일된 guest 바이너리**의 실행을 덮는다. 공격자가 의미상 정상처럼 보이는 guest 코드/패치를 기여해 특정 컴파일러 버그를 발화시키면, zkVM과 소스의 형식 검토가 모두 정상이어도 **잘못된 출력에 대한 유효한 증명**이 생성된다. A118(guest unchecked deserialization), A50(public-claim transcript 미바인딩), D46(Wasmtime backend sandbox escape)와 구별되는 compiler/toolchain 신뢰 경계다.
+- **공격 창**: guest PR·의존성·최적화 패치에 트리거를 삽입하고, 고정하지 않은 rustc/LLVM 또는 target-specific backend에서 오컴파일을 발화시킨 뒤, verifier가 잘못된 collateral/oracle/settlement 결과를 정상 proof로 승인하게 만든다. 소스 리뷰·guest 형식검증·zkVM 검토만으로는 닫히지 않는다.
+- **Microstable**: 현재 `programs/microstable/src/lib.rs`·`keeper/src/`에 SP1/Jolt/RISC-V guest, zkVM prover/verifier, proof-backed collateral/oracle 경로가 없다. **NOT ACTIVE / LATENT** — 향후 zk 오라클·증명형 담보/키퍼 계산기를 도입할 때만 발화.
+- **방어**: guest와 compiler를 함께 고정하고 재현 빌드·바이트코드 해시를 대조한다. 알려진 rustc/LLVM 오컴파일 회귀 코퍼스에 guest별 differential compile을 추가하며, 증명 검증 전후의 공개 출력은 독립 실행기 또는 보수적 온체인 재계산으로 교차검증한다. `rustc --version --verbose`, LLVM commit, target/backend를 배포 증거에 남긴다.
+- **Source**: https://arxiv.org/abs/2611.04701
+
+- **매트릭스 카운트 red 252→253/225 (+A175) · 체크리스트 ☐214→☐215.** 신규 CRITICAL/HIGH 0 — 현재 Microstable에는 zkVM 발화 조건이 없어 NOT ACTIVE/LATENT.

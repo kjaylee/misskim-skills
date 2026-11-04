@@ -2713,3 +2713,11 @@ Sources: https://www.bitquery.io/investigations/solflare-validator-hack · https
 - **A173(#5158, 11-03 14:13Z 머지)**: 중첩 제네릭 IDL에서 TS BorshCoder `resolveGenericArgs` 치환 불완전 — 인자 시프트·내부 평탄화·배열길이 NaN. **정당한 IDL + 공식 클라이언트가 오해석 레이아웃 생산**(A159 자기증명의 역방향). 온체인 아님·클라이언트 코덱 축 — 제네릭 계정 없는 프로그램은 비발화. Microstable NOT ACTIVE(programs 제네릭 0·IDL 무제네릭 실측). ☐213: 제네릭 계정 도입 시 TS 클라이언트 #5158 포함 릴리스 상향 후 도입.
 - **A174(#5223, 11-03 14:03Z 머지)**: #4099가 `anchor deploy`→`anchor program deploy` 이관하며 `--verifiable` 미이관 — 하드코딩 `false`로 **항상 native 빌드만 배포**, target/verifiable 산출물 소비 경로 부재. 감사 규칙: **보안 플래그마다 산출물을 소비하는 하류 단계를 지목하라 — 없으면 플래그는 장식.** Microstable NOT ACTIVE(동결·anchor-deploy 무사용) — 첫 mainnet 배포 게이트 ☐214에서 온체인 배포 바이너리 해시 대조로 아티팩트 정합 증명(☐192 신원 대조와 한 쌍).
 - 매트릭스 red 250→252/225 · A6 CRITICAL day 88 승계(HEAD 23c0163·keeper 무변경) · RustSec 0436 calamine 트리 밖(블랙 11-04 선행 흡수).
+
+### 2026-11-05 redteam — A175 zkVM 컴파일러 오컴파일 유도형 wrong-program proof (솔라나 체크리스트 215)
+
+- **외부 신호**: arXiv `2611.04701`(11-03 제출)은 SP1/Jolt에서 rustc·LLVM 오컴파일이 guest의 잘못된 출력과 유효 proof를 만들 수 있음을 실증했다. 공격자 기여 코드가 정상 최적화처럼 보이는 트리거를 숨길 수 있어, guest 소스·zkVM·검증키를 각각 검토해도 compiler 경계가 빠진다.
+- **솔라나 공격면**: 향후 zk 오라클, 증명형 담보 적정성, proof-backed keeper 계산이 Solana 프로그램의 mint/redeem/settlement 입력이 되면, 공격자는 guest PR 또는 toolchain 변형으로 잘못된 가격·담보·정산 결과를 증명할 수 있다. 이는 A118 파서 위조·A50 transcript 미바인딩·D46 Wasm backend 탈출과 다른 **컴파일된 guest 의미와 소스 의미의 분기**다.
+- **Microstable**: `programs/microstable/src/lib.rs`와 `keeper/src/` 전수 검색에서 `sp1`·`jolt`·`risc0`·`zkvm`·RISC-V guest/prover/verifier가 0매치이고, `Proof::WormholeMerkle`는 Pyth accumulator/Merkle 경로다. **NOT ACTIVE / LATENT**.
+- 215. ☐ **증명형 Solana 경로는 guest 소스만 검토하지 말고 compiler+LLVM+target/backend를 증명 신뢰 경계에 포함한다.** `cargo build --locked`와 재현 빌드·guest 바이너리 해시·`rustc --version --verbose`·LLVM commit을 고정하고, 알려진 rustc/LLVM miscompilation corpus를 SP1/Jolt target별 differential compile로 회귀시킨다. 검증 직전 공개 출력은 독립 실행기 또는 온체인 보수 재계산과 교차검증하며, proof가 유효하다는 사실을 source-level 의미 보증으로 승격하지 않는다.
+- **Source**: https://arxiv.org/abs/2611.04701
