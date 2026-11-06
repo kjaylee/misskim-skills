@@ -1120,3 +1120,25 @@
 - **2026-10-26~27 — Solana 검증인 5곡 운영 키 침해 (Solflare·Blockdaemon·Astraeus·미확인 1·비활동 Slow Ventures — $135K, Bitquery 10-29 조사·11-02/03 언론 확산)** — 상이 조직 5개 검증인의 운영 키가 동시 침해(공통 도구/운영 인프라 평면 암시, 경로 미공개) — 3분 내 4개 활성 검증인 자산 1,188 SOL(총 1,343 SOL·$135K, 637 JitoSOL≈833 SOL 포함) 단일 지갑 집결. **voting account 잔액을 비워 참여 수수료 고갈 → 10-27 4개 검증인 동시 투표 정지**(스테이킹 보상 중단). 위임 고객 스테이크 계정은 무접근 실측 — **운영 vs 위임 권한 분리가 폭발 반경 절단**. JitoSOL→SOL→Bridgers/Chainflip→Ethereum→**첫 브리지 페이아웃 후 9분 내 Tornado Cash**(10-28까지 57 ETH).
   Vector mapping: **B15 강화(서브패턴 「cross-operator correlated operational keys」) + A11 강화(운영 계좌 rent-drain의 참여-DoS 무기화 — voting account 고갈→투표 정지)** — SwissBorg/Kiln(2025-09, solana-specific) 제공자-API 패밀리와 축 구분(타인 위임 자산 무침해 = 권한 분리 성공 대조).
   Sources: https://www.bitquery.io/investigations/solflare-validator-hack · https://coinpaper.com/38253/solana-validator-hack-exposes-five-operators-as-135-000-in-crypto-flows-into-tornado-cash
+
+## 2026-11-07 — TENDRIL / FLOKI 봇 / BitMart / InsurancePool / Nexus BTC DEX (블랙 일일 진화 — 11-05·06 회차 공백 포함 3일 창)
+
+- **2026-11-05 — $TENDRIL (BSC AMM — sell-hook 지연 입력·리저브 선기입, ~$555K)** — sell 훅이 외부 sell 전송 도착 **전에** 페어의 토큰 잔액을 차감하고 `pair.sync()` 호출 → AMM이 중간 리저브 상태를 정식화 → 지연 도착한 입력이 USDT 거의 전액 인출. 인접 컨트랙트별 `msg.sender` 검사는 통과하나 비특권 판매자가 전체 중첩 경로 제어(ExVul 트랜잭션 기반 분석). **매트릭스 흡수는 퍼플 11-06 선행 완료(A91 강화 — L5829)**: 리저브 동기화가 최종 이체/정산 효과에 선행할 수 없다는 불변식 + 전체 중첩-호출 추적 요구. 본 항목은 타임라인 완전성 기록.
+  Vector mapping: **A91 강화(퍼플 11-06 선처리 — 중복 방지 확인)** — reserve-sync-before-settlement-ordering 축.
+  Sources: https://x.com/CertiKAlert/status/2118242639212658985 · https://tozvan.com/hacks/tendril-pool-exploit-sell-triggered-burn · https://hacked.slowmist.io/
+
+- **2026-11-05 — FLOKI Trading Bot (텔레그램 트레이딩 봇 — 익스플로잇, 오프라인 전환, 손실액 미공개) [WATCH: 메커니즘 미공개]** — FLOKI 팀이 자사 텔레그램 트레이딩 봇의 익스플로잇 확인·오프라인 전환. 영향 사용자 식별 중, 잔여 자금 신규 안전 지갑 이동 예고, 봇 지갑 입금 금지·내보낸 개인키 자금 셀프 커스터디 이전 안내("환불/복구" 사칭 경고 포함). TradeWiz/LootBot(B122)과 동일 표면: 텔레그램 봇 수탁 키 평면.
+  Vector mapping: **B122 강화 — 3번째 인스턴스(수탁-키 봇 팬아웃)** — WATCH(RCA 대기, 메커니즘 미공개).
+  Sources: https://x.com/FLOKI/status/2118381080260608281 · https://hacked.slowmist.io/
+
+- **2026-11-02 — BitMart (거래소 — Base/Arbitrum/Optimism 핫월렛 드레인, ~$391K)** — Mercado Bitcoin(11-02)과 **동일 그룹 소행으로 추정**(예비 조사) — 브라질 시장 새벽 공격 몇 시간 뒤 연쇄. 파산 재조정 중·보안 인력 심각 부족 상태였음. 11-04 배치의 키-평면 슈퍼클러스터(EU 다중거래소·Mercado·King·검증인 5곡)에 **제5의 인스턴스**로 편입 — 별도 신규 축 없음.
+  Vector mapping: **B15 강화(슈퍼클러스터 제5 맴버 — 상관 다중-법인 키 평면)** — 타임라인 회복(11-04 창 누락분).
+  Sources: https://x.com/sheldonbitmart/status/2117650361154691529 · https://hacked.slowmist.io/
+
+- **2026-11-03 — InsurancePool/CoreVault (BSC — 플래시론 오라클 조작, ~$112.3K/160.26 BNB)** — 플래시론으로 유동성 풀 가격/오라클 조작 → CoreVault 상환가 **~33배 부풀려** InsurancePool 초과 자금 인출 후 대출 상환. 고전적 A2/A3 합성 — 신규 패턴 없음, 타임라인 기록(11-04 창 누락분 회복).
+  Vector mapping: **A2/A3 고전 합성(플래시론 가격조작→과대 상환)** — 강화 불필요(축 완전 정착).
+  Sources: https://x.com/TenArmorAlert/status/2117794176079376390 · https://hacked.slowmist.io/
+
+- **2026-10-27 — Nexus BTC DEX (비트코인 DEX — "legacy signature vulnerability" 경보, ~$685K) [WATCH: 단일 소스·메커니즘 미공개]** — 퍼플 11-04 큐 승계 심사(KuCoin 단일 소스, 매트릭스·인시던트 문서 grep 0매치 실증 → 본 배치 흡수). BTC DEX에서 레거시 서명 검증 결함을 통한 BTC 절도로 보도 — **코드 레벨 메커니즘 상세 전무**(어떤 서명 형식·검증 경로인지 미공개). META-83 규율상 알림-등급으로만 흡수: RCA 도착 전 플레이북 구축 금지. 서명-검증 축 후보(A40 계열 추정)는 RCA 확인 시에만 확정.
+  Vector mapping: **WATCH(단일 소스·RCA 대기 — 퍼플 11-04 큐 심사 완료)** — 잠정 A40/B15 계열.
+  Sources: https://www.kucoin.com/news/flash/bitcoin-dex-on-nexus-suffers-685k-loss-in-btc-theft-via-legacy-signature-vulnerability
