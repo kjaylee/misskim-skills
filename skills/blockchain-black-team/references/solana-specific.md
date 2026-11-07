@@ -2721,3 +2721,11 @@ Sources: https://www.bitquery.io/investigations/solflare-validator-hack · https
 - **Microstable**: `programs/microstable/src/lib.rs`와 `keeper/src/` 전수 검색에서 `sp1`·`jolt`·`risc0`·`zkvm`·RISC-V guest/prover/verifier가 0매치이고, `Proof::WormholeMerkle`는 Pyth accumulator/Merkle 경로다. **NOT ACTIVE / LATENT**.
 - 215. ☐ **증명형 Solana 경로는 guest 소스만 검토하지 말고 compiler+LLVM+target/backend를 증명 신뢰 경계에 포함한다.** `cargo build --locked`와 재현 빌드·guest 바이너리 해시·`rustc --version --verbose`·LLVM commit을 고정하고, 알려진 rustc/LLVM miscompilation corpus를 SP1/Jolt target별 differential compile로 회귀시킨다. 검증 직전 공개 출력은 독립 실행기 또는 온체인 보수 재계산과 교차검증하며, proof가 유효하다는 사실을 source-level 의미 보증으로 승격하지 않는다.
 - **Source**: https://arxiv.org/abs/2611.04701
+
+### 2026-11-08 redteam — A176 다중 소스 quote 집계 규칙 캡처 (솔라나 체크리스트 216)
+
+- **외부 신호**: Flashbots Collective 11-03 연구 노트(BlazePhoenix 사전출시 집계기 설계) — quote는 무료 위조 가능하고 「다수 신뢰」는 표가 무료한 투표. count-median은 더스트 Sybil에, balanceOf 앵커는 회수가능한 plain-transfer 기부에 캡처되고, 죽은 풀 합의가 유일한 깊은 풀을 배제한다. depth 가중 중앙값(breakdown point = 실 유동성 절반)만 생존, same-block JIT depth 스푸핑은 미해결. 관측 갭 회복 스윕(11-05 런 미프로브·11-07 런 빈 응답).
+- **솔라나 공격면**: 폴백/manual 오라클 레인이나 키퍼 가격 sanity가 「N개 소스 근접」 증거를 수용하면 — 그 N이 무비용으로 창발 가능(count Sybil)하거나 소스별 가중치가 balanceOf·TVL 같은 회수가능 신호면 집계 규칙 자체가 캡처된다. Pyth/Wormhole 정준 경로는 서명·accumulator 검증이 자본 비용을 부과하므로 이 축과 무관하다. Switchboard 08-29(A3 계열)과 축이 다르다: 저쪽은 발행자 면 키 승인 위조, A176은 소비자 입장 집계 규칙 캡처.
+- **Microstable**: quote/median/pool_price 프로그램 0매치 · keeper 「pool」은 에이전트 선택·RPC URL · MANUAL_ORACLE_MODE는 단일 작성자 권한 레인(쿨다운·에포크 상한). **NOT ACTIVE / LATENT**.
+- 216. ☐ 다중 소스 quote/가격 집계 도입 시 (a) 가중치는 평가 시점에 잠긴 depth 또는 실제 거래 크기 시뮬레이션 출력이어야 하고 count·balanceOf 가중 금지 (b) breakdown point(중앙값 이동에 필요한 실 유동성 비용)를 문서화 (c) same-block JIT 유동성 가중치 인플레이션 대응(직전 슬롯 depth 고정 등) (d) 광고된 집계 알고리즘과 구현의 정합 테스트.
+- **Source**: https://collective.flashbots.net/t/which-pools-quote-to-believe-when-quotes-are-free-to-forge-three-rules-three-attacks-one-depth-weighted-median/6122
