@@ -1142,3 +1142,9 @@
 - **2026-10-27 — Nexus BTC DEX (비트코인 DEX — "legacy signature vulnerability" 경보, ~$685K) [WATCH: 단일 소스·메커니즘 미공개]** — 퍼플 11-04 큐 승계 심사(KuCoin 단일 소스, 매트릭스·인시던트 문서 grep 0매치 실증 → 본 배치 흡수). BTC DEX에서 레거시 서명 검증 결함을 통한 BTC 절도로 보도 — **코드 레벨 메커니즘 상세 전무**(어떤 서명 형식·검증 경로인지 미공개). META-83 규율상 알림-등급으로만 흡수: RCA 도착 전 플레이북 구축 금지. 서명-검증 축 후보(A40 계열 추정)는 RCA 확인 시에만 확정.
   Vector mapping: **WATCH(단일 소스·RCA 대기 — 퍼플 11-04 큐 심사 완료)** — 잠정 A40/B15 계열.
   Sources: https://www.kucoin.com/news/flash/bitcoin-dex-on-nexus-suffers-685k-loss-in-btc-theft-via-legacy-signature-vulnerability
+
+## 2026-11-08 — Degen Coin Flip (블랙 일일 진화)
+
+- **2026-11-06 — Degen Coin Flip (Degen Chain 게임 — Degen Spin 익스플로잇, 3만+ 지갑 참여, ~$10K 하우스 한정) [WATCH: 메커니즘 미공개]** — 팀이 Degen Spin 게임의 익스플로잇을 발견·공표. **3만 개 이상 지갑이 공개적으로 공격에 참여**했으나 피해는 하우스 자금 ~$10K로 종결 — 플레이어는 자기 지갑으로 직접 플레이하고 프로젝트가 잔고를 수탁하지 않는 **비수탁 설계** 덕분에 사용자 자금은 구조적으로 무손실. Spin·사이드베팅은 수리를 위해 정지, 타 게임 무영향. FLOKI 봇(11-05, 수탁 키 — 사용자 자금 위험·잔여 자금 긴급 이동)과 동일 「소비자 dApp 익스플로잇」 사건급에서 **수탁 구조가 손실 경계를 결정한다**는 B122 명제의 정확한 대조군. 코드 레벨 메커니즘 미공개 → META-83 규율로 WATCH 등급만 기록(RCA 도착 전 플레이북 구축 금지).
+  Vector mapping: **B122 강화 — 비수탁 대조군(counterfactual) 인스턴스**: 수탁 봇(FLOKI·TradeWiz·LootBot)의 「키-익스포트 = 잔여 표면」과 정반대 — 비수탁 게임은 익스플로잇의 손실 상한이 하우스 플로트로 고정. 부가 관찰: 공개 악용 가능 결함은 3만 지갑 스웜까지 확산돼도 총손실이 수탁 설계 단일 침해 1건보다 작을 수 있다. Microstable 코롤러리: PDA 볼트 수탁형 CDP는 이 상한 이점이 구조적 부재 → 손실 경계 통제는 기존 벡터 방어(A6 등)에 전적으로 의존.
+  Sources: https://x.com/degencoinflip/status/2118555191599616042 · https://hacked.slowmist.io/ (2026-11-07 18:04 UTC 스냅샷)
