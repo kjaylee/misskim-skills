@@ -3428,3 +3428,17 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 | **신규 CRITICAL/HIGH** | — | **0건** |
 
 **블루팀 지시(경화 1건)**: monitor.rs 와치독 루프에 (i) keeper fee-payer SOL 최소액 경보(예: 0.5 SOL 미만 alert) (ii) 마지막 성공 tx 경과시간 경보(임계 초과 alert — King pre-drain quiescence 신호 대응) 추가 — B20급 라이브니스 경화, 특권 평면과 무관하므로 즉시 착수 가능. A6 88일차 수정 지시 ①~⑦ 승계.
+
+## 2026-11-10 — 일일 점검 (A6 day 94, 코드 94일째 불변)
+
+**캐리 전항 라이브 재실증** (HEAD 23c0163·dirty 40·mtime 02-28, sed/lock/grep 실측):
+- A6 CRITICAL **day 94** — lib.rs:2320 `mint::authority = protocol_state` 핀 vs :2395 bare `#[account(mut)]` 비대칭
+- HERMES-H1 HIGH — hermes.rs:61-69 `HermesPostedUpdate` 7필드, `posted_price_account` 부재
+- B83 HIGH — quinn-proto 0.11.13; ☐182 MEDIUM — rustls 0.21.12+0.23.36 듀얼핀; ☐205 — tokio 1.49.0; B45 PARTIAL — attestation 부재; anchor-lang 0.31.1(A157/A158/A164 잠복)
+- 대시보드 innerHTML/document.write/eval 0매치; keeper load_keypairs+pin_keypair_integrity 라이브(main.rs:203-205)
+
+**신규 LOW 1 — RUSTSEC-2026-0463 / GHSA-8c75-8mhr-p7r9 (openssl)**
+- solana/Cargo.lock openssl 0.10.75 = 취약 범위(>=0.10.24, <0.10.78) 내. 취약 API `aes::unwrap_key` 소스 0매치·keeper TLS=reqwest rustls-tls 피처 명시 → **도달 불가 = LOW**
+- ☐206: 0.10.78 상향 + 다음 런 `cargo tree -i openssl` 전이 경로 확정(native-tls 0매치 — 경유 크레이트 미확정)
+
+**창 내 신규 렌즈(Ankr 브리지·ACryptoS·Keplr/Web3Auth·LNbits) 전부 NOT ACTIVE(구조적). 신규 CRITICAL/HIGH 0.**

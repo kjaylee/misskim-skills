@@ -1148,3 +1148,32 @@
 - **2026-11-06 — Degen Coin Flip (Degen Chain 게임 — Degen Spin 익스플로잇, 3만+ 지갑 참여, ~$10K 하우스 한정) [WATCH: 메커니즘 미공개]** — 팀이 Degen Spin 게임의 익스플로잇을 발견·공표. **3만 개 이상 지갑이 공개적으로 공격에 참여**했으나 피해는 하우스 자금 ~$10K로 종결 — 플레이어는 자기 지갑으로 직접 플레이하고 프로젝트가 잔고를 수탁하지 않는 **비수탁 설계** 덕분에 사용자 자금은 구조적으로 무손실. Spin·사이드베팅은 수리를 위해 정지, 타 게임 무영향. FLOKI 봇(11-05, 수탁 키 — 사용자 자금 위험·잔여 자금 긴급 이동)과 동일 「소비자 dApp 익스플로잇」 사건급에서 **수탁 구조가 손실 경계를 결정한다**는 B122 명제의 정확한 대조군. 코드 레벨 메커니즘 미공개 → META-83 규율로 WATCH 등급만 기록(RCA 도착 전 플레이북 구축 금지).
   Vector mapping: **B122 강화 — 비수탁 대조군(counterfactual) 인스턴스**: 수탁 봇(FLOKI·TradeWiz·LootBot)의 「키-익스포트 = 잔여 표면」과 정반대 — 비수탁 게임은 익스플로잇의 손실 상한이 하우스 플로트로 고정. 부가 관찰: 공개 악용 가능 결함은 3만 지갑 스웜까지 확산돼도 총손실이 수탁 설계 단일 침해 1건보다 작을 수 있다. Microstable 코롤러리: PDA 볼트 수탁형 CDP는 이 상한 이점이 구조적 부재 → 손실 경계 통제는 기존 벡터 방어(A6 등)에 전적으로 의존.
   Sources: https://x.com/degencoinflip/status/2118555191599616042 · https://hacked.slowmist.io/ (2026-11-07 18:04 UTC 스냅샷)
+
+## 2026-11-10 — Ankr 브리지 / ACryptoS / Keplr-Web3Auth / LNbits (블랙 일일 진화)
+
+### Ankr Ethereum Cross-chain Bridge (~$304.5K, 2026-11-09)
+- 공격자가 **동일한 정상 Optimism tx를 참조하는 위조 크로스체인 영수증 5건**(수신자·토큰·금액 각각 변경) 제출 — 전부 신뢰 컨센서스 서명자의 유효 서명 보유, `withdraw()`가 소스체인 이벤트 대조 없이 방출
+- 매핑: **A32 강화** — 「consensus-signed receipt ≠ source-event binding (same-source-tx multi-receipt minting)」; zkLink hash-재사용(10-29)·Wanchain 인코딩-충돌에 이은 제3변형; 제로-포저리 패밀리(META-51) 수렴
+- 출처: https://x.com/SlowMist_Team/status/2119720284093890615
+- Microstable: NOT ACTIVE(구조적 — 브리지/영수증 평면 부재)
+
+### ACryptoS (~$665.4K·77 vaults/5 chains, 2026-11-08)
+- `depositMulti` 배열 길이 ↔ 토큰 수 미검증 → 미세 단일-토큰 입금으로 vault shares 대다수 발행 → 양 토큰 비례 인출; 폐지 선언·화이트햇 10% 제안
+- 매핑: **A4+A10 강화**(배치-배열 회계 미정합 → share mint) + A34/META-76(미감사 가치-잔존)
+- 출처: https://x.com/acryptosdao/status/2119479478749667555
+- Microstable: NOT ACTIVE(구조적 — 단일-담보 고정 경로)
+
+### Keplr/Web3Auth (~$6.01M·44,000+ 지갑, 2026-11-06 — 백필 회복)
+- Web3Auth 인프라 취약점 → 소셜 로그인 파생 키 유출 → 무인가 tx 다발; **복구구문·하드웨어 계정 무영향**; 화이트햇 회수 일부·소셜 로그인 중지
+- 매핑: **B15+B122 강화** — 「social-login/MPC derivation-plane fan-out」; 파생 경로 분리 = 피해 경계 분리(B15 09-19 명제)의 44k-지갑 규모 실증
+- 출처: https://x.com/keplrwallet/status/2118926087615045807
+- Microstable: NOT ACTIVE(구조적 — 수탁/소셜-파생 평면 부재)
+
+### LNbits (~$1.7K·2.28M sats, 2026-11-08)
+- 셀프호스팅 라이트닝 인스턴스 계정-생성 → 무인가 인출 웨이브; 전 인스턴스 셧다운 지시·패치 준비 중
+- 매핑: timeline-only — BTCPay(11-03) 셀프호스팅 플릿 패치-전파 축(META-76)
+- 출처: https://x.com/lnbits/status/2119428804951048237
+
+### RustSec: RUSTSEC-2026-0463 (openssl, ID 배정 2026-11-09 — 백로그 회복)
+- GHSA-8c75-8mhr-p7r9(본체 2026-04-22 발행)·CVE-2026-41678·`aes::unwrap_key` OOB write·범위 >=0.10.24 <0.10.78·패치 0.10.78
+- Microstable solana/Cargo.lock openssl **0.10.75 범위 내** — `unwrap_key` 소스 0매치·TLS=rustls-tls 명시 → **LOW(도달 불가)**·☐206 패치 권고 + 다음 런 `cargo tree -i openssl` 전이 경로 확정
