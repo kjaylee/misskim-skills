@@ -2729,3 +2729,40 @@ Sources: https://www.bitquery.io/investigations/solflare-validator-hack · https
 - **Microstable**: quote/median/pool_price 프로그램 0매치 · keeper 「pool」은 에이전트 선택·RPC URL · MANUAL_ORACLE_MODE는 단일 작성자 권한 레인(쿨다운·에포크 상한). **NOT ACTIVE / LATENT**.
 - 216. ☐ 다중 소스 quote/가격 집계 도입 시 (a) 가중치는 평가 시점에 잠긴 depth 또는 실제 거래 크기 시뮬레이션 출력이어야 하고 count·balanceOf 가중 금지 (b) breakdown point(중앙값 이동에 필요한 실 유동성 비용)를 문서화 (c) same-block JIT 유동성 가중치 인플레이션 대응(직전 슬롯 depth 고정 등) (d) 광고된 집계 알고리즘과 구현의 정합 테스트.
 - **Source**: https://collective.flashbots.net/t/which-pools-quote-to-believe-when-quotes-are-free-to-forge-three-rules-three-attacks-one-depth-weighted-median/6122
+
+---
+
+## On-Chain Compressed-Artifact Decompression Bomb (A177, Anchor #5226/#5261, 2026-11-10 master 병합)
+
+### Mechanism
+Legacy `IdlAccount` = [8B discriminator][32B authority][4B data_len][zlib-compressed IDL]. Anchor TS `decodeIdlAccount`/`Program.fetchIdl` and CLI `anchor legacy-idl fetch` inflated the payload without a decompressed-size cap — a few-KB compressed payload (writable by anyone controlling a program's IDL authority) expands to GB-scale allocations and OOM-kills/latency-jams explorers, indexers, and test harnesses that auto-fetch untrusted programs' IDLs. Fix caps decompression at 16 MiB (`DEFAULT_MAX_IDL_DATA_SIZE` = CLI `MAX_IDL_BUFFER_BYTES`), rejects non-UTF-8, and errors (instead of panicking) when declared `data_len` exceeds actual account data.
+
+```text
+// VULNERABLE (off-chain consumer, pre-fix): unbounded inflate of on-chain artifact
+const idl = decodeIdlAccount(account.data);   // pako inflate, no decompressed-size cap
+const idl = await program.fetchIdl();         // same path
+
+// SAFE (#5226/#5261 semantics)
+// - cap decompressed size at 16 MiB while inflating (throw past it)
+// - reject non-UTF-8 decoded IDL
+// - declared length > account data => error, never panic
+// - never auto-fetch IDLs for untrusted programs
+```
+
+**Solana review checklist**:
+1. 온체인 압축 아티팩트(IDL·zstd 계정압축·압축 메타데이터·압축 증명)를 소비하는 오프체인 코드 전수에 감압 후 크기 상한(16 MiB 정합)이 있는지 본다.
+2. 신뢰하지 않는 프로그램의 IDL 자동 fetch 경로(탐색기·인덱서·테스트 하네스·범용 연결 도구)를 폐쇄하거나 샌드박스한다.
+3. 감압 실패·인코딩 위반·선언 길이>실제 데이터가 panic이 아닌 에러로 처리되는지 확인한다.
+4. 상한 정책이 구현 조각(TS/CLI/커스텀 파서)마다 일관 적용됐는지 대조한다 — 한 구현의 상한이 형제 구현을 보증하지 않는다(수정 전 CLI fetcher에는 상한이 있었으나 TS/legacy에는 없었다).
+
+**Microstable risk**: keeper NOT ACTIVE(관련 API·감압 호출 0매치, anchor 0.31.1). TS면 LATENT — @coral-xyz/anchor 0.31.1(취약·패치 미출시) 설치됐으나 자체 소스 fetchIdl/decodeIdlAccount 호출부 0건(node_modules 내부 구현만 해당). 활성 조건: 제3자 프로그램 IDL 수집 도구 추가, 또는 패치 출시 전 잔류 상태의 신규 소비 코드.
+
+**Sources**:
+- https://github.com/otter-sec/anchor/commit/4abbcbf
+- https://github.com/otter-sec/anchor/commit/d0ea75c
+
+## Solana-Specific Defense Checklist Update
+217. ☐ 온체인 압축 아티팩트를 소비하는 모든 오프체인 경로에 감압 크기 상한(16 MiB 정합)·인코딩 검증·길이 불일치 에러화 적용; 신뢰하지 않는 프로그램의 IDL fetch 금지
+
+### A45 강화 — 보안도구 위장 네이밍 악성 크레이트 파형 (RustSec 0464~0472, 2026-11-10)
+신규 악성 크레이트 9종(webhook_commands·electrumd·build_dep·top_level_crate·shinchina·env-test-guard·gabby-types-sec·sec-gemini·shinchina-test) 중 보안/빌드 도구 사칭 이름(`sec-gemini`·`gabby-types-sec`·`env-test-guard`·`build_dep`) 등장 — 「보안 크레이트니까」라는 리뷰 심리와 cargo-deny 예외를 노린다. 캠페인 급 차단(☐25)에 위 계열 이름의 신규 크레이트 강경 처리 조항 추가 권고. 마이크로스테이블 양 록 9종 전수 0매치(2026-11-11 실측).
