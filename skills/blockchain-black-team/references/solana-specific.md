@@ -2766,3 +2766,41 @@ const idl = await program.fetchIdl();         // same path
 
 ### A45 강화 — 보안도구 위장 네이밍 악성 크레이트 파형 (RustSec 0464~0472, 2026-11-10)
 신규 악성 크레이트 9종(webhook_commands·electrumd·build_dep·top_level_crate·shinchina·env-test-guard·gabby-types-sec·sec-gemini·shinchina-test) 중 보안/빌드 도구 사칭 이름(`sec-gemini`·`gabby-types-sec`·`env-test-guard`·`build_dep`) 등장 — 「보안 크레이트니까」라는 리뷰 심리와 cargo-deny 예외를 노린다. 캠페인 급 차단(☐25)에 위 계열 이름의 신규 크레이트 강경 처리 조항 추가 권고. 마이크로스테이블 양 록 9종 전수 0매치(2026-11-11 실측).
+
+## IDL Version-Conversion Semantic Inversion (A178, Anchor #5257/#5255/#5256, 2026-11-11 master 병합·미출시)
+
+### Mechanism
+Legacy→current IDL conversion in **released** anchor-idl/CLI silently corrupted trust metadata in two ways (fix merged to master 48a1575, 2026-11-11T14:30:37Z — unreleased, so every released version still misconverts):
+1. **Const-seed JSON-quotes (#5255)**: a legacy string const seed (`"vault"`) was converted to the bytes of its *JSON form* (quotes included) instead of the raw string bytes — every PDA derivation, codegen, or address display from the converted IDL computes an address the on-chain program does not actually use. Regression test `legacy_string_const_seed_has_no_quotes` asserts `b"vault"`.
+2. **Relation declarer↔named inversion (#5256)**: legacy IDLs record `has_one` relations on the *declaring* account (`vault` lists `authority`); the current spec records them on the *named* account (`authority` lists `vault`). The converter copied entries in place, attaching constraint edges to the wrong account — IDL-driven verification tooling validates the wrong graph and issues false assurance that can mask real has_one violations. Round-trip conversion fixed symmetrically (`invert_relations`/`invert_relations_legacy`).
+
+```text
+// VULNERABLE (released anchor-idl, pre-#5257): trust the converted IDL blindly
+let current = convert_idl(legacy_bytes)?;   // const seeds carry JSON quotes
+let pda     = derive_pda(&current);         // silently wrong address
+verify_relations(&current);                 // edges on wrong account → false pass
+
+// SAFE (#5257 semantics)
+// - legacy string const seed => raw string bytes, never its JSON encoding
+// - relations: declarer -> named account on convert (and back on round-trip)
+// - pin the converter version as part of artifact integrity
+// - before trusting a converted IDL: round-trip check + spot-check seed bytes
+//   and relation direction against the on-chain program source
+```
+
+**Solana review checklist**:
+1. 변환 IDL에서 PDA를 파생·표시하는 도구는 const seed 바이트를 원문과 직접 대조한다(따옴표·이스케이프 부착 = 변환 버그 징후).
+2. 관계(has_one) 기반 자동 검증 도구는 에지 방향(선언 계정 vs 지목 계정)을 프로그램 소스와 대조한다.
+3. 스키마 버전 변환 산출물은 원본→변환→재변환 round-trip 정합을 샘플 검증하기 전까지 신뢰하지 않는다 — well-formed는 의미 정합이 아니다.
+4. 변환기 버전을 아티팩트 무결성의 일부로 핀한다.
+
+**Microstable risk**: NOT ACTIVE — anchor-idl 크레이트 양 록 0매치, convert_idl/IdlSeed/legacy-idl keeper·프로그램 소스 0매치(HEAD 23c0163 동결·창 내 수정 0). LATENT: IDL 변환 도구·제3자 IDL 소비 도입 시 발화. A177(감압 폭탄)과 연쇄 가능 — 압축 아티팩트 전달 → 변환 의미 오염.
+
+**Sources**:
+- https://github.com/otter-sec/anchor/commit/48a1575
+
+## Solana-Specific Defense Checklist Update
+218. ☐ 스키마 버전 변환(IDL legacy→current 등) 산출물을 신뢰하기 전 (a) round-trip 정합 (b) const seed 원시 바이트·관계 방향의 독립 대조를 수행하고, 변환기 버전을 아티팩트 무결성의 일부로 핀한다
+
+### A45 승계 — lwd-uri-util 악성 크레이트 (RustSec 0483, 2026-11-10T21:46Z)
+창 내 신규 악성 크레이트 1종(lwd-uri-util — 일반 utility 네이밍, 보안도구 위장 아님) — 0464~0472 캠페인 연속성 관찰. 양 록 0매치(2026-11-12 실측).
