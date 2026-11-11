@@ -3442,3 +3442,21 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 - ☐206: 0.10.78 상향 + 다음 런 `cargo tree -i openssl` 전이 경로 확정(native-tls 0매치 — 경유 크레이트 미확정)
 
 **창 내 신규 렌즈(Ankr 브리지·ACryptoS·Keplr/Web3Auth·LNbits) 전부 NOT ACTIVE(구조적). 신규 CRITICAL/HIGH 0.**
+
+## 2026-11-12 — 일일 점검 (A6 day 96, 코드 96일째 불변; 11-11 블랙 배치 공백 — 레드/퍼플 대행 승계)
+
+**윈도우**: 2026-11-10 18:00 → 2026-11-11 18:00 UTC · **Evolution delta**: **0 new named / 0 META; 3 reinforcements(D26-Across 4th registrar-layer·B15-Initia 본RCA 자격증명 연쇄·B15-Mercado 봉쇄≠서명면) + 1 WATCH(iOS worse_query)**. 어드바이저리: OSV crates.io 11-10 이후 modified 0건·anza 0건·Anchor 4건(0144/0146 등)은 11-11 A177 기흡수 불변.
+
+| 벡터/렌즈 | 판정 | 근거(실코드·lock 실측 11-12) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 96일차** | lib.rs:2395-2396 bare `#[account(mut)]` vs :2320 `mint::authority = protocol_state` 핀 — sed 재실증. HEAD 23c0163·dirty 40·mtime 02-28 불변(4,669행) |
+| **A10 / HERMES-H1 / B83 / ☐182 / ☐205 / B45** | ❌ HIGH·⚠️ carry | burn CPI :1353-1369 · hermes.rs `HermesPostedUpdate` 7필드(`posted_price_account` 부재) · quinn-proto 0.11.13 · rustls 0.21.12(+0.23.36 듀얼) · tokio 1.49.0 · attestation 부재 · anchor-lang 0.31.1(A157/A158/A164/A177 잠복) — lock/sed 전항 재실증 |
+| **☐206 (openssl)** | LOW + **전이 경로 확정(11-10 큐 해소)** | 0.10.75 ← solana-secp256r1-program 2.2.4 ← solana-precompiles 2.2.2 ← solana-sdk 2.3.1 ← anchor-client 0.31.1(`cargo tree -i` 실측); `aes::unwrap_key` 소스 0매치 → 도달 불가 유지, 패치 0.10.80 상향 승계 |
+| **Initia 렌즈 (env 자격증명 연쇄)** | ⚠️ **PARTIAL** | keeper env 키 = MICROSTABLE_STATE_HMAC_KEY + HMAC(무결성용) — 자금 서명면 아님(자금 = 2-of-3 파일 키페어, main.rs load_keypairs); `verify_config_integrity` 키 부재+비-debug → fail-closed(config.rs:853-866). 잔여: 호스트 침해 시 env 무결성 키 노출 = 상태/설정 위조 가능성(자금 평면과 분리) |
+| **Mercado 렌즈 (봉쇄≠서명면)** | ⚠️ **PARTIAL** | 온체인 mint pause 서킷브레이커(:2858·:2874)는 mint/디펙 국한; redeem `mstb_mint` A6 비대칭 → 「pause=봉쇄」 주장 불완전 — 자금 이동 서명면 열거·회전 절차 부재 |
+| **Across 렌즈 (D26 대시보드)** | ✅ **NOT ACTIVE(구조적)** | docs/index.html — innerHTML/document.write/eval 0매치·fetch 0·외부 script src 0(로컬 vendor solana-web3 1.95.3 iife + app.js만, git 관리) — CDN/외부 의존 0으로 캐노니컬 도메인 하이재킹의 주입 다리 부재 |
+| **신규 CRITICAL/HIGH** | — | **0건** |
+
+**블루팀 지시**: A6 day 96 수정 ①~⑦ 승계 + ⑧(신규) — (a) 대시보드 호스팅 도메인 자산 체크리스트 신설(레지스트라 잠금·MFA·긴급 DNS 동결 채널 — D26-Across 규칙); (b) IR 런북에 「봉쇄 선언 전 자금 이동 서명면 열거+회전 증거」 절차 추가(Mercado 서브패턴); (c) 1회 침해 통과된 env/클라우드 자격증명은 즉시 전량 회전 — 1차 사고 패치가 org-plane sweep을 대체하지 못한다(Initia 3주 2차 실증).
+
+**Sources**: https://x.com/AcrossProtocol/status/2120278803318489362 · https://x.com/initia/status/2120195620442910943 · https://rekt.news/mercado-rekt · https://hacked.slowmist.io/ (2026-11-11 18:00 UTC 스냅샷) · microstable HEAD 23c0163 — lib.rs/rebalance.rs/config.rs/hermes.rs/Cargo.lock/index.html 2026-11-12 전수 실측

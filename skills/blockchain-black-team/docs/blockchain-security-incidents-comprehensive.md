@@ -1177,3 +1177,34 @@
 ### RustSec: RUSTSEC-2026-0463 (openssl, ID 배정 2026-11-09 — 백로그 회복)
 - GHSA-8c75-8mhr-p7r9(본체 2026-04-22 발행)·CVE-2026-41678·`aes::unwrap_key` OOB write·범위 >=0.10.24 <0.10.78·패치 0.10.78
 - Microstable solana/Cargo.lock openssl **0.10.75 범위 내** — `unwrap_key` 소스 0매치·TLS=rustls-tls 명시 → **LOW(도달 불가)**·☐206 패치 권고 + 다음 런 `cargo tree -i openssl` 전이 경로 확정
+
+## 2026-11-12 — Across / Initia 본RCA / Mercado 심층 / iOS worse_query / LNbits 1.7.0 / ☐206 해소 (블랙 일일 진화)
+
+**창**: 2026-11-10 18:00 → 2026-11-11 18:00 UTC (03:00 KST 크론). 11-11 블랙 배치 공백 — 레드(A177·openssl 0473-0479)·퍼플(B114-Initia 렌즈) 대행 승계. 레인: SlowMist 스냅샷(11-11 18:00 UTC) 상위 = Initia(11-10)·Across(11-10 18:45 UTC) — Initia 본RCA 제외 전부 레드/퍼플 기흡수; OSV crates.io 11-10 이후 modified 0건·anza 0건·Neodyme 최신 11-03 무관·zai-search X-레인 정상(web_search 비활성 폴백).
+
+### Across Protocol (~$350K, 2026-11-10 18:45 UTC — 레지스트라 지원데스크 SE → 캐노니컬 도메인 피싱)
+- Namecheap(레지스트라) 지원데스크 소셜엔지니어링 → across.to 탈취 → 캐노니컬 도메인에서 피싱 프론트 서빙; ~15분 내 감지·SEAL911+Cloudflare DNS 풀; 창 내 지갑 연결·서명 사용자 피해(~$350K), 전액 보상 약속, 컨트랙트 무관
+- 매핑: **D26 강화** — registrar-layer 계보 4번째(Neutrl 03-19 → CoW Swap 04-14 → Flap 10-31 → Across 11-10); SE 대상이 프로젝트 계정 → **레지스트라 자체 지원 프로세스**로 상향(프로젝트가 직접 운영하지 않는 통제면). 최선급 대응(15분+벤더 DNS 풀)에도 ~$350K → **응답 하한은 사용자 서명률이 결정** → 레지스트라/레지스트리 잠금·MFA·긴급 DNS 동결 채널만이 창 자체를 제거
+- 출처: https://x.com/AcrossProtocol/status/2120278803318489362 · https://hacked.slowmist.io/ (11-10 엔트리) · https://crypto.news/across-protocol-domain-hijack-phishing-350k-losses
+- Microstable: docs/index.html — innerHTML/document.write/eval 0매치·fetch 0·외부 script src 0(로컬 vendor solana-web3 1.95.3 + app.js만, git 관리) → **NOT ACTIVE(구조적)**
+
+### Initia 2차 사고 본RCA (2026-11-11 공개 — 총 $3.27M, 10-23 1차와 3주 내 이질 클래스)
+- 침해 경로 = 유출된 GCP 키 → 커맨드 인젝션 → 환경변수 수집 → GitHub·클라우드 자격증명 연쇄 → Anvil(롤업 네트워크) 인프라 키 → 5개 롤업 위조 IBC 인출 → 에스크로 방출; $2.16M은 할트된 L1 잔류, 13,400 TIA·8,000 USDC.inj·597K Noble USDC 자체 DEX 사이펀
+- 매핑: **B15 강화**(인프라 자격증명 연쇄 초기 진입) + 규칙 승격: **사고 후 대응 = org-plane sweep** — 1차 패치(MoveVM) 후 통과된 자격증명 평면 미회전이 2차 경로가 됨(3주 간격 실증)
+- 출처: https://x.com/initia/status/2120195620442910943 · gadgets360
+- Microstable: keeper env 평면 = MICROSTABLE_STATE_HMAC_KEY/HMAC 2종(무결성용, 자금 서명면 아님 — 자금은 2-of-3 파일 키페어); `verify_config_integrity` 키 부재 시 debug_assertions+명시적 override 아니면 fail-closed(config.rs:853-866 실측) → ⚠️ PARTIAL
+
+### Mercado Bitcoin 심층 (rekt 11-09/10 게시 — B15 슈퍼클러스터 후속)
+- 「contained」 트윗(12:56 UTC) 30분 전 ETH 예치-주소 스윕 시작, 이후 4시간 지속 — 예치 주소 36,042개가 각자 잔액 서명 이체(11체인 $48.6M, Bitquery); BitMart 연계 지갑이 드레인 53분 전 동일 공격자로 선행
+- 서브패턴: **containment-claim ≠ signing-plane revocation** — 봉쇄 선언 전 「자금 이동 서명면 열거+회전 증거」 IR 요건화
+- 출처: https://rekt.news/mercado-rekt · https://bitquery.io/investigations/mercado-bitcoin-hack
+- Microstable: 온체인 mint 서킷브레이커(:2858/:2874)는 mint/디펙 국한, redeem mstb_mint는 A6 비대칭 → 「pause=봉쇄」 주장 불완전 ⚠️ PARTIAL
+
+### iOS "worse_query" 경고 (Binance 2026-11-10, WATCH — 실제 사고 0)
+- iOS 26.7.1·27.0.1·27.2 — 악성 앱이 타 앱 로컬 파일(시드구문·개인키·크리덴셜) 열람; 암호화폐 실제 피해 확정 0·Apple 수정 미확정. 매핑: B15 디바이스-평면 WATCH(09-16 DCENT 계열), timeline-only
+- 출처: https://x.com/binance/status/2120093246399430770 · news.bitcoin.com
+
+### LNbits 1.7.0 패치·키 회전 권고 (11-11) + ☐206 해소
+- LNbits 「1.7.0 업데이트+키 회전」 권고 = 결함이 키 노출 계열 시사(11-08 사고 후속, META-76 셀프호스팅 플릿 패치-전파 축 timeline 갱신만)
+- **☐206 해소**: `cargo tree -i openssl` 전이 경로 확정 — openssl 0.10.75 ← solana-secp256r1-program 2.2.4 ← solana-precompiles 2.2.2 ← solana-sdk 2.3.1 ← anchor-client 0.31.1 ← keeper; `aes::unwrap_key` 도달 불가 → LOW 유지, 패치 0.10.80 상향 권고 승계(레드 11-11)
+- 참조: https://cryptoticker.io/en/lnbits-security-flaw-emergency-update · DefiLlama 2026 YTD $8.78B/338건(11-10 기준, financefeeds)
