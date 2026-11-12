@@ -2822,3 +2822,20 @@ Solana SIMD-0723(Gabe Rodriguez/Anza): 활성화 후 모든 tx 최근-블록해�
 
 ## Solana-Specific Defense Checklist Update
 219. ☐ 온체인 서명자 프로그램(Programmatic Signer/Vector류) 도입 시 (i) 폐기-만료-실패 3상태의 승인 수명 명시 (ii) 미사용 특권 승인 N-시간 초과 모니터의 프로그램-원장 기반 재구축 (iii) 실패한 제출의 잔존 승인 명시적 폐기 절차를 컷오버 전에 확정한다 (SIMD-0723, B77)
+
+
+## Legacy IDL Fetch Provenance Confusion (A179, Anchor #5269, 2026-11-12T15:34Z master 병합·미출시)
+
+### Mechanism
+`anchor fetch --tx`/`idl_fetch_historical`가 시그니처 페이지네이션으로 수집한 tx의 **모든 인스트럭션**에서 IDL write 식별자(0x40f4bc78a7e9690a + WRITE variant)만 대조해 청크를 재구성 — 방출 프로그램(`program_id_index`)과 목적지 IdlAccount(`accounts[0]`) 미검증. 공격자는 IDL 계정을 터치하는 tx에 **다른 프로그램 호출 기생 인스트럭션**(식별자 선두 데이터)을 실어, 재구성 산출물에 악성 레이아웃·시드·식별자를 대상 프로그램 귀속 — 하류 클라이언트·하네스·탐색기의 잘못된 PDA 파생·악성 계정 디코딩 유도. 패치 c414468f는 `expected_program_id` + `expected_idl_address`(= create_with_seed(PDA(\[\], pid), "anchor:idl", pid)) 양 결속 추가(Parsed/Raw 전 경로, 회귀 테스트 2건). **패치 미출시**(v0.32.3/v0.31.3/v0.30.4 = 11-03) → 잠복창.
+
+IDL 레인 제3 결함: A177(감압 폭탄 — 자원 소진)·A178(버전 변환 의미 반전)·A159(주소 세탁)와 축 상이 — **재구성 파이프라인의 출처 치환: tx-소속 ≠ emitter provenance**. 일반화: tx 이력·이벤트 로그 기반 아티팩트 재구성 클래스 전체(탐색기·인덱서 백필·포렌식 도구·proof-of-publication 검증기) — 데이터 식별자만으로 인스트럭션을 걸러내는 모든 소비자. 잔여 프로브(미실증): 청크 조립 순서가 시그니처 역순 페이지네이션 의존 — 재구성 산출물 provenance(원본 서명·슬롯) 부재 축.
+
+**Microstable risk**: NOT ACTIVE(구조적) — `extract_chunks|idl_fetch|fetch_idl|IdlFetcher|legacy-idl|--tx` keeper·프로그램 0매치(2026-11-13 실측) · anchor-idl/anchor-cli 양 록 0매치. LATENT: anchor CLI 역사적 fetch·제3자 IDL 수집 도구 도입 시 — A177(TS LATENT)·A178와 동일 발화 조건군, IDL 도구 도입 시 3벡터 동시 평가.
+
+**Sources**:
+- https://github.com/coral-xyz/anchor/commit/c414468f (diff 직독 — 회귀 테스트 rejects_write_data_with_wrong_program_or_account 포함)
+- https://api.github.com/repos/coral-xyz/anchor/releases (11-03 최종 확인)
+
+## Solana-Specific Defense Checklist Update
+220. ☐ tx 이력·이벤트 로그 기반 아티팩트 재구성(IDL/ABI 복원 등) 도구 도입 시 인스트럭션 필터가 데이터 식별자만이 아니라 (emitter program_id, destination account, data) 3중 결속을 검증하고, 재구성 산출물에 원본 서명·슬롯 provenance를 첨부한다 (A179, Anchor #5269)
