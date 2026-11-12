@@ -1208,3 +1208,22 @@
 - LNbits 「1.7.0 업데이트+키 회전」 권고 = 결함이 키 노출 계열 시사(11-08 사고 후속, META-76 셀프호스팅 플릿 패치-전파 축 timeline 갱신만)
 - **☐206 해소**: `cargo tree -i openssl` 전이 경로 확정 — openssl 0.10.75 ← solana-secp256r1-program 2.2.4 ← solana-precompiles 2.2.2 ← solana-sdk 2.3.1 ← anchor-client 0.31.1 ← keeper; `aes::unwrap_key` 도달 불가 → LOW 유지, 패치 0.10.80 상향 권고 승계(레드 11-11)
 - 참조: https://cryptoticker.io/en/lnbits-security-flaw-emergency-update · DefiLlama 2026 YTD $8.78B/338건(11-10 기준, financefeeds)
+
+## 2026-11-13 — SIMD-0723 durable nonce 퇴출 제안 / Anchor #5269 / hickory DNSSEC 감사파 (블랙 일일 진화 — 신규 사고 0)
+
+### SIMD-0723 「Durable Nonce 퇴출」 (제안 2026-11-05, CoinDesk 2026-11-09 — B77 강화, 백필 회복)
+- Anza(Gabe Rodriguez) 제안: 활성화 후 모든 tx 최근-블록해시 필수, mainnet-beta 2027-05-05 이전 비활성화 불가(제출일로부터 ≥6개월 이전 창), Anza+Firedancer 각 ≥1 엔지니어 서명 필요. Solana Foundation 10월 폐지 계획에 첫 날짜 부여
+- 동기: Drift $270M(04-2026, 사전서명 tx 9일 잔존 후 실행 — B77) + 2022 양-경로(블록해시·nonce) 이중 처리로 메인넷 4.5h 정지 전례
+- 대체: 온체인 서명자 프로그램(Anza Programmatic Signer·Blueshift Vector) — SIMD 스스로 「a failed submission is not a revocation」(실패 제출 ≠ 승인 폐기) 경고 → B77 승인-수명 제3 서브패턴·☐219(승인 수명 3상태·미사용 특권 승인 모니터·잔존 승인 명시 폐기 선행)
+- 경제: durable-nonce tx 트래픽 ~3% / priority fee 30% / 555 계정 = 97.5%(Max Resnick 「durable nonce spam」) — D계열 수수료-집중 앵커
+- 출처: https://www.coindesk.com/tech/2026/11/09/solana-moves-to-scrap-the-transaction-feature-used-in-the-usd270-million-drift-hack
+
+### Anchor #5269 「validate legacy IDL write provenance」 (2026-11-12, 창 내 — 레드 큐 A179 후보)
+- `anchor fetch --tx`의 IDL 청크 재구성·기록이 방출자 프로그램·IDL 주소 미검증(tx-소속 ≠ 방출자-provenance) → `expected_program_id`+`expected_idl_address` 결속 추가. A177(감압 폭탄)·A178(변환 의미 반전)에 이은 IDL-레인 제3축
+- A178 패치 미출시 재확인: 최신 릴리스 v0.32.3/v0.31.3/v0.30.4 = 2026-11-03(#5257 11-11 병합 이전)
+- 출처: https://github.com/coral-xyz/anchor/commit/c414468f
+
+### RustSec 2026-11-12 대량 배치 (전량 Microstable 트리 밖)
+- RUSTSEC-2026-0492~0512+: hickory-proto/net/resolver/recursor **DNSSEC 검증 감사 일괄**(~16건 — DNSSEC-bogus → Ok 반환·unrelated signed RRset 승인·NSEC3/RRSIG 점검 누락·glueless 루프 등, 다수 privilege-escalation 재분류, 일부 무패치) + russh 0492-0495 + vodozemac 0510(Matrix E2EE) + bsv-rs — 「검증 통과 ≠ 검증 정확」(A32/B114/META-70)의 DNS 평면 인스턴스
+- 양 록 0매치 실측(hickory 5종·russh·vodozemac·bsv-rs·matrix-sdk)
+- 출처: https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-11T18:00:00Z (40커밋)

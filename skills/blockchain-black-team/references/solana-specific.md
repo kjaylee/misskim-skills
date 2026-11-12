@@ -2804,3 +2804,21 @@ verify_relations(&current);                 // edges on wrong account → false 
 
 ### A45 승계 — lwd-uri-util 악성 크레이트 (RustSec 0483, 2026-11-10T21:46Z)
 창 내 신규 악성 크레이트 1종(lwd-uri-util — 일반 utility 네이밍, 보안도구 위장 아님) — 0464~0472 캠페인 연속성 관찰. 양 록 0매치(2026-11-12 실측).
+
+## Durable Nonce Retirement — SIMD-0723 (B77 강화, Anza 제안 2026-11-05 · CoinDesk 2026-11-09)
+
+### Mechanism (블랙 관점 — 퇴출 응답의 공격면)
+Solana SIMD-0723(Gabe Rodriguez/Anza): 활성화 후 모든 tx 최근-블록해시 필수, mainnet-beta 2027-05-05 이전 비활성화 불가(≥6개월 이전 창), Anza+Jump(Firedancer) 각 ≥1 엔지니어 서명 필요. Drift $270M(04-2026, 사전서명 tx 9일 잔존 후 실행 — B77)에 대한 프로토콜-층 응답. 대체 평면 = 온체인 서명자 프로그램(Anza Programmatic Signer·Blueshift Vector).
+
+1. **「실패 실행 ≠ 폐기」 승인-수명**: SIMD 본문 자체 경고 「a failed execution can leave an authorization usable, so a failed submission is not a revocation」 — 대체 서명자 프로그램에서 실패한 제출이 승인을 죽이지 않는다. 운영자의 실패 관찰 = 폐기 관찰이 아니다.
+2. **퇴출-이전 창**: 에어갭 서명 커스터디언·거래소가 2027-05-05까지 서명 플로우 전면 재구축 강제 — 마감 압박 하 플릿 단위 신규 미감사 코드. 2022 양-경로(블록해시·nonce) 이중 처리로 메인넷 4.5h 정지 전례 = 해당 평면은 이미 정지급 클래스.
+3. **B77 관측 코롤러리 일몰**: 「미실행 특권 승인 N시간 초과」 모니터의 관측 원천(온체인 nonce 상태)이 퇴출과 함께 소멸 — 대체 프로그램의 승인 원장이 새 관측 평면(없으면 무관측).
+4. **수수료-집중 앵커(D계열)**: durable-nonce tx 트래픽 ~3% / priority fee 30% / 555 계정 = 97.5%(Max Resnick).
+
+**Microstable risk**: NOT ACTIVE(구조적) — keeper·프로그램 `durable|advance_nonce|DurableNonce` 0매치(2026-11-13 실측), 블록해시 = `get_latest_blockhash()` 최근-블록해시 경로(agent_loop.rs:468, 에이전트 선택 시드 파생 전용). LATENT: 에어갭/오프라인 서명·지연-제출 재시간 도입 시 2027-05-05 마이그레이션·☐219 적용.
+
+**Sources**:
+- https://www.coindesk.com/tech/2026/11/09/solana-moves-to-scrap-the-transaction-feature-used-in-the-usd270-million-drift-hack
+
+## Solana-Specific Defense Checklist Update
+219. ☐ 온체인 서명자 프로그램(Programmatic Signer/Vector류) 도입 시 (i) 폐기-만료-실패 3상태의 승인 수명 명시 (ii) 미사용 특권 승인 N-시간 초과 모니터의 프로그램-원장 기반 재구축 (iii) 실패한 제출의 잔존 승인 명시적 폐기 절차를 컷오버 전에 확정한다 (SIMD-0723, B77)

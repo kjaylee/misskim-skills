@@ -3460,3 +3460,22 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **블루팀 지시**: A6 day 96 수정 ①~⑦ 승계 + ⑧(신규) — (a) 대시보드 호스팅 도메인 자산 체크리스트 신설(레지스트라 잠금·MFA·긴급 DNS 동결 채널 — D26-Across 규칙); (b) IR 런북에 「봉쇄 선언 전 자금 이동 서명면 열거+회전 증거」 절차 추가(Mercado 서브패턴); (c) 1회 침해 통과된 env/클라우드 자격증명은 즉시 전량 회전 — 1차 사고 패치가 org-plane sweep을 대체하지 못한다(Initia 3주 2차 실증).
 
 **Sources**: https://x.com/AcrossProtocol/status/2120278803318489362 · https://x.com/initia/status/2120195620442910943 · https://rekt.news/mercado-rekt · https://hacked.slowmist.io/ (2026-11-11 18:00 UTC 스냅샷) · microstable HEAD 23c0163 — lib.rs/rebalance.rs/config.rs/hermes.rs/Cargo.lock/index.html 2026-11-12 전수 실측
+
+## 2026-11-13 — 일일 점검 (A6 day 97, 코드 97일째 불변)
+
+**윈도우**: 2026-11-11 18:00 → 2026-11-12 18:00 UTC · **Evolution delta**: **0 new named / 0 META; 강화 3** — B77(SIMD-0723 durable-nonce 퇴출 백필 회복: 「실패≠폐기」 승인-수명 불변식·퇴출-이전 창·☐219) + A177/A178 패밀리(Anchor #5269 IDL fetch provenance, 레드 큐 A179) + RustSec hickory DNSSEC 감사파·russh·vodozemac·bsv-rs(전량 트리 밖). 창 내 신규 사고 0(rekt/SlowMist/GHSA/X 전 레인 무풍).
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성 11-13 실측) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 97일차** | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395-2396 bare `#[account(mut)]` — sed 재실증. HEAD 23c0163·dirty 40·mtime 02-28·4,669행 불변 |
+| **A10 / HERMES-H1 / B83 / ☐182 / ☐205 / B45** | ❌ HIGH·⚠️ carry | burn CPI :1360 `authority: user` · hermes.rs `HermesPostedUpdate` 7필드(`posted_price_account` 부재) · quinn-proto 0.11.13 · rustls 0.21.12+0.23.36 듀얼 · tokio 1.49.0 · `security/` 부재(B45) · anchor-lang 0.31.1(A157/A158/A164/A177 잠복) — 전항 라이브 재실증 |
+| **☐206 (openssl)** | LOW 캐리 | 0.10.75 범위 내·`aes::unwrap_key` 도달 불가 유지 — 패치 0.10.80 상향 블루팀 과제 승계(전이경로 solana-secp256r1-program←solana-sdk←anchor-client 확정 완료) |
+| **SIMD-0723 렌즈 (durable nonce 퇴출, B77)** | ✅ **NOT ACTIVE(구조적)** | keeper·프로그램 `durable\|advance_nonce\|DurableNonce` 0매치 — 블록해시 = `get_latest_blockhash()` 최근-블록해시 경로(agent_loop.rs:468, 에이전트 선택 시드 파생 전용). LATENT: 에어갭/오프라인 서명·지연-제출 재시도 도입 시 2027-05-05 마이그레이션 + ☐219(서명자-프로그램 승인-수명 3상태·미사용 특권 승인 N-시간 모니터·「실패 제출 ≠ 폐기」 잔존 승인 명시적 폐기 절차) 선행 |
+| **Anchor #5269 렌즈 (IDL fetch provenance)** | ✅ **NOT ACTIVE(구조적)** | anchor CLI fetch/--tx/extract_chunks 소스 0매치 · anchor-idl 양 록 0매치 — A178 잠복창(#5257/#5269 전부 미출시, 최신 릴리스 11-03) 승계 |
+| **RustSec 신규파 (0492-0512+)** | ✅ 트리 밖 | hickory-proto/net/resolver/recursor/dns·russh·vodozemac·bsv-rs·matrix-sdk — 양 록(microstable/Cargo.lock·solana/Cargo.lock) 전수 0매치. 「DNSSEC-bogus → Ok」 = 「검증 통과 ≠ 검증 정확」 A32/B114/META-70 패밀리의 DNS 평면 인스턴스로 기록 |
+| **대시보드 (D26/Across 승계)** | ✅ | docs/index.html — innerHTML/document.write/eval 0 · fetch( 0 · 외부 script src 0 |
+| **신규 CRITICAL/HIGH** | — | **0건** |
+
+**블루팀 지시**: A6 97일차 ①~⑧ 승계 + ⑨(신규) — (a) SIMD-0723 키퍼 영향 공식 기록: durable nonce 미사용 확인(2027-05-05 마이그레이션 요건 없음), 단 에어갭/오프라인 서명·지연-제출 재시도 도입 검토 시 ☐219 불변식(승인-수명 3상태 명시·미사용 특권 승인 N-시간 모니터·실패 제출의 잔존 승인 명시적 폐기 절차)을 컷오버 게이트로 둘 것; (b) 신규 의존성 추가 시 DNS 스택(hickory 감사파 계류 — 일부 「no fix」)·SSH(russh)·E2EE(vodozemac) 어드바이저리 상태 재확인 게이트; (c) IDL 아티팩트를 tx 재구성으로 기록하는 도구(Anchor `fetch --tx`류) 사용 금지 — #5269 이전 버전은 방출자-provenance 미검증(레드 A179 승계).
+
+**Sources**: https://www.coindesk.com/tech/2026/11/09/solana-moves-to-scrap-the-transaction-feature-used-in-the-usd270-million-drift-hack (본문 직독) · https://github.com/coral-xyz/anchor/commit/c414468f (#5269 diff 직독) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-11T18:00:00Z (40커밋) · https://api.github.com/repos/coral-xyz/anchor/releases · https://hacked.slowmist.io/en/ (11-12 18:1x UTC 스냅샷) · https://rekt.news · microstable HEAD 23c0163 — stat·sed·grep·양 록 2026-11-13 전수 실측
