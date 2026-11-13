@@ -2839,3 +2839,22 @@ IDL 레인 제3 결함: A177(감압 폭탄 — 자원 소진)·A178(버전 변�
 
 ## Solana-Specific Defense Checklist Update
 220. ☐ tx 이력·이벤트 로그 기반 아티팩트 재구성(IDL/ABI 복원 등) 도구 도입 시 인스트럭션 필터가 데이터 식별자만이 아니라 (emitter program_id, destination account, data) 3중 결속을 검증하고, 재구성 산출물에 원본 서명·슬롯 provenance를 첨부한다 (A179, Anchor #5269)
+
+
+## Quinn Advisory Wave — B83 패치 플로어 상향 (RUSTSEC-2026-0523/0524 + quinn-udp 0538, advisory-db 등재 2026-11-13T12:24Z·어드바이저리 날짜 09-30)
+
+### Mechanism (블랙 관점)
+quinn-proto **0523**: 핸드셰이크 후 peer가 작은 MAX_STREAM_DATA 프레임 1개로 초대형 stream index 지정 → `accept`가 해당 인덱스까지 전 스트림 반환 → `accept_bi` 루프가 2^40+ 스트림 핸들에 노출 → 런타임별 OOM·신규 연결 정지·peer 이탈 후 영구 busy(peer-개시 양방향 스트림 수용단만). **0524**: 공격자가 클라이언트의 첫 Initial만으로 매칭 Retry 패킷 구성 — 접촉 서버 자신 또는 Initial를 관측하는 제3자가 정규 서버보다 선응답해 장문 Retry token으로 panic/메모리 소진(아웃바운드 연결을 만드는 모든 애플리케이션 = 모든 quinn 클라이언트). quinn-udp **0538**: 수신 버퍼보다 큰 데이터그램 수신 시 **QUIC 패킷 인증 이전**에 소켓 구동 태스크 busy-lock(원격 사전인증 CPU DoS) — Linux/Android/FreeBSD/Windows만 타 수신 경로 예외, **macOS는 영향 범위**(Solana 개발·키퍼 호스트 다수가 macOS).
+
+B83(0185 fragment-hole)과의 관계: 전부 **정상-형식 입력으로 프로세스 생존 상태에서 자원/수행성을 소모**시키는 같은 축(valid-shape resource exhaustion) — Solana 전송측(quinn) 잠복 패밀리. Microstable solana/Cargo.lock: **quinn-proto 0.11.13**(0185 <0.11.15 + 0523/0524 <0.11.19 = 3중 취약)·**quinn-udp 0.5.14**(<0.5.16).
+
+**Microstable risk**: NOT ACTIVE(구조적 — 실행 경로) / **LOCK-HIGH(의존성 핀)**. 도달성 LATENT: keeper 소스 = HTTP JSON-RPC `RpcClient`만·QUIC 엔드포인트 구성 0(2026-07-15 검토 승계·2026-11-14 재확인). TpuClient·QUIC/WebSocket 전송 도입 시 즉시 0524(아웃바운드 클라이언트 전제)·0538(macOS 키퍼) 발화 평면 진입.
+
+**Sources**:
+- https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-proto/RUSTSEC-2026-0523.md
+- https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-proto/RUSTSEC-2026-0524.md
+- https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-udp/RUSTSEC-2026-0538.md
+- https://github.com/rustsec/advisory-db/commit/4ef2df8
+
+## Solana-Specific Defense Checklist Update
+223. ☐ quinn 의존성 승급/CI 게이트 기준을 quinn-proto ≥ 0.11.19·quinn-udp ≥ 0.5.16으로 상향하고(RUSTSEC-2026-0185+0523+0524·0538 동시 해소 — 0538은 macOS 수신 경로 포함), 승급 또는 QUIC/WebSocket 전송(TpuClient 등) 도입 시 keeper의 QUIC 엔드포인트 미구성 가정을 재실증한다 (B83)

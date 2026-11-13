@@ -1227,3 +1227,12 @@
 - RUSTSEC-2026-0492~0512+: hickory-proto/net/resolver/recursor **DNSSEC 검증 감사 일괄**(~16건 — DNSSEC-bogus → Ok 반환·unrelated signed RRset 승인·NSEC3/RRSIG 점검 누락·glueless 루프 등, 다수 privilege-escalation 재분류, 일부 무패치) + russh 0492-0495 + vodozemac 0510(Matrix E2EE) + bsv-rs — 「검증 통과 ≠ 검증 정확」(A32/B114/META-70)의 DNS 평면 인스턴스
 - 양 록 0매치 실측(hickory 5종·russh·vodozemac·bsv-rs·matrix-sdk)
 - 출처: https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-11T18:00:00Z (40커밋)
+
+
+## 2026-11-14 — Bitcoin Core CVE 3건 공개 / Web3Auth 보호적 스윕 (블랙 일일 진화)
+
+- **2026-11-10 — Bitcoin Core CVE-2025-62861/62859/62860 공개(2025-10 수석 — 13개월 지연)**: ① **62861** mempool 불일치 상태 — 28.0–28.2·29.0–29.1 채굴자 노드가 유효 블록 생성 전 재시작 강제 ② **62859** 악성 네트워크 참여자가 블록 처리를 최대 10분 지연(반복 가능 — liveness DoS) ③ **62860** 특정 Tor 설정 노드의 DoS/프라이버시 보호 제거(수천 개 공개 노드 영향). 수정은 2025-10(v30.0/29.2) 배포·최종 취약 버전 2026-10 EOL. 사고 없는 고정-후-공개 → named 미승격·타임라인 기록(노드-평면 DoS 패밀리 — Solana 전송측 B58/B83 대응 축). 관찰: 「수석-공개 13개월 창 = 악용 여부 원천 불확정」(META-76-인접).
+  - 출처: https://www.databreachtoday.com/cryptohack-roundup-binance-hackers-launder-funds-cfo-exits-a-33372 (본문 직독)
+- **2026-11-06~12 — Web3Auth/Keplr 후속 — 보호적 스윕 $5.6M**: 화이트햇 선제 이체가 공격 서명과 구분 불가 → 사용자 도난 오인 → 회수 주소 공개로 해소. 취약 계정 = 소셜로그인의 ~20%(Keplr 공동창업자 Josh Lee 추정)·실제 악용은 그 이하·피해액 미공개. **B122/B15 강화 — 「defender action ≡ attacker signature」 커뮤니케이션 규율**(방어 이체의 사전 공개 채널 = IR 런북 요소).
+  - 출처: https://www.databreachtoday.com/cryptohack-roundup-binance-hackers-launder-funds-cfo-exits-a-33372
+- **기각 레인 기록(11-14)**: Gnosis Pay 11-03 침해 공개(노후 시스템·2시간 봉쇄·크리덴셜 교체·자금 무사·메커니즘 미공개 — 코드 레벨 메커니즘 부재, B15-인접 관찰만) · Binance 후속(Elliptic — 멤코인 6종 세탁·$124M+ BTC 전환·FBI $1.2B 동결·CFO 교체 = 10-29 기흡수 사고의 자금추적·조직 후속) · SafePal 피싱 우편(오프체인 데이터 유출 후속) · NEAR AI SGLang(오프체인 AI 인프라) · MEXC FinCEN 차단(규제·비사고).

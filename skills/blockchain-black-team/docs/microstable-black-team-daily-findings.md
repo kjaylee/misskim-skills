@@ -3479,3 +3479,24 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **블루팀 지시**: A6 97일차 ①~⑧ 승계 + ⑨(신규) — (a) SIMD-0723 키퍼 영향 공식 기록: durable nonce 미사용 확인(2027-05-05 마이그레이션 요건 없음), 단 에어갭/오프라인 서명·지연-제출 재시도 도입 검토 시 ☐219 불변식(승인-수명 3상태 명시·미사용 특권 승인 N-시간 모니터·실패 제출의 잔존 승인 명시적 폐기 절차)을 컷오버 게이트로 둘 것; (b) 신규 의존성 추가 시 DNS 스택(hickory 감사파 계류 — 일부 「no fix」)·SSH(russh)·E2EE(vodozemac) 어드바이저리 상태 재확인 게이트; (c) IDL 아티팩트를 tx 재구성으로 기록하는 도구(Anchor `fetch --tx`류) 사용 금지 — #5269 이전 버전은 방출자-provenance 미검증(레드 A179 승계).
 
 **Sources**: https://www.coindesk.com/tech/2026/11/09/solana-moves-to-scrap-the-transaction-feature-used-in-the-usd270-million-drift-hack (본문 직독) · https://github.com/coral-xyz/anchor/commit/c414468f (#5269 diff 직독) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-11T18:00:00Z (40커밋) · https://api.github.com/repos/coral-xyz/anchor/releases · https://hacked.slowmist.io/en/ (11-12 18:1x UTC 스냅샷) · https://rekt.news · microstable HEAD 23c0163 — stat·sed·grep·양 록 2026-11-13 전수 실측
+
+
+## 2026-11-14 — 일일 점검 (A6 day 98, 코드 98일째 불변)
+
+**윈도우**: 2026-11-12 18:00 → 2026-11-13 18:00 UTC · **Evolution delta**: **0 new named / 0 META; B83 HIGH 범위 확대(quinn-proto RUSTSEC-2026-0523/0524 + quinn-udp 0538 — 패치 플로어 0.11.15→0.11.19·quinn-udp ≥0.5.16 병과 ☐223) + B122 강화 1(Web3Auth 보호적 스윕) + 타임라인 1(Bitcoin Core CVE 3건 공개) + B45 관측 정정 1**. 창 내 신규 사고 0(rekt/SlowMist/GHSA/X 사고 레인 무풍 — RustSec 어드바이저리 배치가 유일 신호).
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성 11-14 실측) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 98일차** | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395-2396 bare `#[account(mut)]` — sed 재실증. HEAD 23c0163·dirty 40·mtime 02-28·4,669행 불변 |
+| **A10 / HERMES-H1 / ☐182 / ☐205 / ☐206** | ❌ HIGH·⚠️ LOW 캐리 | burn CPI :1360-1370 `authority: user` · hermes.rs `HermesPostedUpdate` 7필드(`posted_price_account` 부재 — 구조 재추출) · rustls 0.21.12+0.23.36 · tokio 1.49.0 · openssl 0.10.75(전이경로 solana-secp256r1-program←solana-sdk←anchor-client·도달 불가) — 재실증 |
+| **B83 (quinn — HIGH 확대)** | ❌ **HIGH(잠복)** | solana/Cargo.lock **quinn-proto 0.11.13** = RUSTSEC-2026-0185(<0.11.15)·**0523**(<0.11.19)·**0524**(<0.11.19) 3건 취약 범위 동시 + **quinn-udp 0.5.14** = **0538**(<0.5.16) 취약 — **macOS는 예외 목록에 없음**(Linux/Android/FreeBSD/Windows만 타 수신 경로). 도달성: keeper 소스 QUIC 엔드포인트 구성 0(HTTP JSON-RPC `RpcClient`만 — 2026-07-15 검토 승계) → 락 기준 HIGH·실행 기준 LATENT 유지. LATENT 발화 조건: TpuClient·QUIC/WebSocket 전송 도입(0524는 아웃바운드 quinn 클라이언트 전제) |
+| **Anchor A177/A178/A179 잠복창** | ⚠️ LATENT | anchor-lang 0.31.1 양 록 · 최신 릴리스 11-03(v0.32.3/v0.31.3/v0.30.4) < #5257 머지(11-11)·#5269 머지(11-12) — **IDL 레인 패치 3연창 미출시 재확인(11-14 API)**. keeper·프로그램 IDL 도구·anchor-idl 양 록 0매치 |
+| **RustSec 신규파 (0523~0541)** | ✅ 트리 밖(quinn 제외) | libp2p×7·hickory×6(DNSSEC 감사파 연장·일부 no-fix)·ref-swap·bsv-rs·ammonia — 양 록(microstable/Cargo.lock·solana/Cargo.lock) 전수 0매치 |
+| **B45 (관측 정정)** | ⚠️ PARTIAL | `security/` 디렉터리 **존재**(git 추적 — 2026-02-22 red/green 리포트·invariant_monitor.py·program-immutability-proof). 11-13 「security/ 부재」 표현 부정확 — B45 PARTIAL 근거는 본래 축(감사-후 배포 델타·attestation 갱신 부재)으로 정위 |
+| **대시보드 (D26/Across 승계)** | ✅ | innerHTML/document.write/eval/fetch 0 · `<script src=` 2건 = 로컬 vendor(solana-web3 1.95.3 iife)+app.js · 외부 https src 0 · mtime 02-28 불변 |
+| **Bitcoin Core 렌즈 (CVE-2025-62859/60/61)** | ✅ NOT ACTIVE(구조적) | Microstable = Solana 원생·BTC 노드 평면 부재 — keeper는 RPC 클라이언트만 사용 |
+| **신규 CRITICAL/HIGH** | — | **0건**(B83 확대 = 기존 HIGH의 범위 확장) |
+
+**블루팀 지시**: A6 98일차 ①~⑨ 승계 + ⑩(신규) — (a) **quinn 승급 과제 갱신(긴급도 상향)**: CI/SBOM 게이트를 `quinn-proto < 0.11.19`·`quinn-udp < 0.5.16` 실패 조건으로 교체하고 승급 시 keeper QUIC 미구성 재실증(☐223 — 0185+0523+0524·0538 동시 해소; 0538은 macOS 수신 경로 포함이므로 맥 호스트 키퍼는 버전 승급 전 잠복 유의); (b) Web3Auth 교훈 반영 — 향후 화이트햇/비상 자금 이체 절차에 **회수 주소 사전 공개 채널** 필수 포함(방어 이체 ≠ 사용자 인지 도난 — 「defender action ≡ attacker signature」 B122 규율); (c) `security/` 산출물(2026-02)에 대한 갱신 주기·attestation 부재를 문서화된 부채로 등록(B45 PARTIAL 정위).
+
+**Sources**: https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-proto/RUSTSEC-2026-0523.md · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-proto/RUSTSEC-2026-0524.md · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-udp/RUSTSEC-2026-0538.md · https://github.com/rustsec/advisory-db/commit/4ef2df8 · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-12T18:00:00Z · https://api.github.com/repos/coral-xyz/anchor/releases · https://www.databreachtoday.com/cryptohack-roundup-binance-hackers-launder-funds-cfo-exits-a-33372 · https://rekt.news · https://hacked.slowmist.io/en/ · https://blog.trailofbits.com/index.xml · microstable HEAD 23c0163 — stat·sed·lock·grep·구조 추출 2026-11-14 전수 실측
