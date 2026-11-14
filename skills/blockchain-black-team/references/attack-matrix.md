@@ -14709,3 +14709,15 @@ Sources: https://hacked.slowmist.io/en/ (10-26 04:01 KST) · https://thehackerne
 **카운트**: black 235/227 불변(신규 named 0 — 퍼플 큐 2건 전부 패밀리 강화로 확정) · 체크리스트 ☐225(퍼플 11-14) → **☐226·☐227**(블랙) · META 84 불변(퍼플 소관 — META-89 승계) · 레드 큐 0(A179 승계).
 
 **Sources**: https://rekt.news (11-15 03:0x KST 스냅샷) · https://hacked.slowmist.io/en/ (동일 스냅샷 — 최신 가시 11-09) · https://api.github.com/advisories?affects=coral-xyz/anchor|anza-xyz/agave|solana-labs/solana-program-library (전부 0) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-13T18:00:00Z (0커밋 실측) · https://api.github.com/repos/anza-xyz/agave/commits?since=2026-11-13T18:00:00Z (5커밋 — 70ef445 quinn-udp 0.5.16 포함) · https://api.github.com/repos/coral-xyz/anchor/releases (11-03 불변 재확인) · https://blog.trailofbits.com/index.xml (lastBuildDate 11-06 불변) · https://www.certora.com/blog/sui-move-security-language-guarantees-misses (Cetus/Typus 메커니즘 — 퍼플 11-14 직독 승계) · https://www.cnbc.com/2026/11/13/us-seizes-binance-hack-crypto.html (timeline-only) · zai web_search_prime oneWeek (X/뉴스 레인) · microstable HEAD 23c0163 (stat·sed·grep·양 록·권한 제약 전수 실측 2026-11-15)
+
+### 2026-11-15 redteam batch — named 0(창 2026-11-13 18:30Z → 2026-11-14 18:30Z): 전 레인 무풍 지속(Anchor 0커밋·A177/A178/A179 패치 미출시 5연창) + RustSec 0커밋 소강 + arXiv 11-14 배치 양 미러 공백(간헐적 원본 공백 확정)
+
+- 블랙 레드 큐: 11-15 배치 「레드 큐 0(A179 승계)」 — 인계 0.
+- **Anchor**: 창 내 0커밋 · releases 11-03 불변 재실측(v0.32.3 16:34Z·v0.31.3 16:11Z·v0.30.4 17:17Z + v1.2.2 10-28 — 전부 #5257(11-11)·#5269(11-12) 머지 이전) → **A177/A178/A179 잠복창 5연창**(v1.2.2 포함 전 IDL 레인).
+- **agave/sdk/SPL**: agave programs/ 4커밋 — quinn-udp 0.5.16(0538, 70ef4451 11-13T21:28Z) = 블랙 11-15 B83 채택 신호 창 내 정합(레드 창 18:30Z 기준 재관측 · quinn-udp 0.5.14 록 잔존 = ☐223/B83 유지) · signal-hook 0.4.6·solana-seed-derivable 3.0.1·tonic 0.14.9 = 비보안 범프(블랙 11-15 분류 승계 — seed-derivable은 무어드바이저리 시맨틱 범프, 기법급 신호 없음·독립 저장소 프로브 404) · solana-sdk 2커밋(wincode feature 전환 비보안 + quinn-udp 동일) · SPL 0(동결 지속).
+- **RustSec**: 창 내 **0커밋**(11-14 libp2p/quinn파 20커밋 이후 소강 — 신규 어드바이저리 0, 록 grep 대상 없음).
+- **CTF/감사/MEV**: Ethernaut pushed_at 11-11T17:31Z(창 밖·비콘텐츠 push 승계) · paradigm top-pushed = solidity-lean/reth/solar/centaur 인프라(비CTF) · ToB lastBuildDate 11-06 불변 · Neodyme 최신 puppet_rce(11-03·하드웨어 — 전일 기록과 동일, SwitchBot 스마트락·Lenovo DCC도 동일 하드웨어 오프플레인) · Flashbots MEV Letter #161(11-10) 불변(창 밖).
+- **arXiv**: 11-14 05:00Z 배치 **양 미러 동시 공백**(rss.arxiv.org·export.arxiv.org 전부 892B·0항목·lastBuildDate 11-14T05:00:0xZ) — 11-13 배치 104편 정상 발행 전례와 대조 → **간헐적 원본 측 공백 확정**(11-12·11-14 2회, 11-12 발표분 미백필 — 미러 고장 가설 기각, 어제 「export 잔존 고장」 판독 정정 · 다음 배치 diff 확인 과제).
+- **뉴스(zai oneWeek)**: NEAR Intents $3.8M 포스트모템(10-01 사고·10-16 보고서 재전달)·Binance $6B 후속(재전달·Project Eleven 양자 경고 = 타임라인)·wfx-loot GitHub Actions CI 시크릿 탈취(오프플레인 CI·에버그린 공급망 TTP)·AI 에이전트 프롬프트 인젝션(에버그린·트리 도달 부재) — 전부 기각(사고 평면 블랙 소관·오프플레인·기법급 메커니즘 부재).
+
+**카운트**: red 257/225 불변(신규 named 0) · 체크리스트 ☐227(블랙 11-15) 불변 · META 84 불변(퍼플 소관) · 레드 큐 0.
