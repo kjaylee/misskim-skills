@@ -2858,3 +2858,23 @@ B83(0185 fragment-hole)과의 관계: 전부 **정상-형식 입력으로 프로
 
 ## Solana-Specific Defense Checklist Update
 223. ☐ quinn 의존성 승급/CI 게이트 기준을 quinn-proto ≥ 0.11.19·quinn-udp ≥ 0.5.16으로 상향하고(RUSTSEC-2026-0185+0523+0524·0538 동시 해소 — 0538은 macOS 수신 경로 포함), 승급 또는 QUIC/WebSocket 전송(TpuClient 등) 도입 시 keeper의 QUIC 엔드포인트 미구성 가정을 재실증한다 (B83)
+
+
+## Cetus checked_shlw / Typus update_v2 — B90·A33 패밀리 강화 (퍼플 큐 판정 2026-11-15)
+
+### Mechanism (블랙 관점)
+**Cetus (2025-05-22, ~$223M, Sui)**: 플랫폼 표준라이브러리 `checked_shlw` u256 매크로가 워드 경계(시프트 192)에서 오버플로 미판정 — (2^64-1)<<192가 2^256 wrap→0 통과, 유동성 산술 붕괴. B90(ruint checked_shl/checked_shr 계약 위반)과 동일 축: **가드 자체가 버그 — 가드의 존재가 가드의 정확성 검증을 대체**(언어-보장 후광의 블랙-레지스터 축). 서브패싯: VM 번들 stdlib 결함 = SBOM·의존성 스캔·어드바이저리 채널 전부 불가시(공급망 스캔 사각 — ruint는 RustSec로 잡혔지만 checked_shlw는 Certora 재분석까지 무관측)·1차 패치 `>` 경계 반례(n=2^192) 생존 → 동일일 2차 `>=` 종결(☐224 생산 실증).
+**Typus (2025-10-15, $3.44M, Sui)**: 오라클 모듈 `update_v2` 무인가 배포 — 모듈이 감사 스코프에 애초에 미포함. A33(선언된 제외)·B45(시간 감쇠 배포 델타)에 이은 제3형태 **미포함(undeclared omission)** — 스코프 문서의 침묵이 공격 로드맵(META-82: 스코프 밖 경로 67.6%·손실가중 94.4%).
+
+### Microstable risk
+- Cetus/B90: **NOT ACTIVE(구조적)** — ruint 양 록 0매치·값-경로 시프트 0매치(`exponent >>= 1` :3557 = fixed_point_pow_ppm 지수-제곱 루프 제어)·값 산술 mul_div_floor/checked_(49회)·wrapping_ 0. LATENT: 신규 산술 크레이트(ruint·bigint류)·플랫폼 프리미티브 래핑 도입 시 ☐226 게이트 통과 전까지.
+- Typus/A33: **방어됨** — 오라클/키퍼 특권 레인 전수 실측: update_oracle(2-of-3 쿼럼 HI-04 + 가격밴드 + `observed_slot <= slot` :700 + 수동모드 만료)·set_pyth_feed·update_oracle_pyth(PTV2-001/RTV3-A34 쿼럼)·rotate_keeper_set(PTV2-015/022 쿼럼+타임락)·enable_manual_oracle_mode(쿼럼)·devnet_force_reinit(authority signer) — **무인가 특권 함수 0**. LATENT: 신규 모듈(신 담보·오라클 소스·키퍼 기능) 배포 시 스코프 매핑 갱신 없으면 발화(☐227).
+
+**Sources**:
+- https://www.certora.com/blog/sui-move-security-language-guarantees-misses (메커니즘 — 퍼플 11-14 직독 승계)
+- https://www.certora.com/blog/auditing-smart-contracts-sui (Typus 스코프 갭 — 퍼플 11-14 직독 승계)
+- 퍼플 11-14 배치(misskim-skills attack-matrix.md) — 큐 요청 원문
+
+## Solana-Specific Defense Checklist Update
+226. ☐ 제3자/플랫폼 산술 프리미티브(외부 산술 크레이트·VM/표준라이브러리 checked·saturating 함수·래핑)를 신규 도입할 때는 워드폭 경계값(시프트량≥비트폭·2^n·2^n±1·타입 최대값±1) 동작의 독립 검증을 통과한 뒤 신뢰한다 — 가드의 존재가 가드의 정확성 검증을 대체하지 않는다 (B90 ← Cetus checked_shlw·ruint)
+227. ☐ 배포 아티팩트 전수(프로그램·키퍼·대시보드·운영 스크립트) × 최신 감사 스코프의 매핑 표를 유지하고, 스코프에 포함되지 않은 모듈의 특권 함수를 0으로 유지한다 — 미포함(undeclared omission)은 선언된 제외·시간 감쇠 배포 델타와 동급의 스코프 갭으로 취급한다 (A33/B45 ← Typus update_v2)

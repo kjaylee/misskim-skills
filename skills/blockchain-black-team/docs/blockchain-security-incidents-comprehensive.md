@@ -1236,3 +1236,12 @@
 - **2026-11-06~12 — Web3Auth/Keplr 후속 — 보호적 스윕 $5.6M**: 화이트햇 선제 이체가 공격 서명과 구분 불가 → 사용자 도난 오인 → 회수 주소 공개로 해소. 취약 계정 = 소셜로그인의 ~20%(Keplr 공동창업자 Josh Lee 추정)·실제 악용은 그 이하·피해액 미공개. **B122/B15 강화 — 「defender action ≡ attacker signature」 커뮤니케이션 규율**(방어 이체의 사전 공개 채널 = IR 런북 요소).
   - 출처: https://www.databreachtoday.com/cryptohack-roundup-binance-hackers-launder-funds-cfo-exits-a-33372
 - **기각 레인 기록(11-14)**: Gnosis Pay 11-03 침해 공개(노후 시스템·2시간 봉쇄·크리덴셜 교체·자금 무사·메커니즘 미공개 — 코드 레벨 메커니즘 부재, B15-인접 관찰만) · Binance 후속(Elliptic — 멤코인 6종 세탁·$124M+ BTC 전환·FBI $1.2B 동결·CFO 교체 = 10-29 기흡수 사고의 자금추적·조직 후속) · SafePal 피싱 우편(오프체인 데이터 유출 후속) · NEAR AI SGLang(오프체인 AI 인프라) · MEXC FinCEN 차단(규제·비사고).
+
+
+## 2026-11-15 — 퍼플 큐 판정 백필: Cetus·Typus 2025 사고 (블랙 일일 진화)
+
+- **2025-05-22 — Cetus (Sui, ~$223M, Sui 사상 최대)**: `checked_shlw` u256 매크로의 워드 경계 오버플로 미판정(시프트 192 → (2^64-1)<<192 wrap→0 통과)으로 유동성 산술 붕괴 — **플랫폼 표준라이브러리(VM 번들 stdlib) 소유 결함**으로 SBOM·의존성 스캔 불가시. 1차 패치 `>` 경계 반례(n=2^192) 생존 → 동일일 2차 `>=` 종결. 블랙 판정(2026-11-15, 퍼플 11-14 큐 승계): **B90 패밀리 강화**(가드 자체의 계약 위반 축 — ruint 쌍둥이)·☐226. Microstable NOT ACTIVE(ruint·값-경로 시프트 0매치).
+  - 출처: https://www.certora.com/blog/sui-move-security-language-guarantees-misses (퍼플 11-14 직독 승계)
+- **2025-10-15 — Typus (Sui, $3.44M)**: 오라클 모듈 `update_v2` **무인가** 배포 — 2025-05 감사 스코프에 모듈 자체가 미포함(undeclared omission). 블랙 판정(2026-11-15, 퍼플 11-14 큐 승계): **A33 패밀리 강화**(선언된 제외·시간 감쇠 배포 델타에 이은 제3 스코프-갭 형태)·META-82 정량 앵커·☐227. Microstable 방어됨(오라클 특권 레인 쿼럼 전수 — 무인가 특권 함수 0).
+  - 출처: https://www.certora.com/blog/auditing-smart-contracts-sui (퍼플 11-14 직독 승계)
+- **기각 레인 기록(11-15)**: Binance 후속(DOJ $1.2B 공식 압수·NK 멤코인 세탁·EIP-7702 재설명·가짜화상 $400M 재구성 = 10-29 기흡수 사고의 법적·자금·재전언 후속 — timeline-only) · Drift 397K SOL 이동·커스터디언 재구축 마감(SIMD-0723 11-13 기흡수 후속 — timeline-only) · Lincoln PD 용어집($43B 오류 수치 = 정밀도 결격 기각).

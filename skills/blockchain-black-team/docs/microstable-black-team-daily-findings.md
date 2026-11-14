@@ -3500,3 +3500,25 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **블루팀 지시**: A6 98일차 ①~⑨ 승계 + ⑩(신규) — (a) **quinn 승급 과제 갱신(긴급도 상향)**: CI/SBOM 게이트를 `quinn-proto < 0.11.19`·`quinn-udp < 0.5.16` 실패 조건으로 교체하고 승급 시 keeper QUIC 미구성 재실증(☐223 — 0185+0523+0524·0538 동시 해소; 0538은 macOS 수신 경로 포함이므로 맥 호스트 키퍼는 버전 승급 전 잠복 유의); (b) Web3Auth 교훈 반영 — 향후 화이트햇/비상 자금 이체 절차에 **회수 주소 사전 공개 채널** 필수 포함(방어 이체 ≠ 사용자 인지 도난 — 「defender action ≡ attacker signature」 B122 규율); (c) `security/` 산출물(2026-02)에 대한 갱신 주기·attestation 부재를 문서화된 부채로 등록(B45 PARTIAL 정위).
 
 **Sources**: https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-proto/RUSTSEC-2026-0523.md · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-proto/RUSTSEC-2026-0524.md · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/quinn-udp/RUSTSEC-2026-0538.md · https://github.com/rustsec/advisory-db/commit/4ef2df8 · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-12T18:00:00Z · https://api.github.com/repos/coral-xyz/anchor/releases · https://www.databreachtoday.com/cryptohack-roundup-binance-hackers-launder-funds-cfo-exits-a-33372 · https://rekt.news · https://hacked.slowmist.io/en/ · https://blog.trailofbits.com/index.xml · microstable HEAD 23c0163 — stat·sed·lock·grep·구조 추출 2026-11-14 전수 실측
+
+
+## 2026-11-15 — 일일 점검 (A6 day 99, 코드 99일째 불변)
+
+**윈도우**: 2026-11-13 18:00 → 2026-11-14 18:00 UTC · **Evolution delta**: **0 new named / 0 META; 퍼플 큐 판정 2건 확정(Cetus→B90 강화·Typus→A33 강화, ☐226·☐227 신설) + B83 채택 신호(agave quinn-udp 0.5.16 범프)**. 창 내 신규 사고 0(rekt/SlowMist/GHSA/RustSec/X 사고 레인 무풍).
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성 11-15 실측) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 99일차** | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395-2396 bare `#[account(mut)]` — sed 재실증. HEAD 23c0163·dirty 40·mtime 02-28·4,669행 불변·창 내 .rs/록 변동 0 |
+| **A10 / HERMES-H1 / ☐182 / ☐205 / ☐206** | ❌ HIGH·⚠️ LOW 캐리 | burn CPI :1360-1370 `authority: user` · hermes.rs `HermesPostedUpdate` 7필드(`posted_price_account` 부재) · rustls 0.21.12+0.23.36 · tokio 1.49.0 · openssl 0.10.75(도달 불가) — 재실증 |
+| **B83 (quinn — HIGH)** | ❌ **HIGH(잠복)** | solana/Cargo.lock quinn-proto 0.11.13(0185+0523+0524 3중)·quinn-udp 0.5.14(0538). **agave 70ef445(11-13T21:28Z) quinn-udp→0.5.16 팩트 대응 = 상류 채택 신호** — 승급 우선도 상향. 도달성 LATENT(keeper QUIC 구성 0·HTTP JSON-RPC만) 승계 |
+| **Anchor A177/A178/A179 잠복창** | ⚠️ LATENT | 릴리스 11-03 불별(v0.32.3/v0.31.3/v0.30.4) < #5257(11-11)·#5269(11-12) — **패치 미출시 5연창 재확인**. anchor-lang 0.31.1 양 록 |
+| **Cetus/B90 렌즈 (퍼플 큐 판정 ①)** | ✅ NOT ACTIVE(구조적) | ruint 양 록 0매치 · 값-경로 시프트 0매치(`exponent >>= 1` :3557 = fixed_point_pow_ppm 지수-제곱 루프 제어) · 값 산술 `mul_div_floor`·checked_ 49·wrapping_ 0 → **B90 패밀리 강화 + ☐226**(경계값 사전 검증 게이트 신설) |
+| **Typus/A33 렌즈 (퍼플 큐 판정 ②)** | ✅ **방어됨** | 오라클 특권 레인 전수 실측: `update_oracle` = 2-of-3 쿼럼(HI-04)+가격밴드+`observed_slot <= slot`(:700)+수동모드 만료 · `set_pyth_feed`/`update_oracle_pyth` = 쿼럼(PTV2-001/RTV3-A34) · `rotate_keeper_set` = 쿼럼+타임락(PTV2-015/022) · `enable_manual_oracle_mode` = 쿼럼 · `devnet_force_reinit` = authority signer — **무인가 특권 함수 0** → **A33 패밀리 강화 + ☐227**(스코프 매핑 표 신설) |
+| **☐225 방향-맹목 신선도 (퍼플 11-14)** | ⚠️ LATENT 승계 | L1005·L3196 단방향 saturating_sub — 수동 오라클 쓰기-경로에는 `observed_slot <= slot` 검증 존재(:700)·Pyth 레인(L3196) 잔존. 전제 = 키퍼/Pyth 침해(HERMES-H1 동일 신뢰 경계) |
+| **B45** | ⚠️ PARTIAL | `security/` 존재(11-14 관측정정 승계)·2026-02 산출물 attestation 갱신 부재 · keeper/Cargo.lock 라이브 트리 부재 **7일차**(11-10~) 관측 |
+| **대시보드 (D26/Across 승계)** | ✅ | innerHTML/document.write/eval/fetch/XMLHttpRequest/localStorage/외부 script src 전부 0 |
+| **신규 CRITICAL/HIGH** | — | **0건** |
+
+**블루팀 지시**: A6 99일차 ①~⑩ 승계 + ⑪(신규) — (a) **☐226**: 신규 산술 의존성(외부 산술 크레이트·checked/saturating 프리미티브 래핑) 도입 PR에는 2^n·2^n±1·타입 최대값±1·시프트량≥비트폭 경계값 테스트를 병합 게이트로 첨부(Cetus checked_shlw·ruint B90 — **가드의 존재 ≠ 가드의 정확성**); (b) **☐227**: `security/`(2026-02 red/green 리포트)에 **배포 아티팩트 전수(프로그램·키퍼·대시보드·운영 스크립트) × 감사 스코프 매핑 표**를 신설 — 현재 전수가 2월 스코프 포함임을 문서화하고, 신규 모듈(신 담보·오라클 소스·키퍼 기능) 추가 시 매핑 갱신을 릴리스 게이트로(B45 attestation 부채와 통합 정리 — 미포함은 선언된 제외와 동급 갭: Typus); (c) quinn 승급(quinn-proto ≥0.11.19·quinn-udp ≥0.5.16) 우선도 상향 — agave가 11-13 이미 0.5.16 이행(☐223).
+
+**Sources**: https://api.github.com/repos/anza-xyz/agave/commits?since=2026-11-13T18:00:00Z (70ef445 quinn-udp 0.5.16) · https://api.github.com/repos/coral-xyz/anchor/releases (11-03 불변) · https://www.certora.com/blog/sui-move-security-language-guarantees-misses (Cetus/Typus 메커니즘 — 퍼플 11-14 직독 승계) · https://rekt.news · https://hacked.slowmist.io/en/ (11-14 18:0x UTC 스냅샷 — 최신 가시 11-09) · https://blog.trailofbits.com/index.xml (lastBuildDate 11-06) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-13T18:00:00Z (0커밋) · https://api.github.com/advisories?affects=coral-xyz/anchor (0) · microstable HEAD 23c0163 — stat·sed·grep·양 록·권한 제약 전수 실측 2026-11-15
