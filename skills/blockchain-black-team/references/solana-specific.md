@@ -2878,3 +2878,24 @@ B83(0185 fragment-hole)과의 관계: 전부 **정상-형식 입력으로 프로
 ## Solana-Specific Defense Checklist Update
 226. ☐ 제3자/플랫폼 산술 프리미티브(외부 산술 크레이트·VM/표준라이브러리 checked·saturating 함수·래핑)를 신규 도입할 때는 워드폭 경계값(시프트량≥비트폭·2^n·2^n±1·타입 최대값±1) 동작의 독립 검증을 통과한 뒤 신뢰한다 — 가드의 존재가 가드의 정확성 검증을 대체하지 않는다 (B90 ← Cetus checked_shlw·ruint)
 227. ☐ 배포 아티팩트 전수(프로그램·키퍼·대시보드·운영 스크립트) × 최신 감사 스코프의 매핑 표를 유지하고, 스코프에 포함되지 않은 모듈의 특권 함수를 0으로 유지한다 — 미포함(undeclared omission)은 선언된 제외·시간 감쇠 배포 델타와 동급의 스코프 갭으로 취급한다 (A33/B45 ← Typus update_v2)
+
+
+## Kava Lend 휴면-시장 지수 인플레이션 / Pool Party 기록-평면 — A68·스코프-델타 패밀리 강화 (창 내 신규 + 퍼플 큐 판정 2026-11-16)
+
+### Mechanism (블랙 관점)
+**Kava Lend (2026-11-14~15, ~$3.76M·55.2M KAVA)**: 휴면 BUSD 시장의 **supply interest index ~243,000배 인플레이션** → 가짜 담보로 55.2M KAVA 차입·BNB Chain 매도(Relay $612K 차단·풀 0.19 KAVA 잔존·KAVA -39~47%). A68(dTRINITY 내부 지수 인플레이션→유령 담보→과차입)의 제3 인스턴스·**패밀리 최대 배율**(Edel 78x → 243,000x). 서브패싯: **휴면 시장 = 최저 비용 인플레이션 기질** — 유동성·감시가 소멸해도 회계 인덱스는 생존(도르머시 축의 회계-상태 쌍둥이), 반대 유동성 부재로 인플레이션 저항 0.
+**Pool Party (2026-11-13, ~$215K·15풀)**: 스냅샷 컨트랙트가 기록한 **공격자 자신의 위치 수정** → 10 USDC 예치 → 전 풀 인출. 스코프-델타 **제4형태 — 불변식-스코프 밖 기록-평면**: 불변식·감사가 신뢰 입력으로 소비하는 상태 평면의 쓰기 권한 집합에 사용자 경로 포함(선언된 제외 A33·시간 감쇠 B45·미포함 Typus에 이은 속성-축 갭). 쓰기-경로 인가 결함 형태 미공개 → WATCH(RCA 시 재판정)·퍼플 ☐228 승계.
+
+### Microstable risk
+- Kava/A68: **NOT ACTIVE(구조적)** — `exchange_rate|liquidity_index|accrue` lib.rs 0매치·이자 지수·차입 시장 부재(고정 4담보 PDA CDP). LATENT: 렌딩/이자 회계·시장 폐지→휴면 전환 도입 시 ☐229 게이트 선행.
+- Pool Party: **NOT ACTIVE(구조적)** — lib.rs `snapshot` 0매치·포지션 = 프로그램 소유 PDA·keeper `ProtocolSnapshot` = 온체인 판독의 읽기 전용 유도(oracle.rs:457 `fetch_oracle_snapshot` — ProtocolState+4 CollateralVault RPC 판독)+`validate()` NaN peg/CR 거부(방어 존재). LATENT: 마이그레이션·에어드랍·게이백·오프체인 미러 기록 구조 도입 시 ☐228 게이트.
+- Swarm/A82: **NOT ACTIVE(구조적)** — npm·자동업데이트·키스토어 평면 부재(keeper grep 0매치·배포 = 동결 git 트리). BTC 채굴/B15: **NOT ACTIVE(구조적)** — 채굴·플릿 관리 평면 부재.
+
+**Sources**:
+- https://bitquery.io/investigations/kava-hack · https://thedefiant.io/news/hacks/kava-lend-exploit-drains-millions-as-kava-falls-47 · The Block/ChainCatcher(zai oneWeek)
+- https://x.com/PoolParty_xyz/status/2121307902430359906 (퍼플 11-15 직독 승계)
+- https://x.com/BitcoinNewsCom/status/2121926629941284955 · https://cryptobriefing.com/64000-bitcoin-miners-hijacked-ocean-pool
+- 퍼플 11-15 배치(misskim-skills attack-matrix.md) — 큐 요청 원문
+
+## Solana-Specific Defense Checklist Update
+229. ☐ 담보·시장 구조를 변경하는 모든 PR(신규 담보 추가·렌딩/이자 회계 도입·시장 폐지→휴면 전환)은 해당 시장 회계 상태(이자 지수·환율)의 인플레이션 기질(기부 경로·라운딩·0-유동성 산술·재초기화)을 점검하고, 휴면 전환 시장은 신규 담보 사용 정지와 인덱스 동결을 명시적으로 선언한다 — 휴면 시장의 회계 상태는 유동성·감시가 소멸해도 살아있는 최저 비용 인플레이션 기질이다 (A68 ← Kava Lend BUSD supply interest index 243,000x)

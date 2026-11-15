@@ -3522,3 +3522,26 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **블루팀 지시**: A6 99일차 ①~⑩ 승계 + ⑪(신규) — (a) **☐226**: 신규 산술 의존성(외부 산술 크레이트·checked/saturating 프리미티브 래핑) 도입 PR에는 2^n·2^n±1·타입 최대값±1·시프트량≥비트폭 경계값 테스트를 병합 게이트로 첨부(Cetus checked_shlw·ruint B90 — **가드의 존재 ≠ 가드의 정확성**); (b) **☐227**: `security/`(2026-02 red/green 리포트)에 **배포 아티팩트 전수(프로그램·키퍼·대시보드·운영 스크립트) × 감사 스코프 매핑 표**를 신설 — 현재 전수가 2월 스코프 포함임을 문서화하고, 신규 모듈(신 담보·오라클 소스·키퍼 기능) 추가 시 매핑 갱신을 릴리스 게이트로(B45 attestation 부채와 통합 정리 — 미포함은 선언된 제외와 동급 갭: Typus); (c) quinn 승급(quinn-proto ≥0.11.19·quinn-udp ≥0.5.16) 우선도 상향 — agave가 11-13 이미 0.5.16 이행(☐223).
 
 **Sources**: https://api.github.com/repos/anza-xyz/agave/commits?since=2026-11-13T18:00:00Z (70ef445 quinn-udp 0.5.16) · https://api.github.com/repos/coral-xyz/anchor/releases (11-03 불변) · https://www.certora.com/blog/sui-move-security-language-guarantees-misses (Cetus/Typus 메커니즘 — 퍼플 11-14 직독 승계) · https://rekt.news · https://hacked.slowmist.io/en/ (11-14 18:0x UTC 스냅샷 — 최신 가시 11-09) · https://blog.trailofbits.com/index.xml (lastBuildDate 11-06) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-13T18:00:00Z (0커밋) · https://api.github.com/advisories?affects=coral-xyz/anchor (0) · microstable HEAD 23c0163 — stat·sed·grep·양 록·권한 제약 전수 실측 2026-11-15
+
+
+## 2026-11-16 — 일일 점검 (A6 day 100, 코드 100일째 불변)
+
+**윈도우**: 2026-11-14 18:00 → 2026-11-15 18:00 UTC · **Evolution delta**: **0 new named / 0 META; 퍼플 큐 판정 3건 확정(Pool Party→스코프-델타 제4형태 WATCH·Swarm→A82 강화·Edel#2 하위 승계) + 창 내 신규 2건 흡수(Kava Lend→A68 강화 + ☐229·BTC 채굴 플릿→B15 각주)**.
+
+| 벡터/렌즈 | 판정 | 근거 (실제 코드·의존성 11-16 실측) |
+|---|---|---|
+| **A6 (Redeem `mstb_mint`)** | ❌ **CRITICAL 100일차** | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395 bare `#[account(mut)]` — sed 재실증. HEAD 23c0163·dirty 40·mtime 02-28·4,669행 불변·창 내 .rs/록 변동 0(find) |
+| **A10 / HERMES-H1 / B83 / ☐182 / ☐205 / ☐206** | ❌ HIGH·⚠️ LOW 캐리 | burn CPI :1353-1370 `authority: user` · hermes.rs:61-69 `HermesPostedUpdate` 7필드(`posted_price_account` 양 파일 0매치) · quinn-proto 0.11.13(:2984)·quinn-udp 0.5.14(:3007) — agave 채택 신호 승계 · rustls 0.21.12(:3296)+0.23.36(:3308) · tokio 1.49.0(:6608) · openssl 0.10.75(:2670·도달 불가) — 재실증 |
+| **Anchor A177/A178/A179 잠복창** | ⚠️ LATENT | 릴리스 v0.32.3/v0.31.3/v0.30.4 = 11-03 불변 < #5257(11-11)·#5269(11-12) — **패치 미출시 6연창 재확인(11-16 API)**. anchor-lang 0.31.1 양 록(:245) |
+| **Kava Lend 렌즈 (A68 휴면-시장 지수 인플레이션)** | ✅ **NOT ACTIVE(구조적)** | `exchange_rate\|liquidity_index\|accrue` lib.rs 0매치 — 이자 지수·환율 축산 회계·차입 시장 부재(고정 4담보 PDA CDP). LATENT: 렌딩/이자 회계·시장 폐지→휴면 전환 도입 시 **☐229 게이트**(휴면 시장 인덱스 동결·신규 담보 정지 선언) 선행 |
+| **Pool Party 렌즈 (기록-평면 쓰기 권한)** | ✅ **NOT ACTIVE(구조적)** | lib.rs `snapshot` 0매치·포지션 = 프로그램 소유 PDA(사용자 직접 쓰기 경로 부재)·keeper `ProtocolSnapshot` = 온체인 상태의 읽기 전용 유도(oracle.rs:457)+`validate()` NaN 거부. LATENT: 마이그레이션·에어드랍·게이백 기록 구조 도입 시 퍼플 ☐228 게이트 |
+| **Swarm 렌즈 (A82 배포 채널·키 위생)** | ✅ **NOT ACTIVE(구조적)** | keeper `npm\|auto-update\|keystore` 0매치·데스크톱/npm 배포 평면 부재(배포 = 동결 git 트리). LATENT: 자동 업데이트·패키지 레지스트리 채널 도입 시 서명 검증 주체·킬 스위치 사전 계약 |
+| **BTC 채굴 플릿 렌즈 (B15 관리-제어 평면)** | ✅ **NOT ACTIVE(구조적)** | 채굴·플릿 관리·제3자 관리 SW 평면 부재 — keeper는 자체 코드+2-of-3 파일 키페어(main.rs load_keypairs) |
+| **B45** | ⚠️ PARTIAL | `security/` 존재 승계·2026-02 산출물 attestation 갱신 부재 · keeper/Cargo.lock 라이브 트리 부재 **8일차**(11-10~) 관측 |
+| **대시보드 (D26/Across 승계)** | ✅ | innerHTML/document.write/eval/fetch/XMLHttpRequest/localStorage·외부 script src 전부 0 |
+| **☐225 방향-맹목 신선도 (퍼플 11-14)** | ⚠️ LATENT 승계 | L1005·L3196 단방향 saturating_sub — 수동 레인 :700 `observed_slot <= slot` 방어·Pyth 레인(L3196) 잔존. 전제 = 키퍼/Pyth 침해(HERMES-H1 동일 신뢰 경계) |
+| **신규 CRITICAL/HIGH** | — | **0건** |
+
+**블루팀 지시**: A6 100일차 ①~⑪ 승계 + ⑫(신규) — (a) **☐229**: 담보·시장 구조를 변경하는 모든 PR(신규 담보·렌딩/이자 회계·시장 폐지→휴면 전환)에 해당 시장 회계 상태(이자 지수·환율)의 인플레이션 기질(기부 경로·라운딩·0-유동성 산술·재초기화) 점검을 병합 게이트로 첨부하고, 휴면 전환 시장은 **신규 담보 사용 정지 + 인덱스 동결을 명시 선언**한다 — 휴면 시장의 회계 상태는 유동성·감시 소멸 후에도 살아있는 최저 비용 인플레이션 기질이다(Kava Lend BUSD 243,000x — Edel 78x의 3,000배); (b) Pool Party 제4형태: 포지션 기록·스냅샷·오프체인 미러 구조 도입 검토 시 퍼플 ☐228(소유자 없는 쓰기 경로 0 인벤토리)를 릴리스 게이트로 — RCA 공개 시 블랙 재판정 예정; (c) 자동 업데이트·패키지 레지스트리 배포 채널 도입 검토 시 서명 검증 주체·이미-배포 인스턴스 도달 수단(킬 스위치)을 사전 계약으로 문서화(Swarm — takedown은 업데이트 완료 설치에 도달 불가); (d) quinn 승급(quinn-proto ≥0.11.19·quinn-udp ≥0.5.16) 우선도 상향 유지 — agave 11-13 이행 대비 잔존(☐223).
+
+**Sources**: https://bitquery.io/investigations/kava-hack · https://thedefiant.io/news/hacks/kava-lend-exploit-drains-millions-as-kava-falls-47 · https://x.com/PoolParty_xyz/status/2121307902430359906 · https://x.com/BitcoinNewsCom/status/2121926629941284955 · https://api.github.com/repos/rustsec/advisory-db/commits/02e2517f (0448 alias — actix-http 트리 밖) · https://api.github.com/repos/coral-xyz/anchor/releases (11-03 불변 6연창) · https://hacked.slowmist.io/en/ · https://rekt.news · https://blog.trailofbits.com/index.xml (11-06) · zai web_search_prime oneWeek · microstable HEAD 23c0163 — stat·sed·grep·양 록·find 2026-11-16 전수 실측

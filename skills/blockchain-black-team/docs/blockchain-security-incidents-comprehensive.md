@@ -1245,3 +1245,13 @@
 - **2025-10-15 — Typus (Sui, $3.44M)**: 오라클 모듈 `update_v2` **무인가** 배포 — 2025-05 감사 스코프에 모듈 자체가 미포함(undeclared omission). 블랙 판정(2026-11-15, 퍼플 11-14 큐 승계): **A33 패밀리 강화**(선언된 제외·시간 감쇠 배포 델타에 이은 제3 스코프-갭 형태)·META-82 정량 앵커·☐227. Microstable 방어됨(오라클 특권 레인 쿼럼 전수 — 무인가 특권 함수 0).
   - 출처: https://www.certora.com/blog/auditing-smart-contracts-sui (퍼플 11-14 직독 승계)
 - **기각 레인 기록(11-15)**: Binance 후속(DOJ $1.2B 공식 압수·NK 멤코인 세탁·EIP-7702 재설명·가짜화상 $400M 재구성 = 10-29 기흡수 사고의 법적·자금·재전언 후속 — timeline-only) · Drift 397K SOL 이동·커스터디언 재구축 마감(SIMD-0723 11-13 기흡수 후속 — timeline-only) · Lincoln PD 용어집($43B 오류 수치 = 정밀도 결격 기각).
+
+
+## 2026-11-16 — Kava Lend 창 내 신규 / BTC 채굴 플릿 하이재킹 / 퍼플 큐 판정 (블랙 일일 진화)
+
+- **2026-11-14~15 — Kava Lend (Kava Chain, ~$3.76M·55.2M KAVA)**: 2개 지갑이 **휴면 BUSD 시장의 supply interest index를 ~243,000배 인플레이션**(The Block) → 가짜 담보로 55.2M KAVA 차입 → BNB Chain ~$2.1M 매도(29% 손실). Relay 브리지 $612K 차단·대출자 풀 0.19 KAVA 잔존(11-14 Bitquery) — KAVA -39~47%·Axelar 인출 정지·한국 거래소 이체 중단. 블랙 판정(11-16): **A68 패밀리 강화**(dTRINITY·Edel 78x에 이은 제3 생산 인스턴스·패밀리 최대 배율) + 신규 서브패싯 **휴면 시장 = 최저 비용 인플레이션 기질**(유동성·감시 소멸 후에도 회계 인덱스 생존 — 도르머시 축의 회계-상태 쌍둥이) + **☐229**. RCA(지수 인플레이션 정확한 버그 형태) 대기 WATCH. Microstable NOT ACTIVE(exchange_rate/liquidity_index/accrue 0매치·차입 시장 부재).
+  - 출처: https://bitquery.io/investigations/kava-hack · https://thedefiant.io/news/hacks/kava-lend-exploit-drains-millions-as-kava-falls-47 · The Block/ChainCatcher(zai oneWeek)
+- **2026-11-14~15 — BTC 채굴 플릿 하이재킹 (~64,000대·~13 EH/s)**: 피해 운영자가 **Luxor Commander 채굴 관리 소프트웨어**를 침입원으로 특정 — 지불 주소를 공격자 주소로 교체·OCEAN 풀로 해시레이트 리다이렉트(공격자 블록 0채굴·피해자 수익 영구 상실). **제3자 관리 소프트웨어 = 플릿 단일 제어 평면** — 1회 침해가 64k 장치 동시 재구성(BTCPay 플릿 스윕 META-76·Swarm 배포 채널과 동일 구조의 채굴-인프라 인스턴스). B15 각주·타임라인 기록(named 미승격). Microstable NOT ACTIVE(채굴·플릿 관리 평면 부재).
+  - 출처: https://x.com/BitcoinNewsCom/status/2121926629941284955 · https://cryptobriefing.com/64000-bitcoin-miners-hijacked-ocean-pool
+- **퍼플 큐 판정(2026-11-16)**: **Pool Party**(2026-11-13, ~$215K·15풀 Arbitrum+Base) = 스코프-델타 패밀리 **제4형태 — 불변식-스코프 밖 기록-평면**(A33 선언·B45 시간·Typus 미포함에 이어: 불변식이 신뢰 입력으로 소비하는 상태 평면의 쓰기 권한에 사용자 경로 포함) — 쓰기-경로 인가 결함 형태 미공개 → **WATCH 등록·명명 승격 유보**(RCA 시 재판정)·퍼플 ☐228 승계 · **Swarm bee-js**(2026-11-09, 확정 손실 0) = A82 강화(오토업데이트 = 서명 검증 주체 불명확 배포 채널·takedown 미도달 + 평문 키스토어 암호 = 키 보호→설정 파일 보호 치환 — npm TTP 에버그린 포섭) · **Edel#2**(11-12, $300K·수법 미상) 하위 WATCH 승계.
+- **기각 레인 기록(11-16)**: **Coinone 데이터 유출**(11-15 공시 — 「계좌·거래·지갑 시스템 직접 침입 증거 없음」·메커니즘 미공개 = 자금·코드 평면 부재, 운영-평면 관찰만) · Binance 후속(DOJ $1.2B 압수·출금 재개 로드맵·가짜 CEO 화상 $400M 재구성 = 기흡수 사고 후속·META-89 재전언) · Initia Foundation 복원 자금 승인(기흡수 후속) · RustSec 0448(actix-http) CVE alias 추가(신규 어드바이저리 아님 — 트리 밖).
