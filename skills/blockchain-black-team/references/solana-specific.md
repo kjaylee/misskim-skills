@@ -2915,3 +2915,19 @@ SAST(CodeQL 등) 경보가 CI/코드리뷰 보안 게이트로 쓰이는 순간 
 
 ## Solana-Specific Defense Checklist Update
 230. ☐ CI/코드리뷰 보안 게이트에서 **경보 소실을 취약점 해결 증거로 취급하지 않는다** — 평범한 리팩터링 재작성이 취약점 보존 상태로 분석기의 라이브러리-모델링 경계 갭만 통과해 경보를 소실시킬 수 있다(경보 소실 ≠ 검증 통과). 파인딩 종결은 소실 경보의 오염 흐름 도달 재실증(독립 재검)으로만 수행한다 (「검증 통과 ≠ 검증 정확」 A32/B114/META-70 보증-도구 평면 ← arXiv 2611.17123 — LLM 자연 재작성 26.2% 소실·7개 모델링 갭·74% 교차-분석기 소실)
+
+## Lighter 운영자 API-키 스코프 이스케이프 — A180 등가-경로 통제 비대칭 (블랙 named 승격 2026-11-17)
+
+### Mechanism (블랙 관점)
+**Lighter (2026-11-16, ~$15.5M USDC, 이더리움 ZK 정산 퍼펙트 DEX — Solana 계열 뿌리·LIT 한국 거래소 상장)**: 운영자 API 키 스코프 = 거래 + **동일 지갑 계정 간 자금 이동(무서명)** / 새 주소 출금 = 지갑 서명 필수. 공격자(유출 MM 키 보유): 피해 포지션 청산 → **0% 수수료 공개 유동성 풀 생성** → $10K 시드로 지분 99.99% → 피해 USDC를 풀로 이동(무서명 스코프 내 정상 권한) → 지분 인출로 유출. **공격자 제어 공유 원시형(public pool)이 무서명 스코프 내부에 위치 — '스코프 내 이동'과 '제3자 유출'이 기능적으로 등가화**. 서명 게이트가 직접 경로에만 적용되는 등가-경로 통제 비대칭. Arcus(11-09) = 동일 인트라-월렛 레일의 코드-버그 쌍둥이 · A6 = 온체인 핀-비대칭 쌍둥이. Solana 운영자 평면 연결: keeper 스택의 Helius/QuickNode/Pyth API 키·RPC 자격증명이 동일 클래스 자산(아래 체크리스트 갱신).
+
+### Microstable risk
+- **NOT ACTIVE(구조적)** — (1) 오프체인 API-키 자금이동 평면 부재: 모든 자금 이동 = 온체인 서명 필수 (2) keeper는 가격 게시·쿼럼 서명만(`transfer|withdraw|move_funds` keeper/src 0매치·system_program readonly) (3) 공격자 제어 공유 원시형 부재(`create_pool|pool_share|add_liquidity` lib.rs 0매치 — 고정 4담보 PDA CDP) (4) 서브계좌·API 키 개념 0매치. **LATENT**: 커스터디얼 프론트엔드·서브계좌·봇 API 키 평면 도입 시 — ☐233 등가-경로 감사 선행. 온체인 쌍둥이 = A6(:2320 핀 vs :2395 bare — CRITICAL day 101 추적 중).
+
+### Sources
+- https://airdropalert.com/blogs/lighter-hack (0xTria/한국 커뮤니티 리서치 — 5단계 풀 백도어)
+- https://www.coindesk.com/tech/2026/11/16/lighter-suspends-all-withdrawals-after-usd10-4-million-crypto-exploit
+- https://bitquery.io/investigations/lighter-hack
+
+## Solana-Specific Defense Checklist Update
+233. ☐ 운영자/봇 API 키를 '지출 권한이 있는 비밀번호'로 취급한다 — 키별 스코프 열거(계정 간 자금 이동·풀/공유 원시형 조작 권한 포함), 미사용 키 즉시 폐기·정기 로테이션, 그리고 **동일한 자금 이동을 수행하는 모든 등가 경로(직접 출금·풀 join/redeem·서브계좌 이체)에 동일한 서명 게이트가 적용되는지 감사한다** — 무서명 스코프 내부의 공격자 제어 가능 원시형 = 서명 게이트 우회 백도어 (A180 ← Lighter MM API 키 스코프 이스케이프 2026-11-16 $15.5M)

@@ -1255,3 +1255,12 @@
   - 출처: https://x.com/BitcoinNewsCom/status/2121926629941284955 · https://cryptobriefing.com/64000-bitcoin-miners-hijacked-ocean-pool
 - **퍼플 큐 판정(2026-11-16)**: **Pool Party**(2026-11-13, ~$215K·15풀 Arbitrum+Base) = 스코프-델타 패밀리 **제4형태 — 불변식-스코프 밖 기록-평면**(A33 선언·B45 시간·Typus 미포함에 이어: 불변식이 신뢰 입력으로 소비하는 상태 평면의 쓰기 권한에 사용자 경로 포함) — 쓰기-경로 인가 결함 형태 미공개 → **WATCH 등록·명명 승격 유보**(RCA 시 재판정)·퍼플 ☐228 승계 · **Swarm bee-js**(2026-11-09, 확정 손실 0) = A82 강화(오토업데이트 = 서명 검증 주체 불명확 배포 채널·takedown 미도달 + 평문 키스토어 암호 = 키 보호→설정 파일 보호 치환 — npm TTP 에버그린 포섭) · **Edel#2**(11-12, $300K·수법 미상) 하위 WATCH 승계.
 - **기각 레인 기록(11-16)**: **Coinone 데이터 유출**(11-15 공시 — 「계좌·거래·지갑 시스템 직접 침입 증거 없음」·메커니즘 미공개 = 자금·코드 평면 부재, 운영-평면 관찰만) · Binance 후속(DOJ $1.2B 압수·출금 재개 로드맵·가짜 CEO 화상 $400M 재구성 = 기흡수 사고 후속·META-89 재전언) · Initia Foundation 복원 자금 승인(기흡수 후속) · RustSec 0448(actix-http) CVE alias 추가(신규 어드바이저리 아님 — 트리 밖).
+
+## 2026-11-17 — Lighter MM API-키 드레인(A180 승격) / Safe·Zodiac Roles WATCH / Troves 갭 회수 (블랙 일일 진화)
+
+- **Lighter (2026-11-16, ~$15.5M USDC — 이더리움 ZK 정산 퍼펙트 DEX)** — **A180 등가-경로 통제 비대칭 신규 named 승격**: 2개 MM 조직 API 키 유출 → 동일 지갑 계정 간 이동(무서명 스코프)으로 피해 USDC를 공격자 지배(지분 99.99%) 0% 공개 풀에 배치 이동 → 지분 인출로 유출 — 새 주소 출금의 지갑 서명 게이트가 풀 join→redeem 등가 경로엔 부재. 세탁: CoW Swap ~5,400 ETH(4분)·160 ETH 분할·XMR 일부(Wagyu→Hyperliquid). 출금 정지·Guardian mode. LIT -17%·Upbit/Bithumb 정지. 프로토콜 컨트랙트 무결(공식).
+  - Source: https://airdropalert.com/blogs/lighter-hack · https://www.coindesk.com/tech/2026/11/16/lighter-suspends-all-withdrawals-after-usd10-4-million-crypto-exploit · https://bitquery.io/investigations/lighter-hack
+- **Safe + Zodiac Roles (2026-11-16, $6.45M = $4.3M USDC + $1.7M syrupUSDC, Ethereum)** — WATCH(RCA 대기): 스코프 위임 역할 모듈의 기존 권한 악용(코드 결함 여부 미확정 — Specter/PeckShield). 2026-07 Gnosis Pay Zodiac 코드 결함과 평면 동일·축 상이. 세탁: 1시간 내 USDC→ETH·$813K~$1.2M XMR(Wagyu→Hyperliquid — Lighter와 동일 no-KYC 레일). Circle 동결 잔여 $236K.
+  - Source: https://beincrypto.com/hacker-stolen-dollars-circle-freeze-monero
+- **Troves (2026-10-31, ~$667K, Starknet xWBTC/WBTC 볼트) — 관측-갭 회복(17일 지연, 전 파일 0매치 그렽 실증)**: 교체된 레거시 리밸런싱 컨트랙트의 잔존 권한으로 볼트 드레인 → 권한 회수·일시정지·화이트햇 바운티. 「deprecation ≠ revocation」 제4 인스턴스(ether.fi→Internet Token→Magic Eden→Troves — 프로토콜 자체 레거시 권한 축).
+  - Source: https://hacked.slowmist.io/en/

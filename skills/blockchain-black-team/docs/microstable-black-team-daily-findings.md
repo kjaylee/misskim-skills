@@ -3545,3 +3545,31 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **블루팀 지시**: A6 100일차 ①~⑪ 승계 + ⑫(신규) — (a) **☐229**: 담보·시장 구조를 변경하는 모든 PR(신규 담보·렌딩/이자 회계·시장 폐지→휴면 전환)에 해당 시장 회계 상태(이자 지수·환율)의 인플레이션 기질(기부 경로·라운딩·0-유동성 산술·재초기화) 점검을 병합 게이트로 첨부하고, 휴면 전환 시장은 **신규 담보 사용 정지 + 인덱스 동결을 명시 선언**한다 — 휴면 시장의 회계 상태는 유동성·감시 소멸 후에도 살아있는 최저 비용 인플레이션 기질이다(Kava Lend BUSD 243,000x — Edel 78x의 3,000배); (b) Pool Party 제4형태: 포지션 기록·스냅샷·오프체인 미러 구조 도입 검토 시 퍼플 ☐228(소유자 없는 쓰기 경로 0 인벤토리)를 릴리스 게이트로 — RCA 공개 시 블랙 재판정 예정; (c) 자동 업데이트·패키지 레지스트리 배포 채널 도입 검토 시 서명 검증 주체·이미-배포 인스턴스 도달 수단(킬 스위치)을 사전 계약으로 문서화(Swarm — takedown은 업데이트 완료 설치에 도달 불가); (d) quinn 승급(quinn-proto ≥0.11.19·quinn-udp ≥0.5.16) 우선도 상향 유지 — agave 11-13 이행 대비 잔존(☐223).
 
 **Sources**: https://bitquery.io/investigations/kava-hack · https://thedefiant.io/news/hacks/kava-lend-exploit-drains-millions-as-kava-falls-47 · https://x.com/PoolParty_xyz/status/2121307902430359906 · https://x.com/BitcoinNewsCom/status/2121926629941284955 · https://api.github.com/repos/rustsec/advisory-db/commits/02e2517f (0448 alias — actix-http 트리 밖) · https://api.github.com/repos/coral-xyz/anchor/releases (11-03 불변 6연창) · https://hacked.slowmist.io/en/ · https://rekt.news · https://blog.trailofbits.com/index.xml (11-06) · zai web_search_prime oneWeek · microstable HEAD 23c0163 — stat·sed·grep·양 록·find 2026-11-16 전수 실측
+
+## 2026-11-17 — 일일 점검 (A6 day 101, 코드 101일째 불변)
+
+**베이스라인**: HEAD `23c0163`·dirty 40건·lib.rs mtime 2026-02-28 13:21:13·161,059 bytes — 전일과 동일(재베이스라인 불필요). 창 내 코드 변동 0.
+
+| 벡터 | 판정 | 근거(실측) |
+|---|---|---|
+| **A6 CRITICAL (day 101)** | ❌ 무방비 지속 | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395 bare `#[account(mut)]` — sed 재실증 |
+| **A10 HIGH** | ❌ 지속 | burn CPI :1363-1369 `authority: user` — sed 재실증 |
+| **HERMES-H1 HIGH** | ❌ 지속 | hermes.rs:61-69 7필드 구조·`posted_price_account` 0매치 |
+| **B83 HIGH** | ⚠️ 캐리 | quinn-proto 0.11.13·quinn-udp 0.5.14 (solana/Cargo.lock) |
+| **☐182 / ☐205** | ⚠️ 캐리 | rustls 0.21.12+0.23.36·tokio 1.49.0 |
+| **☐206 LOW** | ⚠️ 캐리+드리프트 확대 | openssl 0.10.75 핀 — 업스트림 agave 0.10.82 도달(11-16 커밋), 패치 타깃 0.10.80 초과 |
+| **A157/A158/A164/A177 LATENT** | ⚠️ 잠복 7연창 | anchor-lang 0.31.1(양 록)·Anchor 릴리스 11-03 불변 — A177/A178/A179 패치 미출시 |
+| **B45** | ⚠️ PARTIAL | `security/` 존재(2026-02-22~·리포트/invariant_monitor 포함) — attestation 갱신 부재. 정의 축(배포 델타): lib.rs 불변 |
+| **A180 (금일 신규 — Lighter 등가-경로 렌즈)** | ✅ NOT ACTIVE(구조적) | (1) 오프체인 API-키 자금이동 평면 부재 — 모든 자금 이동 = 온체인 서명 필수 (2) keeper 무자금이동권: keeper/src `transfer\|withdraw\|move_funds` 0매치·system_program readonly(AccountMeta) — 가격 게시·쿼럼 서명만 (3) 공격자 제어 공유 원시형 부재: lib.rs `create_pool\|pool_share\|add_liquidity` 0매치(고정 4담보 PDA CDP) (4) 서브계좌/API키 개념 0매치. LATENT: 커스터디얼 프론트엔드·서브계좌·봇 API 키 평면 도입 시 ☐233 게이트 선행 — 온체인 쌍둥이 = A6 자체 |
+| **대시보드 (docs/index.html)** | ✅ | innerHTML·document.write·eval(·fetch(·외부 script src 전부 0 |
+| keeper/Cargo.lock | ⚠️ 관측 | 라이브 트리 부재 9일차(11-10~) |
+
+**블루팀 지시**:
+1. **(이월, 101일째) A6 CRITICAL 수정**: lib.rs:2395 `mstb_mint` 어카운트에 `mint::authority = protocol_state` 핀 추가 — :2320 경로와 대칭화. 단일 어트리뷰트 변경, 기능 영향 없음(동일 제약 상속).
+2. **(갱신) ☐206**: `cargo update -p openssl`로 0.10.75 → 0.10.82 상향 — 업스트림 패치 타깃(0.10.80)을 이미 초과한 드리프트, LOW·충돌 위험 최소.
+3. **(신규, A180 예방)**: 현 구조에는 미적용. 단, 향후 커스터디얼 프론트엔드·서브계좌·봇 API 키 도입 시 **등가-경로 감사(☐233)를 설계 게이트로 선행** 계약 — API 키 1개 = '지출 권한이 있는 비밀번호' 취급, 동일 자금이동의 모든 경로에 동일 서명 게이트 적용 입증 전 출시 금지.
+4. **(관측)**: keeper/Cargo.lock 미커밋 9일차 — 재현성 확보를 위해 커밋 또는 .gitignore 명시 권고.
+
+**신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
+
+**Sources**: microstable HEAD 23c0163 (stat·sed :2318-2322/:2393-2398/:1350-1372·grep hermes.rs/keeper/src·양 록 파이썬 파싱·docs/index.html 5-표면 카운트 — 2026-11-17 실측) · A180 판정 근거: https://airdropalert.com/blogs/lighter-hack · https://www.coindesk.com/tech/2026/11/16/lighter-suspends-all-withdrawals-after-usd10-4-million-crypto-exploit
