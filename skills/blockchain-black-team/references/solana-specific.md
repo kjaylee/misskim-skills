@@ -447,6 +447,21 @@ Staking providers (Kiln, Figment, Blockdaemon etc.) that hold `StakeAuthority`+`
 
 **Sources**: SwissBorg/Kiln (Sep 2025, $41.5M); infstones.com (Feb 2026)
 
+### 2026-11-18 — 신뢰 SaaS 스크립트 평면 제2 인스턴스(OPTIMJACK) + Rust 트리 unmaintained 위생
+
+**OPTIMJACK/Optimizely (2026-11-17, 178~186 조직)**: 웹 실험 SaaS 가입 플로우 결함 → 타 고객 사이트에 악성 JS → 방문자 지갑 주소 치환·결제카드 스키밍(Ledger 포함 — 크립토 페이로드 직결). D26 관측-벤더 스크립트 평면 제2 인스턴스. Polymarket/DebugBear(10-29) = 벤더 계정 침해 축, Optimizely = **SaaS 플랫폼 자체 가입/테넌트 결함 축** — 도메인·DNS·원본이 무결하므로 도메인 신뢰 기반 방어(CSP 화이트리스트·도메인 허용 SRI)가 무력화됨. Solana 프론트엔드/대시보드 함의: 지갑 연결 UI가 있는 모든 페이지에서 '실험/분석 스크립트'는 주소 치환의 직접 운반체(아래 ☐236).
+
+**RustSec unmaintained 배치(11-17)**: solana/Cargo.lock 트리 내 humantime 2.3.0·chrono 0.4.43 — RUSTSEC-2026-0542/0543(수정버전 부재, INFO급 — 감시 목록 항목). zip 4·hickory-proto/net 3(DNSSEC 검증 우회)·libz-sys HIGH·actix-http 3.21.x 전량 트리 밖(양 록 0매치). agave는 libz-sys HIGH 대응 1.1.31→1.1.33 범프(창 내 #16952) — Microstable 무영향.
+
+### Microstable risk
+- **D26/OPTIMJACK**: docs/index.html 외부 script src 0 — ✅ DEFENDED. ☐236 게이트: 프론트엔드 SaaS 스크립트 도입 시 인벤토리·SRI·CSP·지갑 페이지 금지 계약 선행.
+- **unmaintained 2크레이트**: LOW-LATENT — 즉시 위험 아님, 다음 의존성 접촉 시 교체 검토.
+
+### Sources
+- https://blog.reporturi.com/worlds-largest-brands-infected-with-malware-via-optimizely
+- https://www.helpnetsecurity.com/2026/11/17/optimizely-vulnerability-malicious-javascript
+- https://bitquery.io/investigations/optimizely-hack
+
 ## Solana-Specific Defense Checklist Update
 20. ☐ LST collateral staking authority model audited (no single-custodian blast radius)
 21. ☐ crates.io ecosystem namespace provenance check before adding new DeFi SDK dependencies (CI + manual review)
@@ -2931,3 +2946,4 @@ SAST(CodeQL 등) 경보가 CI/코드리뷰 보안 게이트로 쓰이는 순간 
 
 ## Solana-Specific Defense Checklist Update
 233. ☐ 운영자/봇 API 키를 '지출 권한이 있는 비밀번호'로 취급한다 — 키별 스코프 열거(계정 간 자금 이동·풀/공유 원시형 조작 권한 포함), 미사용 키 즉시 폐기·정기 로테이션, 그리고 **동일한 자금 이동을 수행하는 모든 등가 경로(직접 출금·풀 join/redeem·서브계좌 이체)에 동일한 서명 게이트가 적용되는지 감사한다** — 무서명 스코프 내부의 공격자 제어 가능 원시형 = 서명 게이트 우회 백도어 (A180 ← Lighter MM API 키 스코프 이스케이프 2026-11-16 $15.5M)
+236. ☐ 지갑 연결 UI가 있는 모든 프론트엔드·대시보드에서 서드파티 SaaS 스크립트(A/B 실험·분석·채팅 위젯 등) 도입 전 스크립트 인벤토리를 작성하고, SRI·CSP를 계약 게이트로 둔다 — 동적 실험 스크립트(SRI 불가)는 지갑 연결 페이지에서 원천 금지한다. SaaS 플랫폼의 가입/테넌트 결함은 도메인·DNS·원본이 무결한 상태에서 신뢰 원천 자체를 악성화한다(OPTIMJACK/Optimizely 2026-11-17, 178~186 조직, 지갑 주소 치환+카드 스키밍 — D26 관측-벤더 스크립트 평면 제2 인스턴스). 현재 Microstable 대시보드 외부 스크립트 0 — 유지 조건

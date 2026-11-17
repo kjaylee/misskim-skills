@@ -1264,3 +1264,13 @@
   - Source: https://beincrypto.com/hacker-stolen-dollars-circle-freeze-monero
 - **Troves (2026-10-31, ~$667K, Starknet xWBTC/WBTC 볼트) — 관측-갭 회복(17일 지연, 전 파일 0매치 그렽 실증)**: 교체된 레거시 리밸런싱 컨트랙트의 잔존 권한으로 볼트 드레인 → 권한 회수·일시정지·화이트햇 바운티. 「deprecation ≠ revocation」 제4 인스턴스(ether.fi→Internet Token→Magic Eden→Troves — 프로토콜 자체 레거시 권한 축).
   - Source: https://hacked.slowmist.io/en/
+## 2026-11-18 — Optimizely/OPTIMJACK 신뢰 SaaS 스크립트 평면(D26 강화) / 블랙 큐 판정 2건(Chain Games 제5 인스턴스 확정·HyprEarn A180-하위축 후보 WATCH) / Lighter 후속 (블랙 일일 진화)
+
+- **Optimizely/OPTIMJACK (2026-11-17, 웹 실험 SaaS 서플라이체인 — 178~186 조직, BBC·CNN·Zoom·HSBC·Equifax·Ledger 등)** — **D26 관측-벤더 스크립트 평면 제2 인스턴스**: Optimizely Web Experimentation 가입 플로우 결함으로 공격자가 타 고객 사이트에 악성 JS 적재 → 방문자 지갑 주소 공격자 주소로 치환 + 결제카드 스키밍. 도메인·DNS·원본 무결 — 신뢰 스크립트 원천 자체가 악성(도메인 기반 CSP 화이트리스트 무력화). DebugBear/Polymarket(10-29, 벤더 계정 침해)과 진입축 상이: **SaaS 플랫폼 가입/테넌트 결함**. 손실 소액(Bitquery 19결제 $2,260·수령 $7,040) — 신속 차단. Optimizely "contained" 공식. ☐236 게이트 신설.
+  - Source: https://blog.reporturi.com/worlds-largest-brands-infected-with-malware-via-optimizely · https://www.helpnetsecurity.com/2026/11/17/optimizely-vulnerability-malicious-javascript · https://bitquery.io/investigations/optimizely-hack
+- **Chain Games (2026-11-15, ~$20K·37.98M CHAIN — 블랙 큐 판정으로 타임라인 진입)** — **deprecation≠revocation 제5 인스턴스 확정**: 교체된 구형 CHAIN 위임 스테이킹 컨트랙트 `unstakeClaimTokens` 지분 회계+접근통제 결함 → 무지분 `claim()` 반복 escrow 드레인·당일 위임 비활성화·전액 보상 약속. ether.fi→Internet Token→Magic Eden→Troves 계보 제5 데이터포인트(Troves와 동일 하위형 — 교체된 구형 인스턴스가 자금 수호 지속).
+  - Source: https://hacked.slowmist.io/en/ (11-15 행) · https://x.com/RealChainGames/status/2122112343970808002
+- **HyprEarn (2026-11-14, Hyperliquid API 에이전트 월렛 미승인 거래 — 금액 미공개)** — WATCH 타임라인 진입(블랙 큐 판정 ②): 사용자가 승인한 거래 전용 에이전트 자격증명으로 미승인 거래 — 「거래만 가능·출금 불가」가 봉쇄 아님(공격자 대응 계정과의 가격 조건 거래 = 가치 추출 등가-경로, A180 사용자-위임 하위축 후보). 구 에이전트 전량 폐기·재승인 지시. **RCA 공개 시 명명 재판정**(Safe·Zodiac 동일 규약).
+  - Source: https://hacked.slowmist.io/en/ (11-14 행) · https://x.com/HyprEarn/status/2121673806704243178
+- **Lighter 후속 (11-17)**: 출금 재개·침해 경로 = 거래자 API 키 유출 재확정·손실 $10.4M 확정($15.5M 의심치에서 하향 — 추가 인출 시도 저지) — A180 기흡수 사고의 회복 후속(신규 벡터 없음).
+  - Source: https://thedefiant.io/news/hacks/lighter-says-withdrawals-resume-after-api-key-theft · https://www.coindesk.com/tech/2026/11/16/lighter-suspends-all-withdrawals-after-usd10-4-million-crypto-exploit

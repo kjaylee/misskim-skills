@@ -3573,3 +3573,33 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
 
 **Sources**: microstable HEAD 23c0163 (stat·sed :2318-2322/:2393-2398/:1350-1372·grep hermes.rs/keeper/src·양 록 파이썬 파싱·docs/index.html 5-표면 카운트 — 2026-11-17 실측) · A180 판정 근거: https://airdropalert.com/blogs/lighter-hack · https://www.coindesk.com/tech/2026/11/16/lighter-suspends-all-withdrawals-after-usd10-4-million-crypto-exploit
+## 2026-11-18 — 일일 점검 (A6 day 102, 코드 102일째 불변)
+
+**베이스라인**: HEAD `23c0163`·dirty 40건·lib.rs mtime 2026-02-28 13:21:13·161,059 bytes — 전일과 동일(재베이스라인 불필요). 창 내 코드 변동 0.
+
+| 벡터 | 판정 | 근거(실측) |
+|---|---|---|
+| **A6 CRITICAL (day 102)** | ❌ 무방비 지속 | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395 bare `#[account(mut)]` — sed 재실증 |
+| **A10 HIGH** | ❌ 지속 | burn CPI :1360-1366 `authority: ctx.accounts.user.to_account_info()` — sed 재실증 |
+| **HERMES-H1 HIGH** | ❌ 지속 | hermes.rs `HermesPostedUpdate` 7필드(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) — `posted_price_account` 부재 재확인 |
+| **B83 HIGH** | ⚠️ 캐리 | quinn-proto 0.11.13 (solana/Cargo.lock) |
+| **☐182 / ☐205** | ⚠️ 캐리 | rustls 0.21.12+0.23.36 · tokio 1.49.0 |
+| **☐206 LOW** | ⚠️ 캐리+드리프트 | openssl 0.10.75 핀 — 업스트림 0.10.82 초과 드리프트 지속(창 내 agave openssl 변동 없음) |
+| **A157/A158/A164/A177 LATENT** | ⚠️ 잠복 8연창 | anchor-lang 0.31.1(양 록)·Anchor 릴리스 11-03 불변·창 내 0커밋 — A177/A178/A179 패치 미출시 |
+| **신규 — RustSec unmaintained(humantime 2.3.0·chrono 0.4.43)** | ⚠️ LOW-LATENT | solana/Cargo.lock 트리 내(이적 크레이트) — RUSTSEC-2026-0542/0543(11-17 배치). unmaintained = 수정버전 부재·알려진 취약점 아님(위생 항목). zip 4·hickory 3·libz-sys HIGH·actix-http 3.21.x 전량 트리 밖(양 록 0매치) |
+| **신규 — D26/OPTIMJACK 렌즈 (대시보드)** | ✅ DEFENDED | docs/index.html 외부 script src 0 — 서드파티 SaaS 실험/분석 스크립트 부재. ☐236 게이트 신설(도입 시 인벤토리·SRI/CSP·지갑 페이지 금지 계약) |
+| **Chain Games 렌즈 (deprecation≠revocation 제5 인스턴스 — 금일 확정)** | ✅ NOT ACTIVE(구조적) | lib.rs `unstake` 0매치·스테이킹 escrow 부재 — `claim` 20매치는 단일 현행 프로그램 소유 경로(교체·레거시 인스턴스 부재). LATENT: 프로그램 마이그레이션·컨트랙트 교체 시 구 인스턴스 권한 회수+자금 이전 명시 선언 게이트(A153 패밀리 제5 인스턴스) |
+| **HyprEarn 렌즈 (A180 사용자-위임 하위축 후보)** | ✅ NOT ACTIVE(구조적) | keeper·프로그램에 사용자 위임 자격증명 평면 부재(`api_key`·`sub_account` lib.rs 0매치·keeper 무자금이동권 재실측) — A180 렌즈 판정 승계 |
+| **B45** | ⚠️ PARTIAL | `security/` 존재(2026-02 산출물) — attestation 갱신 부재. 정의 축(배포 델타): lib.rs 불변 |
+| **대시보드 (docs/index.html)** | ✅ | innerHTML·document.write·eval·fetch·XHR·localStorage·외부 script src 전부 0 |
+| keeper/Cargo.lock | ⚠️ 관측 | 라이브 트리 부재 10일차(11-10~) |
+
+**블루팀 지시**:
+1. **(이월, 102일째) A6 CRITICAL 수정**: lib.rs:2395 `mstb_mint` 어카운트에 `mint::authority = protocol_state` 핀 추가 — :2320 경로와 대칭화. 단일 어트리뷰트 변경, 기능 영향 없음.
+2. **(이월) ☐206**: `cargo update -p openssl` 0.10.75 → 0.10.82 상향 — 업스트림 패치 타깃(0.10.80) 초과 드리프트.
+3. **(신규, 위생)**: solana/Cargo.lock humantime 2.3.0·chrono 0.4.43 unmaintained(RUSTSEC-2026-0542/0543) — 즉시 위험 아님(수정버전 부재). 다음 의존성 접촉 시 교체 후보(time 계열·jiff) 검토 + 크레이트 감시 목록 태그.
+4. **(신규, ☐236)**: 대시보드·향후 모든 프론트엔드에 서드파티 SaaS 스크립트(A/B 실험·분석·채팅 위젯) 도입 시 — 스크립트 인벤토리 작성 + SRI·CSP 계약 게이트, 동적 실험 스크립트(SRI 불가)는 지갑 연결 페이지에서 원천 금지. 현재 외부 스크립트 0 — 유지 조건.
+
+**신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
+
+**Sources**: microstable HEAD 23c0163 (sed :2318-2322/:2393-2398/:1360-1366·hermes.rs 구조체 직독·keeper/src transfer|withdraw|move_funds 0매치·양 록 파이썬 파싱·docs/index.html 7-표면 카운트 — 2026-11-18 실측) · https://blog.reporturi.com/worlds-largest-brands-infected-with-malware-via-optimizely · https://bitquery.io/investigations/optimizely-hack · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-16T18:00:00Z · https://hacked.slowmist.io/en/
