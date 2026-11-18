@@ -3603,3 +3603,34 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
 
 **Sources**: microstable HEAD 23c0163 (sed :2318-2322/:2393-2398/:1360-1366·hermes.rs 구조체 직독·keeper/src transfer|withdraw|move_funds 0매치·양 록 파이썬 파싱·docs/index.html 7-표면 카운트 — 2026-11-18 실측) · https://blog.reporturi.com/worlds-largest-brands-infected-with-malware-via-optimizely · https://bitquery.io/investigations/optimizely-hack · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-16T18:00:00Z · https://hacked.slowmist.io/en/
+
+## 2026-11-19 — 일일 점검 (A6 day 103, 코드 103일째 불변)
+
+**베이스라인**: HEAD `23c0163`·dirty 40건·lib.rs mtime 2026-02-28 13:21:13·161,059 bytes — 전일과 동일(재베이스라인 불필요). 창 내 코드 변동 0.
+
+| 벡터 | 판정 | 근거(실측) |
+|---|---|---|
+| **A6 CRITICAL (day 103)** | ❌ 무방비 지속 | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2395 bare `#[account(mut)]` — sed 재실증 |
+| **A10 HIGH** | ❌ 지속 | burn CPI :1360-1366 `authority: ctx.accounts.user.to_account_info()` — sed 재실증 |
+| **HERMES-H1 HIGH** | ❌ 지속 | hermes.rs `HermesPostedUpdate` 7필드(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) — `posted_price_account` 부재 재확인 |
+| **B83 HIGH** | ⚠️ 캐리 | quinn-proto 0.11.13 (solana/Cargo.lock) |
+| **☐182 / ☐205** | ⚠️ 캐리 | rustls 0.21.12+0.23.36 · tokio 1.49.0 |
+| **☐206 LOW** | ⚠️ 캐리+드리프트 | openssl 0.10.75 핀 — 업스트림 0.10.82 초과 드리프트 지속(창 내 agave 0커밋 — 변동 없음) |
+| **A157/A158/A164/A177 LATENT** | ⚠️ 잠복 9연창 | anchor-lang 0.31.1(양 록)·Anchor 릴리스 11-03 불변·창 내 0커밋 — A177/A178/A179 패치 미출시 |
+| **RustSec unmaintained(humantime 2.3.0·chrono 0.4.43)** | ⚠️ LOW-LATENT | solana/Cargo.lock 트리 내 승계(11-18 이월). **lettre 6건(0560~0565, ≥0.11.24) 신규 — 전량 트리 밖**(양 록 0매치) |
+| **신규 — A181 청산 담보-부채 비대칭 소거 (MORE Markets 11-16 $308K)** | ✅ NOT ACTIVE(구조적) | lib.rs 청산 경로 부재: `liquidat`·`seize`·`bad_debt`·`debt` 전부 0매치(인스트럭션 전수 = mint/redeem 리프 + rebalance + circuit_breaker + emergency_shutdown — 담보-부채 쌍 소거 평면 자체 없음). LATENT: CDP/청산·벌점 상환 기능 도입 시 ☐238 게이트(쌍 소거 원자성 invariant — 한쪽만 소거된 중간 상태 금지) |
+| **신규 — A182 자기청산 트리거 조각-지연 회계 가격창 (K3 sBOLD 11-18 $3.43M)** | ✅ NOT ACTIVE(구조적) | MSTB 쉐어-가격 회계 부재(`share_price`·`totalAssets`·`total_assets`·`price_per_share` 전부 0매치 실측 — 민팅/상환은 오라클 가격·min_out 직접 정산) + 예치를 외부 수익 베뉴(스테이빌리티 풀 등)에 래핑하는 컴포지션 평면 부재(고정 4담보 PDA 보유) → 공격자 유발 가격창의 전제 없음. LATENT: 외부 베뉴 래핑 도입 시 ☐239 게이트(전환-지연 창에서 정산 금지) |
+| **B45** | ⚠️ PARTIAL | `security/` 존재(2026-02 산출물) — attestation 갱신 부재. 정의 축(배포 델타): lib.rs 불변 |
+| **대시보드 (docs/index.html)** | ✅ | innerHTML·document.write·eval·fetch·localStorage·외부 script src 전부 0 — ☐236 유지 조건 상태 |
+| keeper/Cargo.lock | ⚠️ 관측 | 라이브 트리 부재 11일차(11-10~) |
+
+**블루팀 지시**:
+1. **(이월, 103일째) A6 CRITICAL 수정**: lib.rs:2395 `mstb_mint` 어카운트에 `mint::authority = protocol_state` 핀 추가 — :2320 경로와 대칭화. 단일 어트리뷰트 변경, 기능 영향 없음.
+2. **(이월) ☐206**: `cargo update -p openssl` 0.10.75 → 0.10.82 상향 — 업스트림 패치 타깃(0.10.80) 초과 드리프트.
+3. **(이월, 위생)**: solana/Cargo.lock humantime 2.3.0·chrono 0.4.43 unmaintained(RUSTSEC-2026-0542/0543) — 다음 의존성 접촉 시 교체 후보 검토 + 감시 목록 태그.
+4. **(신규, ☐238 — 예방 계약)**: CDP·청산·벌점 상환 등 담보-부채 쌍 원장을 도입하는 모든 향후 설계에서 — 쌍 소거 원자성(단일 트랜잭션/컨텍스트에서 담보·부채 동시 소거 또는 양쪽 보존)을 설계-시점 invariant + invariant_monitor 항목으로 계약화. 근거: MORE Markets $308K(자기청산 시 담보만 소거→준비금 인출). 현재 구조적 부재 — 발화 조건 아님.
+5. **(신규, ☐239 — 예방 계약)**: 예치 자산을 외부 수익 베뉴(스테이빌리티 풀·렌딩·유동성)에 라우팅/래핑하는 기능 도입 시 — 비목표 자산→목표 자산 전환 창(스왑 지연·마크-투-마켓 공백) 동안 민팅/상환 정산 금지 또는 즉시 시가 평가를 게이트로. 근거: K3 Capital sBOLD $3.43M(자기청산으로 할인 담보 유입→조각-지연 회계 저가 민팅→복원 후 상환). 현재 컴포지션 평면 부재 — 유지 조건.
+
+**신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
+
+**Sources**: microstable HEAD 23c0163 (sed :2318-2322/:2393-2398/:1350-1370·hermes.rs 구조체 직독·keeper/src transfer|withdraw|move_funds 0매치·인스트럭션 전수 grep·양 록 파이썬 파싱·docs/index.html 7-표면 카운트 — 2026-11-19 실측) · https://hacked.slowmist.io/en/ (MORE Markets 11-16 행) · https://ourcryptotalk.com/news/k3-capital-sbold-exploit-3-43m-ethereum · https://dev.to/pandasecurity/more-markets-exploit-liquidation-bug-drains-308k-2hf8

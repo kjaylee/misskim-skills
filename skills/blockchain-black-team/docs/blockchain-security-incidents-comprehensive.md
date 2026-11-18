@@ -1274,3 +1274,12 @@
   - Source: https://hacked.slowmist.io/en/ (11-14 행) · https://x.com/HyprEarn/status/2121673806704243178
 - **Lighter 후속 (11-17)**: 출금 재개·침해 경로 = 거래자 API 키 유출 재확정·손실 $10.4M 확정($15.5M 의심치에서 하향 — 추가 인출 시도 저지) — A180 기흡수 사고의 회복 후속(신규 벡터 없음).
   - Source: https://thedefiant.io/news/hacks/lighter-says-withdrawals-resume-after-api-key-theft · https://www.coindesk.com/tech/2026/11/16/lighter-suspends-all-withdrawals-after-usd10-4-million-crypto-exploit
+
+## 2026-11-19 — K3 Capital sBOLD 자기청산 가격창(A182) / MORE Markets 청산 비대칭 소거(A181 — 블랙 큐 재판정 신규 확정) / Reental WATCH (블랙 일일 진화)
+
+- **K3 Capital sBOLD (2026-11-18, ~$3.43M·~34 tx, Ethereum)** — **A182 신규 named 승격(창 내)**: wstETH 플래시론 → Liquity V2 트로브 오픈·즉시 자기청산 → 스테이빌리티 풀에 할인 담보 유입 → sBOLD(ERC-4626 볼트)가 담보→BOLD 스왑백 전 할인가 장부 반영(조각-지연 회계 창) → 쉐어가격 일시 하락 → 저가 민팅(12:25~12:33 UTC) → 스왑백 복원 → 상환으로 타 예치자 BOLD 인출. Blockaid 경보 12:50 UTC·K3 중단 13:08. A40(기부 공격)과 표면 동일·역방향·별개 진입 원시형(상류 정상 연산의 공격자 유발). ChainSecurity 런칭 전 동일 경로 사전 기술("core tension hard to remove"로 출하)·커뮤니티 제보 "not our scope"+버그바운티 부재 = 컴포지션 계층 보고 소유-공백(META 소관 관찰). NOT Liquity 코어 버그.
+  - Source: https://ourcryptotalk.com/news/k3-capital-sbold-exploit-3-43m-ethereum (publishedTime 2026-11-18T14:32:59Z) · https://x.com/blockaid_ · https://cryptobriefing.com/blockaid-k3-capital-sbold-exploit
+- **MORE Markets (2026-11-16, ~$308K, Flow EVM — 블랙 큐 재판정, 신규 사건 확정)** — **A181 신규 named 승격**: 플래시론 자기청산에서 담보는 소거·연동 WFLOW 부채는 미소거(청산 회계 비원자성) → WFLOW 준비금 인출. 08-31 Ankr ankrFLOW 사건($410K·베뉴 무혐의 판정)과 별개 — 동일 베뉴·동일 시장(ankrFLOW/WFLOW e-mode) 재침해. 11-18 블랙 'stale 재노출' 판정 번복(관측 정정 — JS-렌더 가시 제한 하 원행 미확인 판정). MORE·ankrFLOW 일시 정지. 퍼플 '무혐의 판정 헤일로' META 가설 RCA 병행 추적.
+  - Source: https://hacked.slowmist.io/en/ (11-16 행) · https://dev.to/pandasecurity/more-markets-exploit-liquidation-bug-drains-308k-2hf8 · https://www.theonchainsupport.com
+- **Reental (2026-11-18, ~$454K USDT+USDC, Polygon 부동산 토큰화 플랫폼)** — WATCH 등록: 손실 확정·공격 메커니즘 미공개 — RCA 시 재판정(Edel#2·HyprEarn 규약).
+- **기각 레인 기록(11-19)**: Drift $280M 포스트모템·$270M 토네이도 세탁 이동(4월 기흡수 사고의 RCA·자금추적 후속 — timeline-only) · Immunefi 10월 통계(크리티컬 318%↑)·Solana 29%/$347.4M(에버그린) · Breakpoint AI 해킹 경고·Google 자율 AI 해킹툴(비코드 평면) · Kava HARD Lend 폐쇄(A68 기흡수 후속) · lettre RustSec 6건(0560~0565) 전량 트리 밖.

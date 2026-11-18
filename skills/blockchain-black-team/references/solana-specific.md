@@ -2947,3 +2947,34 @@ SAST(CodeQL 등) 경보가 CI/코드리뷰 보안 게이트로 쓰이는 순간 
 ## Solana-Specific Defense Checklist Update
 233. ☐ 운영자/봇 API 키를 '지출 권한이 있는 비밀번호'로 취급한다 — 키별 스코프 열거(계정 간 자금 이동·풀/공유 원시형 조작 권한 포함), 미사용 키 즉시 폐기·정기 로테이션, 그리고 **동일한 자금 이동을 수행하는 모든 등가 경로(직접 출금·풀 join/redeem·서브계좌 이체)에 동일한 서명 게이트가 적용되는지 감사한다** — 무서명 스코프 내부의 공격자 제어 가능 원시형 = 서명 게이트 우회 백도어 (A180 ← Lighter MM API 키 스코프 이스케이프 2026-11-16 $15.5M)
 236. ☐ 지갑 연결 UI가 있는 모든 프론트엔드·대시보드에서 서드파티 SaaS 스크립트(A/B 실험·분석·채팅 위젯 등) 도입 전 스크립트 인벤토리를 작성하고, SRI·CSP를 계약 게이트로 둔다 — 동적 실험 스크립트(SRI 불가)는 지갑 연결 페이지에서 원천 금지한다. SaaS 플랫폼의 가입/테넌트 결함은 도메인·DNS·원본이 무결한 상태에서 신뢰 원천 자체를 악성화한다(OPTIMJACK/Optimizely 2026-11-17, 178~186 조직, 지갑 주소 치환+카드 스키밍 — D26 관측-벤더 스크립트 평면 제2 인스턴스). 현재 Microstable 대시보드 외부 스크립트 0 — 유지 조건
+
+## 청산 경로 담보-부채 비대칭 소거 / Liquidation Paired-Ledger Asymmetric Clearance (A181 — 블랙 named 승격 2026-11-19)
+
+### Mechanism
+MORE Markets (2026-11-16, ~$308K, Flow EVM): 플래시론 조달로 ankrFLOW/WFLOW e-mode 포지션 오픈 → 자기청산 → 청산 로직이 담보 잔액은 소거하면서 연동된 WFLOW 부채는 소거하지 않음 → 부채 없는 담보-소거 상태에서 WFLOW 준비금 인출. 짝지은 원장 항목(담보↔부채)의 **한쪽만 소거된 중간 상태**가 정상 경로(인출/상환)의 전제로 소비됨. 미소거-재사용 패밀리(B110 DoinGud·zkLink Nova·A128)가 '소거 안 된 값의 재소비'라면 A181은 '부분 소거 상태의 정상-경로 소비' = 회계 원자성 결함의 제2형태. 동일-베뉴·동일-시장(ankrFLOW/WFLOW) 재침해: 08-31 사고의 외부 귀속(Ankr 무근거 발행·베뉴 무혐의 판정)이 베뉴 자체 표면(청산 로직)의 사후 재검을 대체하지 못함 — 사고-귀속 무혐의 판정 ≠ 전 표면 무결(퍼플 META 가설 병행).
+
+### Microstable risk
+**NOT ACTIVE(구조적)** — 청산 경로 자체 부재 실측: lib.rs `liquidat`·`seize`·`bad_debt`·`debt` 0매치, 인스트럭션 전수 = mint/redeem 리프 + rebalance + circuit_breaker + emergency_shutdown 모델(담보-부채 쌍 소거 평면 없음). **LATENT**: CDP·청산·벌점(slashing) 상환 등 쌍 원장 기능 도입 시 발화 — ☐238 게이트 선행.
+
+### Sources
+- https://hacked.slowmist.io/en/ (2026-11-16 행 — 1차 소스)
+- https://dev.to/pandasecurity/more-markets-exploit-liquidation-bug-drains-308k-2hf8 · https://www.theonchainsupport.com (자기청산·e-mode 메커니즘 독립 확인)
+- 퍼플 2026-11-18 배치(재판정 요청 원문 — SlowMist 행 전문 인용)
+
+## Solana-Specific Defense Checklist Update
+238. ☐ 담보-부채 쌍 원장(청산·벌점 상환·CDP 폐쇄 등)을 도입하는 모든 설계에서 — 쌍 소거 원자성을 invariant로 계약한다: 단일 트랜잭션/실행 컨텍스트에서 담보와 부채가 동시에 소거되거나 둘 다 보존되어야 하며, 한쪽만 소거된 중간 상태가 존재할 수 없음을 invariant_monitor 항목으로 검증한다 (A181 ← MORE Markets 2026-11-16 $308K — 자기청산 시 담보만 소거·연동 부채 미소거→준비금 인출)
+
+## 자기청산 트리거 조각-지연 회계 가격창 / Self-Liquidation-Triggered Stale-Booking Share-Price Window (A182 — 블랙 named 승격 2026-11-19)
+
+### Mechanism
+K3 Capital sBOLD (2026-11-18, ~$3.43M·~34 tx, Ethereum): sBOLD = BOLD 예치를 Liquity V2 스테이빌리티 풀에 라우팅하는 ERC-4626 볼트. 공격자: wstETH 플래시론 → 트로브 오픈·즉시 자기청산(정상 기능) → 풀에 할인 담보 유입 → 볼트가 **담보→BOLD 스왑백 완료 전 할인가로 자산 장부 반영**(조각-지연 회계 창) → 쉐어가격 일시 하락 → 저가 쉐어 대량 민팅(12:25~12:33 UTC 클러스터) → 스왑백 완료로 회계 복원 → 상환으로 타 예치자 BOLD 인출. 축: **공격자가 유발할 수 있는 상류 프로토콜 정상 연산이 하류 볼트의 자산 구성·가격 창을 여는 것** — A40(ERC4626 기부 공격: 직접 이체로 share_price 왜곡)와 같은 표면(쉐어 가격)·역방향(인플레이트→차입 vs 디프레스→민팅)·별개 진입 원시형. 감사 에코: ChainSecurity가 런칭 전 동일 경로 기술("force liquidations → depress share price → mint cheap → redeem", 완화 후에도 "core tension hard to remove") = 알려진-리스크 출하. 보고 소유-공백: 컴포지션 계층 결함은 컴포넌트 베뉴("not our scope")와 래핑 베뉴(버그바운티 부재) 사이에 떨어짐.
+
+### Microstable risk
+**NOT ACTIVE(구조적)** — (1) ERC-4626 쉐어-가격 회계 부재(share_price·totalAssets·total_assets·price_per_share 0매치 실측 — 민팅/상환은 오라클 가격·min_out 가드로 직접 정산) (2) 예치를 외부 수익 베뉴에 라우팅/래핑하는 컴포지션 평면 부재(고정 4담보 PDA 보유) → 공격자 유발 가격창의 전제 없음. **LATENT**: 스테이빌리티 풀·렌딩·유동성 베뉴 래핑 도입 시 발화 — ☐239 게이트 선행. 오라클 평면의 가격창 유사축은 기존 오라클 벡터 렌즈가 커버.
+
+### Sources
+- https://ourcryptotalk.com/news/k3-capital-sbold-exploit-3-43m-ethereum (publishedTime 2026-11-18T14:32:59Z — 메커니즘·타임라인·ChainSecurity/Dedaub 감사 에코)
+- https://x.com/blockaid_ (12:50 UTC 경보) · https://cryptobriefing.com/blockaid-k3-capital-sbold-exploit
+
+## Solana-Specific Defense Checklist Update
+239. ☐ 예치 자산을 외부 수익 베뉴(스테이빌리티 풀·렌딩·유동성 공급)에 라우팅·래핑하는 기능 도입 시 — 비목표 자산의 목표 자산 전환 창(스왑 지연·마크-투-마켓 공백) 동안에는 민팅/상환 정산을 금지하거나 즉시 시가 평가로 전환 원자성을 확보한다. 상류 프로토콜의 정상 연산(자기청산 등)을 제3자가 유발할 수 있다면, 그 상태 변화가 볼트 회계에 반영되는 시차가 곧 가격 조작 창이다 (A182 ← K3 Capital sBOLD 2026-11-18 $3.43M — ChainSecurity 사전 지적에도 'tension hard to remove'로 출하)
