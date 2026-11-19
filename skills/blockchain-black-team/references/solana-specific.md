@@ -2999,3 +2999,32 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 ## Solana-Specific Defense Checklist Update
 242. ☐ 권한 회전 경로(keeper 집합·오라클 권한·upgrade authority·민트 authority)를 신설·변경할 때 — **회전 승인 임계값 ≥ 자금 이동 경로 임계값**을 불변식으로 계약하고, ① 회전 지연 하한을 **에포크 단위(수천 슬롯)**로 환산해 설정 ② `pending` 세팅 시 오프체인 경보·이벤트 로그 필수화 ③ 대기 중 구 권한 집합의 emergency 정지 절차 문서화를 게이트로 통과시킨다 (Gonka bridge 2026-11-18 ~$1.05M — 에포크 BLS 그룹키 등록 59초 후 인출·22M 무담보 민팅, RCA 대기 / 블랙 WATCH 축 후보)
+
+
+## 이벤트 구독 사망 / Event-Subscription Kill (A183 — red named 승격 2026-11-20, Anchor Rust client PR #5295 open·수정 미출시)
+
+### Mechanism
+`anchor-client` 이벤트 스트림이 **알림 1건의 파싱 실패를 스트림 태스크 전체로 전파**했다: `logs.value.signature.parse()?`와 `parse_logs(&logs.value.logs, &program_id_str)?`가 `?`로 조기 반환 → 구독 루프 종료. 수정 diff의 회귀 테스트가 결함을 증명한다(`unparsable_notifications_do_not_kill_subscription`, 주석 "one bad log line ends the stream otherwise"). 공격자는 `logsSubscribe(mentions=<victim>)` 필터를 이용해 **피해 프로그램을 계정으로 언급만 한 자기 tx**에서 위조 `Program data:`(discriminator + 잘린 본문) 또는 서명 파싱 불가 알림을 흘려 구독을 사망시킨다 — 이후 실제 이벤트(청산·거버넌스·오라클 갱신)가 전량 미관측되고, 소비자는 침묵을 '무사건'으로 오독한다. 실패 tx 로그도 RPC가 반환하므로 공격 tx는 실패해도 무방(비용 극소). **변별**: B116 = 로그 *내용*의 의미 위조(원본성·상태 정합) / A183 = 관측 채널의 *수명* 절단(가용성). 따라서 B116 방어("정본 Anchor 디코더만 사용")를 완전히 준수한 소비자도 취약 — 정본 디코더 바깥의 스트림 래퍼가 단일 실패 지점.
+
+### Microstable risk
+**NOT ACTIVE(구조적)** — (1) 이벤트 구독 API 0매치: `add_program_event_subscriber|on_logs|logs_subscribe|LogsSubscribe|EventParser|addEventListener|event_subscribe` → programs/ + keeper/src 전수 0매치(`json_logs`는 tracing 플래그, 프로그램 이벤트 구독과 무관) (2) 프로그램 이벤트 표면 부재: `emit!`/`emit_cpi!` 0매치(B116 실측 승계) (3) keeper는 상태-풀 구조 — `utils::fetch_account`/`get_account_with_commitment` 경유, 로그 구독·파싱 없음. **잠복 거리 단축 관측(신규)**: `anchor-client 0.31.1`이 **이미 solana/Cargo.lock에 존재**(양 록 파싱 실측) — 수정 미출시 버전이 의존성으로 트리 안에 있으므로, 이벤트 구독 도입 시 A183이 즉시 활성 평면이 된다. **LATENT 트리거**: keeper/모니터가 `anchor-client` 이벤트 구독 또는 `logsSubscribe` 소비로 전환하는 PR — 그 시점에 ☐243 선행.
+
+### Sources
+- https://github.com/coral-xyz/anchor/pull/5295.diff (2026-11-19T11:41Z 갱신 — 회귀 테스트·주석 직독)
+- B116(Anchor Event-Plane Semantic Spoofing) 대조 · microstable solana/Cargo.lock(anchor-client 0.31.1)·programs/·keeper/src grep 0매치 — 2026-11-19 실측
+
+## 재전송 멱등성 아티팩트 오염 / Retry-Idempotency Artifact Corruption (A184 — red named 승격 2026-11-20, Anchor CLI PR #5310 open·수정 미출시)
+
+### Mechanism
+`anchor legacy-idl write` 청크 루프가 `send_and_confirm_transaction` 실패 시 재시도하는데 온체인 `__idl_write`는 **무조건 append** → "tx는 착지·확인은 모호" 상태에서 재전송이 동일 청크를 중복 append해 zlib 스트림 파손(diff 주석: "resending a landed chunk duplicates it and corrupts the zlib stream", 수정 = `chunk_covers`/`chunk_already_written` + 테스트 2건). **at-least-once 재시도 × 비멱등 append = 아티팩트 오염**. 확인 모호성은 공격자가 값싸게 유도 가능한 상태(혼잡 스팸·RPC 지연·공용 RPC 경유)이며, 성공 시 배포 산출물 파손 → 하류 fetch/압축 해제 실패(DoS) 또는 중복 허용 파서에서 의미 변형된 IDL 소비. **A177/A178/A179 변별**: 그 셋은 공격자 공급 *내용* 악용(감압·변환 반전·출처 혼동), A184는 내용과 무관한 *쓰기 경로 멱등성* 결함. 일반화: 재시도 루프 + append-only 원장(청크 업로드·배치 append·증분 머클) 전 클래스.
+
+### Microstable risk
+**NOT ACTIVE(구조적)** — IDL 쓰기 경로 부재: `legacy_idl|idl_write|IdlInstruction|MAX_WRITE_SIZE|chunk_already` programs/ + keeper/src **0매치**(A179 렌즈 승계). keeper는 append-only 원장 쓰기 없음(온체인 상태는 instruction 단위 원자 갱신). **LATENT 트리거**: 청크 단위 아티팩트 업로드(IDL·wasm 세그먼트·메타데이터 배치) 또는 재시도 루프를 가진 append 경로 도입 시 — ☐244 선행.
+
+### Sources
+- https://github.com/coral-xyz/anchor/pull/5310.diff (2026-11-19T07:12Z 갱신 — `chunk_covers` 판정 로직·테스트 직독)
+- A177(감압 폭탄)·A178(변환 반전)·A179(재구성 출처 혼동) 대조 · microstable grep 0매치 — 2026-11-19 실측
+
+## Solana-Specific Defense Checklist Update
+243. ☐ 이벤트/로그 구독으로 오프체인 자동화를 구동하는 모든 서비스에서 — **구독 수명을 알림 내용과 독립**시킨다: 알림 1건의 파싱 실패는 skip+continue로 격리하고(스트림 태스크 종료 금지), 재구독 백오프·스트림 하트비트·"N분 무이벤트 ≠ 정상" 경보를 계약한다. 반복 파싱 실패 알림의 발신 program-id·서명은 관측 공격 시도로 수집·경보한다. 정본 디코더 사용은 스트림 생존성을 보장하지 않는다(디코더 *바깥* 래퍼가 단일 실패 지점) (A183 ← Anchor Rust client PR #5295 — 위조 `Program data:` 1건으로 구독 사망·이후 전 이벤트 미관측)
+244. ☐ 재시도(재전송) 루프로 append-only 원장에 쓰는 모든 도구(청크 업로드·배치 append·증분 머클·IDL write)에서 — **쓰기 전 원장 상태를 재확인**해 이미 착지한 쓰기를 건너뛰고(offset/length 커버리지 판정), 원장 측에서도 중복 append를 거부하도록 오프셋·인덱스를 명시한다. "확인 실패"는 "미착지"가 아니다 — 확인 모호성은 공격자가 유도 가능한 정상 상태다. 쓰기 종료 조건에 전체 길이·압축 스트림 무결성 검증 포함 (A184 ← Anchor CLI PR #5310 — 착지한 IDL 청크 재전송 → 중복 append → zlib 스트림 파손)
