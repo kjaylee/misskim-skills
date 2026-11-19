@@ -3634,3 +3634,42 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
 
 **Sources**: microstable HEAD 23c0163 (sed :2318-2322/:2393-2398/:1350-1370·hermes.rs 구조체 직독·keeper/src transfer|withdraw|move_funds 0매치·인스트럭션 전수 grep·양 록 파이썬 파싱·docs/index.html 7-표면 카운트 — 2026-11-19 실측) · https://hacked.slowmist.io/en/ (MORE Markets 11-16 행) · https://ourcryptotalk.com/news/k3-capital-sbold-exploit-3-43m-ethereum · https://dev.to/pandasecurity/more-markets-exploit-liquidation-bug-drains-308k-2hf8
+
+## 2026-11-20 — 일일 점검 (A6 day 104, 코드 104일째 불변)
+
+**베이스라인**: HEAD `23c0163`·dirty 40건·lib.rs mtime 2026-02-28 13:21:13·161,059 bytes — 전일과 동일(재베이스라인 불필요). 창(11-18 18:00Z~11-19 18:00Z) 내 코드 변동 0.
+
+| 벡터 | 판정 | 근거(실측) |
+|---|---|---|
+| **A6 CRITICAL (day 104)** | ❌ 무방비 지속 | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2396 bare `#[account(mut)]` — sed 재실증 |
+| **A10 HIGH** | ❌ 지속 | burn CPI :1366 `authority: ctx.accounts.user.to_account_info()` — sed 재실증 |
+| **HERMES-H1 HIGH** | ❌ 지속 | hermes.rs `HermesPostedUpdate` 7필드(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) — `posted_price_account` 양측 0매치 |
+| **B83 HIGH** | ⚠️ 캐리 | quinn-proto 0.11.13 (solana/Cargo.lock) |
+| **☐182 / ☐205** | ⚠️ 캐리 | rustls 0.21.12 + 0.23.36 · tokio 1.49.0 |
+| **☐206 LOW** | ⚠️ 캐리+드리프트 | openssl 0.10.75 핀 — 업스트림 0.10.82 초과 드리프트 지속(창 내 agave openssl 변동 0) |
+| **A157/A158/A164/A177 LATENT** | ⚠️ 잠복 10연창 | anchor-lang 0.31.1(양 록)·Anchor 릴리스 11-03 불변·창 내 1커밋은 비보안(#5326 rust-analyzer 진단 침묵) — A177/A178/A179 패치 미출시 |
+| **RustSec — wasmtime 8건(0566~0573)·heapless 9건(0574~0582)** | ✅ 트리 밖 | 양 록 `wasmtime`·`wasmtime-environ/runtime`·`cranelift-codegen`·`wasmparser`·`heapless` **전부 0매치**(wasm-bindgen 계열만 존재 — 별개 평면). 창 내 신규 17건 전량 무영향 |
+| **RustSec unmaintained(humantime 2.3.0·chrono 0.4.43)** | ⚠️ LOW-LATENT | solana/Cargo.lock 트리 내 승계(11-18 이월·수정버전 부재 위생 항목) |
+| **A181 청산 담보-부채 비대칭 소거 렌즈** | ✅ NOT ACTIVE(구조적) | 청산 경로 부재 승계(`liquidat`·`seize`·`bad_debt`·`debt` 0매치). LATENT: ☐238 게이트 |
+| **A182 렌즈(기전 재정의 반영)** | ✅ NOT ACTIVE(구조적) | 쉐어-가격 회계 부재 실측(`totalAssets`·`total_assets`·`share_price`·`price_per_share`·`share_value`·`exchange_rate` 전부 0) → dust-floor 무시 구간·permissionless 전환 함수(swap류) 전제 자체가 없음. LATENT: ☐239 보강 문면(전환 창 + dust floor 금지) |
+| **신규 — Gonka 에포크-키 회전 렌즈** | ⚠️ 부분 방어(설계 대칭·창 부재) | `rotate_keeper_set`(:1895) = `keeper_one/keeper_two: Signer` + `require_keeper_quorum`(2-of-3·중복 서명 거부) + 2단계 확정(`pending_keeper_set` → `KEEPER_ROTATION_DELAY_SLOTS=100`). **회전 임계값 = 자금·파라미터 경로 임계값(동일 2-of-3)** → '회전 경로가 더 약한 고리' 불성립. 관찰: 지연 100슬롯 ≈ 40초(감시 창 사실상 없음)·회전 경보 훅 부재 |
+| **신규 — LUKSO 복구-컨트롤러 렌즈** | ✅ NOT ACTIVE(구조적) | `controller`·`guardian`·`session_key`·`delegate`·`signer_set` 전부 0매치(계정 추상화·복구 평면 부재 — `recovery` 33매치는 `recover_circuit_breaker` 경로) |
+| **B18 서명-바우처 소비 렌즈** | ✅ NOT ACTIVE 승계 | voucher/settle/withdraw_level 0매치(퍼플 11-19 실측 승계) |
+| **B45** | ⚠️ PARTIAL | `security/` 존재(2026-02 산출물) — attestation 갱신 부재. 정의 축(배포 델타): lib.rs 불변 |
+| **대시보드 (docs/index.html)** | ✅ | innerHTML·document.write·eval·fetch·XMLHttpRequest·localStorage·**외부(http) script src 전부 0** — ☐236 유지 조건 |
+| keeper/Cargo.lock | ⚠️ 관측 | 라이브 트리 부재 12일차(11-10~) |
+
+**블루팀 지시**:
+1. **(이월, 104일째) A6 CRITICAL 수정**: lib.rs:2396 `mstb_mint` 어카운트에 `mint::authority = protocol_state` 핀 추가 — :2320 경로와 대칭화. 단일 어트리뷰트 변경, 기능 영향 없음.
+2. **(이월) ☐206**: `cargo update -p openssl` 0.10.75 → 0.10.82 상향(업스트림 패치 타깃 0.10.80 초과 드리프트).
+3. **(이월, 위생)**: humantime 2.3.0·chrono 0.4.43 unmaintained(RUSTSEC-2026-0542/0543) — 다음 의존성 접촉 시 교체 후보 검토 + 감시 목록 태그.
+4. **(신규, 관찰→개선) `rotate_keeper_set` 감시 창**: `KEEPER_ROTATION_DELAY_SLOTS = 100`(≈40초)은 2단계 확정에도 불구하고 **인간 개입·모니터링 창이 사실상 0**이다. 권고 — ① `pending_keeper_set` 세팅 시 이벤트 로그/경보(오프체인 알림) 필수화 ② 지연을 최소 1 에포크(예: 1,000~9,000 슬롯)로 상향 검토 ③ 회전 대기 중 구 keeper 집합의 `emergency_shutdown` 우선 실행 절차 문서화. 신뢰 전제(2-of-3) 내부 문제이므로 severity는 관찰 등급.
+5. **(신규, ☐242 게이트) 신뢰 앵커 회전 경로 임계값 대칭**: 향후 오라클 권한·keeper 집합·upgrade authority 등 **권한 회전 경로를 신설/변경할 때 — 회전 승인 임계값 ≥ 자금 이동 경로 임계값**을 불변식으로 계약하고, 회전 지연 하한 + 회전 이벤트 경보를 게이트로 통과시킨다. 근거: Gonka bridge(11-18, ~$1.05M — 키 등록 59초 후 인출·22M WGNK 무담보 민팅, RCA 대기). 현재 코드는 임계값 대칭(2-of-3)으로 조건 충족.
+6. **(신규, ☐239 보강) dust-floor 금지**: 가격·회계 산정에서 **임계값 미만 잔액을 무시하는 구현을 금지**한다 — 무시 구간은 공격자의 무료 가치 축적 구역이며 permissionless 전환 함수가 즉시 유동화한다. 근거: A182 기전 정정(K3 sBOLD — Bitquery 온체인 97tx 실측, 트로브 청산 0회, 7,500 BOLD 이하 담보 무시 → `swap()` 유동화).
+7. **(신규, ☐240 보강 권고 — B18 판정 부수)**: 정산·보상 컨트랙트가 공유 준비금을 보유하는 구조를 도입할 경우 **단일 호출 인출 상한 + 에포크 예산 + 이상 인출 자동 정지**를 런타임에 강제한다(감사 수검 ≠ 런타임 상한). 근거: B18 TimeBank(11-17, $404,540 — 단일 `withdrawLevelReward`로 준비금 79% 인출, CertiK 2026-03 감사 대상).
+
+**신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리).
+
+**참고(오늘의 스킬 진화)**: A182 기전 재정의(자기청산 축 폐기 — Bitquery 온체인 반증) · Gonka WATCH · LUKSO 백필 회복 · 블랙 큐 2건 클리어 · RustSec 17건 전량 트리 밖.
+
+**Sources**: microstable HEAD 23c0163 (sed :2318-2322/:2393-2398/:1350-1370·hermes.rs 구조체 직독·rotate_keeper_set :1895-1929·KEEPER_ROTATION_DELAY_SLOTS :133·양 록 파이썬 파싱·docs/index.html 7-표면 카운트 — 2026-11-19 실측) · https://bitquery.io/investigations/k3-capital-sbold-hack · https://thedefiant.io/news/security/lukso-urges-key-removal-after-universal-profile-attack · https://kucoin.com/blog/gonka-ethereum-bridge-exploit-bls-key-wgnk · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-18T18:00:00Z

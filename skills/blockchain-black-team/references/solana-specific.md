@@ -2978,3 +2978,24 @@ K3 Capital sBOLD (2026-11-18, ~$3.43M·~34 tx, Ethereum): sBOLD = BOLD 예치를
 
 ## Solana-Specific Defense Checklist Update
 239. ☐ 예치 자산을 외부 수익 베뉴(스테이빌리티 풀·렌딩·유동성 공급)에 라우팅·래핑하는 기능 도입 시 — 비목표 자산의 목표 자산 전환 창(스왑 지연·마크-투-마켓 공백) 동안에는 민팅/상환 정산을 금지하거나 즉시 시가 평가로 전환 원자성을 확보한다. 상류 프로토콜의 정상 연산(자기청산 등)을 제3자가 유발할 수 있다면, 그 상태 변화가 볼트 회계에 반영되는 시차가 곧 가격 조작 창이다 (A182 ← K3 Capital sBOLD 2026-11-18 $3.43M — ChainSecurity 사전 지적에도 'tension hard to remove'로 출하)
+
+
+## 신뢰 앵커 회전 경로 임계값 대칭 / Trust-Anchor Rotation Threshold Parity (Gonka 2026-11-18 — 블랙 WATCH 축 후보 2026-11-20)
+
+### Mechanism
+Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **새 에포크 BLS 그룹키를 온체인 등록**한 직후 같은 에포크 식별자로 스테이블 인출(884,150.87 USDT + 647.74 USDC)과 **22M WGNK 무담보 민팅**. 문서상 설계는 신규 그룹키를 **이전 에포크 키로 서명**해 등록하고 컨트랙트는 전임자 서명이 있는 다음 순번 키만 수용(원 키까지 끊김 없는 서명 체인)하며, **등록 tx 제출 자체는 누구나 가능**하다. 따라서 이 구조의 보안은 "회전을 승인하는 데 필요한 권한"으로 축약된다.
+
+**축**: 신뢰 앵커(검증자 집합·오라클 권한·upgrade authority)의 **회전 경로 임계값이 자금 경로 임계값보다 낮으면**, 자금 경로가 아무리 다중서명이어도 전체 보안은 회전 경로의 최약 임계값으로 붕괴한다 — 연속성 증명(전임 키 서명)은 *전이의 정당성*만 보증하고 *권한의 동일성*을 보증하지 않는다. RCA 대기(키 탈취/서명 검증/구현 결함 특정 불가) → **명명 보류**.
+
+### Microstable 실측 (2026-11-20)
+`rotate_keeper_set`(:1895) = `EmergencyShutdown` 컨텍스트의 `keeper_one`·`keeper_two: Signer` + `require_keeper_quorum`(2-of-3 멤버십·동일 서명자 거부) + **2단계 확정**(`pending_keeper_set` 설정 → `KEEPER_ROTATION_DELAY_SLOTS=100` 슬롯 경과 후 적용). 회전 임계값이 자금·파라미터 경로와 **동일한 2-of-3** → '회전 경로가 더 약한 고리' 구조 불성립 = **⚠️ 부분 방어(설계 대칭 달성)**.
+
+**관찰(개선 권고)**: 지연 100 슬롯 ≈ **40초** — 2단계 확정에도 인간 개입·모니터링 창이 사실상 없고, pending 셋 취소 경로는 동일 쿼럼 재제안(덮어쓰기)뿐이며 회전 이벤트 경보 훅이 없다. Solana 특화: 슬롯 기반 지연은 400ms 슬롯 기준으로 짧아지므로 **에포크 단위(수천 슬롯)로 환산해 설계**해야 실질 창이 생긴다.
+
+### Sources
+- https://kucoin.com/blog/gonka-ethereum-bridge-exploit-bls-key-wgnk (publishedTime 2026-11-19T08:14Z — 설계 문서·RCA 부재 명시)
+- https://thedefiant.io/news/hacks/gonka-bridge-exploit-drains-stablecoins-mints-wgnk (2026-11-18T22:24:25Z)
+- microstable `solana/programs/microstable/src/lib.rs` :1895-1929 · :133 (KEEPER_ROTATION_DELAY_SLOTS) — 2026-11-19 실측
+
+## Solana-Specific Defense Checklist Update
+242. ☐ 권한 회전 경로(keeper 집합·오라클 권한·upgrade authority·민트 authority)를 신설·변경할 때 — **회전 승인 임계값 ≥ 자금 이동 경로 임계값**을 불변식으로 계약하고, ① 회전 지연 하한을 **에포크 단위(수천 슬롯)**로 환산해 설정 ② `pending` 세팅 시 오프체인 경보·이벤트 로그 필수화 ③ 대기 중 구 권한 집합의 emergency 정지 절차 문서화를 게이트로 통과시킨다 (Gonka bridge 2026-11-18 ~$1.05M — 에포크 BLS 그룹키 등록 59초 후 인출·22M 무담보 민팅, RCA 대기 / 블랙 WATCH 축 후보)
