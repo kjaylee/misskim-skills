@@ -3673,3 +3673,38 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **참고(오늘의 스킬 진화)**: A182 기전 재정의(자기청산 축 폐기 — Bitquery 온체인 반증) · Gonka WATCH · LUKSO 백필 회복 · 블랙 큐 2건 클리어 · RustSec 17건 전량 트리 밖.
 
 **Sources**: microstable HEAD 23c0163 (sed :2318-2322/:2393-2398/:1350-1370·hermes.rs 구조체 직독·rotate_keeper_set :1895-1929·KEEPER_ROTATION_DELAY_SLOTS :133·양 록 파이썬 파싱·docs/index.html 7-표면 카운트 — 2026-11-19 실측) · https://bitquery.io/investigations/k3-capital-sbold-hack · https://thedefiant.io/news/security/lukso-urges-key-removal-after-universal-profile-attack · https://kucoin.com/blog/gonka-ethereum-bridge-exploit-bls-key-wgnk · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-18T18:00:00Z
+
+## 2026-11-21 — 일일 점검 (A6 day 105, 코드 105일째 불변)
+
+**베이스라인**: HEAD `23c0163`·dirty 40건·lib.rs mtime 2026-02-28 13:21:13·161,059 bytes — 전일과 동일(재베이스라인 불필요). 창(11-19 18:00Z~11-20 18:00Z) 내 코드 변동 0.
+
+| 벡터 | 판정 | 근거(실측) |
+|---|---|---|
+| **A6 CRITICAL (day 105)** | ❌ 무방비 지속 | lib.rs:2320 `#[account(mut, mint::authority = protocol_state)]` vs :2396 bare `#[account(mut)]` — sed 재실증(105일 미수정) |
+| **A10 HIGH** | ❌ 지속 | burn CPI :1366 `authority: ctx.accounts.user.to_account_info()` — mint 대상 계정과 burn 권한자 불일치 승계 |
+| **HERMES-H1 HIGH** | ❌ 지속 | hermes.rs:61-69 `HermesPostedUpdate` 7필드(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) — `posted_price_account` 0매치 |
+| **B83 HIGH** | ⚠️ 캐리 | quinn-proto 0.11.13 (solana/Cargo.lock) |
+| **☐182 / ☐205** | ⚠️ 캐리 | rustls 0.21.12 + 0.23.36 · tokio 1.49.0 |
+| **☐206 LOW** | ⚠️ 캐리+드리프트 | openssl 0.10.75 핀 — 창 내 agave openssl 변동 0(0.10.82 드리프트 유지) |
+| **A157/A158/A164/A177/A178/A179 LATENT** | ⚠️ 잠복 11연창 | anchor-lang 0.31.1(양 록) · 창 내 Anchor 2커밋 전부 비보안(#5165 TS 필터·#5337 문서) — 패치 미출시 승계 |
+| **RustSec 창 내 6건(0583~0587)** | ✅ 트리 밖 | `sad-rsa`·`tokio-rate-limit`·`pqcrypto-mlkem`·`pqcrypto-mldsa`·`wasmtime-wasi`·`wasmtime` **양 록 전부 0매치**(`heapless` 0 승계) |
+| **A185 판정 백엔드 분기 렌즈(금일 신규)** | ✅ NOT ACTIVE(구조적) | 로컬 암호 검증 경로 부재 — 온체인은 런타임 서명자(`Signer`/`require_keeper_quorum`)·Pyth 수신 프로그램 `verification_level = Full`(:3244-3247)에 위임, keeper는 `Signature` 파싱만(hermes.rs:16) 후 VAA 서명 트림(:263-310)해 온체인 검증에 넘김. `pqcrypto|ml_kem|mldsa|kyber|dilithium` **0매치**. ed25519-dalek 1.0.1/curve25519-dalek 3.2.0 = 백엔드 힌트 선택이 결정적(CPU 피처 비의존). **LATENT**: wasmtime 계열 임베딩 또는 로컬 서명 검증 도입 시 ☐249 |
+| **A186 통제 키 대체 렌즈(금일 신규)** | ⚠️ 부분방어 | ① keeper 인바운드 서버 **0**(`TcpListener|axum|warp|hyper|listen(` 0매치 — CLI 데몬) → 레이트리밋·IP 허용목록 평면 자체 부재(NOT ACTIVE) ② **오라클 신선도는 방어**: `publish_time <= now`(:3171) + `age <= 60s`(:3172-3173) + `posted_slot <= current_slot`(:3184) + 동적 스테일니스(:3189-3198) = 클라이언트 제공 타임스탬프를 로컬 Clock·슬롯으로 **양방향 바운드** ③ **잔여 관찰 1**: `is_allowed_pyth_write_authority`(:3209-3216)의 **자기-권한 예외**(`write_authority == pyth_price_account`) → 허용목록이 load-bearing이 아니고 실제 하중은 `owner == PYTH_RECEIVER_PROGRAM`(:3223)+discriminator(:3234)+`Full`(:3244)에 있음. 오늘은 안전, **허용목록을 신뢰 경계로 오인한 변경**(검증 레벨 완화·비-Pyth 소유 계정 핀)에서 즉시 무력화 |
+| **회전·권한 평면 재검증** | ⚠️ 부분방어(변동 없음) | `rotate_keeper_set`(:1895-1929) = `EmergencyShutdown` ctx + `require_keeper_quorum`(:3380-3390 — 서로 다른 2명·keeper_set 소속) + `pending_keeper_set` 2단계(`KEEPER_ROTATION_DELAY_SLOTS=100`, :133) → 회전 임계값 = 자금 경로 임계값(대칭). 관찰 승계: 100슬롯 ≈ 40초(인간 개입 창 없음)·회전 경보 훅 부재 |
+| **B45 (배포 델타)** | ❌ 무방비(승격) | `security/` **존재**(13파일·전부 2026-02-22 산출 — `program-immutability-proof.txt` 포함), `solana/security` 부재. 아티팩트 선언(`Verification Date 2026-02-22T05:05Z`·authority `None`)이 퍼플 11-20 온체인 실측으로 반증(devnet authority `Some`·최종 배포 슬롯 445171946 = **2026-02-28**, 검증일 +6일) → **검증 이후 재배포로 아티팩트 무효화·재검 훅 부재**(검출 술어 = 파일 존재) |
+| **대시보드 (docs/index.html)** | ✅ | innerHTML·document.write·eval·fetch **0** · 외부 `https?://` script src **0** — ☐236 유지 조건 충족 |
+| keeper/Cargo.lock | ⚠️ 관측 | 라이브 트리 부재 13일차(11-10~) |
+
+**블루팀 지시**:
+1. **(이월, 105일째) A6 CRITICAL**: lib.rs:2396 `mstb_mint`에 `mint::authority = protocol_state` 핀 추가 — :2320 경로와 대칭화. 단일 어트리뷰트, 기능 영향 없음.
+2. **(이월) ☐206**: `cargo update -p openssl` 0.10.75 → 0.10.82(업스트림 드리프트 3일째).
+3. **(신규, ☐248 — 통제 키 게이트)**: 외부 입력을 판정 키로 쓰는 통제를 신설·이관할 때 4항을 릴리스 게이트로 통과시킨다 — ① **키의 출처 표기**(전송계층 peer / 프로토콜 검증값 / 클라이언트 제출값) ② 클라이언트 제출값을 키로 쓰는 경우 **대체 통제(총량 상한·전역 버킷·비용 부과) 필수** ③ **증거-타입 불일치 시 무음 폴백 금지**(폴백 발생을 계측·경보) ④ **fail-open 옵션 금지**(증거 부재 = 거부). 근거: RUSTSEC-2026-0584(tonic `IpKeyExtractor`가 `x-forwarded-for` 키잉 + `SocketAddr`/`TcpConnectInfo` 타입 불일치로 무음 폴백 → 버킷 무한 분할).
+4. **(신규, ☐249 — 판정 결정성 게이트)**: 검증 로직(서명·캡슐·해시·정규화)을 도입·교체할 때 ① 스펙 필수 입력검증 항목을 코드 체크리스트로 명시(수용 과다 방지) ② **스칼라/AVX2/SIMD/HW 경로별 동일 입력 동일 판정 회귀 테스트**(Wycheproof류 벡터) ③ 비정규 입력 거부 + 정상 입력 수용을 양성 테스트로 고정. 근거: RUSTSEC-2026-0585/0586(PQClean 래퍼가 FIPS 203 §7.2/§7.3·FIPS 204 Alg.8 L13 검사 생략; AVX2 경로가 무효 37/41/49 수용·정상 1건 거부 → **같은 크레이트의 AVX2 유무가 판정을 바꿈**).
+5. **(신규, 관찰→개선) 오라클 write-authority 허용목록의 load-bearing 오인 방지**: `is_allowed_pyth_write_authority`(:3209-3216)의 자기-권한 예외를 문서·주석에 "devnet 예외"로만 남기지 말고, **허용목록이 단독으로 성립하지 않는다**는 사실을 계약으로 명시한다(실제 경계 = owner + discriminator + verification_level). 향후 `verification_level` 완화 또는 비-Pyth 소유 계정 핀 변경 시 **허용목록이 유일 방어선인 상태를 만들지 않는다**.
+6. **(이월·퍼플 승계) 불변성 아티팩트 재발급**: ① 실측 클러스터 명기(devnet 한정 배포 사실 포함) ② program-id·authority 상태를 **온체인 loader 상태에서 직접 인용** ③ 아티팩트 해시·서명·**재검 주기(배포마다 갱신)** 기재 ④ CI에서 배포 슬롯·authority를 아티팩트와 대조하는 자동 검사 추가(퍼플 ☐246과 동일 항목 — 파일 존재 ≠ 불변성).
+
+**신규 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리. B45는 등급 승격이나 코드 결함이 아닌 **통제 아티팩트 결함**으로 퍼플 11-20 CRITICAL의 블랙 확인분).
+
+**참고(오늘의 스킬 진화)**: 신규 named 2(A185 판정 백엔드 분기 · A186 통제 키 대체 — 둘 다 RustSec 검증-래퍼 어드바이저리 0584/0585/0586 파생) · RustSec 6건 전량 트리 밖 · 관측 정정 1(security/ 존재·B45 축 재고정) · 에버그린 recency 함정 1(Drift 4월) · 레드 큐 2(#5165·#5337).
+
+**Sources**: microstable HEAD 23c0163 (sed :2316-2324/:2392-2400/:1350-1372·:3145-3207·:3209-3216/:3380-3390·:1895-1929·:133·hermes.rs:61-69·양 록 파이썬 파싱·`security/` 13파일 mtime·docs/index.html 7-표면 카운트 — 2026-11-20 실측) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-19T18:00:00Z · raw.githubusercontent.com/rustsec/advisory-db/main/crates/{tokio-rate-limit,pqcrypto-mlkem,pqcrypto-mldsa,sad-rsa,wasmtime-wasi}/RUSTSEC-2026-0{583..587}.md · https://github.com/pq-crystals/dilithium/issues/113 · https://api.github.com/repos/coral-xyz/anchor/commits?since=2026-11-19T18:00:00Z

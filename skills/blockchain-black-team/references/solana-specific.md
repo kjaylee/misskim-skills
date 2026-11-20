@@ -3028,3 +3028,36 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 ## Solana-Specific Defense Checklist Update
 243. ☐ 이벤트/로그 구독으로 오프체인 자동화를 구동하는 모든 서비스에서 — **구독 수명을 알림 내용과 독립**시킨다: 알림 1건의 파싱 실패는 skip+continue로 격리하고(스트림 태스크 종료 금지), 재구독 백오프·스트림 하트비트·"N분 무이벤트 ≠ 정상" 경보를 계약한다. 반복 파싱 실패 알림의 발신 program-id·서명은 관측 공격 시도로 수집·경보한다. 정본 디코더 사용은 스트림 생존성을 보장하지 않는다(디코더 *바깥* 래퍼가 단일 실패 지점) (A183 ← Anchor Rust client PR #5295 — 위조 `Program data:` 1건으로 구독 사망·이후 전 이벤트 미관측)
 244. ☐ 재시도(재전송) 루프로 append-only 원장에 쓰는 모든 도구(청크 업로드·배치 append·증분 머클·IDL write)에서 — **쓰기 전 원장 상태를 재확인**해 이미 착지한 쓰기를 건너뛰고(offset/length 커버리지 판정), 원장 측에서도 중복 append를 거부하도록 오프셋·인덱스를 명시한다. "확인 실패"는 "미착지"가 아니다 — 확인 모호성은 공격자가 유도 가능한 정상 상태다. 쓰기 종료 조건에 전체 길이·압축 스트림 무결성 검증 포함 (A184 ← Anchor CLI PR #5310 — 착지한 IDL 청크 재전송 → 중복 append → zlib 스트림 파손)
+
+## 판정 백엔드 분기 / Verifier Backend Divergence (A185 — black named 2026-11-21, RUSTSEC-2026-0585/0586)
+
+### Mechanism
+검증 술어가 `f(입력)`이 아니라 `f(입력, 백엔드)`가 되는 클래스. **pqcrypto-mlkem ≤0.1.1**은 PQClean ML-KEM 래퍼로 **FIPS 203 §7.2 encapsulation key modulus check**와 **§7.3 decapsulation key hash check**를 수행하지 않는다 — 계수가 q로 환원되지 않은 캡슐화 키, 저장 해시/내장 캡슐화 키가 변조된 디캡슐화 키가 수용된다(Wycheproof: 무효 캡슐화 키 108/112/116·파라미터 세트당 무효 디캡슐화 키 2건 수용, 키 재료 유출은 없음. unmaintained `RUSTSEC-2026-0161`, 패치 미예정). **pqcrypto-mldsa ≤0.1.2**는 x86_64 비-Windows 기본 `avx2` 피처에서 PQClean **AVX2** ML-DSA 검증기를 쓰는데, 이 구현은 상류 수정 2건(`pq-crystals/dilithium#113`, 2026-06-03)에 선행한다 — ① FIPS 204 Alg.8 L13의 `‖z‖∞ < γ1−β` 검사를 생략해 **규격 검증기가 거부하는 서명을 수용** ② `use_hint_avx()` 경계 오처리로 **정상 서명 1계열을 거부**(Wycheproof: 무효 37/41/49 수용·세트당 정상 1건 거부. unmaintained `RUSTSEC-2026-0166`, 패치 미예정). 결과: **같은 크레이트의 AVX2 사용/미사용이 같은 입력에 다른 판정**을 내고, 규격 구현과도 갈린다.
+**Solana 함의**: 검증 판정이 CPU 피처의 함수가 되면 (a) 서로 다른 하드웨어의 validator가 동일 트랜잭션에 다른 결과를 내 **합의 분기**, (b) keeper 클러스터 노드별 오라클 수용/거부 비대칭, (c) 개발기(시뮬레이션)와 프로덕션 서버의 판정 차이로 **배포 전 검증 무효화**. 래퍼 라이브러리의 기본 피처 플래그가 백엔드를 고르며 그 선택은 문서화되지 않는다. 판별 질문: "이 검증은 입력만의 함수인가? 같은 바이트를 스칼라·AVX2·SIMD 경로에 각각 넣으면 판정이 같은가?"
+
+### Microstable risk
+**NOT ACTIVE(구조적)** — 로컬 암호 검증 경로 자체가 없다: 온체인은 런타임 서명자 검사(`Signer`·`require_keeper_quorum`, lib.rs:3380-3390)와 Pyth 수신 프로그램의 `verification_level = Full`(:3244-3247)에 위임하고, keeper는 `Signature` 타입 파싱(hermes.rs:16) 후 VAA 서명을 트림(:263-310)해 `post_update_atomic`으로 넘기며 실제 검증은 Pyth가 수행한다. `pqcrypto|ml_kem|mldsa|kyber|dilithium` programs/ + keeper/src **0매치**. 트리 내 ed25519-dalek 1.0.1·curve25519-dalek 3.2.0은 백엔드 힌트 선택이 결정적(동일 입력 동일 판정). **LATENT 트리거**: wasmtime 계열 임베딩(전략·quote 엔진), PQC 프리컴파일/래퍼 도입, keeper의 오라클 서명 로컬 재검증 도입 — ☐249 선행.
+
+### Sources
+- https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/pqcrypto-mldsa/RUSTSEC-2026-0586.md (FIPS 204 Alg.8 L13·`use_hint_avx()`·Wycheproof 37/41/49)
+- https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/pqcrypto-mlkem/RUSTSEC-2026-0585.md (FIPS 203 §7.2/§7.3·108/112/116)
+- https://github.com/pq-crystals/dilithium/issues/113 (상류 수정 2026-06-03)
+- microstable grep 실측(`Signer`·`verification_level`·pqcrypto 0매치) — 2026-11-20
+
+## 통제 키 대체 / Control-Key Substitution (A186 — black named 2026-11-21, RUSTSEC-2026-0584)
+
+### Mechanism
+`tokio-rate-limit 0.5.0~0.11.0`(patched **0.11.1**, `GHSA-r5c9-r265-ccg3`)의 `tonic_middleware::IpKeyExtractor::extract`는 문서상 클라이언트 IP로 gRPC 레이트리밋을 하지만, 표준 `tonic::transport::Server`에서 실제로는 **클라이언트 제공 `x-forwarded-for`/`x-real-ip`** 로 키잉한다. 3중 결함 — ① **문서-구현 분기**(문서 = peer IP, 구현 = 클라이언트 재선언 가능 헤더) ② **증거-타입 불일치 무음 폴백**(0.10.0~0.11.0은 먼저 `std::net::SocketAddr` 요청 익스텐션을 확인하나 tonic 서버는 `TcpConnectInfo`를 넣으므로 **항상 미스** → 같은 헤더로 폴백, 로그·경보 0) ③ **fail-open 코너**(0.5.0~0.9.1은 헤더 부재 시 무제한 통과, 0.10~0.11은 `.fail_open()` 사용 시 통과). 결과: 직접 클라이언트가 키를 임의 선택해 **버킷을 무한 분할**하고 추적 키 수를 폭증시킨다. 같은 이름의 HTTP 미들웨어는 `ConnectInfo<SocketAddr>`를 읽어 무영향 — **전송 계층에 따라 같은 통제가 다르게 동작**한다.
+**일반화 3항**: ① 판정 키는 피통제자가 재선언할 수 없어야 한다(헤더·쿼리·메모·클라이언트 타임스탬프·자기신고 출처로 키잉된 한도/쿼터/리밋은 계측이지 통제가 아니다) ② **증거-타입 불일치 무음 폴백 금지**(기대 증거 타입 ≠ 런타임 제공 타입일 때 조용히 약한 경로로 강등되면 "검사 코드 존재"가 통제의 증거로 남는다 — A150 「검사 존재≠효력」의 인프라·미들웨어 판, B102 표현 혼동 계보) ③ **fail-open 금지**(신원 증거 부재 시 기본값 = 거부).
+
+### Microstable risk
+**⚠️ 부분방어** — ① keeper는 인바운드 서버가 없다(`TcpListener|axum|warp|hyper|HttpServer|listen(` **0매치**, CLI 데몬) → 레이트리밋·IP 허용목록 평면 자체가 없음(NOT ACTIVE). ② **오라클 신선도 통제는 방어**: 제공자(클라이언트) 제공 `publish_time`을 로컬 `Clock.unix_timestamp`로 **양방향 바운드**(`publish_time <= now` :3171, `age <= 60s` :3172-3173)하고 `posted_slot <= current_slot`(:3184)·동적 스테일니스(:3189-3198)를 병행 → 제공자가 과거·미래 타임스탬프를 재선언해도 수용되지 않는다. ③ **잔여 관찰(1)**: `is_allowed_pyth_write_authority`(:3209-3216)의 자기-권한 예외(`write_authority == pyth_price_account`) 때문에 허용목록이 load-bearing이 아니며 실제 경계는 `owner == PYTH_RECEIVER_PROGRAM`(:3223) + discriminator(:3234) + `Full`(:3244)이다. 현 상태 안전, **허용목록을 신뢰 경계로 오인한 변경**(검증 레벨 완화·비-Pyth 소유 계정 핀)에서 즉시 무력화. **LATENT 트리거**: keeper에 메트릭/헬스/quote HTTP·gRPC 엔드포인트 도입 — ☐248 선행.
+
+### Sources
+- https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/tokio-rate-limit/RUSTSEC-2026-0584.md (0.5.0~0.11.0·`SocketAddr` vs `TcpConnectInfo`·fail-open·patched 0.11.1)
+- microstable 실측: lib.rs:3145-3207·:3209-3216·:3171-3178·:3184-3198, grep `TcpListener|axum|warp|hyper|listen(` 0 — 2026-11-20
+
+## Solana-Specific Defense Checklist Update
+245. ☐ *(번호 245~247은 퍼플 11-20 배치 소관 — `attack-matrix.md` 2026-11-20 퍼플 항목 참조. 아래는 블랙 11-21 신설.)*
+248. ☐ **외부 입력을 판정 키로 쓰는 통제(레이트리밋·쿼터·IP 허용목록·신선도 게이트)를 신설·이관할 때 — 키의 출처를 계약에 명시하고, 클라이언트 제출값을 키로 쓰면 대체 통제(총량 상한·전역 버킷·비용 부과)를 병기한다. 증거-타입 불일치로 인한 무음 폴백은 금지하고(폴백 발생 = 계측·경보), 신원 증거 부재 시 기본값은 거부(fail-open 금지)다.** 판별 질문: "이 키를 피통제자가 다시 쓸 수 있는가? 통제가 기대한 증거 타입을 런타임이 실제로 제공하는가?" (A186 ← RUSTSEC-2026-0584 — tonic `IpKeyExtractor`가 `x-forwarded-for`로 키잉하고 `SocketAddr`/`TcpConnectInfo` 타입 불일치로 무음 폴백 → 버킷 무한 분할)
+249. ☐ **서명·캡슐·해시 검증 로직을 도입·교체할 때 — ① 스펙 필수 입력검증 항목(정규화·범위·해시 검사)을 코드 체크리스트로 열거하고 ② 스칼라/AVX2/SIMD/HW 경로별 "동일 입력 → 동일 판정" 회귀 벡터(Wycheproof류)를 CI에 넣고 ③ 비정규 입력 거부 + 정상 입력 수용을 양성 테스트로 고정한다. 래퍼 라이브러리의 기본 피처 플래그가 검증 백엔드를 고른다는 사실을 릴리스 문서에 적는다.** 판별 질문: "이 검증은 입력만의 함수인가? 같은 바이트를 AVX2 경로와 스칼라 경로에 각각 넣으면 판정이 같은가?" (A185 ← RUSTSEC-2026-0585/0586 — PQClean 래퍼가 FIPS 203 §7.2/§7.3·FIPS 204 Alg.8 L13 검사 생략, AVX2 경로가 무효 37/41/49 수용·정상 1건 거부)
