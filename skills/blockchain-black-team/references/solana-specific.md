@@ -3061,3 +3061,20 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 245. ☐ *(번호 245~247은 퍼플 11-20 배치 소관 — `attack-matrix.md` 2026-11-20 퍼플 항목 참조. 아래는 블랙 11-21 신설.)*
 248. ☐ **외부 입력을 판정 키로 쓰는 통제(레이트리밋·쿼터·IP 허용목록·신선도 게이트)를 신설·이관할 때 — 키의 출처를 계약에 명시하고, 클라이언트 제출값을 키로 쓰면 대체 통제(총량 상한·전역 버킷·비용 부과)를 병기한다. 증거-타입 불일치로 인한 무음 폴백은 금지하고(폴백 발생 = 계측·경보), 신원 증거 부재 시 기본값은 거부(fail-open 금지)다.** 판별 질문: "이 키를 피통제자가 다시 쓸 수 있는가? 통제가 기대한 증거 타입을 런타임이 실제로 제공하는가?" (A186 ← RUSTSEC-2026-0584 — tonic `IpKeyExtractor`가 `x-forwarded-for`로 키잉하고 `SocketAddr`/`TcpConnectInfo` 타입 불일치로 무음 폴백 → 버킷 무한 분할)
 249. ☐ **서명·캡슐·해시 검증 로직을 도입·교체할 때 — ① 스펙 필수 입력검증 항목(정규화·범위·해시 검사)을 코드 체크리스트로 열거하고 ② 스칼라/AVX2/SIMD/HW 경로별 "동일 입력 → 동일 판정" 회귀 벡터(Wycheproof류)를 CI에 넣고 ③ 비정규 입력 거부 + 정상 입력 수용을 양성 테스트로 고정한다. 래퍼 라이브러리의 기본 피처 플래그가 검증 백엔드를 고른다는 사실을 릴리스 문서에 적는다.** 판별 질문: "이 검증은 입력만의 함수인가? 같은 바이트를 AVX2 경로와 스칼라 경로에 각각 넣으면 판정이 같은가?" (A185 ← RUSTSEC-2026-0585/0586 — PQClean 래퍼가 FIPS 203 §7.2/§7.3·FIPS 204 Alg.8 L13 검사 생략, AVX2 경로가 무효 37/41/49 수용·정상 1건 거부)
+
+## 조회 술어 무음 소실 / Silent Filter-Predicate Drop (A187 — red named 승격 2026-11-21, Anchor TS PR #5165 merged 98846e3b 2026-11-20·미출시)
+
+### Mechanism
+`AccountClient.all(filters?: Buffer | GetProgramAccountsFilter[])`는 Buffer 인자를 `coder.accounts.memcmp(accountName, buffer)`로 **RPC 필터 절**로 번역한 뒤 `{offset, bytes}`만 `getProgramAccounts`의 memcmp 절로 전송한다. `SystemAccountsCoder.memcmp`는 `appendData`를 **선언만 하고 무시**했다(원문 주석 `// TODO: this won't use the appendData.`) → 호출자의 Buffer는 **어떤 필터 절도 만들지 못하고** `{dataSize: NONCE_ACCOUNT_LENGTH}`만 전송된다. 요청은 **유효**하기 때문에 오류·경고·로그가 없고, 반환값은 "필터된 부분집합"이 아니라 **네트워크 전역 nonce 계정 전체**다. 소비자는 침묵을 "필터 적용됨"으로 읽고 후속 판단(대상 계정 선택·권한 판정·집계)을 잘못된 카디널리티 위에서 수행한다. 수정은 `appendData?.length ? { dataSize, offset: 0, bytes: bs58.encode(appendData) } : { dataSize }`로 술어를 복원하고, 회귀 테스트 2건이 양성(비어있지 않은 버퍼 → memcmp 절)과 부정(빈 버퍼·미지정 → 크기 필터만)을 함께 고정한다. **A186(통제 키 대체)와의 변별**: A186은 피통제자가 키를 재선언하는 축(공격자 입력 필요), A187은 키 조작 없이 **요청자가 스스로 건 제약이 소멸**하는 축(공격자 입력 불요·결정적). **A150(「검사 존재≠효력」)의 클라이언트 조회 평면 인스턴스**.
+**일반화 3항**: ① 번역 계층은 미지원 인자를 **거부**해야 한다(번역/오류/명시적 무시+경고 3분법, 무시는 기본값 금지) ② **약화된 요청이 여전히 유효하면 무음 실패다** — 안전성은 응답 **카디널리티 기대치**로 검사(결과 개수 상한·전체 집합 동일 시 경보) ③ 보안-의미 경로의 `TODO`/`won't use`/`not yet supported` 주석은 **선언된 미수정 결함**으로 릴리스 게이트 집계 대상.
+
+### Microstable risk
+**NOT ACTIVE(구조적)** — (1) TS 조회 경로 부재: `memcmp|SystemAccountsCoder|getProgramAccounts` grep 매치는 `Promise.all(`뿐(애플리케이션 코드 0) (2) `docs/app.js:2700-2702`는 **raw RPC** `getProgramAccounts`에 `{dataSize: 168/200/264}`를 직접 전달 — coder를 우회하므로 술어 소실 평면 자체가 없다 (3) 프로그램에 durable nonce 계정 0(`nonce` 매치는 keeper `agent_loop.rs`의 엔트로피 nonce뿐) (4) 의존성 `@coral-xyz/anchor ^0.31.1`(solana/package.json·루트) = 수정 미포함. **LATENT 트리거**: 대시보드·keeper 툴·통합 스크립트가 `program.account.*.all(Buffer)` 또는 `memcmp` 경유 조회로 전환하는 순간 활성 평면이 된다(특히 durable nonce·authority별 계정 열거 도입). 그 시점에 ☐250 선행.
+
+### Sources
+- https://github.com/coral-xyz/anchor/pull/5165.diff (머지 98846e3b 2026-11-20T14:52:23Z — 수정 diff·`coder-system-accounts.spec.ts` 29행 직독)
+- https://raw.githubusercontent.com/coral-xyz/anchor/98846e3b/ts/packages/anchor/src/program/namespace/account.ts (`all()` → `coder.accounts.memcmp` → memcmp/dataSize 절 조립 직독)
+- A163(값 인코딩)·A173(레이아웃 해석)·A186(통제 키 대체)·A150(검사 존재≠효력) 대조 · microstable grep 실측 — 2026-11-20
+
+## Solana-Specific Defense Checklist Update
+250. ☐ **클라이언트/서비스가 계정 열거 API에 술어(필터·offset·앵커·범위)를 넘길 때 — 그 술어가 *실제 요청에 도달했는지*를 응답 형태로 검증한다**: (a) 결과 개수 상한 또는 "전체 집합과 동일하면 경보" (b) 결과 원소가 기대 술어를 만족하는지 클라이언트 측 재검증(수신 후 필터 재적용 — 서버 필터를 신뢰 경계로 삼지 않는다) (c) 미지원 인자는 조용히 무시하지 말고 거부. 판별 질문: "내가 넘긴 제약 중 요청에 도달하지 못한 것이 있는지 호출자가 알 수 있는가? 이 API가 더 넓은 술어로도 성공 응답을 내는가?" (A187 ← Anchor TS #5165 — `SystemAccountsCoder.memcmp`가 Buffer 필터를 무시하고 dataSize 필터만 전송 → 전역 계정 집합 반환·오류 0)
