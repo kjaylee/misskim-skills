@@ -3078,3 +3078,29 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 ## Solana-Specific Defense Checklist Update
 250. ☐ **클라이언트/서비스가 계정 열거 API에 술어(필터·offset·앵커·범위)를 넘길 때 — 그 술어가 *실제 요청에 도달했는지*를 응답 형태로 검증한다**: (a) 결과 개수 상한 또는 "전체 집합과 동일하면 경보" (b) 결과 원소가 기대 술어를 만족하는지 클라이언트 측 재검증(수신 후 필터 재적용 — 서버 필터를 신뢰 경계로 삼지 않는다) (c) 미지원 인자는 조용히 무시하지 말고 거부. 판별 질문: "내가 넘긴 제약 중 요청에 도달하지 못한 것이 있는지 호출자가 알 수 있는가? 이 API가 더 넓은 술어로도 성공 응답을 내는가?" (A187 ← Anchor TS #5165 — `SystemAccountsCoder.memcmp`가 Buffer 필터를 무시하고 dataSize 필터만 전송 → 전역 계정 집합 반환·오류 0)
+
+
+### A188 — 임계-집계 서명 권한 붕괴 (threshold-aggregate signature authority collapse)
+**패턴**: t-of-n 임계 서명(TSS/MPC)의 t는 **키 소재의 분산**만 보증한다. 온체인 검증 경계의 권한 술어는 **단일 집계 서명 아티팩트**이므로 자금 경로의 실효 임계값은 1이고, 그 1회 서명이 승인하는 **가치의 상한**은 코드에 없다(Chainflip 11-21: `cap`0·`delay`0·`allowlist`0, `transferBatch`가 임의 길이·임의 자산·임의 수취인).
+
+**솔라나 함의**: Anchor 프로그램은 보통 이 축이 구조적으로 부재(instruction별 `Signer`+PDA seeds+`mint::authority`)하지만, 다음을 들이는 순간 활성 평면이 된다 — ① ed25519/secp256k1 프리컴파일 기반 **오프체인 서명자 게이트**(`ed25519_program`·`secp256k1_program` instruction introspection) ② 브리지·크로스체인 어댑터의 **aggregate 서명 수용** ③ keeper 집합 대신 **단일 서명자 키**로 자금 명령 승인 ④ `*_batch` 류 다자산 전송.
+
+**판별 질문 4개**: (a) 이 서명 1개가 승인할 수 있는 최대 가치는 얼마이며 온체인 상수로 존재하는가? (b) 전액 규모 인출에 timelock·거부권 창이 있는가? (c) 수취인이 사전 등록/직전 승인 해시에 결속되는가? (d) 보안 문서의 "t-of-n" 문장이 **키 소재**만 말하고 **권한 크기**는 말하지 않는가?
+
+**Microstable risk**: **NOT ACTIVE(구조적)** — `schnorr|tss|aggregate|signature_verify|secp256k1|ed25519|merkle|transfer_batch|verify_batch` 0매치, `batch_` 8매치 = 리밸런스 commit-reveal 윈도(자산 전송 아님), keeper `aggregate` = `aig::aggregate_scores`. 회전 평면은 agg-key 단일 아티팩트가 아니라 **2-of-3 서명자 쿼럼**으로 검증(대칭). **LATENT**: 브리지/TSS/단일 서명자 자금 게이트 도입 시 ☐253 선행.
+
+### A44 강화 — 설치-시점 코드의 자격증명 저장소 스윕 ∩ 네트워크 송신 (PyPI solana-utils-terminalmoney1, 2026-11-18)
+**탐지 술어**: 악성 패키지의 정적 신호는 이름 유사성이 아니라 **설치 훅 안에서 자격증명 저장소 접근과 네트워크 호출이 동거**하는 조합이다(OX.Radar 규칙 문면 "Credential access next to a network call in install-time code"). 표적 저장소 = `.env`뿐 아니라 **Solana CLI 키페어**(`~/.config/solana/id.json`)·클라우드 자격증명(`~/.aws/`)·쉘 히스토리.
+
+**방어**: ① Python/Node 의존은 **버전 핀 + 해시 고정**(`pip install pkg` 무핀 금지, `--require-hashes`) ② 설치 훅 실행을 샌드박스/오프네트워크로 격리하거나 `--no-build-isolation`·`--only-binary`로 훅 자체를 차단 ③ **빌드 머신에 keeper 운영 키를 두지 않는다**(전용 경로·600·별도 사용자) ④ 신규 의존성의 첫 버전(당일 발행·2버전 이하)은 자동 수용하지 않는다.
+
+### Sources
+- https://hacked.slowmist.io/en/ (2026-11-21 Chainflip 행문 — "aggregate/TSS signing key"·Schnorr·`Vault.transferBatch`)
+- contracts/Vault.sol · KeyManager.sol · AggKeyNonceConsumer.sol (chainflip-io/chainflip-eth-contracts@master 직독 — `transferBatch`·`consumesKeyNonce`·`_aggKey`·`_AGG_KEY_TIMEOUT=2 days`)
+- https://www.ox.security/ox-radar/pypi/solana-utils-terminalmoney1 (2026-11-18 · risk 90/100 · 6규칙)
+- https://pypi.org/pypi/solana-py-utils/json 외 3종 (404 = takedown)
+- 대조: A32(동일 프로토콜 09-12 — 소비 의미론 평면)·A180(등가-경로)·Gonka 축(경로 간 임계값 비대칭)·A6(권한 술어의 경계 이동) · microstable grep 실측 — 2026-11-22
+
+## Solana-Specific Defense Checklist Update
+253. ☐ **임계 서명(TSS/MPC)·집계 서명·오프체인 서명자 게이트를 도입할 때 — 온체인 권한 술어의 *실효 임계값*을 측정하고 1회 서명의 가치 상한을 코드로 강제한다**: (a) "서명 1개가 승인 가능한 최대 가치"를 온체인 상수/파라미터로 존재시킨다(자산별·일별 유출 상한) (b) 전액-유출 규모 배치는 timelock + 거부권 창 경유 (c) 수취인을 사전 등록 화이트리스트 또는 직전 승인 해시에 결속 (d) 보안 문서의 "t-of-n" 옆에 "온체인 권한 술어 = 단일 집계 서명, 실효 임계값 1"을 병기. 판별 질문: "t-of-n이라는 문장은 키가 어디 있는지만 말하는가, 아니면 서명 1회가 무엇을 승인할 수 있는지도 말하는가?" (A188 ← Chainflip 2026-11-21 $4.86M — `Vault.transferBatch`에 cap·delay·allowlist 전부 0)
+254. ☐ **빌드·설치-시점 코드가 자격증명 저장소를 읽으면서 동시에 네트워크로 나가는 조합을 릴리스 게이트로 차단한다**: (a) Python/Node 의존은 버전 핀 + 해시 고정(`--require-hashes`, `npm ci`) (b) 설치 훅(`postinstall`/`setup.py`/build script)은 샌드박스·오프네트워크 실행 또는 `--only-binary`로 차단 (c) **빌드 머신에 keeper 운영 키페어를 두지 않는다** — `~/.config/solana/id.json`·`~/.aws/`·`.env`가 빌드 사용자 홈에 존재하면 그 자체가 표적 (d) 당일 발행·2버전 이하의 신규 패키지는 자동 수용 금지. 판별 질문: "우리 CI/개발 머신에서 `pip install`/`npm install` 한 번이 어떤 파일을 읽고 어디로 보낼 수 있는가?" (A44 강화 ← PyPI `solana-utils-terminalmoney1` 2026-11-18 — "credential access next to a network call in install-time code")

@@ -1294,3 +1294,23 @@
   - 부수: 공격 컨트랙트(9,132B) 온체인 배포 후 generalized frontrunner 봇이 주소 2개만 치환해 복제 — 97tx 중 57tx·56%($1.91M) 탈취, 빌더 브라이브 $1.78M(52%) → **빌더+봇 59% / 최초 공격자 ~15%**(META-09 레인 각주).
   - Source: https://bitquery.io/investigations/k3-capital-sbold-hack (published 2026-11-18T18:00:00Z)
 - **기각 레인 기록(11-20)**: Sky/북한 $518M 자금추적(기흡수 사고 후속)·Binance 192토큰 법원 서류($6.3B 후속)·Lighter 자금추적 후속·Reental 재전달(WATCH 승계)·GTIG 에이전트 위협 임계 보고(LiteLLM CVE-2026-40217 — AI 인프라 평면·트리 밖)·10월 통계 에버그린 · RustSec wasmtime 8·heapless 9 = 전량 트리 밖.
+
+### 2026-11-21 — Chainflip Ethereum Vault (~$4.86M, TSS aggregate key 침해) — A188 신규
+- 지갑 `0x78fa`가 **TSS aggregate key로 서명된 유효한 Schnorr 서명**으로 `Vault.transferBatch` 호출 → **1 tx로 전액**(520.2 ETH + 3,249,631.41 USDC + 758,141.33 USDT). 9분 내 2,909 ETH를 **38배치**로 Tornado Cash. 팀 = Full Safe Mode(입금·출금·스왑·견적 정지), FLIP −39%.
+- **컨트랙트 무결 / 키 계층 침해**(Bitquery 분석, SlowMist "Private Key Leak"). 코드 레벨: `KeyManager is SchnorrSECP256K1` = 단일 `_aggKey`(x, parity) + `_isNonceUsedByAggKey` + `_AGG_KEY_TIMEOUT=2 days`; `Vault.transferBatch` = `onlyNotSuspended` + `consumesKeyNonce(sigData, keccak256(abi.encode(selector, transferParamsArray)))` → `_transferBatch` 루프. **cap 0 · delay 0 · allowlist 0** = 단일 서명이 임의 길이·임의 자산·임의 수취인 배치를 승인.
+- **Vector mapping: A188 NEW — 임계-집계 서명 권한 붕괴.** t-of-n은 키-생성/세레모니의 속성이고 온체인 권한 술어는 단일 집계 아티팩트 → **자금 경로 실효 임계값 = 1**. 검증 경계는 정직한 세레모니 서명과 침해된 1개 서명 호스트의 서명을 **구별할 방법이 없다**. 방어 4항(1회 유출 상한·timelock+거부권·수취인 결속·문서에 실효 임계값 병기) → ☐253.
+- **계보 구별**: ① A32(동일 프로토콜 2026-09-12, $736,442.17 TRON memo 재해석) = **소비 의미론** 평면, A188 = **자격증명** 평면 → 2개월 내 2회 침해가 서로 다른 평면에서 발생(평면 분리 실증). ② Gonka(11-18) = 경로 간 회전 임계값 비대칭 / Chainflip = 경로 비대칭 없음·자금 경로 자체가 1로 수렴.
+- Sources: https://hacked.slowmist.io/en/ (2026-11-21) · https://cryptobriefing.com/chainflip-exploit-4-86-million-tornado-cash (2026-11-21T12:16:29Z) · https://www.tradingview.com/news/coinpedia:77a02da3f094b:0-chainflip-hit-by-4-86m-exploit-as-ethereum-vault-drained · https://www.bitkub.com/en/blog/chainflip-hit-by-486m-exploit-as-ethereum-vault-drained-E4Mlb9ZmBdIkA5SMA9xfgA · raw.githubusercontent.com/chainflip-io/chainflip-eth-contracts/master/contracts/{Vault,KeyManager,AggKeyNonceConsumer}.sol
+
+### 2026-11-19 — Fluidkey (프라이버시 지갑, 다중체인 무단 인출, 손실 미공개) — WATCH
+- Base·Arbitrum 등 다중체인에서 일부 사용자 자금 무단 인출. 팀 = 서비스·웹·API 전면 오프라인 + SEAL 911 추적 + 포스트모템 예고. 공개 메커니즘 0·금액 `-`.
+- 판정: **WATCH**(RCA 시 재판정). 판정점 = ①침해 평면(키 유도 vs 백엔드) ②다중체인이 단일 자격증명에서 파생됐는가(A188 지갑 평면 쌍둥이 여부) ③스텔스 어드레스 스캔 경로의 오프체인 단일점 여부.
+- Source: https://hacked.slowmist.io/en/ (2026-11-19 행) · SEAL 911 공지(팀 성명 인용)
+
+### 2026-11-18 — PyPI `solana-utils-terminalmoney1` 외 3종 (설치-시점 자격증명 탈취, Solana 개발자 표적) — A44 강화
+- OX.Radar = 2버전 전부 당일(11-18) 발행, risk **90/100 critical**, 6규칙(5 HIGH/1 MED) 발화, AI 리뷰 malicious. 규칙 문면: **"Credential access next to a network call in install-time code"** · **"Hidden or install-time code sweeps many credential stores"**. 발행자 `terminalmoney1`.
+- 형제 캠페인 `solana-py-utils`·`solders-utils`·`anchorpy-utils`(4 프로젝트 분산) — 3종 모두 PyPI **404 = takedown 완료**(직접 프로브). 표적 = **Solana CLI 키페어 저장소**류(일반 `.env`가 아님).
+- Vector mapping: **A44(A44 = 1차 의존성 위장 크레이트의 설치/빌드-시점 자격증명 탈취) Python·Solana 도구 평면 인스턴스** — 신규 named 아님, D28/D33 계보 병기. 신규 서브패싯 = **탐지 술어가 "자격증명 저장소 접근 ∩ 네트워크 송신"의 동거**. → ☐254.
+- Sources: https://www.ox.security/ox-radar/pypi/solana-utils-terminalmoney1 (Published 18 Nov 2026) · https://pypi.org/pypi/{solana-py-utils,solders-utils,anchorpy-utils,solana-utils-terminalmoney1}/json (전건 404) · https://www.linkedin.com/pulse/4-malicious-packages-mail-your-solana-keys-public-feed-chi-tran-at0bc (2026-11-18T23:47Z, 2차 인용)
+
+- **기각 레인 기록(11-22)**: Binance 해커 $600M ETH 이동(X2/THORChain/Chainflip 라우팅 — 11-06 $6.43B 사건 자금추적 후속) · Kelp DAO $175M 이동(기흡수 후속) · Chainflip FLIP −39%(당일 사고 가격 반응) · ToB 「After Binance, check what your signing systems can approve」(11-06, 기흡수) · 홍콩 라이선스 법안(규제 평면) · thedefiant **HTTP 403 = 관측 실패**(무풍 아님).

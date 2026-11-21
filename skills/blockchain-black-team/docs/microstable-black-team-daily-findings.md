@@ -3708,3 +3708,35 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **참고(오늘의 스킬 진화)**: 신규 named 2(A185 판정 백엔드 분기 · A186 통제 키 대체 — 둘 다 RustSec 검증-래퍼 어드바이저리 0584/0585/0586 파생) · RustSec 6건 전량 트리 밖 · 관측 정정 1(security/ 존재·B45 축 재고정) · 에버그린 recency 함정 1(Drift 4월) · 레드 큐 2(#5165·#5337).
 
 **Sources**: microstable HEAD 23c0163 (sed :2316-2324/:2392-2400/:1350-1372·:3145-3207·:3209-3216/:3380-3390·:1895-1929·:133·hermes.rs:61-69·양 록 파이썬 파싱·`security/` 13파일 mtime·docs/index.html 7-표면 카운트 — 2026-11-20 실측) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-19T18:00:00Z · raw.githubusercontent.com/rustsec/advisory-db/main/crates/{tokio-rate-limit,pqcrypto-mlkem,pqcrypto-mldsa,sad-rsa,wasmtime-wasi}/RUSTSEC-2026-0{583..587}.md · https://github.com/pq-crystals/dilithium/issues/113 · https://api.github.com/repos/coral-xyz/anchor/commits?since=2026-11-19T18:00:00Z
+
+## 2026-11-22 — 일일 점검 (A6 day 106, 코드 106일째 불변)
+
+**대상**: `microstable` HEAD `23c0163`(2026-09-13) · dirty 40 · `solana/programs/microstable/src/lib.rs` **161,059 bytes** · mtime **2026-02-28 13:21:13**(전일과 동일 — 코드 상태 신규 아님) · 양 록 핀 불변 · 창 내 `.rs/.toml/Cargo.lock` 변경 **0**.
+
+**금일 진화분(블랙팀)**: 신규 named **A188 임계-집계 서명 권한 붕괴** — Chainflip 11-21(~$4.86M)의 TSS aggregate key 침해가 **단일 집계 서명 → `Vault.transferBatch` 1회 → 전 액체 잔액**으로 완결된 사고. 컨트랙트 직독으로 `cap`·`delay`·`allowlist` **전부 0** 실측(아래 A188 행).
+
+| 벡터 | 판정 | 근거 |
+|---|---|---|
+| **A188 임계-집계 서명 권한 붕괴(금일 신규)** | ✅ NOT ACTIVE(구조적) | 프로그램에 집계/임계 서명 수용 경계 **자체가 없음**: `schnorr`·`tss`·`aggregate`·`signature_verify`·`secp256k1`·`ed25519`·`merkle`·`transfer_batch`·`verify_batch` **전부 0매치**. `batch_` 8매치 = 리밸런스 **commit-reveal 배치 윈도**(`BATCH_WINDOW_SLOTS`, :1538/:3465-3487)로 자산 전송 배치가 아님. keeper `aggregate` 10매치 = `aig::aggregate_scores`(챌린지 점수 집계 — 권한 평면 무관). 모든 가치 이동은 instruction별 `Signer` + PDA seeds + `mint::authority` 핀으로 **건별 결속**되어 "서명 1회의 권한 크기"라는 축이 성립하지 않는다. **LATENT**: 외부 브리지·TSS/MPC 서명자·집계 서명 수용·배치 전송 도입 시 즉시 활성 → ☐253 선행 |
+| **A188 부수축 — A6 접점(신규 아님)** | ❌ 무방비(기존 A6) | `mstb_mint`(:2395-2396) bare `#[account(mut)]` vs :2320-2321 `#[account(mut, mint::authority = protocol_state)]` — "권한 술어가 *다른 경계*에서만 성립"의 온체인 잔존형. **A6 CRITICAL로 이미 추적 중**(금일 신규 판정 아님, day 106) |
+| **A44-PyPI 하위 서브패싯(금일 강화: 설치-시점 자격증명 스윕)** | ✅ NOT ACTIVE(구조적) | 배포·툴링 평면 부재: `requirements*.txt`/`pyproject.toml`/`Pipfile` **0개**, `pip install` 참조 **0**, CI 워크플로 **`pages.yml` 단일**(빌드·릴리스 파이프라인 없음). Node 의존은 `@coral-xyz/anchor` 계열 정식 패키지, Rust는 `Cargo.lock` 고정. **LATENT**: keeper 툴링에 Python 스크립트 도입, devcontainer/CI 이미지에 무핀 `pip install` 추가 시 → ☐254 선행 |
+| **A6 CRITICAL (발급권한 핀 비대칭)** | ❌ 무방비(day 106) | :2320-2321 핀 vs :2395-2396 bare 재실증(오늘도 동일 좌표). 캐리 |
+| **A10 HIGH (burn CPI 권한 전달)** | ❌ 무방비(캐리) | `token::burn` CPI(:1359-1369) `authority: ctx.accounts.user` — user ATA에 대한 소각 권한을 프로그램이 대행. 캐리 |
+| **HERMES-H1 HIGH (오라클 푸시 계정 결속 부재)** | ⚠️ 부분방어(캐리) | `HermesPostedUpdate`(hermes.rs:61) **7필드**, `posted_price_account` **0매치** — 게시 갱신이 대상 가격계정을 자체 필드로 지목하지 않음(온체인 write-authority 허용목록+owner+discriminator+`Full`이 실경계) |
+| **A186 통제 키 대체(승계)** | ⚠️ 부분방어 | keeper 인바운드 서버 0(레이트리밋 평면 부재) · 오라클 신선도 양방향 바운드 유지 · 잔여: `is_allowed_pyth_write_authority` 자기-권한 예외 |
+| **회전·권한 평면(승계 재검증)** | ⚠️ 부분방어(변동 없음) | `rotate_keeper_set`(:1895-1929) = 2-of-3 쿼럼(중복 서명 거부) + `pending_keeper_set` 2단계(`KEEPER_ROTATION_DELAY_SLOTS=100`, :133) → 회전 임계값 = 자금 경로 임계값(대칭). **A188 관점 대조**: Microstable 회전은 agg-key 단일 아티팩트가 아니라 **서명자 집합 쿼럼**으로 검증 → A188 축과 구조적으로 다름(대칭성 유지). 관찰 승계: 100슬롯 ≈ 40초·회전 경보 훅 부재 |
+| **B45 (배포 델타)** | ❌ 무방비(승계) | `microstable/security/` **존재**(13파일·2026-02-22 산출), `solana/security` 부재. 퍼플 11-20 온체인 실측(devnet authority `Some`·최종 배포 02-28 = 검증일 +6일)으로 아티팩트 무효화·재검 훅 부재 |
+| **의존성 캐리** | ⚠️ 관측 | quinn-proto **0.11.13**(B83 HIGH) · rustls **0.21.12+0.23.36**(☐182) · tokio **1.49.0**(☐205) · openssl **0.10.75**(☐206 LOW — 업스트림 최신 대비 드리프트 지속) · anchor-lang **0.31.1**(A157/158/164/177 잠복, **A177/A178/A179 패치 미출시 12연창** — 릴리스 11-03 불변) · RustSec 창 내 `ruma-identifiers-validation` **양 록 0매치**(트리 밖) |
+| **대시보드 (docs/index.html)** | ✅ | innerHTML·document.write·eval·fetch **0** · 외부 `https?://` script src **0**(☐236 유지) |
+| keeper/Cargo.lock | ⚠️ 관측 | 라이브 트리 부재 승계 |
+
+**블루팀 지시**:
+1. **(이월, 106일째 — 최우선) A6 CRITICAL**: `lib.rs:2396` `mstb_mint`에 `mint::authority = protocol_state` 핀 추가 — :2320 경로와 대칭화. 단일 어트리뷰트·기능 영향 없음. **106일 무수정은 "감사 통과"가 아니라 미착수**로 기록한다.
+2. **(이월) ☐206**: `cargo update -p openssl` 0.10.75 → 업스트림 최신(0.10.82 이상). 드리프트 매일 누적 중.
+3. **(신규, ☐253 — 집계 서명·외부 서명자 도입 게이트)**: TSS/MPC·브리지 서명자·집계 서명 수용 경로를 **설계 단계에서만** 통과시키는 4항 — ① 자금 경로의 **실효 임계값을 문서화**(집계 서명 1개가 승인 가능한 최대 가치 = 온체인 상수) ② **1회 유출 상한**(자산별·일별) 온체인 강제 ③ 전액-유출 규모는 **timelock + 거부권 창** 경유 ④ 수취인 **화이트리스트/승인 해시 결속**. 근거: Chainflip `Vault.transferBatch`에 cap·delay·allowlist **전부 0** → 유효 서명 1개 = 전 볼트.
+4. **(신규, ☐254 — 빌드/설치-시점 자격증명 유출 게이트)**: ① CI·devcontainer·keeper 툴링에 Python/Node 의존 추가 시 **버전 핀 + 해시 고정**(`pip install pkg` 무핀 금지) ② 설치 훅(`postinstall`/`setup.py`)이 **자격증명 저장소(≈`~/.config/solana/id.json`, `~/.aws/`, `.env`)를 읽으면서 동시에 네트워크 호출**하는 조합을 릴리스 게이트로 차단 ③ keeper 운영 키를 빌드 머신의 기본 경로에 두지 않는다(전용 경로·권한 600). 근거: PyPI `solana-utils-terminalmoney1`(2026-11-18, risk 90/100 — "credential access next to a network call in install-time code").
+5. **(관찰 승계) A188을 "브리지 한정" 이슈로 축소 해석하지 말 것**: 온체인 권한 술어가 **단일 아티팩트**(하나의 서명·하나의 키·하나의 백엔드)로 임의 가치를 승인하는 모든 경로가 같은 축이다. 향후 수탁·오라클 푸시·크로스체인 어댑터 설계 리뷰에서 "서명 1회당 최대 가치"를 필수 항목으로 넣는다.
+
+**신규 코드 레벨 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리, B45는 통제 아티팩트 결함 승계).
+
+**Sources**: microstable 실측 — `git log -1`(23c0163)·`git status --short|wc -l`(40)·`stat`(161,059B/2026-02-28 13:21:13)·`sed -n '2318,2322p;2393,2398p;1350,1370p'`·A188 grep 9종(프로그램)·keeper `aggregate|batch` 문맥 열람·양 록 Python 정규식 파싱(quinn-proto 0.11.13·rustls 0.21.12+0.23.36·tokio 1.49.0·openssl 0.10.75·anchor-lang 0.31.1·ruma-identifiers-validation 0)·`find`(requirements/pyproject/pip 0)·`.github/workflows`(pages.yml 단일)·`docs/index.html` 4표면 카운트 — 2026-11-21 18:1xZ 기준. 벡터 근거 = https://hacked.slowmist.io/en/ (11-21 Chainflip 행) · https://cryptobriefing.com/chainflip-exploit-4-86-million-tornado-cash (2026-11-21T12:16:29Z) · https://raw.githubusercontent.com/chainflip-io/chainflip-eth-contracts/master/contracts/Vault.sol · .../KeyManager.sol · .../AggKeyNonceConsumer.sol · https://www.ox.security/ox-radar/pypi/solana-utils-terminalmoney1 (2026-11-18) · https://pypi.org/pypi/solana-utils-terminalmoney1/json (404=takedown) · https://api.github.com/repos/rustsec/advisory-db/commits/4a4f122557
