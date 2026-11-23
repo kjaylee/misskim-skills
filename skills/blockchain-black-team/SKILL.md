@@ -124,6 +124,11 @@ Execute battle-tested attack vectors from 90+ historical incidents ($10B+ total 
 | `code audited` ≠ `governance economically safe` | 스마트 컨트랙트 감사가 코드 정확성을 확인해도 거버넌스 파라미터(quorum, timelock, 제안 형식)의 경제적 공격 저항성은 표준 scope 바깥에 있다 | BonkDAO $20M pure governance attack — $4M로 1% 매수 후 2.9% 투표율로 treasury 통과 → **A92 / META-72** |
 | `guardian exists` ≠ `guardian can act everywhere` | guardian module 이 존재해도 특정 체인/스코프에서 권한이 없으면 실전에서 무력화된다 | Summer.fi Guardian Module had no authority on one chain → **META-53** |
 | `OS write allowed` ≠ `self-state mutation authorized` | self-hosted agent가 업무상 memory/config를 정상적으로 쓰는 구조에서는 syscall 허용 여부만으로 정상 학습과 지속성 공격을 완전히 분리할 수 없고, 동일 권한의 backup도 함께 지워질 수 있다 | Self-State Attacks (`2026-07-20`) → **B85 / META-49 / META-66** |
+| `key held` ≠ `intent authentic` | 기기 전용 키 감사는 '키가 나가지 않음'만 증명한다 — 손실 경로는 요청 작성 평면(서버 '승인됨' 상태 표지 · 알림으로 빌린 잠금 해제)에 있고, 정직한 서명기가 출처 불문 승인 상태를 사용자 작성 요청과 동일하게 소비한다 | Fluidkey RCA 2026-11-22 → **A180 / B19 / META-91 / 완화-경계 평면** |
+| `threshold declared` ≠ `threshold preserved` | 유효 서명 1개 ≥ 임계 N은 4개 층(키 구조 · 경로 설정 · 재생 방지 · 계수 산술) 각각에서 따로 무너지는데, 감사·설계 문서는 보통 키 구조만 서술한다 | Chainflip A188 · Cyber route threshold · Aramid A7 · A190 → **META-91** |
+| `policy as prose` ≠ `control` / `prose claim` ≠ `authorization` | 룰 파일 · AUTHORIZATION.md · '승인됨' 플래그는 강제가 아니라 산문인데, 같은 채널이 에이전트는 못 묶고 가드레일은 풀고 서명기는 움직인다(음의 권한만 보유) | Markdown Is Not a Firewall(arXiv 2611.27112) · Unit42 CL-STA-1238 AUTHORIZATION.md → **WATCH 산문 비대칭 / META-91 발급 주체 축** |
+| `verdict produced` ≠ `verdict independent` | 판정자(시험 기댓값 · 감사 설정 · 증명 가정 · 채점기)가 피판정자의 권한 영역 안에 있으면 판정 내용과 무관하게 무결성이 무너진다 — 코드 동일성엔 외부 증인이 있어도 행동 속성엔 없다 | SplitBench/BenchJack(arXiv 2611.27860) · HF 스코어러 역설계 · ☐257·☐258 → **WATCH 판정-분리 / META-73 인접** |
+| `predicate evaluated` ≠ `predicate passed` | revert · 예외 · 0-포화 · 소식 없는 0-채움으로 평가 자체가 실패한 술어가 통과로 집계된다 — 형식검증의 revert-passing invariant ↔ 온체인 `saturating_sub` ↔ 모니터 0행이 같은 불변식의 3평면 | Certora invariant guide 2026-11-23 · ☐225 · ☐252 · `derive_selection_seed` 0-채움 → **관측-술어 갭①** |
 
 ## Attack Matrix (214 active named headings / 206 unique named IDs, continuously extended)
 
