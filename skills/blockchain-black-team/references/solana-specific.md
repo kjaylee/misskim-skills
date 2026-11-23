@@ -3122,3 +3122,36 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 ## Solana-Specific Defense Checklist Update
 255. ☐ **프레임워크 메이저 이관(Anchor v1/0.x → v2 rc.3+)·언어 크레이트 교체 시 — "프레임워크가 대신 거부해 주던 것"을 목록화하고 각 항목에 명시 가드를 부여한다**: (a) 대출을 잡지 않는 래퍼(`Signer`·`SystemAccount`·`UncheckedAccount`·`Program<T>`)의 `mut` 슬롯을 **전수 열거**하고, 같은 인스트럭션에서 서로 달라야 하는 쌍마다 `#[account(mut, unique)]` 또는 `constraint = !address_eq(a, b)` + 회귀 테스트(별칭 거부·정상 통과 양성/부정)를 넣는다 (b) **컴파일 오류 없이 보증이 사라지는 이관**을 릴리스 게이트로 탐지: 이관 전후 `Accounts` 구조체 필드·제약 덤프를 diff 해 "제약 감소" 행을 사람이 승인 (c) `remaining_accounts`·`Nested<Inner>`는 프레임워크 중복 검사 **범위 밖**이므로 별칭 판정을 직접 수행 (d) 수동 `load_mut` 경로는 v1 필드 제약을 재실행하지 않는다 — 수동 로드 도입 시 `has_one`·`seeds`·`address`·`constraint` 재검사를 코드에 명시. 판별 질문: "이 두 슬롯이 서로 다른 주소라는 보장은 지금 **누가** 하고 있는가 — 프레임워크인가, 내 코드인가? 프레임워크가 한다면 그 검사가 다음 메이저에 남아 있다는 증거는 무엇인가?" (A189 ← Anchor #5091(rc.3/rc.4 거부 철회) → #5306(49필드 중 3개소 유일-가드) — Microstable 잠복 17슬롯)
+
+## 서명자-슬롯 중복 계수 / Signer-Slot Multiplicity Inflation (A190 — 레드 2026-11-24, Anchor #5358 예제 수정 파생: 서명 1개로 승인 N표)
+
+**Mechanism**: 멀티시그·승인 인스트럭션이 서명자를 `remaining_accounts`(또는 `Vec<Signer>`)로 받아 **계정 컬렉션을 바깥 루프**로 돌며 승인 수를 세면, `is_signer`는 *pubkey의 서명 비트가 그 키를 가리키는 모든 슬롯에 복제*되는 플래그이므로 같은 멤버 키 하나를 슬롯 N개로 반복 전달하는 것만으로 승인 N표가 된다(메시지 서명은 1회). 멤버 매칭 안쪽의 `break`는 "한 슬롯이 여러 멤버와 매칭"만 막을 뿐 "한 멤버가 여러 슬롯에"는 열어 둔다. 수정 패턴(#5358)은 축을 반전해 **멤버(저장 서명자)를 바깥 루프**로, `remaining.iter().any(|a| a.is_signer && a.key == member)`로 멤버당 최대 1표를 센다. v1(`is_signer` 필드형)·v2(`is_signer()` 메서드형) 양 캘리퍼 예제가 **똑같이 결함**이었고 diff에 회귀 테스트는 없었다. 슬롯 상한은 tx 크기가 정한다(AccountMeta ≈ 34B → remaining 약 30~35슬롯) — 그 이하 임계값의 멀티시그는 서명 1개로 채워진다.
+
+**기존 방어의 맹점**: Anchor v1 `dup`/`ConstraintDuplicateMutableAccount`는 `mut` 필드끼리만 비교(remaining 범위 밖) · v2 `unique`(#5345, 미머지)도 직접 필드끼리만 비교(remaining 범위 밖 = A189 잔여 프로브 ①의 애플리케이션층 실증) · 고정 `Signer` 2슬롯 설계는 v0에선 프레임워크가 잡지만 v2에선 대출-면제(A189) → 명시 `!=` 검사가 유일 가드.
+
+**Microstable risk**: **NOT ACTIVE(구조적)** — 2026-11-23T18:50Z 실측: `remaining_accounts|Vec<Signer|.is_signer()` 프로그램·keeper **0매치** · 키퍼 쿼럼 = 고정 `Signer<'info>` 2슬롯 + `require_keeper_quorum`(lib.rs:3380-3390: `signer_a != signer_b` → 멤버 검사를 **서명자별로** 수행) + `keeper_set: [Pubkey; 3]` 고정 배열·`validate_keeper_set`(:3361-3370) default·중복 거부 · 회귀 테스트 3곳(`DuplicateKeeperSigner` 기대 :4352·:4571·:4604). LATENT 트리거: (a) 쿼럼을 `remaining_accounts`로 확장 (b) v2 이관 + `!=` 검사 제거 리팩터 → ☐261.
+
+**Sources**: https://github.com/otter-sec/anchor/pull/5358 (jamie-osec, merged 2026-11-23T14:09Z, base anchor-next) · https://github.com/otter-sec/anchor/pull/5358.diff (`bench/programs/multisig/anchor-v{1,2}/src/instructions/execute_transfer.rs` 수정 전·후 직독) · microstable `solana/programs/microstable/src/lib.rs`:3361-3390·:4352·:4571·:4604·:4585-4591
+
+## A187 강화 — TS 커스텀 리졸버의 '반환 계정' 무음 무시 (Anchor #5357, open)
+
+**Mechanism**: `ts/packages/anchor/src/program/accounts-resolver.ts`의 `resolveCustom`이 `this._accounts = accounts`로 **리졸버 자기 참조만 교체**하고, `MethodsBuilder`는 **원래 계정 객체를 계속 들고 있어** 리졸버가 *반환한* 계정이 무시된다. 라우드 경로(리졸버가 새로 추가한 계정 → "Account not provided") 외에 **무음 경로**가 있다 — 호출자가 `vault`를 넘기고 리졸버가 **다른 주소의** `vault`를 반환하면 호출자의 값이 그대로 쓰인다 = 클라이언트-측 고정(pin)·치환 가드의 **무음 무효**(A187 '검사 존재 ≠ 효력' 가족, 계층 동일 = TS 클라이언트 번역 계층). 수정 #5357(미머지)은 `Object.assign(this._accounts, accounts)`로 **호출자 객체에 대입**.
+
+**Microstable risk**: NOT ACTIVE — TS `Program`/`getCustomResolver`/`views` **0매치**(docs/app.js = raw RPC) · `@coral-xyz/anchor ^0.31.1`. LATENT: keeper/대시보드에 Anchor TS 클라이언트 + 커스텀 리졸버 도입 시 → ☐262.
+
+**Sources**: https://github.com/otter-sec/anchor/pull/5357.diff (accounts-resolver.ts + tests/program.spec.ts) · attack-matrix A187(11-21, #5165)
+
+## Anchor 1.2.2 exit 동작 정밀화 — <1.2.2 vs 1.2.2 (레드 큐 평가: black ☐259 보강)
+
+**Mechanism(태그별 직독)**: `lang/src/accounts/account.rs::exit` — **<1.2.2**(v0.31.1·v0.31.3·v1.2.1 동일) = `expected_owner == program_id && !is_closed` → 라이브 `info.owner`를 보지 않고 `try_borrow_mut_data()` + `try_serialize` = CPI로 소유권이 넘어간 계정에 **스테일 직렬화 쓰기**. **v1.2.2**(PR #5011) = `info.owner != program_id` → `exit_unowned`(`common.rs`): `CompareWriter`로 직렬화 결과를 기존 데이터와 **바이트 단위 비교** → 동일하면 쓰기 생략(OK) · **다르면 `AccountOwnedByWrongProgram` 에러**(라우드). 즉 1.2.2는 "동일 시 생략" + "상이 시 명시 에러"의 두 갈래.
+
+**무결성 각도(구런타임, 추론 등급)**: 메모리 체크 이전 런타임이 비소유 계정 데이터 쓰기를 거부하지 않았다는 전제(에러가 새 규칙에서 *새로* 나왔다는 서술로부터의 추론 — 런타임 소스 미직독)하에, <1.2.2의 exit은 캘리가 CPI 중 쓴 데이터를 스테일 T로 **덮어쓸 수 있다**(A42 CPI 후 스테일 캐시의 exit-직렬화 변형). 경로 제약: `SystemInstruction::Assign`은 데이터가 비어 있어야 하므로 "호출자가 자기 데이터를 비움 → assign → 캘리 초기화 → exit 덮어쓰기" 순서만 성립 = **자가 유발 등급** · `close_account`는 `is_closed`로 exit 생략. → named 미달 유지.
+
+**Microstable risk**: NOT ACTIVE(구조적) — anchor-lang 0.31.1은 <1.2.2 경령이나 CPI 전수 = `transfer_checked` 2 · `mint_to` 1 · `burn` 1(`authority: user`), `close_account|set_authority|assign|reallocate` **0매치**(레드 재실증) · 유일한 close = Anchor 네이티브 close(`is_closed` → exit 생략). LATENT: 소유권 이전형 CPI 도입 + Anchor <1.2.2 유지 시 → ☐259(블랙) 선행.
+
+**Sources**: https://raw.githubusercontent.com/coral-xyz/anchor/v1.2.2/lang/src/common.rs (`exit_unowned`·`CompareWriter`) · `lang/src/accounts/account.rs` @ v0.31.1/v0.31.3/v1.2.1/v1.2.2/master · CHANGELOG v1.2.2 · attack-matrix 2026-11-24 blackteam batch 항목 7(☐259)
+
+## Solana-Specific Defense Checklist Update
+
+- 261. ☐ **승인 수는 슬롯이 아니라 멤버 기준으로 센다(A190 — Anchor #5358 예제 결함)**: (a) remaining/`Vec<Signer>`로 서명자를 받는 인스트럭션 전수 열거 — 계수 루프가 **계정 컬렉션을 바깥 루프**로 돌면 결함(슬롯 중복이 표가 됨) (b) 수정 패턴 = **멤버(저장 서명자)를 바깥 루프**로, `any(|a| a.is_signer && a.key == member)`로 멤버당 1회 계수 (c) remaining 키의 중복 자체를 거부(`BTreeSet` 키 비교)하거나 계수 전 `dedup` (d) 회귀 테스트 = **서명자 1명의 키를 임계값 수만큼 remaining에 반복** 전달 → 거부 (e) 고정 `Signer` 슬롯 설계는 명시 `a != b` 검사를 유지(v2에서는 프레임워크가 잡지 않음 — A189). 판별 질문: **"임계값 N 인스트럭션에 서명 1개로 remaining 슬롯 N개를 채우면 통과하는가?"** Microstable 실측(11-24): remaining 0 · 고정 2슬롯 + `!=` 검사 + 회귀 테스트 3 → ✅ NOT ACTIVE.
+- 262. ☐ **클라이언트 계정 고정(pin)은 '반환'이 아니라 '대입'으로 검증한다(A187 강화 — #5357)**: (a) `new Program(idl, provider, wallet, getCustomResolver)` 사용처 전수 — 리졸버가 **새 객체를 반환**하면 호출자가 넘긴 계정이 그대로 쓰였는지(#5357 수정 전) 확인 (b) 리졸버는 **주어진 객체를 변형**하는 스타일로 쓰거나, 반환 후 `accounts` 객체를 **재확인** (c) 사용자 입력 주소(vault·receipt·authority)가 리졸버로 '정정'된다는 가정이 있으면 테스트로 고정 (d) #5357 머지 후 Anchor TS 갱신. Microstable 실측(11-24): TS `Program`/`getCustomResolver`/`views` 0매치(docs/app.js = raw RPC) · `@coral-xyz/anchor ^0.31.1` → ✅ NOT ACTIVE.
