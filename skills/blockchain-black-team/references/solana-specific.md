@@ -3123,6 +3123,26 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 ## Solana-Specific Defense Checklist Update
 255. ☐ **프레임워크 메이저 이관(Anchor v1/0.x → v2 rc.3+)·언어 크레이트 교체 시 — "프레임워크가 대신 거부해 주던 것"을 목록화하고 각 항목에 명시 가드를 부여한다**: (a) 대출을 잡지 않는 래퍼(`Signer`·`SystemAccount`·`UncheckedAccount`·`Program<T>`)의 `mut` 슬롯을 **전수 열거**하고, 같은 인스트럭션에서 서로 달라야 하는 쌍마다 `#[account(mut, unique)]` 또는 `constraint = !address_eq(a, b)` + 회귀 테스트(별칭 거부·정상 통과 양성/부정)를 넣는다 (b) **컴파일 오류 없이 보증이 사라지는 이관**을 릴리스 게이트로 탐지: 이관 전후 `Accounts` 구조체 필드·제약 덤프를 diff 해 "제약 감소" 행을 사람이 승인 (c) `remaining_accounts`·`Nested<Inner>`는 프레임워크 중복 검사 **범위 밖**이므로 별칭 판정을 직접 수행 (d) 수동 `load_mut` 경로는 v1 필드 제약을 재실행하지 않는다 — 수동 로드 도입 시 `has_one`·`seeds`·`address`·`constraint` 재검사를 코드에 명시. 판별 질문: "이 두 슬롯이 서로 다른 주소라는 보장은 지금 **누가** 하고 있는가 — 프레임워크인가, 내 코드인가? 프레임워크가 한다면 그 검사가 다음 메이저에 남아 있다는 증거는 무엇인가?" (A189 ← Anchor #5091(rc.3/rc.4 거부 철회) → #5306(49필드 중 3개소 유일-가드) — Microstable 잠복 17슬롯)
 
+## Account Data Direct Mapping(SIMD-0460)·메모리 체크 ↔ Anchor <1.2.2 소유권-이전 후 write-back (플랫폼 렌즈 — 블랙 2026-11-24, named 미부여)
+
+**Mechanism**: Anza의 **Virtual Address Space Adjustments(SIMD-0460)**와 **SIMD-0219(Stricter ABI and Runtime Constraints)**는 프로그램이 **소유하지 않은 계정 데이터에 쓰는 것**을 거부하는 메모리 규칙을 도입한다(Account Data Direct Mapping은 별도 스위치). Anchor 구버전의 exit 직렬화는 CPI로 **소유권이 다른 프로그램으로 넘어간(닫히지는 않은) 계정**에 변경 없는 바이트라도 다시 쓰려고 하므로, 새 규칙 하에서 그 경로의 트랜잭션만 실패한다(**부분 라이브니스 실패** — 다른 트랜잭션은 계속 통과). 수정은 **Anchor 1.2.2**(소유권 변경 후 데이터를 비교해 같으면 쓰기 생략)이며, Loader V3 배포 프로그램은 업그레이드 권한자가 재배포해야 한다. 메인넷 활성 에폭·슬롯은 **미정(2026-11-21 확인, pending)**; 테스트넷·devnet은 메모리 체크 → 매핑 스위치가 한 에폭 간격. 감시 대상은 매핑 스위치가 아니라 **메모리 체크 활성**이다.
+
+**Anchor 0.31.1 exit 코드 직독(취약 축의 정확한 위치)**: `impl AccountsExit for Account<T>` → `exit()` = `exit_with_expected_owner(&T::owner(), program_id)`; 기록 조건은 `expected_owner == program_id && !is_closed`(단, `try_borrow_mut_data` 기억 필요 시 **변경된 경우만** 기록). 즉 소유자 비교가 **정적 타입 소유자(`T::owner()`)**지 **라이브 `info.owner`**가 아니다 — CPI 도중 소유권이 넘어가도 `is_closed`(system 소유+빈 데이터)만 아니면 기록을 시도한다. 이것이 1.2.2가 닫은 갭이며, 사고가 아닌 플랫폼-유발 라이브니스 패턴이라 named 미부여.
+
+**Microstable risk (2026-11-23T18:23Z 실측)**: **NOT ACTIVE(구조적)** — `lib.rs` CPI 전수 = `token::transfer_checked`(mint)·`token::burn`(redeem) **2종**, `close_account|set_authority|assign|reallocate|reinit` **0**. 유일한 close는 `close = claimant`(claim_stake) = Anchor 네이티브 close(lamport→claimant·owner→system·데이터 0) → `is_closed` → exit 생략. 토큰 계정(`Box<Account<'info, TokenAccount>>`)은 `T::owner()` = SPL Token ≠ program_id → 원래 미기록. **LATENT**: 프로그램 소유 `Account<T>`의 소유권을 CPI로 넘기는 인스트럭션(토큰 close·PDA 핸드오프·`set_authority`·`reallocate`)을 추가하는 순간 활성 — `anchor-lang 0.31.1`은 수정 미탑재, Loader V3 업그레이드 권한자 재배포 필요.
+
+### Sources
+- SIMD-0460 https://github.com/solana-foundation/solana-improvement-documents/pull/460 · SIMD-0219 https://github.com/solana-foundation/solana-improvement-documents/pull/219 · Agave PR https://github.com/anza-xyz/agave/pull/7113
+- Anza Feature Gate Tracker(11-20 편집·11-21 확인: 둘 다 메인넷 pending) · CryptoSlate 「Anchor 1.2.2 changelog」 보도(exa 하이라이트, 2026-11-24 수집)
+- `~/.cargo/registry/src/*/anchor-lang-0.31.1/src/accounts/account.rs` `exit_with_expected_owner` 직독 · microstable `solana/programs/microstable/src/lib.rs` CPI grep 실측
+
+### A188 강화 — 논스 유일성 ≠ 순서 (Chainflip 포스트모템, 2026-11-21T22:08Z)
+`KeyManager.consumeKeyNonce`는 **논스 유일성**만 검증한다. 2023년 이래 수락된 모든 서명의 연속 카운트를 깨는 **39자리 논스**가 유일한 이상 신호였고(Bitquery), 그 신호는 오프체인에만 있었다 — 온체인 술어에는 순서·연속성이 없다. 유일성-만 체계에서는 임의의 미사용 논스로 서명된 1회의 유효 서명이 전액을 승인한다. 판별 질문 제5축: "(e) 논스 술어가 유일성만 검사하는가? 서명 카운터의 연속성은 온체인 술어인가, 아니면 오프체인 경고인가?" Microstable: durable nonce 0·온체인 서명 검증 게이트 0 → NOT ACTIVE(승계).
+
+## Solana-Specific Defense Checklist Update
+259. ☐ **Anchor <1.2.2(0.x·1.2.1 이하) 프로그램이 SIMD-0460 메모리 체크 활성 전에 가져야 할 게이트 — "소유권-이후 쓰기" 정적 차단**: (a) 프로그램 소유 `Account<T>`·`InterfaceAccount<T>`로 역직렬화한 계정의 **소유권을 CPI로 넘기는 경로**(`token::close_account`·`set_authority`·`assign`·PDA 핸드오프)를 전수 열거하고, 없으면 릴리스 게이트(CI grep)로 유지한다 (b) 그런 경로가 생기면 **Anchor ≥1.2.2로 재빌드**하거나 해당 필드를 `UncheckedAccount`로 낮춰 exit 직렬화를 제거한다 (c) Anza 피처 트래커의 **메모리 체크(매핑 스위치 아님) 메인넷 활성 에폭**을 감시해 활성 전 테스트넷 리플레이에서 해당 경로 트랜잭션 성공을 확인한다 (d) Loader V3 프로그램은 업그레이드 권한자의 재배포 절차를 사전 문서화한다. 판별 질문: "exit 직렬화가 라이브 `owner`를 보는가, 아니면 타입의 정적 소유자만 보는가?" Microstable 실측: (a) 0건 ✅ · anchor-lang 0.31.1(수정 미탑재) · 활성 에폭 미정.
+260. ☐ **세션 토큰·백엔드 '승인 상태'로 서명기가 준비된 트랜잭션을 서명하는 경로 차단(Fluidkey 11-19, $1.6M/52계정)**: (a) 로그·관측 스택(SigNoz·ClickHouse 등)에 **세션 토큰·viewing key·서명 재료 문자열**이 기록되지 않도록 마스킹을 릴리스 게이트로 강제하고, 이미 기록된 이력을 열람 가능한 결함(미인증 엔드포인트·SQL 인젝션)은 패치 SLA 내에 닫는다 (b) 서명기(기기·keeper)는 **'서버가 승인했다'는 상태가 아니라 사용자/쿼럼 키로 직접 서명된 인텐트**만 서명한다 — 승인 상태는 전달일 뿐 권한이 아니다 (c) 지출 한도 변경은 서버에서 재검증하고 세션 토큰만으로는 불가능하게 한다 (d) 알림·잠금 해제 등 **사용자의 비서명 행위가 서명을 유발하지 않는지** 클라이언트 서명 플로우를 점검한다 (e) 서드파티 관측 스택 버전의 미패치 기간을 30일 이내로 유지한다. Microstable 실측: keeper 인바운드 서버 0·세션 토큰/승인 상태 표면 0·키 소재 로그 0(`redact_pubkey` main.rs:578)·키파일 경로 정책(`/tmp` 등 금지)·암호화 키파일 지원 → **NOT ACTIVE(구조적)**.
+
 ## 서명자-슬롯 중복 계수 / Signer-Slot Multiplicity Inflation (A190 — 레드 2026-11-24, Anchor #5358 예제 수정 파생: 서명 1개로 승인 N표)
 
 **Mechanism**: 멀티시그·승인 인스트럭션이 서명자를 `remaining_accounts`(또는 `Vec<Signer>`)로 받아 **계정 컬렉션을 바깥 루프**로 돌며 승인 수를 세면, `is_signer`는 *pubkey의 서명 비트가 그 키를 가리키는 모든 슬롯에 복제*되는 플래그이므로 같은 멤버 키 하나를 슬롯 N개로 반복 전달하는 것만으로 승인 N표가 된다(메시지 서명은 1회). 멤버 매칭 안쪽의 `break`는 "한 슬롯이 여러 멤버와 매칭"만 막을 뿐 "한 멤버가 여러 슬롯에"는 열어 둔다. 수정 패턴(#5358)은 축을 반전해 **멤버(저장 서명자)를 바깥 루프**로, `remaining.iter().any(|a| a.is_signer && a.key == member)`로 멤버당 최대 1표를 센다. v1(`is_signer` 필드형)·v2(`is_signer()` 메서드형) 양 캘리퍼 예제가 **똑같이 결함**이었고 diff에 회귀 테스트는 없었다. 슬롯 상한은 tx 크기가 정한다(AccountMeta ≈ 34B → remaining 약 30~35슬롯) — 그 이하 임계값의 멀티시그는 서명 1개로 채워진다.
@@ -3155,3 +3175,51 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 - 261. ☐ **승인 수는 슬롯이 아니라 멤버 기준으로 센다(A190 — Anchor #5358 예제 결함)**: (a) remaining/`Vec<Signer>`로 서명자를 받는 인스트럭션 전수 열거 — 계수 루프가 **계정 컬렉션을 바깥 루프**로 돌면 결함(슬롯 중복이 표가 됨) (b) 수정 패턴 = **멤버(저장 서명자)를 바깥 루프**로, `any(|a| a.is_signer && a.key == member)`로 멤버당 1회 계수 (c) remaining 키의 중복 자체를 거부(`BTreeSet` 키 비교)하거나 계수 전 `dedup` (d) 회귀 테스트 = **서명자 1명의 키를 임계값 수만큼 remaining에 반복** 전달 → 거부 (e) 고정 `Signer` 슬롯 설계는 명시 `a != b` 검사를 유지(v2에서는 프레임워크가 잡지 않음 — A189). 판별 질문: **"임계값 N 인스트럭션에 서명 1개로 remaining 슬롯 N개를 채우면 통과하는가?"** Microstable 실측(11-24): remaining 0 · 고정 2슬롯 + `!=` 검사 + 회귀 테스트 3 → ✅ NOT ACTIVE.
 - 262. ☐ **클라이언트 계정 고정(pin)은 '반환'이 아니라 '대입'으로 검증한다(A187 강화 — #5357)**: (a) `new Program(idl, provider, wallet, getCustomResolver)` 사용처 전수 — 리졸버가 **새 객체를 반환**하면 호출자가 넘긴 계정이 그대로 쓰였는지(#5357 수정 전) 확인 (b) 리졸버는 **주어진 객체를 변형**하는 스타일로 쓰거나, 반환 후 `accounts` 객체를 **재확인** (c) 사용자 입력 주소(vault·receipt·authority)가 리졸버로 '정정'된다는 가정이 있으면 테스트로 고정 (d) #5357 머지 후 Anchor TS 갱신. Microstable 실측(11-24): TS `Program`/`getCustomResolver`/`views` 0매치(docs/app.js = raw RPC) · `@coral-xyz/anchor ^0.31.1` → ✅ NOT ACTIVE.
+
+
+## 증명-의도 결속 부재 / Attested-but-Unbound Artifact (A191 — 레드 2026-11-25, Anchor avm #5362 draft 수정 파생: 유효한 증명은 '의도된 산출물'의 증거가 아니다)
+
+**Mechanism**: 설치기·갱신기가 산출물을 검사할 때 ① 파일 sha256 = 매니페스트값 ② 그 digest에 대한 서명·증명 존재 ③ 증명의 발급 주체(워크플로 경로·ref)만 묻고 ④ **증명이 가리키는 소스 커밋** = 매니페스트 `git_sha` ⑤ **증명의 주체명** = `{tool}-{version}-{target}.tar.gz`를 묻지 않으면, 그 파이프라인이 **과거에라도 찍어 낸 산출물이면 무엇이든** 통과한다. 서명은 한 번도 위조되지 않는다 — 공격자는 서명 신원이 아니라 **배포 채널**(매니페스트 인덱스 또는 그 전송 경로)만 건드린다. 두 갈래: *롤백/프리즈*(구버전 digest를 돌려줘 고쳐진 결함을 되살림) · *믹스-앤-매치*(형제 도구·다른 타깃의 산출물을 돌려줘 설치 대상을 바꿈). 제3의 갈래 *트리거≠체크아웃*: 빌드 워크플로가 `ref: master`를 체크아웃하면 트리거 커밋과 다른 HEAD가 빌드되고 증명은 그 HEAD를 가리킨다(④가 없으면 아무도 비교하지 않는다). Anchor avm 수정 #5362(draft·open): `NightlyExpectation { source_commit, subject_name }` 도입 · 설치 후보를 `git_sha.is_some()`으로 걸러 커밋 미기재 매니페스트는 에러 · 워크플로 `ref: ${{ github.sha }}`.
+
+**기존 방어의 맹점**: B95 완화 #4("CI 빌드 산출물 증명(Sigstore/cosign) + 배포 전 서명 검증")는 **'유효한 증명이 있는가'만 묻도록 두면 A191과 같은 구멍**이다. 출처 증명(provenance)은 "어디서 왔는가"에 답할 뿐 "이것이 내가 의도한 빌드인가"에는 답하지 않는다(arXiv 2611.31110 Preflight의 같은 지적: provenance·정적 분석·패키지 수준 접근은 특정 프로그램에 대한 산출물 거동을 정하지 않는다). TUF 위협모델의 롤백·프리즈·믹스-앤-매치 공격이 그대로 성립하며, 매트릭스에는 해당 축이 없었다(`TUF`·`freeze attack`·`mix-and-match` 0건).
+
+**Microstable risk**: **NOT ACTIVE(버전·채널)** — 2026-11-24T19:00Z 실측: avm nightly 미노출(루트 `Anchor.toml` `[toolchain] anchor_version = "0.31.1"` 안정판 핀 · `solana/Anchor.toml`의 `[toolchain]`은 `package_manager = "yarn"`만) · npm = `yarn.lock` 2개 모두 `@coral-xyz/anchor@^0.31.1 → 0.31.1` + `integrity` · Rust = `solana/Cargo.lock` 584패키지 전량 `checksum` → 의도 결속이 해시 형태로 존재(증명 계층 자체가 없음). LATENT 트리거 3: (a) keeper 바이너리 출처 — 릴리스 CI 없음(`pages.yml` = docs 전용) · PM2 재시작만 문서화(`docs/security/ops-hardening.md:53`) · 해시·증명 검증 절차 0기술 (b) nightly 도입 (c) `scripts/multi-airdrop.sh:6`의 solana-install `active_release` 채널(롤백 방어 미직독) → ☐266.
+
+**Sources**: https://github.com/coral-xyz/anchor/pull/5362 (ragen1337, draft·open, created 2026-11-24T07:39Z, base master) · https://github.com/coral-xyz/anchor/pull/5362.diff (`avm/src/attestation.rs`·`avm/src/cmd/install.rs`·`.github/workflows/nightly-attested-binaries.yaml`·`CHANGELOG.md`) · https://arxiv.org/abs/2611.31110 · microstable `Anchor.toml`·`solana/Anchor.toml`·`yarn.lock`·`solana/yarn.lock`·`Cargo.lock`·`solana/Cargo.lock`·`scripts/multi-airdrop.sh`:6·`docs/security/ops-hardening.md`:53·`.github/workflows/pages.yml`
+
+## A183 상태 갱신 — master 머지·미출시 (#5295, 레드 2026-11-25)
+
+**Mechanism**: #5295 "fix(client): keep event subscription alive after one bad log notification"이 **master 머지 2026-11-24T13:07Z**(`ec12dd68`). 상태 open → **merged-unreleased** — Anchor 릴리스는 창 내 0(0.x 최신 0.31.3 = 11-03 · 1.x v1.2.2 = 10-28 · 2.x rc.4 = 11-14)이므로 사용자는 여전히 미수정 클라이언트를 내려받는다(패치 미출시 15연창에 A183 신규 편입).
+
+**Microstable risk**: NOT ACTIVE 승계 — TS `Program` 이벤트 구독 경로 0매치(11-20 판정 승계) · `@coral-xyz/anchor` 0.31.1.
+
+**Sources**: https://github.com/coral-xyz/anchor/commit/ec12dd68 · https://api.github.com/repos/coral-xyz/anchor/releases
+
+## A156×A153 강화 — 락파일 핀이 '사용 중인 버전'이다 (yarn.lock 0.31.1 vs 0.31.3 출시, 레드 2026-11-25)
+
+**Mechanism**: `package.json` `@coral-xyz/anchor: ^0.31.1`은 0.31.2·0.31.3을 허용하지만 `yarn.lock`(루트·`solana/` 각 1)이 **0.31.1**에 고정 → 0.31.3(11-03 출시)에 실린 TS 클라이언트·CLI 수정은 **락을 갱신하지 않으면 섭취되지 않는다**. Cargo 평면(소스 트리 고정)과 같은 '수정≠배포'가 npm 평면에서는 **락파일의 정상 동작**으로 재현된다. 락은 공급망 방어(고정)이자 동시에 **구버전 체류 장치**다.
+
+**Microstable risk**: INFO — 락 재생성(`yarn upgrade`) 시 범위 내 최신(0.31.3)으로 올라가며 그때 첫 섭취. 지연이 의도인지 미기록.
+
+**Sources**: microstable `package.json`·`solana/package.json`·`yarn.lock`:15·`solana/yarn.lock`:15 · https://api.github.com/repos/coral-xyz/anchor/releases (v0.31.3, 2026-11-03)
+
+## A42 각주 — v2 `SerializedAccount`의 release 상태는 라우드였다 (Anchor #5322, open · anchor-next · 레드 2026-11-25, 승격 없음)
+
+**Mechanism**: v2 `SerializedAccount`/`BorshAccount`은 `release_borrow()`·`cpi_handle_mut()` 뒤 **`exit()`가 no-op**이 된다(캘리의 쓰기를 보존). 종전 코드에서 그 상태의 typed 접근(`Deref`)은 **panic**(`account borrow released (closed)`) — 삭제된 테스트 `stale_access must stay released`가 `catch_unwind(|| acct.value).is_err()`을 단언. 즉 `reacquire_borrow_mut()`를 빼먹으면 **스테일 읽기·무음 쓰기 유실이 아니라 라우드 자기-DoS**였다. #5322는 첫 typed 접근에서 **재검증(소유자·discriminator·크기) + 재로드**를 암묵 수행하도록 바꾼다(인체공학 + A42의 typed-handle 경로 구조적 봉쇄). v2에 남은 스테일 캐시 write-back 경로 2곳은 README의 **산문**으로만 막힌다: ① `reacquire_guard_only()`(재검증·재로드 없이 가드만 재취득 → payload를 바꾼 CPI 뒤에 쓰면 A42) ② raw `AccountView`로 writable CPI를 호출할 때의 `release_borrow()` 호출 의무.
+
+**Microstable risk**: NOT ACTIVE(버전) — `anchor-lang 0.31.1`(v1 `Account<T>`, release 개념 없음) · `2.0.0-rc.*` 0매치. LATENT: v2 이관 시 위 2경로 → 기존 v2 이관 ☐에 합류.
+
+**Sources**: https://github.com/coral-xyz/anchor/pull/5322 (jamie-osec, anchor-next, open, updated 2026-11-24T12:34Z) · https://github.com/coral-xyz/anchor/pull/5322.diff (`lang-v2/src/serialized_account.rs`·`borsh_account.rs`·README·tests)
+
+## RPC 폐기 의존 — `getProgramAccounts`가 4.5.0부터 폐기 (Agave #17045, 레드 2026-11-25, named 아님 → ☐267)
+
+**Mechanism**: Agave #17045 "rpc: Deprecates methods that use account scans"가 `#[deprecated(since = "4.5.0")]`를 부여: `getProgramAccounts`·`getLargestAccounts`·`getSupply`·`getTokenLargestAccounts`·`getTokenAccountsByOwner`·`getTokenAccountsByDelegate` + `rpc_accounts_scan` + `/v0/circulating-supply`. 폐기는 **제거 예고**이며 제거 시점은 각 RPC 제공자(Helius·QuickNode·Triton·자가 호스트)가 정한다. 전체 스캔 계열은 이미 요금제·레이트리밋 게이트 대상이라 제공자가 먼저 끄는 일이 생길 수 있다. 의존 클라이언트에 마감일 추적이 없으면 **라이브니스 절벽**이 되고, 공격자는 예고된 제거 시점에 맞춰 행동을 타이밍할 수 있다(공격 기법이 아니라 **취약 노출의 지속 기간을 정하는 운영 조건**).
+
+**Microstable risk**: **LATENT(라이브니스 · warn+skip+Ok)** — 2026-11-24T19:00Z 실측: keeper `solana/keeper/src/agent_loop.rs:548` `fetch_registered_agents()` → `for (_, account) in rpc.get_program_accounts_with_config(&program_id, RpcProgramAccountsConfig { filters: Some(agent_record_scan_filters()), ..Default::default() })?` · `solana/keeper/src/rebalance.rs:994` `fetch_eligible_commit_agents()` → 동일 패턴. 호출부 3곳의 실패 모두 = **`warn!` 뒤 skip + `Ok` 복귀**(`agent_loop.rs:136-145` AIG tx 제출 `Vec::new()` · `:252-261` 토너먼트 사이클 `Vec::new()` → 최소 참가자 미달로 skip · `rebalance.rs:332-341` `return Ok(outcome)`) → 프로세스는 정상(PM2·헬스체크 통과)이고 **에이전트 레지스트리 의존 기능만 조용히 정지**한다(청산 경로 아님 · 자금 손실 경로 없음). 필터는 discriminator+size 포함(테스트 `tc_alw_08`·`tc_ow_11`). 종전 grep 패턴이 camelCase `getProgramAccounts`만 포함해 keeper의 snake_case 사용처는 기록되지 않았었다. 락: `solana-client 2.3.13`(메서드 존재). → ☐267.
+
+**Sources**: https://github.com/anza-xyz/agave/pull/17045 (창 내 머지 — `book/src/references/api/json-http-faq.md`·`rpc-client-api`·`rpc-client`·`client` crate `#[deprecated(since = "4.5.0")]`) · microstable `solana/keeper/src/agent_loop.rs`:548·:136-152·:252-268 · `solana/keeper/src/rebalance.rs`:994·:332-341
+
+## Solana-Specific Defense Checklist Update
+
+- 266. ☐ **증명 검증에는 '유효'가 아니라 '의도'를 묻는다 — 버전 하한·소스 커밋·주체명의 3건 결속(A191 — Anchor avm #5362)**: (a) 바이너리·툴체인·의존성을 내려받는 모든 경로(avm·solana-install·cargo install·curl|sh·docker pull·keeper 배포)를 전수 열거 — 각 경로가 **"이 산출물이 내가 요청한 버전·커밋·타깃인가"**를 묻는가, 아니면 **"유효한 서명·증명이 있는가"**만 묻는가 (b) 서명·증명 검증기에는 **버전 단조성 검사**(설치본 < 현재 설치본이면 거부)·**커밋 등식**(증명의 소스 커밋 = 릴리스 노트·매니페스트 기재값)·**주체명 등식**(파일명 = 도구·버전·타깃)을 코딩한다 (c) 빌드 워크플로의 checkout이 `master`·`main` 같은 가지 참조이면 트리거≠체크아웃 — `${{ github.sha }}`로 고정 (d) 매니페스트 채널의 쓰기 권한·전송 보호를 서명 신원과 같은 등급으로 취급 (e) 회귀 테스트 = **과거의 정당한 산출물 1개**와 **형제 도구 산출물 1개**를 매니페스트에 넣어 거부 확인. 판별 질문: **"어제의 정당한 빌드를 오늘 요청에 돌려주면 설치기가 받아들이는가?"** Microstable 실측(11-25): 안정판 핀 · 락 해시 결속 존재 · keeper 배포 경로 미추적 → ✅ NOT ACTIVE(버전·채널) · LATENT 3.
+- 267. ☐ **RPC 메서드 폐기 공고에 마감일을 단다 — 전체 스캔 계열(`getProgramAccounts`·`getTokenAccountsByOwner`·`getSupply` …, Agave 4.5.0 폐기)**: (a) keeper·대시보드·스크립트의 `get_program_accounts*`·`get_token_accounts_by_owner*`·`get_supply*` 호출 전수와 그 실패 모드(`warn!`+skip+`Ok` = 조용한 정지 / `?` 전파 = 폭쇄)를 열거 (b) 각 호출에 **비-스캔 대체 경로**(도출형 PDA 목록 + `get_multiple_accounts`·웹소켓 구독·자체 인덱서)를 설계하고 제공자별 폐기 일정을 추적 (c) 제공자가 메서드를 끈 상태를 재현하는 테스트(메서드 없음 에러 주입)를 둔다 (d) `warn!`+skip+`Ok`가 **연속 발생하면 알림**(헬스체크가 정상으로 보는 조용한 정지 — zero-rows-equals-healthy 가족). 판별 질문: **"지금 RPC 제공자가 `getProgramAccounts`를 끄면 keeper의 다음 틱은 무엇을 하는가?"** Microstable 실측(11-25): 사용처 2(`agent_loop.rs:548`·`rebalance.rs:994`) · 호출부 3곳 모두 `warn!`+skip+`Ok` · 대체 경로 0 → 🔴 LATENT(라이브니스).
