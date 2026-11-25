@@ -1314,3 +1314,18 @@
 - Sources: https://www.ox.security/ox-radar/pypi/solana-utils-terminalmoney1 (Published 18 Nov 2026) · https://pypi.org/pypi/{solana-py-utils,solders-utils,anchorpy-utils,solana-utils-terminalmoney1}/json (전건 404) · https://www.linkedin.com/pulse/4-malicious-packages-mail-your-solana-keys-public-feed-chi-tran-at0bc (2026-11-18T23:47Z, 2차 인용)
 
 - **기각 레인 기록(11-22)**: Binance 해커 $600M ETH 이동(X2/THORChain/Chainflip 라우팅 — 11-06 $6.43B 사건 자금추적 후속) · Kelp DAO $175M 이동(기흡수 후속) · Chainflip FLIP −39%(당일 사고 가격 반응) · ToB 「After Binance, check what your signing systems can approve」(11-06, 기흡수) · 홍콩 라이선스 법안(규제 평면) · thedefiant **HTTP 403 = 관측 실패**(무풍 아님).
+
+
+## 2026-11-26 — Biswap 영-다리 회계 스킵(B124) / Chainflip Part 1 공식 RCA: 피어-도달 술어 ⊂ 권한 술어(B123) (블랙 일일 진화)
+
+### 2026-11-25 — Biswap (BSC, 구형 `BiswapPoolV3` 풀, ~$51K) — B124 신규 named
+- SlowMist 11-25 행: **`burn()` 유동성 회계 결함**. 현재 가격 포인트 기준 인출 성분이 **둘 다 0**(Y 금액이 **반올림으로 0**)일 때 **active liquidity 감소를 수행하지 않음** → 반복 `burn()`으로 **포지션은 완전히 제거되고 유동성(팬텀)은 잔존** → 다음 `swap()`에서 그 팬텀 유동성이 인출됨.
+- Vector mapping: **B124 「반올림-영 다리 → 회계 갱신 조건 스킵」** — 결함 소재가 `if`의 **조건식**이 아니라 `if`의 **범위**(회계 갱신은 조건부, 파괴적 변이는 무조건). A182(임계값 미만 무시)·A40(기부로 잔량 왜곡)과 평면이 다름. 근거 등급 = SlowMist 기전 서술(컨트랙트 직독 미수행 — 다음 배치 재확인).
+- Sources: https://hacked.slowmist.io/en/ (2026-11-25 Biswap 행 · 27,960자 스냅샷 · 누적 2,389건)
+
+### 2026-11-21 — Chainflip BTC/ETH 볼트 유출, 공식 RCA Part 1(11-23 게시) — B123 신규 named(사고 기전의 앞단 확정)
+- 공식 문면: 공격자가 **최소 스테이크(20,500 FLIP)** 로 검증인 등록 → **활성 셋에는 들어가지 못했으나 등록만으로 검증인들이 P2P 연결을 수락** → "in order to enter the authority set, any new validator needs to be able to communicate with existing authorities" → **서드파티 네트워킹 라이브러리의 메모리-안전 결함**으로 검증인 머신에서 코드 실행 → **키 셰어 추출** → "with enough shares, the attacker could sign vault transactions without the network".
+- 손실(공식): **122.86137042 BTC + 10.48288011 BTC**(2차, 회전 완료 선언 08:21:48 후 **11:24:18**) · ETH 볼트 **520.2243399 ETH + 3,249,631.41 USDC + 758,141.33 USDT** = 11-21 오전 가격 기준 **~$12.6M**(사실상 전 볼트 잔액).
+- 대응 실패 3건(프로세스 평면): **06:49 자동 경보가 무인 채널**(모니터 "still being evaluated"·오탐 이력 → 자동 에스컬레이션 미연결) → **07:41 사람이 Discord에서 발견** · "회전 완료" 선언에도 **BTC 볼트 키가 +3시간 02분 유효**(키 변경이 실패 지급 뒤 적체 → 수동 제출) · 공격자 피어 제거 **+5시간 56분**.
+- 판정: **B123** 승격(A188의 사전-권한 평면 — 11-24 배치의 A188 강화는 집계 서명 아티팩트 축, 본 항목은 도달-권한 비대칭 축). 재발 방지 = 도달면 격리·SBOM 고정·키 셰어 비상주·피어 변경 감시(☐272).
+- Sources: https://chainflip.io/blog/incident-report-vault-exploit-21-november-2026-part-1 (2026-11-23 · 전문 타임라인 직독 2026-11-26) · 11-24 배치 A188 강화 항목(PandaSecurity 11-21T22:08Z·Bitquery 논스 39자리)

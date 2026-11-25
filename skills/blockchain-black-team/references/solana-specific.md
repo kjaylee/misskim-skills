@@ -3223,3 +3223,35 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 - 266. ☐ **증명 검증에는 '유효'가 아니라 '의도'를 묻는다 — 버전 하한·소스 커밋·주체명의 3건 결속(A191 — Anchor avm #5362)**: (a) 바이너리·툴체인·의존성을 내려받는 모든 경로(avm·solana-install·cargo install·curl|sh·docker pull·keeper 배포)를 전수 열거 — 각 경로가 **"이 산출물이 내가 요청한 버전·커밋·타깃인가"**를 묻는가, 아니면 **"유효한 서명·증명이 있는가"**만 묻는가 (b) 서명·증명 검증기에는 **버전 단조성 검사**(설치본 < 현재 설치본이면 거부)·**커밋 등식**(증명의 소스 커밋 = 릴리스 노트·매니페스트 기재값)·**주체명 등식**(파일명 = 도구·버전·타깃)을 코딩한다 (c) 빌드 워크플로의 checkout이 `master`·`main` 같은 가지 참조이면 트리거≠체크아웃 — `${{ github.sha }}`로 고정 (d) 매니페스트 채널의 쓰기 권한·전송 보호를 서명 신원과 같은 등급으로 취급 (e) 회귀 테스트 = **과거의 정당한 산출물 1개**와 **형제 도구 산출물 1개**를 매니페스트에 넣어 거부 확인. 판별 질문: **"어제의 정당한 빌드를 오늘 요청에 돌려주면 설치기가 받아들이는가?"** Microstable 실측(11-25): 안정판 핀 · 락 해시 결속 존재 · keeper 배포 경로 미추적 → ✅ NOT ACTIVE(버전·채널) · LATENT 3.
 - 267. ☐ **RPC 메서드 폐기 공고에 마감일을 단다 — 전체 스캔 계열(`getProgramAccounts`·`getTokenAccountsByOwner`·`getSupply` …, Agave 4.5.0 폐기)**: (a) keeper·대시보드·스크립트의 `get_program_accounts*`·`get_token_accounts_by_owner*`·`get_supply*` 호출 전수와 그 실패 모드(`warn!`+skip+`Ok` = 조용한 정지 / `?` 전파 = 폭쇄)를 열거 (b) 각 호출에 **비-스캔 대체 경로**(도출형 PDA 목록 + `get_multiple_accounts`·웹소켓 구독·자체 인덱서)를 설계하고 제공자별 폐기 일정을 추적 (c) 제공자가 메서드를 끈 상태를 재현하는 테스트(메서드 없음 에러 주입)를 둔다 (d) `warn!`+skip+`Ok`가 **연속 발생하면 알림**(헬스체크가 정상으로 보는 조용한 정지 — zero-rows-equals-healthy 가족). 판별 질문: **"지금 RPC 제공자가 `getProgramAccounts`를 끄면 keeper의 다음 틱은 무엇을 하는가?"** Microstable 실측(11-25): 사용처 2(`agent_loop.rs:548`·`rebalance.rs:994`) · 호출부 3곳 모두 `warn!`+skip+`Ok` · 대체 경로 0 → 🔴 LATENT(라이브니스).
+
+
+## 영-다리 회계 스킵 / Zero-Leg Accounting Skip (B124 — Biswap 2026-11-25, ~$51K) — Solana 특화
+
+**Why Solana**: Anchor·Pinocchio 프로그램에서 **부분 인출·부분 소각**은 흔하고(`burn(amount)`·`withdraw(liquidity, token_a_min, token_b_min)`), `u64` 산술은 **정수 반올림이 기본**이다(CLMM의 `tick`·`sqrt_price`·`liquidity` 변환은 반올림·내림이 상시). EVM의 `burn()` 케이스가 Solana CLMM/DLMM(예: Raydium CLMM·Orca Whirlpool류)에 그대로 성립하는 조건은 하나뿐이다 — **회계 갱신이 0-다리 조건 안에 있고, 포지션/티켓 삭제가 그 밖에 있을 때**.
+
+**Mechanism**: `if (amount_a > 0 && amount_b > 0) { liquidity -= removed; fee_growth_checkpoint(...); } positions.remove(id);` 형태에서 `amount_b`가 반올림으로 0이 되면 **유동성 감소·수수료 체크포인트가 통째로 스킵**되는데 `positions.remove(id)`는 실행된다 → **티켓은 사라지고 `pool.liquidity`는 그대로** 남는다. 남은 유동성은 이후 `swap`의 가격 계산 입력이므로 **다른 LP들의 지분을 담보로 인출**된다(팬텀 유동성). 0-금액을 "no-op"으로 간주해 조기 반환하는 구현은 **안전**하다(회계·변이 모두 미실행) — 위험한 것은 **변이만 조건 밖**인 비대칭이다.
+
+**판별 질문**: "이 상태 변경에서 '아무 일도 없음'을 뜻하는 입력(0·0·빈 배열·전량 반올림)에서 **회계 갱신과 파괴적 변이가 같은 분기 안에 있는가**?"
+**방어**: ① 파괴적 변이와 회계 갱신을 같은 조건 블록에 둔다(변이도 게이트) ② 0-금액 경로에 **불변식 단언**(`after == before - removed`) ③ 삭제 후 잔량 0 확인 테스트 ④ 부분 인출의 최소 단위(minimum_liquidity)를 온체인 상수로.
+
+**Microstable risk**: **✅ NOT ACTIVE(구조적)** — AMM·풀·LP 포지션 개념 부재 · 0-금액 경로 4곳 전부 **함수 선두 조기 반환**(`enforce_slot_flow_limit`·`check_tx_flow_limit`·`mint_mstb_to` 대칭 함수) → 회계 갱신과 변이가 항상 함께 스킵 · 소각은 `token::burn` CPI(0에서 no-op) + 프로그램 회계 `checked_sub`(:1374). **LATENT**: 유동성 풀·LP 티켓·부분 인출 도입 시.
+
+**Sources**: https://hacked.slowmist.io/en/ (2026-11-25 Biswap) · microstable `solana/programs/microstable/src/lib.rs`:3694-3726·:3855-3868·:3905-3916·:1359-1374 (직독 2026-11-26)
+
+## 피어-도달 술어 ⊂ 권한 술어 / Peer-Reachability Weaker Than Authority (B123 — Chainflip 2026-11-21, ~$12.6M) — Solana 특화
+
+**Why Solana**: Solana 검증인·RPC·키퍼 클러스터는 **동일 바이너리·동일 서드파티 크레이트(quinn/rustls/tokio)** 를 쓰고, 신규 참가자는 **권한(스테이크·화이트리스트) 이전에 네트워크 접속**을 허용받아야 한다(그래야 다음 에폭에 권한을 얻는다). 이 닭-달걀 구조가 곧 **도달 술어 < 권한 술어**다. Solana 생태계의 실례: RPC가 `--allow-private-addr`·gossip 수락 정책을 기본 허용으로 두고, 키퍼는 P2P 없이도 **RPC 응답을 신뢰**한다 — 도달면이 RPC면 **RPC 제공자가 곧 키 셰어 보관자가 아님**을 확인해야 한다(키는 기기에).
+
+**Mechanism**: t-of-n 임계 서명(TSS/MPC·멀티시그)의 가정은 n대의 **독립 침해**. 그러나 ① 도달 술어(네트워크 연결 허용)가 권한 술어(서명 권한)보다 약하고 ② n대가 **같은 서드파티 라이브러리**를 쓰면, **하나의 RCE 클래스**가 t대에 도달해 **임계값 t → 1(결함 인스턴스 1개)** 로 붕괴한다. 온체인 검증은 완벽하게 통과한다(유효한 t개 서명) — 결함은 **키 소재의 도달 반경**에 있다.
+
+**판별 질문**: "권한 술어를 만족하지 못한 주체가 **네트워크·RPC·피어·플러그인** 중 어디까지 도달할 수 있는가? 그 도달면의 코드가 **권한자와 같은 코드/같은 프로세스**인가?"
+**방어 4항**: ① 도달면을 권한면과 **다른 프로세스·다른 UID·다른 호스트**로 격리 ② 도달면 서드파티 의존을 SBOM으로 고정 + 메모리-안전 패치 SLA ③ 키 셰어를 **단일 프로세스 메모리에 상주 금지**(HSM·원격 서명자·기기) ④ 피어 등록·수락·제거를 **감시 이벤트**로 승격(등록은 경제적 최소비용으로 가능하다는 전제로 위협모델링).
+
+**Microstable risk**: **✅ NOT ACTIVE(구조적)** — keeper 인바운드 서버 0(`TcpListener`·`axum`·`warp`·`tungstenite` 0매치) · 온체인 프로그램에 피어 평면 0 · 모든 가치 이동은 instruction 단위 서명+PDA 결속. **LATENT**: keeper에 P2P/gossip·RPC 서버·플러그인 로더·원격 설정 도입 시.
+
+**Sources**: https://chainflip.io/blog/incident-report-vault-exploit-21-november-2026-part-1 · microstable keeper 전수 grep(직독 2026-11-26)
+
+## Solana-Specific Defense Checklist Update
+
+- 271. ☐ **0-금액·0-다리 경로에서 회계 갱신과 파괴적 변이의 스코프를 일치시킨다(B124 — Biswap 11-25, 팬텀 유동성)**: (a) 부분 인출·부분 소각·포지션 종료 함수를 전수 열거 — **파괴적 변이(`positions.remove`·`close`·`burn`)와 회계 갱신(`liquidity`·`total_shares`·`fee_growth`)이 같은 조건 블록 안에 있는가** (b) 0-금액·0-다리·전량 반올림 입력에서 **불변식 단언**(`after == before - removed`) — 0-금액은 "no-op"이 아니라 **가장 먼저 시험할 경로** (c) 반복 호출 누적 테스트: 삭제 후 잔량이 0인지, 팬텀 유동성이 남지 않는지 (d) 부분 인출 최소 단위(`minimum_liquidity`)를 온체인 상수로 강제 (e) 리뷰 항목을 "`if`의 조건식"이 아니라 **"`if`의 범위"**로 잡는다. 판별 질문: **"이 입력에서 회계는 갱신되지 않는데 상태는 변하는가?"** Microstable 실측(11-26): 0-금액 경로 4곳 전부 **함수 선두 조기 반환**(회계·변이 함께 스킵) · AMM/포지션 개념 0 → ✅ NOT ACTIVE(구조적).
+- 272. ☐ **도달 술어와 권한 술어를 분리해 격리한다 — 등록이 곧 공격면(B123 — Chainflip 11-21, ~$12.6M; 최소 스테이크 등록 → P2P 수락 → 서드파티 네트워킹 결함 RCE → 키 셰어 추출)**: (a) 네트워크 도달면(P2P·gossip·RPC 서버·플러그인 로더·원격 설정 수신)을 전수 열거하고, 각 면에 **권한 술어와 다른 술어**가 걸려 있는지 확인 (b) 도달면을 **다른 프로세스·다른 UID·다른 호스트**로 격리 — 같은 머신에서 같은 스택으로 돌리면 임계 서명의 t가 "결함 인스턴스 1개"로 붕괴 (c) 도달면 서드파티 의존을 **SBOM으로 고정**하고 메모리-안전 결함 패치 SLA를 정한다 (d) 키 셰어·키페어를 **단일 프로세스 메모리에 상주 금지**(HSM·원격 서명자·기기 보관, keeper는 서명 요청만) (e) 피어 등록·수락·제거를 **감시 이벤트**로 승격하고, 등록 최소비용을 위협모델의 상수로 명시. 판별 질문: **"권한을 얻지 못한 주체가 어디까지 도달하는가, 그 도달면에서 키·서명 재료를 읽을 수 있는가?"** Microstable 실측(11-26): keeper 인바운드 서버 0 · 피어 평면 0 · 키 소재 로그 0(`redact_pubkey` main.rs:578) → ✅ NOT ACTIVE(구조적) · LATENT(도달면 도입 시).
