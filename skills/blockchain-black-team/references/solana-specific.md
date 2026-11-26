@@ -3276,3 +3276,20 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 - 273. ☐ **제로카피 로더의 재검증 술어를 신원(owner)으로 고정한다(A192 — Anchor #5364, CPI 중 owner 재할당)**: (a) `load`·`load_mut`·`load_init`·`reload`마다 **소유자 재검사**를 넣고, **디스크리미네이터 재검사만으로 충분하다고 보지 않는다**(디스크리미네이터는 데이터 — 신원 변경 후 공격자-작성 가능) (b) CPI 경계를 전수 열거하고, **그 CPI가 계정 소유 프로그램을 포함하는지** 표시 — 포함하면 복귀 후 모든 로더 접근이 재검증 대상 (c) mutable 제로카피 계정 + 외부 CPI 조합을 **금지하거나 사본으로 대체** (d) 회귀 테스트: CPI 안에서 owner를 바꾸는 목 프로그램을 세우고 `load`가 **실패**하는지 단언. 판별 질문: **"이 바이트를 쓴 주체가 내가 검증한 그 주체인가?"** Microstable 실측(11-26): 제로카피 0 · 수동 기록 경로는 :3079에서 owner 재확인 → ✅ NOT ACTIVE(구조적) · LATENT.
 - 274. ☐ **실효 배포 대상을 아티팩트 안에서 결속한다 — 설정 파싱 실패는 폴백이 아니라 실패다(A193 — Anchor #5298 + 수렴 #5299·#5294·#5366; RUSTSEC-2026-0600 명시 CA + 기본 저장소)**: (a) 설정 **존재 + 파싱 실패 = 중단**, 폴백은 "설정 없음"에서만 (b) 배포·테스트 커맨드에 **클러스터·지갑을 명시 인자로 고정**(앰비언트 `solana config` 의존 제거) (c) 배포 직전 **선언 주소 vs 해석 주소 비교**를 게이트로(불일치 = 중단, 경고 아님) (d) 도구가 설정 파일을 **재작성하지 않게** 하고(쓰기는 단일 키 in-place), 오버라이드가 파일에 영속화되지 않는지 테스트 (e) 신뢰 앵커도 같은 원칙 — **명시 CA가 기본 저장소에 '추가'되지 않고 '대체'**하는지 확인. 판별 질문: **"이 명령이 실제로 향한 대상은 저장소 어디에 적혀 있는가? 적혀 있지 않다면 그것이 결함이다."** Microstable 실측(11-26): 루트 `anchor_version=0.31.1` 핀 · `anchor deploy` 문서화 · `multi-airdrop.sh`는 `--url devnet` 명시(면역) → 🟡 LATENT(배포 절차 사용 시 발화).
+
+## Solana-Specific Defense Checklist Update
+
+### 2026-11-27 — 「벌칙이 검증의 수용 도메인을 상속」 (Penalty Inherits the Verifier's Acceptance Domain) · agave `bls-sigverify` #16906 / Microstable `slash_agent` 실측
+
+**솔라나 특화 평면**: 이 체인은 *검증 실패에 벌칙을 결속*하는 장치를 두 층에 갖는다 — (1) **네트워크 층 banlist**(gossip/릴레이: cert·vote 검증 실패 → sender banlisting, agave `bls-sigverify`) (2) **프로그램 층 슬래시**(스테이크 예치 → 벌칙 집행, Microstable `slash_agent`). 두 층 모두 벌칙 술어를 **"검증 함수가 false를 반환했다"** 또는 **"서명자 집합이 승인했다"** 로 두며, 그 사이의 *실패 원인 분류*가 비어 있으면 벌칙이 **검증기의 수용 도메인**(버전·피처·백엔드에 따라 변하는 집합)을 상속한다.
+
+**#16906 실측 기전**: Agave 4.4는 **비압축 `Signature` 필드에 압축 BLS 인코딩을 수용**하고 원본 cert 바이트를 그대로 중계 → 4.5는 이 인코딩을 거부 → 혼재 롤아웃에서 **정직한 4.4 릴레이가 banlist 등재**. 수정 = `cert_payload.cert.signature.0[0] & 0xA0 != 0`(compression/sort 플래그)이면 **ban 없이 skip**, 단 "valid point signing a different payload must still result in a ban"으로 실제 위조는 계속 처벌. 핵심: **벌칙의 사유가 피어의 행위가 아니라 검증기 버전**.
+
+**일반 판정 규칙 3항** (신규 기법 = ☐278):
+- (a) **원인 분류 선행**: 검증 실패를 `malformed-encoding` / `version-or-feature-skew` / `actual-forgery`로 분류. 분류 없이 벌칙을 걸지 않는다.
+- (b) **분류 불가 구간은 skip-only·무벌칙**: 롤아웃·피처 플래그 구간에서 "수용 집합이 다를 수 있는" 실패는 *격리(quarantine)*만, banlist·슬래시·평판 하락 금지.
+- (c) **예외는 만료 조건과 함께**: 버전 편차 예외는 반드시 상위 릴리스에서 제거되는 조건(`Remove this exception in 5.0`)을 코드 주석·테스트에 못박고, 예외 목록을 **양성/음성 테스트로 고정**(`invalid_signature_bytes` vs `exempt_indexes` 패턴).
+
+**Microstable 실측 대조 (`slash_agent` lib.rs:574-632)**: 방어 = 2-of-3 쿼럼(:580)·treasury 핀(:585)·100슬롯 쿨다운(:597)·회당 50% 상한(:4153-4155) / 결여 = `reason: [u8;32]` **폐기**(`let _ = reason;` :631)·슬래시를 관측된 실패에 결속하는 require **0**·`emit!` **0** → *프로그램 층 슬래시는 (a)(b) 두 규칙 모두 미적용 상태이며, 벌칙 술어가 "서명자 집합" 그 자체*. 자금은 잠기지 않음(Slashed→자기 deregister→쿨다운 후 잔여 50% 인출 가능) → 잔여 위험은 **귀속·포렌식 평면**.
+
+278. ☐ **검증 실패 → 벌칙(banlist·슬래시·평판) 결속 경로 전수 열거 + 원인 분류 게이트**: (a) 코드에서 `verify`/`require` 실패가 **처벌·영구 상태·평판 하락**으로 이어지는 모든 경로를 열거한다(네트워크 banlist 등재, 스테이크 슬래시, 피어 차단, 티어 강등) (b) 각 경로마다 실패를 `malformed / version-or-feature-skew / actual-forgery`로 분류하는 단계를 넣고, **분류 불가 구간은 skip-only·무벌칙**(격리 후 관측) (c) 벌칙의 **사유를 온체인/로그에 영속**한다 — 인자로 받은 `reason`을 버리지 말고 레코드에 저장 + 이벤트 발행 (d) 벌칙을 *관측된 위반*(미보고 슬롯·점수 하한·브레이커 트립)에 결속하는 `require`를 최소 1개 둔다 — "서명자 집합이 승인했다"만으로 성립하는 벌칙은 오작동·키 탈취 시 무기록 반복 집행이 된다 (e) 버전·피처 편차 예외는 **만료 조건**과 함께 코드·테스트에 명시하고, 예외/정상/위조 3분류 테스트를 회귀 세트에 고정한다. 판별 질문: **"이 피어/에이전트가 처벌받은 이유는 *그것이 한 일*인가, 아니면 *내가 지금 실행 중인 검증기의 수용 집합*인가? 벌칙의 사유는 집행 후에 복원 가능한가?"** (출처: agave #16906 `bls-sigverify/src/bls_cert_sigverify.rs` +9-2 · Microstable `slash_agent` :574-632 실측)
