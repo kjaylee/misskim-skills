@@ -3773,3 +3773,38 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 **신규 코드 레벨 CRITICAL/HIGH — 0건**(A6·A10·HERMES-H1·B83 전부 기존 캐리 · 신규는 MEDIUM 1건[워치독]과 B45 사유 2건 추가).
 
 **Sources**: microstable 실측(2026-11-25T18:0xZ) — `git log -1`(23c0163)·`git status --short|wc -l`(40)·`stat`(161,059B / 2026-02-28 13:21:13)·`sed -n '2318,2322p;2393,2398p;1350,1372p;3694,3726p;3855,3868p;3905,3916p'`·`grep AccountLoader|zero_copy|dup|TcpListener|axum|warp|tungstenite|process::exit`(전량 0)·`cat security/program-immutability-proof.txt`(536B 전문)·`ls -la security/`(13항목·2026-02-22)·`wc -c docs/index.html`(30,438B)·`grep -o -F innerHTML|document.write|eval(|fetch(`(각 0)·script src 2(로컬)·양 록 Python 정규식 파싱(루트 261 / solana 663패키지; quinn-proto 0.11.13·rustls 0.21.12+0.23.36·tokio 1.49.0·openssl 0.10.75·anchor-lang 0.31.1·solana-client 2.3.13)·`sed -n '255,270p' config.rs`·`sed -n '845,865p' main.rs`·`sed -n '211,245p' watchdog.rs`. 벡터 근거 = https://chainflip.io/blog/incident-report-vault-exploit-21-november-2026-part-1 · https://hacked.slowmist.io/en/ (11-25 Biswap 행) · https://github.com/coral-xyz/anchor/pull/5364 · /5365 · /5296 · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/xmloxide/RUSTSEC-2026-0599.md · …/kube-client/RUSTSEC-2026-0600.md
+
+## 2026-11-27 — 일일 점검 (A6 day 111, 코드 111일째 불변)
+
+**코드 상태(실측)**: HEAD `23c0163` · dirty 40 · `solana/programs/microstable/src/lib.rs` **161,059B / mtime 2026-02-28 13:21:13** — 11-26과 동일 → 모든 캐리 판정 승계 정당. `microstable/security/` 존재(**11항목**, `ls | wc -l` 기준) · `solana/security` 부재.
+> **관측 정정**: 11-26 findings는 같은 디렉터리를 "13항목"으로 기재 — 이는 `ls -la`(도트 엔트리 포함) 계수 차이로 보이며 실체는 **11개 파일**이다. B45 판정 축(배포 델타)에는 영향 없음.
+
+| 벡터 | 판정 | 근거(실측 좌표) |
+|---|---|---|
+| **A6 CRITICAL** — mint authority 미핀 비대칭 | ❌ **day 111** | :2320 `#[account(mut, mint::authority = protocol_state)] pub mstb_mint` ↔ :2395 `#[account(mut)] pub mstb_mint` (동일 타입·상이 제약). 111일째 무수정 |
+| **A10 HIGH** — redeem burn CPI 권한 | ❌ 지속 | :1352-1369 `token::burn(CpiContext::new(..., Burn { mint, from: user_mstb_ata, authority: ctx.accounts.user }))` — authority가 ATA 소유자 |
+| **HERMES-H1 HIGH** — 오라클 업데이트 계정 미핀 | ❌ 지속 | `keeper/src/hermes.rs:61-69` `HermesPostedUpdate` **7필드**(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature), `posted_price_account` 부재 |
+| **B83 HIGH** — quinn-proto 0.11.13 | ❌ 핀 불변 | 양 록 파싱: solana/Cargo.lock 0.11.13 |
+| **☐182** rustls 0.21.12 + 0.23.36 | ❌ 핀 불변 | solana/Cargo.lock 양 계열 동시 존재 |
+| **☐205** tokio 1.49.0 | ❌ 핀 불변 | solana/Cargo.lock |
+| **☐206** openssl 0.10.75 (LOW) | ❌ 핀 불변 | agave 상류는 0.10.82 도달(11-16) — 패치 목표 0.10.80 이미 초과, 드리프트 지속 |
+| **A157/A158/A164/A177** anchor-lang 0.31.1 잠복 | ⚠️ 잠복 | 릴리스 v0.32.3/v0.31.3/v0.30.4 = **2026-11-03 불변** → **패치 미출시 17연창**. 창 내 anchor 커밋 0 |
+| **B45** 불변성 아티팩트 | ❌ | 축 = **배포 델타**. `security/program-immutability-proof.txt`(536B)는 Program ID·검증일·절차·명령만 기재, **관측값(ProgramData 주소·슬롯·해시) 없음** = 증거가 아니라 주장. 재검 훅 부재 |
+| **☐278 (신규) 벌칙-귀속 평면** — 검증 실패→벌칙 결속 | ⚠️ **PARTIAL** (신규 MEDIUM) | `slash_agent` :574-632 — 방어: 쿼럼 2-of-3(:580)·treasury 핀(:585)·100슬롯 쿨다운(:597, 상수 :138)·`capped_slash_amount` 50% 상한(:4153-4155)·escrow 소유자 일치(:601). 결여: (a) `reason: [u8;32]` → `let _ = reason;`(:631) **폐기** (b) 슬래시를 관측된 실패에 묶는 require **0** (c) `emit!` **0**. 상태: `Slashed`(:630)를 구별해 읽는 코드 0(독자 :482/:506/:534/:559/:4165) · 자금 경로 열림(자기 deregister :474-489가 `≠Deregistered`만 요구) → **영구 잠김 아님** |
+| **B123 / B124** (11-26 named) | ✅ NOT ACTIVE (구조적) 승계 | 코드 불변(mtime 02-28) → 11-26 직독 판정 승계 |
+| **RUSTSEC-2024-0362** (alloy-json-abi) | ✅ 트리 밖 | alloy·alloy-json-abi **양 록 0매치** |
+| **Dashboard** (`docs/index.html`) | ✅ 방어 | innerHTML 0 · document.write 0 · eval( 0 · 외부 `<script src="https://` 0 |
+| **회전/권한 평면** | ⚠️ 관찰 유지 | `rotate_keeper_set` :1895-1929 = 2-of-3 쿼럼 + 2단계(`pending` → `KEEPER_ROTATION_DELAY_SLOTS=100`) — 회전 임계값 == 자금 임계값(비대칭 없음), 잔여: 100슬롯(≈40초) 감시창·회전 경보 훅 부재 |
+
+**신규 CRITICAL/HIGH: 0** · 신규 MEDIUM: **1**(☐278 — 슬래시 근거 폐기·트리거 비결속·이벤트 0)
+
+### 블루팀 지시 (즉시 수정 권고)
+
+1. **[MEDIUM·최우선] 슬래시 사유 영속 + 이벤트 발행** — `slash_agent`(:574)의 `let _ = reason;`(:631)을 제거하고 `AgentRecord`에 `last_slash_reason: [u8;32]`·`last_slash_slot: u64`를 추가 저장, `emit!(AgentSlashed { agent, amount, reason, slot })` 추가. 현재는 온체인에 **"왜"가 남지 않아** 오작동·키 탈취 슬래시를 사후에 복원할 수 없다.
+2. **[MEDIUM] 슬래시를 관측된 위반에 결속** — `slash_agent`에 최소 1개의 증거 조건을 추가: 예) `require!(record.missed_report_count >= MAX_MISSED \|\| circuit_breaker.tripped == true, ErrorCode::NoObservedViolation)`. 현재 페널티 술어는 **keeper 2인의 서명 그 자체**이며, 100슬롯 간격·회당 50% 상한 덕에 4회 호출로 스테이크 93.75%까지 소거 가능(에이전트가 40초 내 자기 deregister로 회피해야만 중단).
+3. **[LOW] `Slashed` 상태에 의미 부여 또는 제거** — 현재 `AgentStatus::Slashed`는 `Active` 게이트를 닫는 것 외 고유 효과가 없다(구별 독자 0). 재등록 경로(`register_agent`)에서 `== Slashed`를 명시적으로 거부/별도 쿨다운 부여하거나, 상태를 없애고 `stake`·사유 필드로 대체할 것.
+4. **[관측] 슬래시 감시 배선** — 이벤트 부재 상태에서는 스테이크/레코드 diff 폴링이 유일한 탐지 수단이다. 2)의 이벤트 추가 전까지 keeper·모니터가 `agent_escrow` lamports 변화를 폴링하도록 명시하고, 추가 후에는 이벤트 구독으로 전환.
+5. **[캐리·111일째] A6 CRITICAL** — :2395 `mstb_mint`에 :2320과 동일한 `mint::authority = protocol_state` 제약을 적용(또는 의도된 자유 슬롯이면 주석+`#[account(mut)]` 사유 명문화). 111일 미수정.
+6. **[캐리] 의존성 게이트 입력 교차확인** — `patched` 하한을 신뢰 경계로 쓰지 말 것(RUSTSEC-2024-0362가 `>=0.7.7`→`>=0.8.0`으로 2년 만에 정정됨). ☐206 openssl 0.10.75 → 0.10.80 목표는 이미 상류(0.10.82)에 뒤처짐.
+
+**Sources**: https://github.com/anza-xyz/agave/commit/8c20586c9f (#16906) · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/alloy-json-abi/RUSTSEC-2024-0362.md · https://hacked.slowmist.io/en/ · https://rekt.news/ · https://www.rektradar.xyz/web3-daily-exploits-26-nov-2026-quiet-window-no-new-scored/ · https://api.github.com/repos/coral-xyz/anchor/releases
