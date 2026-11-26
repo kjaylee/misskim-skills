@@ -3293,3 +3293,33 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 **Microstable 실측 대조 (`slash_agent` lib.rs:574-632)**: 방어 = 2-of-3 쿼럼(:580)·treasury 핀(:585)·100슬롯 쿨다운(:597)·회당 50% 상한(:4153-4155) / 결여 = `reason: [u8;32]` **폐기**(`let _ = reason;` :631)·슬래시를 관측된 실패에 결속하는 require **0**·`emit!` **0** → *프로그램 층 슬래시는 (a)(b) 두 규칙 모두 미적용 상태이며, 벌칙 술어가 "서명자 집합" 그 자체*. 자금은 잠기지 않음(Slashed→자기 deregister→쿨다운 후 잔여 50% 인출 가능) → 잔여 위험은 **귀속·포렌식 평면**.
 
 278. ☐ **검증 실패 → 벌칙(banlist·슬래시·평판) 결속 경로 전수 열거 + 원인 분류 게이트**: (a) 코드에서 `verify`/`require` 실패가 **처벌·영구 상태·평판 하락**으로 이어지는 모든 경로를 열거한다(네트워크 banlist 등재, 스테이크 슬래시, 피어 차단, 티어 강등) (b) 각 경로마다 실패를 `malformed / version-or-feature-skew / actual-forgery`로 분류하는 단계를 넣고, **분류 불가 구간은 skip-only·무벌칙**(격리 후 관측) (c) 벌칙의 **사유를 온체인/로그에 영속**한다 — 인자로 받은 `reason`을 버리지 말고 레코드에 저장 + 이벤트 발행 (d) 벌칙을 *관측된 위반*(미보고 슬롯·점수 하한·브레이커 트립)에 결속하는 `require`를 최소 1개 둔다 — "서명자 집합이 승인했다"만으로 성립하는 벌칙은 오작동·키 탈취 시 무기록 반복 집행이 된다 (e) 버전·피처 편차 예외는 **만료 조건**과 함께 코드·테스트에 명시하고, 예외/정상/위조 3분류 테스트를 회귀 세트에 고정한다. 판별 질문: **"이 피어/에이전트가 처벌받은 이유는 *그것이 한 일*인가, 아니면 *내가 지금 실행 중인 검증기의 수용 집합*인가? 벌칙의 사유는 집행 후에 복원 가능한가?"** (출처: agave #16906 `bls-sigverify/src/bls_cert_sigverify.rs` +9-2 · Microstable `slash_agent` :574-632 실측)
+
+## 면제 술어의 공격자 제어성 (A194, agave `bls-sigverify` #16906 · 커밋 `8c20586c9f`, merged 2026-11-26T08:08:07Z · 5.0에서 예외 제거 예정)
+
+**Mechanism**: Agave 4.4는 비압축 `Signature` 필드 안에 **압축 인코딩(48B)** 을 수용하고 원본 cert 바이트를 중계할 수 있고, 4.5는 이를 거부한다. 혼재 롤아웃에서 4.5 노드는 4.4 릴레이의 cert를 검증 실패로 판정하고 **sender를 banlist에 등재**(정직 릴레이 영구 처벌)했다. 수정 #16906은 `verify_cert` **호출 앞**에 `cert_payload.cert.signature.0[0] & 0xA0 != 0 → continue`(검증 0 · 전달 0 · **밴 0**)를 삽입하고, "Any certificate that fails verification will have its sender banlisted" 문서 주석 2개를 삭제하며, 예외에 코드 주석 만료 조건("Remove this exception in 5.0")을 남긴다. 회귀 테스트 `test_banlist_updates_for_invalid_certificates`는 12케이스로 재작성되어 **면제 7 / 밴 3 / 위조 1**(`i == 6`: "A valid point signing a different payload must still result in a ban")을 고정한다.
+
+**핵심**: 벌칙의 **면제 조건이 수용 집합의 이동(4.4↔4.5)을 흡수하려다 송신자 제공 바이트의 2비트 테스트로 구현**되었다. `0xA0` 마스크이므로 임의 첫 바이트 256개 중 **192개(75%)** 가 면제 클래스이고, 테스트는 플래그 + 비트맵 오류 조합(인덱스 8·9·10)까지 면제됨을 명시한다. 즉 (a) 벌칙 사유가 피어 행위가 아니라 **검증기 버전**이 되고 (b) **면제 자체가 밴 회피 채널**이 된다 — 반복 방출해도 밴리스트가 성장하지 않고, diff에 카운터·로그·메트릭이 없어 **관측도 남지 않는다**(합의 무결성 영향은 0: 면제 cert는 수용되지 않음).
+
+**Microstable risk**: **NOT ACTIVE(구조적)** — `bls|cert_?sig|banlist|ban_` 프로그램·keeper **0매치**(BLS·인증서·피어 밴 평면 부재). 동형 평면은 `slash_agent`(lib.rs:574-632): 벌칙 술어 = keeper 2인 서명, `reason: [u8;32]` :632 폐기, `emit!` 0 → A194 규칙상 *면제도 분류도 없는 벌칙*(0x00 케이스). **LATENT ☐279**.
+
+**Sources**: https://github.com/anza-xyz/agave/commit/8c20586c9f · https://github.com/anza-xyz/agave/commit/8c20586c9f.diff · Microstable `solana/programs/microstable/src/lib.rs`:574-632·:2485 · `solana/keeper/src` 전수 grep
+
+## 홀드 갱신 — ☐259 SIMD-0460 ↔ Anchor write-back: **v2측 수정 착륙** (Anchor #5369, open, created 2026-11-26T16:39:18Z, base `anchor-next`)
+
+**Mechanism**: `lang-v2/src/accounts/borsh_account.rs`에 `BorshAccountWriter` 신설 — `write()`가 `if dst != src` 일 때만 `sol_memcpy`를 수행하고, 주석은 "**The VM rejects even same-byte stores to foreign-owned account data**"라고 근거를 명시한다. `serialized_account.rs`는 `zero_len != 0` 가드 추가(빈 `sol_memset` 회피). PR 본문 1문장: "This use case breaks with SIMD-0460 activation. **The same approach is already in use on v1**". 회귀 테스트는 `foreign_borsh_account_mutation_is_rejected_on_exit` → `writable_foreign_borsh_account_only_rejects_changed_data`로 교체되며 **SIMD-0460 피처(`7VgiehxNxu53KdxgLspGQY8myE6f7UokaWa4jsGcaSz`)를 명시 활성화**해 `value 42→42`(무변경) **성공** / `42→999`(변경) **`ExternalAccountDataModified` 거부**를 2×2(prepare_cpi true/false)로 검증.
+
+**판정(레드)**: 승격 아님 — 실패 모드가 **fail-loud**(런타임 거부)이고 공격자 이득 0, 트리 도달 0(BorshAccount/zero-copy/load_mut 0매치). **음성 실증**: "동등-바이트 write는 통과"는 *쓰기가 발생하지 않기 때문*이며, 변경 바이트는 여전히 거부 → **무결성 우회 아님**. 그러나 ☐259 홀드의 **첫 코드-레벨 증거**(프레임워크측 수정 + 활성화 게이트 테스트)이므로 홀드 상태를 "Anza pending·프레임워크 무증거" → "**v2 수정 착륙(미머지·anchor-next), v1은 기존 채택**"으로 갱신한다. 판별 질문: "이 계정을 *읽기만* 했는데 exit가 쓰기를 시도하는가? 런타임 업그레이드가 그 쓰기의 **합법성 판정 기준(스토어 vs 바이트 동등성)** 을 바꾸는가?"
+
+**Sources**: https://github.com/coral-xyz/anchor/pull/5369 · .diff · https://api.github.com/repos/coral-xyz/anchor/pulls/5369 (created 2026-11-26T16:39:18Z, draft=false, merged=null)
+
+## 홀드 에스컬레이션 — ☐267 keeper RPC 의존: `getProgramAccounts` **agave 5.0 Breaking 제거 확정** (#17068, 2026-11-25T20:10:48Z)
+
+**Mechanism**: 커밋 `0a8d80767` "rpc: Removes rpc_accounts_scan methods"가 `pub mod rpc_accounts_scan` 전체를 삭제하고, `CHANGELOG.md` **`## 5.0.0-Unreleased` → `### RPC` → `#### Breaking`** 에 "The `rpc_accounts_scan` RPC methods have been removed"로 **6개 메서드**(`getProgramAccounts`·`getLargestAccounts`·`getSupply`·`getTokenLargestAccounts`·`getTokenAccountsByOwner`·`getTokenAccountsByDelegate`)를 열거한다. 레드 독립 실측: `raw.githubusercontent.com/anza-xyz/agave/master/rpc/src/rpc.rs`에서 **`getProgramAccounts` 0회** (메서드 등록 자체 소멸). 릴리스 경계: master=5.0.0-Unreleased(edge) · beta=v4.5 · stable=v4.4 → **미출시 단계의 Breaking**.
+
+**Microstable risk**: **LATENT(현행 유지) / 노출 시계 확정** — keeper의 RPC 계정 스캔 사용처는 **정확히 2곳**(`solana/keeper/src/agent_loop.rs:548` · `rebalance.rs:994` `rpc.get_program_accounts_with_config`)이며, 같은 커밋이 제거하는 나머지 5개 메서드는 **트리 0매치**. 두 호출부는 실패 시 `warn!` + skip + `Ok` → 제공자 노드가 5.0으로 올라가면 **method-not-found → zero-rows → "정상"으로 판정되는 무음 정지**(☐267 시나리오 그대로). 자금 손실 경로 0. **에스컬레이션 근거**: 종전 "4.5.0에서 deprecated(`#[deprecated]` #17045)" → 이제 "**5.0에서 제거(Breaking)**" = 폐기에서 삭제로 시계가 좁혀짐. 판별 질문: "내 노드 버전이 아니라 **내가 쓰는 RPC 제공자의** 노드 버전이 내 술어의 존재를 결정하는가? 메서드 부재를 '데이터 없음'과 구분하는 코드가 있는가?"
+
+**Sources**: https://github.com/anza-xyz/agave/commit/0a8d80767 · .diff · https://raw.githubusercontent.com/anza-xyz/agave/master/CHANGELOG.md (## 5.0.0-Unreleased) · https://raw.githubusercontent.com/anza-xyz/agave/master/rpc/src/rpc.rs · microstable `keeper/src/agent_loop.rs`:548 · `keeper/src/rebalance.rs`:994
+
+## Solana-Specific Defense Checklist Update
+
+279. ☐ **"실패 → 벌칙/차단/격리" 경로의 면제 술어가 *분류 결과*인가, *입력 바이트*인가** (A194 ← agave #16906 · Microstable 잠복 0): (a) 벌칙 경로의 모든 조기 `continue`/`return`을 열거하고 술어가 **송신자 제공 데이터**(서명 첫 바이트·버전 필드·비트맵 플래그·자기신고 버전)로 계산되면 위험 표시 — `0xA0` 같은 **마스크 테스트는 임의 바이트의 3/4를 면제**한다 (b) 면제는 (i) 수용 집합의 실증된 확장(대체 인코딩을 실제 파싱·재검증) 또는 (ii) 검증기 자신의 버전/피처 상태로만 결정 (c) 면제 클래스도 **관측**(카운터·이벤트)하고 비율 급증을 경보 — 벌칙의 부재는 관측 없이는 남용이 보이지 않는다 (d) 예외에 **만료 조건**을 코드·테스트에 명시하고 회귀 세트에 3분류(정상/면제/위조)를 고정 — 특히 "유효한 서명이 다른 페이로드에 서명" 케이스는 **반드시 밴**으로 남긴다 (e) 온체인 벌칙이면 사유를 폐기하지 말고 레코드+이벤트에 영속(☐278-b의 (c)(d)와 짝). 판별 질문: **"이 피어가 처벌받지 않은 이유는 *검증을 통과했기 때문*인가, 아니면 *내 코드가 그 필드를 읽지 않기로 했기 때문*인가? 그 필드는 누가 고르는가?"**
