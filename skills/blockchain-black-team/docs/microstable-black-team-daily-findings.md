@@ -3808,3 +3808,31 @@ Matrix: 42 → **44 vectors**. Incidents timeline updated.
 6. **[캐리] 의존성 게이트 입력 교차확인** — `patched` 하한을 신뢰 경계로 쓰지 말 것(RUSTSEC-2024-0362가 `>=0.7.7`→`>=0.8.0`으로 2년 만에 정정됨). ☐206 openssl 0.10.75 → 0.10.80 목표는 이미 상류(0.10.82)에 뒤처짐.
 
 **Sources**: https://github.com/anza-xyz/agave/commit/8c20586c9f (#16906) · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/alloy-json-abi/RUSTSEC-2024-0362.md · https://hacked.slowmist.io/en/ · https://rekt.news/ · https://www.rektradar.xyz/web3-daily-exploits-26-nov-2026-quiet-window-no-new-scored/ · https://api.github.com/repos/coral-xyz/anchor/releases
+
+## 2026-11-28 — 일일 점검 (A6 day 112, 코드 112일째 불변)
+
+**기준 상태**: `microstable` HEAD `23c0163` · dirty 40 · `solana/programs/microstable/src/lib.rs` mtime **2026-02-28 13:21:13** · 161,059B — 직전 배치와 **동일**(재베이스라인 불요). 코드-레벨 CRITICAL/HIGH **신규 0**, 신규 MEDIUM **1**(키 무결성 핀의 기준점), 신규 하위평면 판정 2(wsts 조정자 ✅NOT ACTIVE · dryoc 키쌍 ⚠️PARTIAL), 로그 평면 ⚠️PARTIAL.
+
+| 벡터 | 판정 | 근거(실측 좌표) |
+|---|---|---|
+| **B125 (신규) 업그레이드 권한 = 자금 경로** | ❌ 무방비 | lib.rs 내 `upgrade_authority`·`bpf_loader_upgradeable`·`set_authority` **0매치** = 업그레이드 통제가 온체인 코드 평면에 없음(CLI/배포자 키 단독). devnet `upgrade_authority=Some`, last deploy slot 445171946(2026-02-28). PDA 소유 자금은 교체된 프로그램이 서명 권한 상속 → Atoshi형 "교체+전액 인출" 원자 실행 가능. 타임락·2단계 거버넌스 부재. |
+| **B45 배포-델타 증거** | ❌ 유지 | `security/program-immutability-proof.txt` **536B** — Program ID·검증일·절차·명령만, **관측값 없음(증거 아닌 주장)**. devnet authority `Some`·last deploy slot이 2026-02-28(주장 검증일 02-22 +6일) → artifact 무효, 재검증 훅은 파일 존재 조건 → 온체인 술어 결속 필요. |
+| **A6 (CRITICAL, black origin)** | ⚠️ 비대칭 유지 | `:2320` `#[account(mut, mint::authority = protocol_state)]` 핀 ↔ `:2395` `#[account(mut)]` **bare**(대칭 mint에 authority 제약 없음). day **112**. |
+| **A10 (HIGH)** | ⚠️ 유지 | `:1353-1369` `token::burn` CPI의 `authority: ctx.accounts.user` — 사용자 ATA 경로만 검증, CPI 권한 주체는 호출자 서명. |
+| **HERMES-H1 (HIGH)** | ⚠️ 유지 | `keeper/src/hermes.rs:61-69` `HermesPostedUpdate` **7필드**(symbol·collateral_index·price·confidence·publish_time·observed_slot·signature) — `posted_price_account` 부재 → 오라클 계정 결속 없음. |
+| **☐278 벌칙-귀속 평면 (MEDIUM)** | ⚠️ 유지 | `slash_agent` `:631` **`let _ = reason;`**(사유 폐기) · `capped_slash_amount :4153-4156`(50% 상한) · `:585` treasury 핀 · `:580` 2-of-3 · `AGENT_SLASH_COOLDOWN_SLOTS=100`. 슬래시↔관측 실패 결속 require **0**, `emit!` **0**. (11-27 기각 유지: `deregister_agent :474-489`가 `≠Deregistered`만 요구 → Slashed→Deregistered 전이 가능, **자금 잠김 아님**.) |
+| **wsts 0601 — 조정자 집계 입력 무검증** | ✅ NOT ACTIVE(구조적) | `require_keeper_quorum :3380-3390` = **개별 멤버십 검증 2회 + 중복 서명 거부**(`signer_a != signer_b`) — 집계 공개키 계산 자체가 없음 → "조정자가 커밋먼트 저장 후 집계" 구조 부재. LATENT: FROST/임계서명 도입 시 ☐284 적용. |
+| **dryoc 0602 — 키쌍 내장 공개키 불일치** | ⚠️ PARTIAL → **신규 MEDIUM** | 로드 경로 `utils.rs:432-440` `read_keypair`(바이트 그대로 수용, **seed→pubkey 재유도 일치 검증 없음**) · 핀 `:673-685` 다이제스트 = `hash(kp.to_bytes())`(**로드된 64바이트 기준**) · 검증 `:698-717` 핀 대조만. 파일 단계에서 내장 공개키가 바뀐 채 로드되면 **핀도 그 값으로 설정**되어 통과 — 무결성 핀이 "로드 이후 변조"만 잡고 "로드 이전 변조"는 못 잡는다. 전제=키파일 쓰기 권한(로컬 침해) → 로컬 MEDIUM. |
+| **dryoc 0603 — X25519 저차점** | ✅ NOT ACTIVE | keeper/wire에 X25519 키교환 코드 없음(dryoc·x25519 의존 **양 록 0매치**) — ☐284로 예방 항목화. |
+| **agave #16909 — 로그 제어문자 주입** | ⚠️ PARTIAL | keeper `format!` **81곳**, 제어문자 이스케이프 헬퍼 **0매치**(`\x1b`·`\x00-\x1f` 검색 0). 보간 필드는 대부분 설정/API 유래(`{symbol}`·`{name}`)이고 응답 본문은 수치 필드(`body.price`) — **온체인 유래 문자열의 로그 직접 유입은 미확인**. 대시보드 HTML 렌더는 안전(`innerHTML` 0). |
+| **Dashboard** | ✅ | `docs/index.html`: `innerHTML` 0 · `document.write` 0 · `eval(` 0 · `fetch(` 0 · **외부 `script src` 0**(로컬 2개) — XSS/외부 스크립트 주입면 없음. |
+| **록 핀 (양 록)** | ☐ 유지 | quinn-proto **0.11.13**(B83 HIGH) · rustls **0.21.12 + 0.23.36**(☐182) · tokio **1.49.0**(☐205) · openssl **0.10.75**(☐206 LOW · 업스트림 0.10.82 대비 drift 지속) · anchor-lang **0.31.1**(A157/A158/A164/A177 latent) · solana-program 2.3.0 · **wsts·dryoc 0매치 = 트리 밖**. |
+
+**블루팀 지시 (우선순위 순)**
+1. **[B125·B45 · 최우선] 업그레이드 권한을 온체인 술어로 결속하라.** (a) `solana program show --output json`의 `upgradeAuthority`·`lastDeploySlot`·`programDataAddress`를 `security/program-immutability-proof.txt`에 **값으로** 기재(현재 536B는 절차·명령만 있어 증거력 0). (b) 재검증 훅을 "파일 존재"가 아니라 **`upgrade_authority_address == None`(또는 multisig+timelock 거버넌스 pubkey 일치)** 술어로 교체. (c) 최종 배포는 authority를 None으로 굽거나, SPL Governance/자체 timelock 프로그램으로 이전 — 프록시 타임락이 있는 EVM과 달리 Solana는 **배포 1회로 전 자금 경로가 교체**된다.
+2. **[신규 MEDIUM] 키 무결성 핀의 기준점을 독립 유도값으로 바꿔라.** `utils.rs:432-440` 로드 직후 `Keypair::from_seed(kp.secret().as_bytes())`로 **공개키 재유도 후 `kp.pubkey()`와 일치 require**(불일치 시 로드 거부), `pin_keypair_integrity :673-685` 다이제스트에 재유도 공개키를 포함. 이렇게 해야 "로드 이전 파일 변조"까지 잡힌다(dryoc 0602 축).
+3. **[로그 평면] keeper 로그에 제어문자 이스케이프 헬퍼를 추가하라.** `[\x00-\x1f\x7f-\x9f]` 이스케이프/제거를 `format!` 직전 공통 함수로 적용(81개 지점 중 외부 유래 문자열: symbol·name·API 응답문). 대시보드는 현 상태 유지(`innerHTML` 0).
+4. **[☐278] `slash_agent`의 `let _ = reason;` 제거**: 사유를 이벤트로 발행(`emit!(AgentSlashed{reason_code, observed_failure_count})`)하고, 슬래시 실행에 **관측된 실패 증거**를 require로 결속. 그렇지 않으면 2-of-3 쿼럼이 서 있어도 사유 없는 벌칙 평면은 감사 불가.
+5. **[캐리] A6 `:2395` 대칭 mint에 `mint::authority = protocol_state` 제약 추가 · A10 burn CPI의 권한 주체를 프로그램 PDA로 고정 · HERMES-H1 `posted_price_account` 필드 추가** — 3건 모두 코드 변경 0(112일)으로 미해소.
+
+**Sources**: 로컬 `microstable/solana/programs/microstable/src/lib.rs`(:580·:631·:1353-1369·:2320·:2395·:3380-3390·:4153-4156) · `microstable/solana/keeper/src/{utils.rs:432-440,673-717 · hermes.rs:61-69 · price_feed.rs · wire.rs}` · `microstable/docs/index.html` · 양 `Cargo.lock` · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/wsts/RUSTSEC-2026-0601.md · .../dryoc/RUSTSEC-2026-0602.md · .../dryoc/RUSTSEC-2026-0603.md · https://api.github.com/repos/anza-xyz/agave/commits/d1685ab0 · https://altcoinreporter.com/atoshi-router-upgrade-201m-atos-blockaid-compromised-key/ · https://chainflip.io/blog/incident-report-vault-exploit-21-november-2026-part-2
