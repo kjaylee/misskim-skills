@@ -15618,3 +15618,59 @@ Sources: https://hacked.slowmist.io/en/ (10-26 04:01 KST) · https://thehackerne
 **카운트**: named 신규 **1(B125)** → black **243 → 244**(다음 빈 번호 **B126**) · 강화 **1**(B123 ← Chainflip RCA Part 2) · 신규 하위평면 **1**(조정자 집계 입력 무검증) · 트리 내 **0**(wsts·dryoc 양 록 0매치) · 레드 큐 **2**(wsts 0601 → A195 후보 · agave #16909 → A196 후보) · WATCH **2**(Cryptio 11-26 · Chainflip 재기동 재판정) · 체크리스트 **☐283·☐284** 신설.
 
 **Sources**: https://altcoinreporter.com/atoshi-router-upgrade-201m-atos-blockaid-compromised-key/ (2026-11-27, tx `0x0955…d913`·블록 26,506,387·11:57:11Z 실측) · https://thedefiant.io/news/hacks/atoshi-bridge-drained-of-201-million-atos-on-ethereum (2026-11-27T12:51:58Z) · https://www.tokenpost.com/news/technology/63576 (2026-11-27T12:41:37Z) · https://chainflip.io/blog/incident-report-vault-exploit-21-november-2026-part-2 (2026-11-27T00:00Z · libzmq UAF·4.3.3·검증인 허용목록) · https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/wsts/RUSTSEC-2026-0601.md (date 2026-11-26, GHSA-whwx-jj37-4gg5) · .../crates/dryoc/RUSTSEC-2026-0602.md (GHSA-vc3q-r4qh-vp64) · .../crates/dryoc/RUSTSEC-2026-0603.md (GHSA-6xqm-2982-gvrm) · https://api.github.com/repos/rustsec/advisory-db/commits?since=2026-11-26T18:00:00Z (3커밋: c5279d0b·e3bab8d1·8cf35790) · https://api.github.com/repos/anza-xyz/agave/commits/d1685ab0 (#16909 diff) · https://hacked.slowmist.io/en/ (200 · 28,001B · 최대일자 2026-11-26 Cryptio) · https://rekt.news/ (200 · 슬러그 10) · https://blog.trailofbits.com/index.xml (2026-11-06 불변) · 로컬 `microstable/solana/programs/microstable/src/lib.rs` · 양 `Cargo.lock`
+
+### 2026-11-28 redteam batch — 신규 named 2(A195 실패 라운드 잔여 입력 / 거부≠롤백 — wsts RUSTSEC-2026-0601 조정자 캐시 잔존 · A196 기본 구성 무방비 이스케이프 — agave #16909 수정이 `default` 기능 뒤에서 무효, `\r`·`\n` 잔여) + 레드 큐 평가 2(전건 승격) + RustSec 창 내 3건(승격 1·각주 2) + Anchor 오픈 PR 신규 4건 기각 + 트리 내 로거 포매터 부분 노출(☐286) (창 2026-11-26T18:30Z → 2026-11-27T18:30Z, 24시간)
+
+#### A195. 실패 라운드 잔여 입력 / 거부는 롤백이 아니다 (Failed-Round Input Residue)
+
+**신호**: wsts **RUSTSEC-2026-0601**(date 2026-11-26 · GHSA-whwx-jj37-4gg5 · CVSS 3.1 `AV:N/AC:H/PR:H/UI:N/S:U/C:N/I:H/A:H` · patched **>= 15.0.1**) · 수정 커밋 `1aa6902f4e8d`("Merge commit from fork", 2026-11-26T22:39:46Z) · crates.io **15.0.1**(11-26T22:47:01Z) · **15.0.2**(11-27T01:45:50Z, 내용 미열람) · 블랙 11-28 하위평면 인계(「조정자 집계 입력 무검증」). 레드 큐 항목 1.
+
+**기작(diff 직독 · `src/state_machine/coordinator/frost.rs` +265-5 / `fire.rs` +84-1)**:
+- 수신 경로 `gather_public_shares`는 `dkg_public_shares`/`party_polynomials`에 **검증 없이 저장**하고, 검증은 라운드 종료 `dkg_end_gathered`에서야 한다. **저장은 라운드 실패 후에도 남는다** — 수정 주석 그대로: "a round that later fails leaves the cache in place: nothing clears it and the previous round's aggregate key persists."
+- 집계 공개키를 `self.party_polynomials`(**조정자 자기 사본**)에서 계산한다 → 브로드캐스트를 강제하지 않는 트랜스포트에서 조정자에게만 전달된 커밋먼트가 그룹키에 합산되고, **어떤 정직자도 보유하지 않는 키**가 성립(C:N · I:H · 키 유출·서명 위조는 아님).
+- 수정은 **두 지점을 함께** 닫는다: ① 수신 시 `check_public_shares(comm, threshold, dkg_id)` 실패 → 메시지 전체 거부(캐시 유입 0) ② `dkg_end_gathered` 재검증 실패 → `party_polynomials.clear()` 후 `BadPolyCommitments(bad_ids)`. 즉 결함의 본질은 "검증 누락"이 아니라 **"거부 경로가 저장을 되돌리지 않는다"**(실패 경로의 원자성 부재)다.
+- **모양 vs 공백**: 테스트 주석이 명시한다 — `comms: vec![]`(빈 공유)는 삽입 루프가 0회라 **무해**하지만, `comms=[poly: vec![]]`(커밋먼트는 존재·다항식이 빈) 것은 `aggregator.init`이 `poly[i] for i < threshold`를 **길이검사 없이** 인덱싱해 조정자를 panic시킨다. 외곽 컨테이너 크기 검사는 내곽 벡터의 공백을 잡지 못한다.
+- **검사 존재 ≠ 검사 고정**: FIRE는 원래 검증하고 있었다 — "has always validated the commitments here, but nothing asserted it, so the check could have been refactored away silently". 수정이 FIRE에도 twin 테스트를 추가한 이유가 이것이다. 테스트 부재는 결함의 *이웃*이다(A150 인접).
+
+**공격 시나리오(PoC 수준)**: ① 서명 집합 구성원 1명 확보(최소 스테이크) ② 지식증명 불일치 또는 계수 개수 부족(0 포함) 커밋먼트를 전원에게 브로드캐스트 — 정직자는 거부하지만 **조정자는 이미 캐시** ③ 라운드 실패 → 조정자가 저장 상태에서 복원, 재키잉 없이 서명 계속 ④ 다음 라운드 `aggregator.init` 인덱싱 → **조정자 프로세스 panic**(DoS) ⑤ 변형: 브로드캐스트 미강제 트랜스포트로 조정자에만 전달 → 조정자가 계산한 집계 공개키를 **공격자가 제어**(정직자 미보유).
+
+**변별(전수 대조)**: A150(검사 존재≠효력) · A187(조회 술어 무음 소실) · A192(load 경로 owner 재검사) · A194(면제 술어의 공격자 제어성) — A195는 **"실패한 거부가 상태를 되돌리지 않는다"(실패 경로의 상태 원자성)** 로 구분된다. 기존 A벡터 중 *거부 경로 자체가 잔여 상태를 남긴다*를 named로 잡은 항목은 없다(블랙의 평면 「수신 시점 무검증」보다 한 단계 아래 — 검증을 *추가해도* 순서·롤백이 없으면 같은 결함이 남는다).
+
+**Microstable 판정**: **NOT ACTIVE(구조적)** — `frost|dkg|polynomial|party_polynomials|aggregate_public_key` 프로그램·keeper **0매치**(`threshold` 20여 매치는 config 임계값·모니터 임계로 집계 평면 아님) · `wsts|frost|dryoc` **양 록 0매치**(tomllib 1패스 261/663) · `slash_agent`·`require_keeper_quorum`은 **개별 서명 검증 후 카운트**(집계키 계산 없음). **LATENT ☐285**.
+
+**잔여 프로브(미실증 명시)**: 15.0.2 내용 미열람 · 조정자 저장/복원 훅(예제·서비스 코드) 미열람 · 실제 FROST 운영 노드의 트랜스포트 브로드캐스트 강제 여부 미실증.
+
+**방어 규칙**: (a) 수신 즉시 검증 **그리고** 검증 전 캐시 금지 (b) 거부 경로에서 **부분 저장분 롤백** (c) 외곽 컨테이너가 아니라 **원소별 형상**(길이·계수 개수·지식증명) 검사 (d) 집계 공개키는 서명자 DKG 결과에서 취득 (e) 실패 라운드 후 **재키잉 없이 서명 재개 금지** (f) "원래 검증하고 있었다"에는 **assert를 붙여** 리팩터링로 사라지지 않게 한다.
+
+**Sources**: https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/wsts/RUSTSEC-2026-0601.md · https://api.github.com/repos/xoloki/wsts/commits/1aa6902f4e8d98460d5a6760a657125670938a48 (+.patch: frost.rs +265-5 · fire.rs +84-1 · Cargo.toml 15.0.0→15.0.1) · https://crates.io/api/v1/crates/wsts/versions (15.0.1 11-26T22:47:01Z · 15.0.2 11-27T01:45:50Z) · Microstable `solana/programs/microstable/src`·`solana/keeper/src` 전수 grep · 양 `Cargo.lock`
+
+#### A196. 기본 구성 무방비 이스케이프 / 완화책이 제외한 문자가 곧 잔여 벡터 (Default-Composition Sanitizer Bypass)
+
+**신호**: agave **#16909** `logger: escape control characters in records`(커밋 `d1685ab032`, merged **2026-11-27T14:31:31Z**, PR 생성 2026-11-12 — 15일 열림) · `logger/src/lib.rs` **+167/-17**, `logger/Cargo.toml`에 **`default = ["auto-color"]` 신설** · 블랙 11-28 레드 큐(A196 후보). 레드 큐 항목 2.
+
+**기작(diff + PR 본문 직독)**:
+- 문제 문면(PR 본문): "records write caller-controlled bytes verbatim, so logging untrusted input can drive the terminal of whoever reads the output" + "**anstream strips escape sequences only when stderr is not a terminal, and it passes `\r`, VT and FF through even then**".
+- 수정은 `Escaped` 래퍼로 C0+DEL을 `\xNN`으로 이스케이프한다. 테스트가 고정하는 표적: `\x1b[31m`(SGR) · `\x07`(BEL) · `\x7f`(DEL) · **OSC 52 클립보드 쓰기** `\x1b]52;c;cGF5bG9hZA==\x07` · "anstream이 통과시키는 `\r`".
+- **그러나 게이트가 기본값을 비껴간다**: `auto-color`가 **default feature**이고 `format_record`/`Escaped`는 `#[cfg(not(feature = "auto-color"))]`. 즉 **기본 빌드는 종전 경로 그대로**다. PR 본문 자인: "gate it behind a default-on auto-color feature, so builds keep the colored default format until they opt out of default features."
+- **잔여 서브클래스 2**: ① `is_control`이 `\n`·`\t`를 **허용목록**으로 남긴다(포맷이 쓰는 문자) → 본문 개행 주입 시 4칸 들여쓰기된 **위조 레코드 라인**이 성립(다중행 로그 위조) ② 기본 빌드(anstream 경로)에서는 `\r`·VT·FF가 통과 → **CR 덮어쓰기**(직전 라인을 덮어 가짜 상태 표시).
+- **릴리스 경계 실측**: `raw.githubusercontent.com/anza-xyz/agave/v4.5.0-rc.0/logger/src/lib.rs`(3,091B) 및 `v4.4.1`(3,091B)에 `Escaped` **부재**(grep 0) → 수정은 **master(5.0 edge) 단독**, 출시 채널 0(rc.0은 머지보다 2일 앞, 11-25T19:04Z).
+
+**공격 시나리오**: ① 공격자가 온체인 유래 문자열(계정 라벨·메타데이터·에러 문자열)에 `\x1b]52;c;<base64>\x07`(클립보드 쓰기) 또는 `\x1b]8;;http://…\x1b\\`(하이퍼링크 위장) 삽입 ② 운영자가 `solana logs`/validator stdout/로그 tail을 **터미널에서** 열람 ③ 기본 빌드는 이스케이프 0 → 클립보드 하이재킹·하이퍼링크 스푸핑 ④ 파일 경로에서도 `\r`로 **직전 경고 라인 덮어쓰기** → "rebalance failed"가 정상 문구로 보인다.
+
+**등급 정직 기록**: **자금 경로 0 · 합의 무결성 영향 0** — 평면은 **관측/운영자 인지**. 단 keeper의 무음 정지(☐267: `warn!`+skip+`Ok`)와 결합하면 **유일한 잔여 신호가 덮어써질 수 있다** → **MEDIUM(관측 평면)**, CRITICAL/HIGH 아님.
+
+**변별**: A187(조회 술어 무음 소실) · A194(면제 술어 — 벌칙 평면) · A150(검사 존재≠효력) — A196은 **"보안 술어가 기본 구성에서 비활성(비-default 기능 게이트)"** + **"이스케이프 술어의 허용목록이 곧 잔여 공격면"** 두 축으로 구분된다. 상위 규칙: *완화책은 자신이 제외한 문자·경로를 문서화해야 하고, 그 제외가 곧 잔여 벡터다.*
+
+**Microstable 판정**: **PARTIAL(구조적)** — keeper 로거는 `tracing_subscriber` 0.3.22이고 `utils.rs:295-307 init_tracing(json_logs)`: `json_logs=true`면 `.json().flatten_event(true)`(serde_json 이스케이프로 C0 안전) / **false면 `.compact()`** → **raw 출력**. `--json-logs`는 `bool` 플래그(`main.rs:99-100`)이므로 **기본값 false = 무이스케이프 경로가 기본**이다. 다만 현재 로그 사이트에 온체인 유래 문자열이 **없다**(전수: `info!/warn!` 필드는 정적 리터럴·수치·`Pubkey`·`%err`, `price_feed` 심볼은 하드코드 `["USDC","USDT","DAI","USDS"]`) → **데이터 도달 0 = NOT ACTIVE**, 포매터는 **LATENT ☐286**. 록 실측: `env_logger 0.9.3`(←`solana-logger 2.3.1`) · `anstream 0.6.21`(←`clap_builder 4.5.60`, 로그 경로 아님).
+
+**잔여 프로브**: 대시보드/앱 렌더 경로(`textContent` 원칙) 이번 런 미재확인 · `solana logs` 클라이언트측 이스케이프 여부 미열람 · 4.4/4.5 백포트 여부 미확정.
+
+**방어 규칙**: (a) 완화책이 **기본 구성에서 켜지는지** 확인 — `#[cfg(not(feature=…))]` + `default = [feature]` 조합은 "고친 코드가 기본 빌드에 없다" (b) 이스케이프/정규화의 **허용목록을 열거**하고 각 허용 문자가 만드는 위조 가능성을 검토 (c) 온체인 유래 문자열의 렌더 경계는 **구조화 로그(JSON)** 로 고정 (d) 무음 실패 경로의 유일 신호를 로그에 두지 말고 **메트릭/이벤트로 이중화**.
+
+**Sources**: https://api.github.com/repos/anza-xyz/agave/pulls/16909 (merged 2026-11-27T14:31:31Z · 15일 열림 · 본문 = anstream 문면) · https://github.com/anza-xyz/agave/commit/d1685ab032 (logger/src/lib.rs +167/-17 · auto-color default) · https://raw.githubusercontent.com/anza-xyz/agave/v4.5.0-rc.0/logger/src/lib.rs (`Escaped` 0) · https://raw.githubusercontent.com/anza-xyz/agave/v4.4.1/logger/src/lib.rs (`Escaped` 0) · https://api.github.com/repos/anza-xyz/agave/releases (v4.5.0-rc.0 11-25T19:04Z) · Microstable `keeper/src/utils.rs`:295-307 · `keeper/src/main.rs`:99-100 · `solana/Cargo.lock`
+
+**RustSec 창 내 3건 — 승격 1 · 각주 2**: 0601 wsts(A195) 외 **0602/0603 dryoc**(GHSA-vc3q-r4qh-vp64 · GHSA-6xqm-2982-gvrm)는 **양 록 `dryoc` 0매치**(=트리 밖, 블랙 11-28 승계). 0602 축(내장 공개키 32..64바이트 교체 → 두 서명의 R 동일 → `a=(S1-S2)/(k1-k2)`)은 **nonce 재사용의 저장층 유도** 변형 — 새 named 아님, 각주로만 남긴다(Solana `Keypair::from_bytes`가 dalek 공개키 일치를 검증 → keeper 키 로드 경로는 구조적 방어). 0603(X25519 저차점 → all-zero 공유비밀)은 ☐284(블랙)에 흡수.
+
+**창 내 무풍 레인(관측 명시)**: Anchor·SPL 창 내 커밋 **각 0** · Anchor 오픈 PR **15건 전수 열람**(창 내 신규 4건 전부 기각 — #5341 에러 코드 정확성(fail-loud 오진단) · #5258 IDL 빌드 시점 · #5372 본문 공백(제목 등급) · #5159 memo CPI 이식) · paradigm CTF 0 · Ethernaut 0 · ToB `lastBuildDate` 2026-11-06(**22일**) · Neodyme 신규 0 · Flashbots 최신 11-26T07:50:15Z(창 밖) · arXiv RSS **0항목**(lastBuild 11-27T05:00) + API 최신 **2611.34876 = 11-25T18:37:29Z**(창 밖 — 추수감사절 공백 추정, **소스측**) · agave GHSA 0 · **뉴스 레인 미실시**(이 런타임에 web_search 도구 부재 — 관측 불가로 정직 기록) · Solana Changelog 미프로브.
+
+**카운트**: named 신규 **2(A195·A196)** → **red 266 → 268**(쌍 지표 **226 불변** · 다음 빈 번호 **A197**) · 레드 큐 평가 **2**(전건 승격) · 체크리스트 ☐284(블랙 11-28) → **☐285·☐286**(레드) · 홀드 무변(**A6 day 112** · ☐267 · ☐259) · RustSec 창 내 신규 3(승격 1 · 각주 2 · 양 록 0매치) · **트리 내 신규 0(CRITICAL 0 / HIGH 0 / MEDIUM 0)**.

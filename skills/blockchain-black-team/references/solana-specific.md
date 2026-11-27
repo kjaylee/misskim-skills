@@ -3334,3 +3334,28 @@ Gonka AI Ethereum bridge (2026-11-18 18:00:59Z, ~$1.05M, 5 tx): 공격자가 **�
 
 283. ☐ **업그레이드/구현체 교체 경로 체크(배포 전)**: (1) 업그레이드 권한 보유 주체·키 관리 방식 확인, (2) 교체-인출 원자 결합이 가능한 구조인지(프록시/ProgramData 자기잔고 여부) 확인, (3) 활성화 지연(타임락)·권한 분리·2단계 거버넌스 중 최소 1개 존재 확인, (4) 재검증 훅을 온체인 술어에 결속. **사후 모니터링은 방어로 인정하지 않는다**(개입 창 0).
 284. ☐ **조정자/집계 입력 검증 체크**: 조정자·릴레이어·오케스트레이터가 타 참가자의 커밋먼트/셰어/증명을 **수신 시점**에 검증하는가 + 집계 결과를 자기 사본이 아니라 참가자 결과에서 취득하는가 + 브로드캐스트 미강제 트랜스포트를 허용하지 않는가 + 실패한 라운드 후 **재키잉 없이 서명을 계속하지 않는가**.
+
+
+## 실패 라운드 잔여 입력 — 거부는 롤백이 아니다 (A195, wsts RUSTSEC-2026-0601 · 커밋 `1aa6902f4e8d`, merged 2026-11-26T22:39:46Z · 출시 15.0.1/15.0.2)
+
+**Mechanism**: FROST **조정자**가 수신한 DKG 다항식 커밋먼트를 **수신 시점에 저장**하고 검증은 라운드 종료에야 한다. 라운드가 실패해도 캐시는 남고 이전 라운드의 집계 공개키도 유지된다(수정 주석: "a round that later fails leaves the cache in place: nothing clears it and the previous round's aggregate key persists"). 그 상태로 재키잉 없이 서명을 계속하면 다음 라운드 `aggregator.init`이 `poly[i] for i < threshold`를 길이검사 없이 인덱싱해 **조정자 panic**(DoS). 별도로 집계키를 조정자 자기 사본에서 계산하므로, 브로드캐스트 미강제 트랜스포트에서 조정자에게만 전달된 커밋먼트로 **정직자가 보유하지 않는 그룹키**가 성립한다(C:N·I:H, 키 유출·서명 위조는 없음). 수정 15.0.1은 ① 수신 시 `check_public_shares` 검증(캐시 이전) ② `dkg_end_gathered` 재검증 실패 시 `party_polynomials.clear()` 두 지점을 함께 닫는다 — 즉 결함은 "검증 누락"이 아니라 **거부 경로의 상태 원자성 부재**다. FIRE 경로도 `clear()`가 추가되고, "원래 검증은 있었지만 아무 assert도 없었다"는 이유로 twin 테스트가 붙었다(검사 존재 ≠ 검사 고정, A150 인접).
+
+**모양 vs 공백**: `comms: vec![]`는 삽입 루프 0회로 무해하지만 `comms=[poly: vec![]]`는 유효하다 — **외곽 컨테이너 크기 검사는 내곽 벡터의 공백을 잡지 못한다**.
+
+**Microstable risk**: **NOT ACTIVE(구조적)** — `frost|dkg|polynomial|party_polynomials|aggregate_public_key` 프로그램·keeper **0매치** · `slash_agent`/`require_keeper_quorum`은 개별 서명 검증 후 카운트(집계키 계산 없음) · `wsts|frost|dryoc` 양 록 0매치. **LATENT ☐285**.
+
+**Sources**: https://raw.githubusercontent.com/rustsec/advisory-db/main/crates/wsts/RUSTSEC-2026-0601.md · https://api.github.com/repos/xoloki/wsts/commits/1aa6902f4e8d98460d5a6760a657125670938a48 (+patch: frost.rs +265-5 · fire.rs +84-1) · https://crates.io/api/v1/crates/wsts/versions (15.0.1 11-26T22:47Z · 15.0.2 11-27T01:45Z)
+
+## 기본 구성 무방비 이스케이프 — 완화책이 제외한 문자 = 잔여 벡터 (A196, agave #16909 · 커밋 `d1685ab032`, merged 2026-11-27T14:31:31Z · 출시 채널 0)
+
+**Mechanism**: 레코드가 호출자 바이트를 그대로 써서, 신뢰할 수 없는 입력을 로깅하면 **출력을 읽는 사람의 터미널**을 조작할 수 있다. PR 본문이 명시한다: anstream은 **stderr가 터미널이 아닐 때만** 이스케이프를 제거하고, 그 경우에도 **`\r`·VT·FF는 통과**시킨다. 수정은 `Escaped` 래퍼로 C0+DEL을 `\xNN`으로 바꾸고(테스트: SGR·BEL·DEL·**OSC 52 클립보드 쓰기**·"anstream이 통과시키는 `\r`") `\n`·`\t`만 허용목록으로 남긴다. **그러나 `auto-color`가 default feature이고 이스케이프 코드는 `#[cfg(not(feature = "auto-color"))]`** → 기본 빌드는 종전 경로 그대로(PR 본문 자인: "builds keep the colored default format until they opt out of default features"). 잔여 2종: ① `\n` 허용 → 4칸 들여쓰기된 **위조 레코드 라인**(다중행 로그 위조) ② 기본 빌드에서 `\r` 통과 → **직전 라인 덮어쓰기**. 릴리스 경계: `v4.5.0-rc.0`(11-25T19:04Z)·`v4.4.1`의 `logger/src/lib.rs`에 `Escaped` **부재** → master(5.0 edge) 단독.
+
+**Microstable risk**: **PARTIAL(구조적)** — `keeper/src/utils.rs:295-307 init_tracing(json_logs)`: `.json()`(serde_json 이스케이프 = C0 안전) 또는 **`.compact()`(raw)** 이고 `--json-logs`는 `bool` 플래그(`main.rs:99-100`) → **기본값 false = 무이스케이프 경로가 기본**. 현재 로그 사이트에 온체인 유래 문자열 **0**(정적 리터럴·수치·`Pubkey`·`%err`, 심볼은 하드코드) → 데이터 도달 0 = NOT ACTIVE, 포매터는 **LATENT ☐286**. 록: `env_logger 0.9.3`(←solana-logger) · `anstream 0.6.21`(←clap_builder, 로그 경로 아님).
+
+**Sources**: https://api.github.com/repos/anza-xyz/agave/pulls/16909 · https://github.com/anza-xyz/agave/commit/d1685ab032 · https://raw.githubusercontent.com/anza-xyz/agave/v4.5.0-rc.0/logger/src/lib.rs (`Escaped` 0) · https://raw.githubusercontent.com/anza-xyz/agave/v4.4.1/logger/src/lib.rs (`Escaped` 0) · Microstable `keeper/src/utils.rs`:295-307 · `keeper/src/main.rs`:99-100
+
+## Solana-Specific Defense Checklist Update
+
+285. ☐ **"거부 경로가 저장을 되돌리는가" — 실패 라운드 잔여 입력 체크** (A195 ← wsts RUSTSEC-2026-0601 · Microstable 잠복 0): (a) 수신 데이터를 **검증 전에 저장**하는 경로를 열거하고, 검증을 *나중에* 하더라도 검증 실패 시 **부분 저장분을 비우는지** 확인 — 거부는 롤백이 아니다 (b) 라운드/사이클 실패 후 **재키잉 없이 같은 키로 다음 라운드를 시작하는 경로**가 있으면 위험 표시(잔여 상태가 다음 라운드 인덱싱에 들어간다) (c) 컨테이너 검사는 **외곽 크기(`comms.is_empty()`)가 아니라 원소 형상**(길이·계수 개수·지식증명)으로 (d) 집계/조정 결과는 자기 사본이 아니라 **참가자 결과**에서 취득(뷰 분기 금지) (e) "원래 검증하고 있었다"는 코드에는 **assert/회귀 테스트**를 붙여 리팩터링로 조용히 사라지지 않게. 판별 질문: **"이 입력이 거부되었을 때, 거부되기 전에 이미 저장된 것은 누가 지우는가?"**
+
+286. ☐ **완화책의 기본 구성 도달성 + 허용목록 잔여 체크** (A196 ← agave #16909 · Microstable PARTIAL ☐286): (a) 보안 술어가 `#[cfg(not(feature = "X"))]` 같은 조건 뒤에 있으면서 `X`가 **default feature**가 아닌지 확인 — 기본 빌드에 고친 코드가 없으면 완화는 존재하지 않는다 (b) 이스케이프/정규화의 **허용목록을 열거**하고 각 허용 문자(`\n`·`\t`·`\r`)가 만드는 위조(가짜 레코드 라인·직전 라인 덮어쓰기)를 검토 (c) 온체인 유래 문자열은 **구조화 로그(JSON)** 로만 렌더하고 비구조 포매터는 운영자 편의용으로 한정 (d) 무음 실패(`warn!`+skip+`Ok`) 경로의 유일 신호를 로그에 두지 말고 **메트릭/이벤트로 이중화** — 로그는 덮어쓸 수 있지만 카운터는 지워지지 않는다. 판별 질문: **"내가 켠 완화책이, 내가 기본값으로 빌드한 바이너리에 실제로 들어 있는가? 그 완화책이 통과시키기로 한 문자는 무엇을 할 수 있는가?"**
